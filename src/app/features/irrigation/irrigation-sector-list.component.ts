@@ -121,30 +121,30 @@ import { switchMap, startWith } from 'rxjs/operators';
                   <!-- Status Indicators -->
                   <div class="row text-center mb-3">
                     <div class="col-4">
-                      <div class="d-flex flex-column align-items-center">
+                      <!-- <div class="d-flex flex-column align-items-center">
                         <i class="bi bi-thermometer-half display-6" 
                            [class.text-danger]="sector.currentTemperature > 30"
                            [class.text-warning]="sector.currentTemperature > 25"
                            [class.text-primary]="sector.currentTemperature <= 25"></i>
                         <small class="text-muted">{{ sector.currentTemperature || '--' }}°C</small>
-                      </div>
+                      </div> -->
                     </div>
                     <div class="col-4">
                       <div class="d-flex flex-column align-items-center">
-                        <i class="bi bi-moisture display-6"
+                        <!-- <i class="bi bi-moisture display-6"
                            [class.text-info]="sector.currentHumidity > 60"
                            [class.text-warning]="sector.currentHumidity < 40"
-                           [class.text-success]="sector.currentHumidity >= 40 && sector.currentHumidity <= 60"></i>
+                           [class.text-success]="sector.currentHumidity >= 40 && sector.currentHumidity <= 60"></i> -->
                         <small class="text-muted">{{ sector.currentHumidity || '--' }}%</small>
                       </div>
                     </div>
                     <div class="col-4">
-                      <div class="d-flex flex-column align-items-center">
+                      <!-- <div class="d-flex flex-column align-items-center">
                         <i class="bi bi-water display-6"
                            [class.text-primary]="sector.waterFlow > 0"
                            [class.text-muted]="!sector.waterFlow"></i>
                         <small class="text-muted">{{ sector.waterFlow || 0 }} L/h</small>
-                      </div>
+                      </div> -->
                     </div>
                   </div>
 
@@ -350,7 +350,7 @@ export class IrrigationSectorListComponent implements OnInit {
   constructor(
     private irrigationSectorService: IrrigationSectorService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadCropProductions();
@@ -376,7 +376,7 @@ export class IrrigationSectorListComponent implements OnInit {
     } else {
       this.irrigationSectors$ = this.irrigationSectorService.getAll(filters);
     }
-    
+
     this.irrigationSectors$.subscribe({
       next: (sectors) => {
         this.isLoading = false;
@@ -440,7 +440,11 @@ export class IrrigationSectorListComponent implements OnInit {
     return sector.id;
   }
 
-  getStatusClass(status: string): string {
+  getStatusClass(status: string | undefined): string {
+    if (status === undefined) {
+      status = 'running';
+    }
+
     const statusClasses: { [key: string]: string } = {
       'running': 'bg-success',
       'scheduled': 'bg-info',
@@ -451,7 +455,10 @@ export class IrrigationSectorListComponent implements OnInit {
     return statusClasses[status] || 'bg-light text-dark';
   }
 
-  getStatusText(status: string): string {
+  getStatusText(status: string | undefined): string {
+    if (status === undefined) {
+      status = 'running';
+    }
     const statusTexts: { [key: string]: string } = {
       'running': 'Ejecutando',
       'scheduled': 'Programado',

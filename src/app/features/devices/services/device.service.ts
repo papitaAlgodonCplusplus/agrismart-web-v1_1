@@ -578,19 +578,20 @@ export class DeviceService {
   }
 
   sortByStatus(devices: Device[], ascending: boolean = true): Device[] {
-    const statusPriority: { [key: string]: number } = {
-      'Online': 1,
-      'Offline': 2,
-      'Maintenance': 3,
-      'Error': 4
-    };
+    return [...devices]
+    // const statusPriority: { [key: string]: number } = {
+    //   'Online': 1,
+    //   'Offline': 2,
+    //   'Maintenance': 3,
+    //   'Error': 4
+    // };
 
-    return [...devices].sort((a, b) => {
-      const priorityA = statusPriority[a.status] || 5;
-      const priorityB = statusPriority[b.status] || 5;
-      const comparison = priorityA - priorityB;
-      return ascending ? comparison : -comparison;
-    });
+    // return [...devices].sort((a, b) => {
+    //   const priorityA = statusPriority[a.status] || 5;
+    //   const priorityB = statusPriority[b.status] || 5;
+    //   const comparison = priorityA - priorityB;
+    //   return ascending ? comparison : -comparison;
+    // });
   }
 
   sortByLastSeen(devices: Device[], ascending: boolean = false): Device[] {
