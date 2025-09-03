@@ -1,0 +1,546 @@
+// src/app/app.component.scss
+
+.app-container {
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+// Loading Screen Styles
+.app-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  .loading-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+  }
+
+  .loading-content {
+    text-align: center;
+    color: white;
+
+    .agrismart-logo {
+      margin-bottom: 2rem;
+      
+      i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        display: block;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+      }
+
+      h2 {
+        font-weight: 300;
+        margin-bottom: 0;
+        font-size: 2.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      border-width: 0.3em;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      margin: 0;
+    }
+  }
+}
+
+// Main App Content
+.app-content {
+  height: 100vh;
+  overflow: hidden;
+}
+
+// Connection Status Indicator
+.connection-status {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1050;
+  border-radius: 25px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+
+  &.connection-online {
+    background: rgba(25, 135, 84, 0.9);
+    color: white;
+    border: 1px solid rgba(25, 135, 84, 1);
+  }
+
+  &.connection-offline {
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: 1px solid rgba(220, 53, 69, 1);
+  }
+
+  .connection-indicator {
+    display: flex;
+    align-items: center;
+    
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
+// Global Progress Bar
+.global-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: 1060;
+
+  .progress-bar {
+    height: 100%;
+    transition: width 0.3s ease;
+    background: linear-gradient(90deg, #28a745, #20c997, #17a2b8);
+    background-size: 200% 100%;
+    animation: progressShimmer 1.5s infinite;
+  }
+}
+
+@keyframes progressShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// Update Notification
+.update-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1055;
+  max-width: 400px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  animation: slideInFromRight 0.5s ease-out;
+
+  .alert {
+    margin-bottom: 0;
+    border: none;
+    
+    .btn {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+// PWA Install Prompt
+.pwa-install-prompt {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1055;
+  max-width: 400px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  animation: slideInFromLeft 0.5s ease-out;
+
+  .alert {
+    margin-bottom: 0;
+    border: none;
+    
+    .btn {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+// Toast Container Enhancements
+.toast-container {
+  .toast {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+    margin-bottom: 0.5rem;
+    min-width: 300px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .toast-header {
+      border-bottom: none;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+
+      i {
+        font-size: 1.1rem;
+      }
+
+      .btn-close,
+      .btn-close-white {
+        font-size: 0.8rem;
+      }
+    }
+
+    .toast-body {
+      padding: 0.75rem 1rem;
+      color: #212529;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+  }
+}
+
+// Keyboard Shortcuts Modal
+#shortcutsModal {
+  .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+
+    .modal-title {
+      font-weight: 600;
+      
+      i {
+        opacity: 0.9;
+      }
+    }
+
+    .btn-close {
+      filter: invert(1) grayscale(100%) brightness(200%);
+    }
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+
+    h6 {
+      color: #495057;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
+// Keyboard Shortcut Items
+.keyboard-shortcut {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0;
+
+  kbd {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    color: #495057;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    margin-right: 0.25rem;
+
+    &:last-of-type {
+      margin-right: 0.5rem;
+    }
+  }
+
+  span {
+    color: #6c757d;
+    font-size: 0.875rem;
+  }
+}
+
+// Animations
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .connection-status {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+    border-radius: 8px;
+    font-size: 0.8rem;
+  }
+
+  .update-notification,
+  .pwa-install-prompt {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    max-width: none;
+  }
+
+  .toast-container {
+    left: 0.5rem;
+    right: 0.5rem;
+    top: 0.5rem;
+
+    .toast {
+      min-width: auto;
+      width: 100%;
+    }
+  }
+
+  #shortcutsModal {
+    .modal-dialog {
+      margin: 1rem;
+      max-width: calc(100vw - 2rem);
+    }
+
+    .keyboard-shortcut {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+
+      span {
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  .app-loading {
+    .loading-content {
+      padding: 1rem;
+
+      .agrismart-logo {
+        h2 {
+          font-size: 2rem;
+        }
+
+        i {
+          font-size: 3rem;
+        }
+      }
+
+      .spinner-border {
+        width: 2.5rem;
+        height: 2.5rem;
+      }
+
+      p {
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .app-loading {
+    .loading-content {
+      .agrismart-logo {
+        margin-bottom: 1.5rem;
+
+        h2 {
+          font-size: 1.8rem;
+        }
+
+        i {
+          font-size: 2.5rem;
+        }
+      }
+    }
+  }
+
+  .toast-container {
+    .toast {
+      .toast-header,
+      .toast-body {
+        padding: 0.5rem 0.75rem;
+      }
+
+      .toast-header {
+        font-size: 0.85rem;
+
+        i {
+          font-size: 1rem;
+        }
+      }
+
+      .toast-body {
+        font-size: 0.8rem;
+      }
+    }
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .app-loading {
+    background: #000;
+    
+    .loading-overlay {
+      background: rgba(0, 0, 0, 0.8);
+    }
+  }
+
+  .connection-status {
+    backdrop-filter: none;
+    
+    &.connection-online {
+      background: #198754;
+      border-color: #198754;
+    }
+
+    &.connection-offline {
+      background: #dc3545;
+      border-color: #dc3545;
+    }
+  }
+
+  .toast {
+    backdrop-filter: none;
+    background: #fff !important;
+    border: 2px solid #000 !important;
+
+    .toast-header {
+      border-bottom: 1px solid #dee2e6;
+    }
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .app-loading .loading-content .agrismart-logo i,
+  .connection-status,
+  .global-progress .progress-bar,
+  .update-notification,
+  .pwa-install-prompt,
+  .toast {
+    animation: none;
+    transition: none;
+  }
+
+  .global-progress .progress-bar {
+    background: #28a745;
+  }
+}
+
+// Dark theme support (when implemented)
+@media (prefers-color-scheme: dark) {
+  .app-loading {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  }
+
+  .keyboard-shortcut {
+    kbd {
+      background: #4a5568;
+      border-color: #718096;
+      color: #e2e8f0;
+    }
+
+    span {
+      color: #a0aec0;
+    }
+  }
+
+  #shortcutsModal {
+    .modal-content {
+      background: #2d3748;
+      color: #e2e8f0;
+    }
+
+    .modal-body h6 {
+      color: #cbd5e0;
+    }
+  }
+}
+
+// Print styles
+@media print {
+  .app-loading,
+  .connection-status,
+  .global-progress,
+  .update-notification,
+  .pwa-install-prompt,
+  .toast-container {
+    display: none !important;
+  }
+}
+
+// Focus styles for accessibility
+.keyboard-shortcut kbd:focus,
+.btn:focus,
+.toast .btn-close:focus {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+// Loading shimmer effect for skeletons (future use)
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
