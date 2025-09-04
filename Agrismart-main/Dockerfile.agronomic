@@ -1,0 +1,23 @@
+# Stage 1: Base image for running
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 7029
+
+# Stage 2: Build and publish the app
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy everything into the container
+COPY . .
+
+# Restore dependencies for this specific project
+RUN dotnet restore "AgriSmart.Api.Agronomic/AgriSmart.Api.Agronomic.csproj"
+
+# Publish the project
+RUN dotnet publish "AgriSmart.Api.Agronomic/AgriSmart.Api.Agronomic.csproj" -c Release -o /app/publish
+
+# Stage 3: Final image
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "AgriSmart.Api.Agronomic.dll"]
