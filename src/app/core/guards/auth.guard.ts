@@ -9,7 +9,6 @@ import {
 } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
-import { map, take } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -35,29 +34,24 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     return this.canActivate(childRoute, state);
   }
 
-  private checkAuth(url: string): Observable<boolean> {
-    return this.authService.currentUser$.pipe(
-      take(1),
-      map(user => {
-        const isAuthenticated = this.authService.isAuthenticated();
-        
-        if (isAuthenticated && user) {
-          // User is authenticated and user data is available
-          return true;
-        } else {
-          // User is not authenticated, redirect to login
-          console.log('Access denied. Redirecting to login...');
-          this.router.navigate(['/login'], { 
-            queryParams: { returnUrl: url }
-          });
-          return false;
-        }
-      })
-    );
+  private checkAuth(url: string): boolean {
+    const isAuthenticated = this.authService.isAuthenticated();
+    
+    console.log(`DEBUG AuthGuard - URL: ${url}, Authenticated: ${isAuthenticated}`);
+    
+    if (isAuthenticated) {
+      return true;
+    } else {
+      console.log('Access denied. Redirecting to login...');
+      this.router.navigate(['/login'], { 
+        queryParams: { returnUrl: url }
+      });
+      return false;
+    }
   }
 }
 
-// Alternative simpler version using just token check
+// Simple alternative guard that just checks token
 @Injectable({
   providedIn: 'root'
 })

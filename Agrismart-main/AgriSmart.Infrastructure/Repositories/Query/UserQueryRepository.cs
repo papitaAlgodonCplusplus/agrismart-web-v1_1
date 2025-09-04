@@ -23,33 +23,47 @@ namespace AgriSmart.Infrastructure.Repositories.Query
         {
             try
             {
-                return await _context.User
+                // DEBUG: Add logging to see what parameters are received
+                Console.WriteLine($"DEBUG AuthenticateAsync - userEmail: '{userEmail}'");
+                Console.WriteLine($"DEBUG AuthenticateAsync - userPassword: '{userPassword}'");
+                Console.WriteLine($"DEBUG AuthenticateAsync - userEmail is null: {userEmail == null}");
+                Console.WriteLine($"DEBUG AuthenticateAsync - userPassword is null: {userPassword == null}");
+
+                var query = _context.User
                     .Select(record => new User()
                     {
                         Id = record.Id,
                         ClientId = record.ClientId,
-                        UserEmail = record.UserEmail, 
+                        UserEmail = record.UserEmail,
                         Password = record.Password,
                         ProfileId = record.ProfileId,
                         UserStatusId = record.UserStatusId
                     })
                     .Where(record => (record.UserEmail == userEmail && userEmail != null)
                         && (record.Password == userPassword && userPassword != null)
-                        && record.UserStatusId == 1)
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync();
+                        && record.UserStatusId == 1);
+
+                // DEBUG: Log the generated SQL query
+                var sql = query.ToQueryString();
+                Console.WriteLine($"DEBUG AuthenticateAsync - Generated SQL: {sql}");
+
+                var result = await query.AsNoTracking().FirstOrDefaultAsync();
+
+                Console.WriteLine($"DEBUG AuthenticateAsync - Result: {(result != null ? $"Found user {result.UserEmail}" : "No user found")}");
+
+                return result;
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"DEBUG AuthenticateAsync - Exception: {ex.Message}");
                 throw new Exception(ex.Message, ex);
             }
         }
-
         public async Task<IReadOnlyList<User>> GetAllAsync(int profileId, int clientId, int userStatusId)
         {
             try
             {
-                return await (from u in _context.User                             
+                return await (from u in _context.User
                               where
                                   (
                                         (u.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser && u.Id == GetSessionUserId()) ||
@@ -58,7 +72,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   )
                                   && ((u.ProfileId == profileId) || profileId == 0)
                                   && ((u.ClientId == clientId) || clientId == 0)
-                                  && ((u.UserStatusId == userStatusId) || userStatusId == 0)                                  
+                                  && ((u.UserStatusId == userStatusId) || userStatusId == 0)
                               select u).ToListAsync();
             }
             catch (Exception ex)

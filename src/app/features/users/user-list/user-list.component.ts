@@ -149,7 +149,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
                             <strong>{{ user.name }}</strong>
                             <div class="text-muted small">{{ user.email }}</div>
                             <div class="text-muted small" *ngIf="user.username !== user.email">
-                              @{{ user.username }}
+                              @{{user.username}}
                             </div>
                           </div>
                         </div>
@@ -556,7 +556,7 @@ export class UserListComponent implements OnInit {
     }
   }
 
-  trackByFn(index: number, user: User): number {
+  trackByFn(_: number, user: User): number {
     return user.id;
   }
 

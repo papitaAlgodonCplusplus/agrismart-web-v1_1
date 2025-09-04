@@ -7,13 +7,29 @@ import { ApiConfigService } from '../services/api-config.service';
 import { Router } from '@angular/router';
 
 export interface LoginRequest {
-  email: string;
-  password: string;
+  UserEmail: string;    // Backend expects 'UserEmail'
+  Password: string;     // Backend expects 'Password'
 }
 
+// Backend response structure (matches your C# LoginResponse wrapped in Response<T>)
+export interface BackendLoginResponse {
+  success: boolean;
+  exception: any;
+  result: {
+    Id: number;
+    ClientId: number;
+    UserName: string;
+    ProfileId: number;
+    Token: string;
+    ValidTo: string;
+    Active: boolean;
+  };
+}
+
+// Normalized frontend interface
 export interface LoginResponse {
   token: string;
-  refreshToken: string;
+  refreshToken?: string; // Optional since backend doesn't provide it
   user: any;
 }
 
@@ -32,22 +48,89 @@ export class AuthService {
     // Check if user is already logged in
     const token = localStorage.getItem('access_token');
     if (token) {
-      // Decode token and set user (you'll need jwt-decode library)
+      // Decode token and set user
       this.setCurrentUser(this.decodeToken(token));
     }
   }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(
+    return this.http.post<any>( // Changed to 'any' to see raw response
       `${this.apiConfig.agronomicApiUrl}${this.apiConfig.endpoints.auth.login}`,
       credentials
     ).pipe(
+      tap(rawResponse => {
+        // CRITICAL: Log the raw response FIRST
+        console.log('RAW BACKEND RESPONSE:', rawResponse);
+        console.log('Response type:', typeof rawResponse);
+        console.log('Response keys:', Object.keys(rawResponse || {}));
+      }),
+      map(backendResponse => {
+        // Try multiple possible response structures
+        let token = undefined;
+        let userInfo = {};
+        
+        // Structure 1: Wrapped in Response<T> (success/result)
+        if (backendResponse?.success && backendResponse?.result) {
+          console.log('Found success/result structure');
+          const result = backendResponse.result;
+          token = result.Token || result.token;
+          userInfo = {
+            id: result.Id || result.id,
+            clientId: result.ClientId || result.clientId,
+            userName: result.UserName || result.userName,
+            profileId: result.ProfileId || result.profileId,
+            active: result.Active || result.active
+          };
+        }
+        // Structure 2: Direct LoginResponse object
+        else if (backendResponse?.Token || backendResponse?.token) {
+          console.log('Found direct token structure');
+          token = backendResponse.Token || backendResponse.token;
+          userInfo = {
+            id: backendResponse.Id || backendResponse.id,
+            clientId: backendResponse.ClientId || backendResponse.clientId,
+            userName: backendResponse.UserName || backendResponse.userName,
+            profileId: backendResponse.ProfileId || backendResponse.profileId,
+            active: backendResponse.Active || backendResponse.active
+          };
+        }
+        // Structure 3: Other possible structures
+        else {
+          console.error('Unknown response structure:', backendResponse);
+          throw new Error('Unknown response format');
+        }
+        
+        console.log('Extracted token:', token);
+        console.log('Extracted user info:', userInfo);
+        
+        const finalResponse = {
+          token: token,
+          refreshToken: '',
+          user: userInfo
+        };
+        
+        console.log('Final transformed response:', finalResponse);
+        return finalResponse;
+      }),
       tap(response => {
-        localStorage.setItem('access_token', response.token);
-        localStorage.setItem('refresh_token', response.refreshToken);
+        console.log('Storing token:', response.token);
+        if (response.token && response.token !== 'undefined') {
+          localStorage.setItem('access_token', response.token);
+        } else {
+          console.error('Cannot store undefined/null token');
+        }
         this.setCurrentUser(response.user);
+        console.log('Token in localStorage:', localStorage.getItem('access_token'));
       })
     );
+  }
+
+  // Helper method to create login request with proper property names
+  createLoginRequest(email: string, password: string): LoginRequest {
+    return {
+      UserEmail: email,
+      Password: password
+    };
   }
 
   logout(): void {
@@ -59,7 +142,18 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     const token = localStorage.getItem('access_token');
-    return !!token && !this.isTokenExpired(token);
+    console.log('Token from localStorage:', token);
+    console.log('Token exists:', !!token);
+    
+    if (!token || token === 'undefined' || token === 'null') {
+      return false;
+    }
+    
+    const isExpired = this.isTokenExpired(token);
+    console.log('Token expired:', isExpired);
+    console.log('Final authentication result:', !!token && !isExpired);
+    
+    return !!token && !isExpired;
   }
 
   private setCurrentUser(user: any): void {
@@ -67,10 +161,13 @@ export class AuthService {
   }
 
   private decodeToken(token: string): any {
-    // Implement token decoding logic
     try {
+      if (!token || token === 'undefined' || token === 'null') {
+        return null;
+      }
       return JSON.parse(atob(token.split('.')[1]));
-    } catch {
+    } catch (error) {
+      console.error('Error decoding token:', error);
       return null;
     }
   }
@@ -87,16 +184,32 @@ export class AuthService {
     ).pipe(
       tap(response => {
         localStorage.setItem('access_token', response.token);
-        localStorage.setItem('refresh_token', response.refreshToken);
+        if (response.refreshToken) {
+          localStorage.setItem('refresh_token', response.refreshToken);
+        }
         this.setCurrentUser(response.user);
       })
     );
   }
 
   private isTokenExpired(token: string): boolean {
-    // Implement token expiration check
-    const decoded = this.decodeToken(token);
-    if (!decoded || !decoded.exp) return true;
-    return Date.now() >= decoded.exp * 1000;
+    try {
+      const decoded = this.decodeToken(token);
+      console.log('Decoded token:', decoded);
+      
+      if (!decoded || !decoded.exp) {
+        console.log('No exp claim, considering expired');
+        return true;
+      }
+      
+      const currentTime = Math.floor(Date.now() / 1000);
+      const isExpired = currentTime >= decoded.exp;
+      console.log('Current time:', currentTime, 'Token exp:', decoded.exp, 'Expired:', isExpired);
+      
+      return isExpired;
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return true;
+    }
   }
 }

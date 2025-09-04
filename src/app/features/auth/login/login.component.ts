@@ -71,28 +71,55 @@ import { AuthService } from '../../../core/auth/auth.service';
             </button>
           </div>
 
-          <div class="alert alert-danger mt-3" *ngIf="errorMessage">
+          <div *ngIf="errorMessage" class="alert alert-danger mt-3" role="alert">
             {{ errorMessage }}
           </div>
         </form>
+
+        <div class="text-center mt-3">
+          <small class="text-muted">
+            ¿Olvidaste tu contraseña? <a href="#" class="text-decoration-none">Recuperar</a>
+          </small>
+        </div>
       </div>
     </div>
   `,
   styles: [`
     .login-container {
-      min-height: 100vh;
       display: flex;
-      align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f8f9fa;
     }
+
     .login-card {
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 400px;
+      padding: 2rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      color: #2c3e50;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      background-color: #27ae60;
+      border-color: #27ae60;
+    }
+
+    .btn-primary:hover {
+      background-color: #219a52;
+      border-color: #1e8449;
+    }
+
+    .form-control:focus {
+      border-color: #27ae60;
+      box-shadow: 0 0 0 0.2rem rgba(39, 174, 96, 0.25);
     }
   `]
 })
@@ -110,7 +137,7 @@ export class LoginComponent implements OnInit {
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required]],
+      password: ['', Validators.required],
       rememberMe: [false]
     });
   }
@@ -118,48 +145,78 @@ export class LoginComponent implements OnInit {
   ngOnInit(): void {
     // Get return url from route parameters or default to dashboard
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-
-    // Check if user is already logged in
+    
+    // Redirect to dashboard if already logged in
     if (this.authService.isAuthenticated()) {
       this.router.navigate([this.returnUrl]);
+    }
+
+    // Set default test values for development
+    if (!this.isProduction()) {
+      this.loginForm.patchValue({
+        email: 'csolano@iapcr.com',
+        password: '123'
+      });
     }
   }
 
   onSubmit(): void {
-    if (this.loginForm.valid) {
-      this.isLoading = true;
-      this.errorMessage = '';
+    if (this.loginForm.invalid) {
+      this.markAllFieldsAsTouched();
+      return;
+    }
 
-      const credentials = {
-        email: this.loginForm.value.email,
-        password: this.loginForm.value.password
-      };
+    this.isLoading = true;
+    this.errorMessage = '';
 
-      this.authService.login(credentials).subscribe({
-        next: (response) => {
-          this.isLoading = false;
-          this.router.navigate([this.returnUrl]);
-        },
-        error: (error) => {
-          console.error('Login error:', error);
-          this.isLoading = false;
-          this.errorMessage = error.error?.message || 'Error al iniciar sesión. Verifique sus credenciales.';
-        }
-      });
+    const formValue = this.loginForm.value;
+    
+    // FIXED: Use the helper method to create proper request structure
+    const loginRequest = this.authService.createLoginRequest(
+      formValue.email, 
+      formValue.password
+    );
+
+    console.log('DEBUG Frontend - Sending login request:', loginRequest);
+
+    this.authService.login(loginRequest).subscribe({
+      next: (response) => {
+        console.log('DEBUG Frontend - Login successful:', response);
+        this.isLoading = false;
+        this.router.navigate([this.returnUrl]);
+      },
+      error: (error) => {
+        console.error('DEBUG Frontend - Login error:', error);
+        this.isLoading = false;
+        this.errorMessage = this.getErrorMessage(error);
+      }
+    });
+  }
+
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.loginForm.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  private markAllFieldsAsTouched(): void {
+    Object.keys(this.loginForm.controls).forEach(key => {
+      this.loginForm.get(key)?.markAsTouched();
+    });
+  }
+
+  private getErrorMessage(error: any): string {
+    if (error.status === 401) {
+      return 'Email o contraseña incorrectos.';
+    } else if (error.status === 0) {
+      return 'No se puede conectar con el servidor. Verifique su conexión.';
+    } else if (error.error?.message) {
+      return error.error.message;
     } else {
-      this.markFormGroupTouched();
+      return 'Ocurrió un error inesperado. Intente nuevamente.';
     }
   }
 
-  isFieldInvalid(field: string): boolean {
-    const formField = this.loginForm.get(field);
-    return !!(formField && formField.invalid && (formField.dirty || formField.touched));
-  }
-
-  private markFormGroupTouched(): void {
-    Object.keys(this.loginForm.controls).forEach(key => {
-      const control = this.loginForm.get(key);
-      control?.markAsTouched();
-    });
+  private isProduction(): boolean {
+    return false; // Set to true in production build
   }
 }
