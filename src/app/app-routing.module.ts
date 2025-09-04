@@ -32,7 +32,7 @@ import { FertilizerListComponent } from './features/fertilizers/fertilizer-list/
 import { FertilizerInputListComponent } from './features/fertilizer-inputs/fertilizer-input-list/fertilizer-input-list.component';
 
 // Users & Administration
-import { UserListComponent } from './features/users/user-list/user-list.component';
+// import { UserListComponent } from './features/users/user-list/user-list.component';
 import { ProfileComponent } from './features/profile/profile.component';
 
 const routes: Routes = [
@@ -154,10 +154,10 @@ const routes: Routes = [
       },
 
       // User Management
-      {
-        path: 'users',
-        component: UserListComponent
-      },
+      // {
+      //   path: 'users',
+      //   component: UserListComponent
+      // },
       {
         path: 'profile',
         component: ProfileComponent

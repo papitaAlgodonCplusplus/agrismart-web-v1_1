@@ -10,54 +10,96 @@ export class ApiConfigService {
   readonly iotApiUrl = environment.iotApiUrl;
   
   readonly endpoints = {
+    // Authentication endpoints
     auth: {
-      login: '/Authentication/Login',                    // Fixed: removed /api prefix
-      refresh: '/Authentication/Refresh',               // Fixed: removed /api prefix  
-      refreshToken: '/Authentication/RefreshToken'      // Fixed: removed /api prefix
+      login: '/Authentication/Login',
+      refresh: '/Authentication/Refresh',
+      refreshToken: '/Authentication/RefreshToken'
     },
-    // Based on your backend controllers, these should also be updated:
-    companies: '/Company',                              // Fixed: removed /api prefix
-    farms: '/Farm',                                     // Fixed: removed /api prefix
-    crops: '/Crop',                                     // Fixed: removed /api prefix
-    devices: '/Device',                                 // Fixed: removed /api prefix
-    cropProductions: '/CropProduction',                 // Fixed: removed /api prefix
-    clients: '/Client',                                 // Fixed: removed /api prefix
-    users: '/User',                                     // Fixed: removed /api prefix
-    profiles: '/Profile',                               // Fixed: removed /api prefix
-    productionUnits: '/ProductionUnit',                 // Fixed: removed /api prefix
-    productionUnitTypes: '/ProductionUnitType',         // Fixed: removed /api prefix
-    cropPhases: '/CropPhase',                           // Fixed: removed /api prefix
-    containers: '/Container',                           // Fixed: removed /api prefix
-    growingMediums: '/GrowingMedium',                   // Fixed: removed /api prefix
-    sensors: '/Sensor',                                 // Fixed: removed /api prefix
-    cropProductionDevices: '/CropProductionDevice',     // Fixed: removed /api prefix
-    cropProductionIrrigationSectors: '/CropProductionIrrigationSector', // Fixed: removed /api prefix
-    droppers: '/Dropper',                               // Fixed: removed /api prefix
-    catalogs: '/Catalog',                               // Fixed: removed /api prefix
-    userFarms: '/UserFarm',                             // Fixed: removed /api prefix
-    fertilizers: '/Fertilizer',                         // Fixed: removed /api prefix
-    fertilizerChemistry: '/FertilizerChemistry',        // Fixed: removed /api prefix
-    fertilizerInputs: '/FertilizerInput',               // Fixed: removed /api prefix
-    water: '/Water',                                    // Fixed: removed /api prefix
-    waterChemistry: '/WaterChemistry',                  // Fixed: removed /api prefix
-    calculationSettings: '/CalculationSetting',        // Fixed: removed /api prefix
-    cropPhaseOptimals: '/CropPhaseOptimal',             // Fixed: removed /api prefix
-    relayModules: '/RelayModule',                       // Fixed: removed /api prefix
-    measurementVariables: '/MeasurementVariable',       // Fixed: removed /api prefix
-    timeZones: '/TimeZone',                             // Fixed: removed /api prefix
-    containerTypes: '/ContainerType',                   // Fixed: removed /api prefix
-    measurementVariableStandards: '/MeasurementVariableStandard', // Fixed: removed /api prefix
-    measurementUnits: '/MeasurementUnit',               // Fixed: removed /api prefix
-    licenses: '/License'                                // Fixed: removed /api prefix
+    
+    // Agronomic API endpoints
+    analyticalEntity: '/AnalyticalEntity',
+    company: '/Company',
+    crop: '/Crop',
+    cropProductionDevice: '/CropProductionDevice',
+    cropProductionIrrigationSector: '/CropProductionIrrigationSector',
+    device: '/Device',
+    farm: '/Farm',
+    license: '/License',
+    productionUnit: '/ProductionUnit',
+    relayModuleCropProductionIrrigationSector: '/RelayModuleCropProductionIrrigationSector',
+    user: '/User',
+    userFarm: '/UserFarm',
+    waterChemistry: '/WaterChemistry',
+    
+    // Extended endpoints (based on frontend services)
+    client: '/Client',
+    productionUnitType: '/ProductionUnitType',
+    cropPhase: '/CropPhase',
+    growingMedium: '/GrowingMedium',
+    sensor: '/Sensor',
+    measurementVariable: '/MeasurementVariable',
+    measurementVariableStandard: '/MeasurementVariableStandard',
+    measurementUnit: '/MeasurementUnit',
+    cropProduction: '/CropProduction',
+    dropper: '/Dropper',
+    catalog: '/Catalog',
+    container: '/Container',
+    containerType: '/ContainerType',
+    fertilizer: '/Fertilizer',
+    fertilizerChemistry: '/FertilizerChemistry',
+    fertilizerInput: '/FertilizerInput',
+    water: '/Water',
+    calculationSetting: '/CalculationSetting',
+    cropPhaseOptimal: '/CropPhaseOptimal',
+    relayModule: '/RelayModule',
+    timeZone: '/TimeZone',
+    profile: '/Profile',
+    userStatus: '/UserStatus',
+    
+    // IoT API endpoints
+    iot: {
+      deviceRawData: '/DeviceRawData',
+      deviceRawDataMqtt: '/DeviceRawData/Mqtt',
+      processRawData: '/DeviceRawData/ProcessRawData',
+      authenticateDevice: '/Security/AuthenticateDevice',
+      authenticateMqttConnection: '/Security/AuthenticateMqttConnection'
+    }
   };
 
-  // Helper method to build full URL
-  getFullUrl(endpoint: string): string {
+  /**
+   * Get the full URL for an agronomic API endpoint
+   */
+  getAgronomicUrl(endpoint: string): string {
     return `${this.agronomicApiUrl}${endpoint}`;
   }
 
-  // Helper method to get authentication URL
-  getAuthUrl(authEndpoint: keyof typeof this.endpoints.auth): string {
-    return this.getFullUrl(this.endpoints.auth[authEndpoint]);
+  /**
+   * Get the full URL for an IoT API endpoint
+   */
+  getIotUrl(endpoint: string): string {
+    return `${this.iotApiUrl}${endpoint}`;
+  }
+
+  /**
+   * Get endpoint by key with optional ID parameter
+   */
+  getEndpoint(key: string, id?: number | string): string {
+    const endpoint = (this.endpoints as any)[key];
+    if (!endpoint) {
+      throw new Error(`Endpoint '${key}' not found`);
+    }
+    return id ? `${endpoint}/${id}` : endpoint;
+  }
+
+  /**
+   * Get IoT endpoint by key with optional parameters
+   */
+  getIotEndpoint(key: string): string {
+    const endpoint = (this.endpoints.iot as any)[key];
+    if (!endpoint) {
+      throw new Error(`IoT endpoint '${key}' not found`);
+    }
+    return endpoint;
   }
 }
