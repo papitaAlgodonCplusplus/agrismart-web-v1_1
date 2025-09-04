@@ -1,0 +1,30 @@
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+WORKDIR /app
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /src
+
+COPY ["AgriSmart.sln", "."]
+COPY ["AgriSmart.AgronomicProcess/AgriSmart.AgronomicProcess.csproj", "AgriSmart.AgronomicProcess/"]
+COPY ["AgriSmart.Core/AgriSmart.Core.csproj", "AgriSmart.Core/"]
+COPY ["AgriSmart.Infrastructure/AgriSmart.Infrastructure.csproj", "AgriSmart.Infrastructure/"]
+COPY ["AgriSmart.Application.Agronomic/AgriSmart.Application.Agronomic.csproj", "AgriSmart.Application.Agronomic/"]
+
+RUN dotnet restore "AgriSmart.AgronomicProcess/AgriSmart.AgronomicProcess.csproj"
+
+COPY . .
+
+WORKDIR "/src/AgriSmart.AgronomicProcess"
+RUN dotnet build "AgriSmart.AgronomicProcess.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "AgriSmart.AgronomicProcess.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+RUN mkdir -p Logs
+COPY --from=publish /app/publish .
+
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+ENTRYPOINT ["dotnet", "AgriSmart.AgronomicProcess.dll"]

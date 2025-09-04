@@ -1,0 +1,29 @@
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+WORKDIR /app
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /src
+
+COPY ["AgriSmart.sln", "."]
+COPY ["AgriSmart.OnDemandIrrigation/AgriSmart.OnDemandIrrigation.csproj", "AgriSmart.OnDemandIrrigation/"]
+COPY ["AgriSmart.Core/AgriSmart.Core.csproj", "AgriSmart.Core/"]
+COPY ["AgriSmart.Infrastructure/AgriSmart.Infrastructure.csproj", "AgriSmart.Infrastructure/"]
+
+RUN dotnet restore "AgriSmart.OnDemandIrrigation/AgriSmart.OnDemandIrrigation.csproj"
+
+COPY . .
+
+WORKDIR "/src/AgriSmart.OnDemandIrrigation"
+RUN dotnet build "AgriSmart.OnDemandIrrigation.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "AgriSmart.OnDemandIrrigation.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+RUN mkdir -p Logs
+COPY --from=publish /app/publish .
+
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+ENTRYPOINT ["dotnet", "AgriSmart.OnDemandIrrigation.dll"]

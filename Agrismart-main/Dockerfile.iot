@@ -1,0 +1,36 @@
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /src
+
+# Copy solution and project files
+COPY ["AgriSmart.sln", "."]
+COPY ["AgriSmart.Api.Iot/AgriSmart.Api.Iot.csproj", "AgriSmart.Api.Iot/"]
+COPY ["AgriSmart.Core/AgriSmart.Core.csproj", "AgriSmart.Core/"]
+COPY ["AgriSmart.Infrastructure/AgriSmart.Infrastructure.csproj", "AgriSmart.Infrastructure/"]
+COPY ["AgriSmart.Application.Iot/AgriSmart.Application.Iot.csproj", "AgriSmart.Application.Iot/"]
+
+# Restore dependencies
+RUN dotnet restore "AgriSmart.Api.Iot/AgriSmart.Api.Iot.csproj"
+
+# Copy all source code
+COPY . .
+
+# Build
+WORKDIR "/src/AgriSmart.Api.Iot"
+RUN dotnet build "AgriSmart.Api.Iot.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "AgriSmart.Api.Iot.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+RUN mkdir -p Logs
+COPY --from=publish /app/publish .
+
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_URLS=http://+:80
+
+ENTRYPOINT ["dotnet", "AgriSmart.Api.Iot.dll"]
