@@ -3,7 +3,7 @@ WORKDIR /app
 EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
-WORKDIR /src
+WORKDIR /
 COPY ["AgriSmart.Api.Agronomic.csproj", "./"]
 RUN dotnet restore "./AgriSmart.Api.Agronomic.csproj"
 COPY . .
