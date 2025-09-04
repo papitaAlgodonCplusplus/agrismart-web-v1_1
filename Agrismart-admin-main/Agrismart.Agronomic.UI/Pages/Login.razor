@@ -1,0 +1,85 @@
+﻿@page "/Login"
+@using Agrismart.Agronomic.UI.Authentication
+@using Agrismart.Agronomic.UI.Services.Interfaces
+@using Agrismart.Agronomic.UI.Services.Requests
+@using Agrismart.Agronomic.UI.Services.Requests.Commands
+
+@inject IAuthenticationService _authenticationService
+@inject AuthenticationStateProvider _authenticationStateProvider
+@inject NavigationManager _navigationManager
+
+<PageTitle>Ingresar</PageTitle>
+
+@if (loginInProcess)
+{
+
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+}
+else
+{
+    <AuthorizeView>
+        <NotAuthorized>
+            <div class="col-md-6 col-lg-7 d-flex align-items-center justify-content-center">
+                <div class="card-body p-4 p-lg-5 text-black">
+                    <div class="form-outline mb-4 w-75">
+                        <label for="username" class="form-label">Usuario</label>
+                        <input type="email" class="form-control" id="username" @bind="model.UserName">
+                    </div>
+                    <div class="form-outline mb-4 w-75">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="password" @bind="model.Password" @onkeyup="Enter">
+                    </div>
+                    <button class="btn btn-primary" @onclick="LoginClick">Ingresar</button>
+                    <div class="alert alert-warning" role="alert" hidden="@(HideLoginErrorAlert)">
+                        Usuario y/o contraseña inválidos!
+                    </div>
+                </div>
+            </div>
+        </NotAuthorized>
+        <Authorized>
+            Esta Autorizado
+        </Authorized>
+    </AuthorizeView>
+}
+
+@code {
+    private class Model
+    {
+        public string UserName { get; set; }
+        public string Password { get; set; }
+    }
+
+    private Model model = new Model();
+    private bool loginInProcess = false;
+
+    private bool HideLoginErrorAlert;
+
+    protected override void OnInitialized() => HideLoginErrorAlert = true;
+
+    public async Task LoginClick()
+    {
+        loginInProcess = true;
+        var loginResponse = await _authenticationService.Login(new LoginRequest() { UserEmail = model.UserName, Password = model.Password });
+        if (loginResponse != null)
+        {
+            var authenticationStateProvider = (AgrismartAuthenticationStateProvider)_authenticationStateProvider;
+            await authenticationStateProvider.UpdateAuthenticationState(loginResponse);
+
+            _navigationManager.NavigateTo("/");
+        }
+    }
+
+    public async Task Enter(KeyboardEventArgs e)
+    {
+        if (!string.IsNullOrWhiteSpace(model.Password))
+        {
+            if (e.Code == "Enter" || e.Code == "NumpadEnter")
+            {
+                await LoginClick();
+            }
+        }
+    }
+}
+

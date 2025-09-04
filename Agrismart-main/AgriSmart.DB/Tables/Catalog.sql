@@ -1,0 +1,11 @@
+﻿CREATE TABLE [dbo].[Catalog]
+(
+	[Id] INT NOT NULL PRIMARY KEY IDENTITY,
+	[ClientId] INT NOT NULL,
+	[Name] NVARCHAR(64) NOT NULL,
+	[Active] BIT NOT NULL DEFAULT 1, 
+	[DateCreated] DATETIME NOT NULL DEFAULT GETDATE(),
+	[DateUpdated] DATETIME NULL,
+	[CreatedBy] INT NOT NULL,
+	[UpdatedBy] INT NULL
+)

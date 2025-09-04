@@ -1,0 +1,632 @@
+﻿@page "/Users"
+@using Agrismart.Agronomic.UI.Services.Models
+@using Agrismart.Agronomic.UI.Pages.Components
+@using Agrismart.Agronomic.UI.Pages.InputValidators
+@using Agrismart.Agronomic.UI.Services.Interfaces
+@using Agrismart.Agronomic.UI.Services.Requests
+@using Agrismart.Agronomic.UI.Services.Requests.Commands
+@using Agrismart.Agronomic.UI.Services.Requests.Queries
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using System.ComponentModel.DataAnnotations
+@using static Agrismart.Agronomic.UI.Pages.Farms
+@attribute [Authorize]
+
+@inject IUserService _userService
+@inject IClientService _clientService
+@inject IProfileService _profileService
+@inject IUserStatusService _userStatusService
+@inject IUserFarmService _userFarmService
+@inject IFarmService _farmService
+
+<PageTitle>Usuarios</PageTitle>
+
+<h2>Lista de Usuarios</h2>
+<hr />
+
+<AlertMessage Title="Mensaje de sistema" @ref="@alertCreateMessage">
+    <div class="alert alert-success">
+        <p>Usuario creado con éxito</p>
+    </div>
+</AlertMessage>
+
+<AlertMessage Title="Mensaje de sistema" @ref="@alertUpdateMessage">
+    <div class="alert alert-success">
+        <p>Usuario actualizado con éxito</p>
+    </div>
+</AlertMessage>
+
+<AlertMessage Title="Error de sistema" @ref="@alertErrorMessage">
+    <div class="alert alert-danger">
+        <p><label>Hubo un error en la aplicación. Informe al administrador</label></p>
+    </div>
+</AlertMessage>
+
+@if (!createNew)
+{
+    <div class="container-fluid">
+        <div class="row align-items-end">
+            <div class="col-2">
+                <label>Clientes:</label>
+                <InputSelect id="clientsList" @bind-Value="@selectedClientId" style="width: 100%" class="form-select form-select-sm">
+                    <option value="0">Todos</option>
+                    @foreach (var client in clients)
+                    {
+                        <option value="@client.Id">@client.Name</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-2">
+                <button class="btn btn-primary" @onclick="GetUsersClick">Consultar</button>
+            </div>
+            <div class="col-2">
+                <button class="btn btn-secondary" @onclick="NewUserClick">Nuevo</button>
+            </div>
+            <div class="col-2" />
+
+        </div>
+    </div>
+}
+else
+{
+    <EditForm EditContext="editContext">
+        <DataAnnotationsValidator />
+        <div class="container-fluid">
+            <div class="row align-items-end">
+                <div class="col-2">
+                    <label>Cliente:</label>
+                    <InputSelect id="clientsList" @bind-Value="@newUser.ClientId" style="width: 100%" class="form-select form-select-sm">
+                        <option value="0">Todos</option>
+                        @foreach (var client in clients)
+                        {
+                            <option value="@client.Id">@client.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-2">
+                    <label>Perfil:</label>
+                    <InputSelect id="profilesList" @bind-Value="@newUser.ProfileId" style="width: 100%" class="form-select form-select-sm">
+                        <option value="0">Todos</option>
+                        @foreach (var profile in profiles)
+                        {
+                            <option value="@profile.Id">@profile.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-3">
+                    <label>Cuenta de Correo:</label>
+                    <InputText @bind-Value="@newUser.UserEmail" style="width: 100%" class="form-control form-control-sm" />
+                </div>
+                <div class="col-2">
+                    <button class="btn btn-primary" @onclick="AddUserClick">Agregar</button>
+                    <button class="btn btn-danger" @onclick="CancelAddUserClick">Cancelar</button>
+                </div>
+            </div>
+            @if (!valid)
+            {
+                <div class="row p-3">
+                    <div class="alert alert-warning col-8" role="alert">
+                        Debe seleccionar o digitar algun valor para los atributos marcados en rojo
+                    </div>
+                </div>
+            }
+        </div>
+    </EditForm>
+}
+<hr />
+
+@if (users == null)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+}
+else
+{
+     <QuickGrid Items="@users" Pagination="@pagination">
+        <TemplateColumn Title="Id" Class="tinyColumn">
+            <label>@context.Id</label>
+        </TemplateColumn>
+        <TemplateColumn Title="Perfil" Class="normalColumn">
+            @if (context.Id == editableId)
+            {
+                <InputSelect id="profileList" @bind-Value="@context.ProfileId" style="width: 100%">
+                    @foreach (var profile in profiles)
+                    {
+                        <option value="@profile.Id">@profile.Name</option>
+                    }
+                </InputSelect>
+            }
+            else
+            {
+                <label>@context.Profile</label>
+            }
+        </TemplateColumn>
+        <TemplateColumn Title="Clientes" Class="normalColumn">
+            @if (context.Id == editableId)
+            {
+                <InputSelect id="clientList" @bind-Value="@context.ClientId" style="width: 100%">
+                    <option value="0">Todos</option>
+                    @foreach (var client in clients)
+                    {
+                        <option value="@client.Id">@client.Name</option>
+                    }
+                </InputSelect>
+            }
+            else
+            {
+                <label>@context.Client</label>
+            }
+        </TemplateColumn>
+        <TemplateColumn Title="Correo Electrónico" Class="bigColumn">
+            @if (context.Id == editableId)
+            {
+                <input @bind="@context.UserEmail" />
+            }
+            else
+            {
+                <label>@context.UserEmail</label>
+            }
+        </TemplateColumn>
+        <TemplateColumn Title="Estado" Class="smallColumn">
+            @if (context.Id == editableId)
+            {
+                <InputSelect id="userStatusList" @bind-Value="@context.UserStatusId" style="width: 100%">
+                    @foreach (var userStatus in userStatuses)
+                    {
+                        <option value="@userStatus.Id">@userStatus.Name</option>
+                    }
+                </InputSelect>
+            }
+            else
+            {
+                <label>@context.UserStatus</label>
+            }
+        </TemplateColumn>
+
+        <TemplateColumn Title="Acciones" Class="normalColumn">
+            @if (context.Id == editableId)
+            {
+                <button @onclick="@(() => SaveClick(@context))"><i class="bi bi-floppy-fill"></i></button>
+                <button @onclick="@(() => CancelClick())"><i class="bi bi-x-circle-fill"></i></button>
+            }
+            else
+            {
+                <button @onclick="@(() => Edit(@context.Id))"><i class="bi bi-pencil-square"></i></button>
+                @if (context.ProfileId == 3)
+                {
+                    <button @onclick="@(() => EditFarms(@context.Id))"><i class="bi bi-grid"></i></button>
+                }
+            }
+        </TemplateColumn>
+
+    </QuickGrid> 
+
+    <Paginator State="@pagination" />
+}
+
+@if (@manageFarms)
+{
+    <div class="modal show" tabindex="-1" role="dialog" style="display:block; overflow-y: auto;">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Administrar fincas</h4>
+                    <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close" @onclick="CloseEditFarms">
+                    </button>
+                </div>
+                <div class="modal-body ">
+                    <div class="row align-items-end ms-2 me-2">
+                        <div class="col-5" align="center">
+                            <h5>Fincas asignadas</h5>
+                        </div>
+                        <div class="col-2">
+                        </div>
+                        <div class="col-5" align="center">
+                            <h5>Fincas disponibles</h5>
+                        </div>
+                    </div>
+                    <div class="row manageFarms ms-2 me-2">
+                        <div class="col-5 align-top border">
+                            @if (userFarms != null)
+                            {
+                                <QuickGrid Items="@userFarms">
+                                    <TemplateColumn Title="" Class="hugeColumn">
+                                        @if (context.Id == selectedAssignedFarmId)
+                                        {
+                                            <div @onclick="@(() => UnselectAssigned())" style="width:100%;background-color:black;">
+                                                <label><font color="white">@context.Name</font></label>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div @onclick="@(() => SelectAssigned(@context.Id))" style="width:100%">
+                                                <label>@context.Name</label>
+                                            </div>
+                                        }
+                                    </TemplateColumn>
+                                </QuickGrid>
+                            }
+                        </div>
+                        <div class="col-2" align="center">
+                            @if (userFarms == null || availableFarms == null)
+                            {
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                            }
+                        </div>
+                        <div class="col-5 align-top border">
+                            @if (availableFarms != null)
+                            {
+                                <QuickGrid Items="@availableFarms" style="width:100%">
+                                    <TemplateColumn Title="" Class="hugeColumn">
+                                        @if (context.Id == selectedAvailableFarmId)
+                                        {
+                                            <div @onclick="@(() => UnselectAvailable())" style="width:100%;background-color:black;">
+                                                <label><font color="white">@context.Name</font></label>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div @onclick="@(() => SelectAvailable(@context.Id))" style="width:100%">
+                                                <label>@context.Name</label>
+                                            </div>
+                                        }
+                                    </TemplateColumn>
+                                </QuickGrid>
+                            }
+                        </div>
+                    </div>
+                   <div class="row align-items-end ms-2 me-2 pt-4">
+                        <div class="col-5" align="center">
+                            <button class="btn btn-danger" @onclick="RemoveFarmFromUser">Eliminar</button>
+                        </div>
+                        <div class="col-2">
+                        </div>
+                        <div class="col-5" align="center">
+                            <button class="btn btn-primary" @onclick="AddFarmToUser">Agregar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    #region Main
+
+    public class UserModel
+    {
+        public int Id { get; set; }
+        [Required]
+        public int ProfileId { get; set; }
+        public string Profile { get; set; }
+        public int ClientId { get; set; }
+        public string Client { get; set; }
+        public string? UserEmail { get; set; }
+        public int UserStatusId { get; set; }
+        public string UserStatus { get; set; }
+
+    }
+
+    private AlertMessage? alertErrorMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            editContext = new EditContext(newUser);
+
+            var getAllClientsResult = await _clientService.GetAll(new GetAllClientsRequest() { IncludeInactives = false });
+            clients = getAllClientsResult.Clients.ToList();
+
+            var getAllProfilesResult = await _profileService.GetAll(new GetAllProfilesRequest() { IncludeInactives = false });
+            profiles = getAllProfilesResult.Profiles.ToList();
+
+            var getAllUserStatusesResult = await _userStatusService.GetAll(new GetAllUserStatusesRequest() { IncludeInactives = false });
+            userStatuses = getAllUserStatusesResult.UserStatuses.ToList();
+
+            var getAllFarmsResult = await _farmService.GetAll(new GetAllFarmsRequest() { IncludeInactives = false });
+            farms = getAllFarmsResult.Farms.ToList();
+
+            await GetUsersClick();
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    #endregion
+
+    #region Search of sensors
+
+    public int selectedProfileId = 0;
+    public int selectedClientId = 0;
+    public int selectedUserStatusId = 0;
+    private IQueryable<UserModel>? users;
+
+    public List<Client> clients = new List<Client>();
+    public List<Profile> profiles = new List<Profile>();
+    public List<UserStatus> userStatuses = new List<UserStatus>();
+    public List<Farm> farms = new List<Farm>();
+    public bool onlyActives = true;
+
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
+
+    public async Task GetUsersClick()
+    {
+        users = null;
+        List<UserModel> usersList = new List<UserModel>();
+        try
+        {
+            var getAllUsersResult = await _userService.GetAll(new GetAllUsersRequest() { ProfileId = selectedProfileId, ClientId = selectedClientId, UserStatusId = selectedUserStatusId });
+
+            getAllUsersResult.Users.ToList().ForEach(u => usersList.Add(new UserModel()
+                {
+                    Id = u.Id,
+                    ProfileId = u.ProfileId,
+                    Profile = profiles.Where(p => p.Id == u.ProfileId).FirstOrDefault().Name,
+                    ClientId = u.ClientId,
+                    Client = u.ClientId > 0 ? clients.Where(c => c.Id == u.ClientId).FirstOrDefault().Name : "Todos",
+                    UserEmail = u.UserEmail,
+                    UserStatusId = u.UserStatusId,
+                    UserStatus = userStatuses.Where(us => us.Id == u.UserStatusId).FirstOrDefault().Name 
+                }));
+
+            users = usersList.AsQueryable();
+        }
+        catch (Exception ex)
+        {
+            alertErrorMessage.Open();
+            users = usersList.AsQueryable();
+        }
+    }
+
+    #endregion
+
+    #region New sensor
+
+    public EditContext editContext;
+    public UserModel newUser = new UserModel();
+    public int newProfileId = 0;
+    public bool createNew = false;
+    bool valid = true;
+    public List<Client> clientsForNew = new List<Client>();
+    private AlertMessage alertCreateMessage { get; set; }
+
+
+    public async Task NewUserClick()
+    {
+        createNew = true;
+        valid = true;
+        ClearNewModel();
+    }
+
+    public async Task AddUserClick()
+    {
+        try
+        {
+            valid = editContext.Validate();
+            if (valid)
+            {
+                users = null;
+                var createSensorResult = await _userService.Create(new CreateUserRequest()
+                    {
+                        ProfileId = newUser.ProfileId,
+                        ClientId = newUser.ClientId,
+                        UserEmail = newUser.UserEmail
+                    });
+
+                if (createSensorResult != null)
+                {
+                    alertCreateMessage.Open();
+                    await GetUsersClick();
+                }
+                else
+                {
+                    alertErrorMessage.Open();
+                }
+                CancelAddUserClick();
+            }
+        }
+        catch (Exception ex)
+        {
+            alertErrorMessage.Open();
+        }                
+    }
+
+    public async Task CancelAddUserClick()
+    {
+        createNew = false;
+        valid = true;
+    }
+
+    private void ClearNewModel()
+    {
+        newUser.ProfileId = 0;
+        newUser.ClientId = 0;
+        newUser.UserStatusId = 0;
+
+    }
+
+    #endregion
+
+    #region Edit Sensor
+
+    public bool validEdit = true;
+    public int editableId = 0;
+    public int editableFarmsId = 0;
+    private AlertMessage alertUpdateMessage { get; set; }
+
+    private string validateStyleSensorLabel = "";
+    private string validateStyleDescription = "";
+    private string validateStyleDeviceRx = "";
+
+    void Edit(int id) => editableId = id;
+
+    void CancelClick() => editableId = 0;
+
+    private async Task SaveClick(UserModel userToSave)
+    {
+        users = null;
+        try
+        {
+            ICollection<ValidationResult> results = null;
+
+            if (ModelValidator.Validate(userToSave, out results))
+            {
+                var updateUserResult = await _userService.Update(new UpdateUserRequest()
+                    {
+                        Id = userToSave.Id,
+                        ProfileId = userToSave.ProfileId,
+                        ClientId = userToSave.ClientId,
+                        UserEmail = userToSave.UserEmail,
+                        UserStatusId = userToSave.UserStatusId
+                    });
+                if (updateUserResult != null)
+                {
+                    alertUpdateMessage.Open();
+                    await GetUsersClick();
+                }
+                else
+                {
+                    alertErrorMessage.Open();
+                }
+                editableId = 0;
+            }
+            else
+            {
+                foreach (ValidationResult result in results)
+                {
+
+                    validEdit = false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+    #endregion
+
+    #region ManageFarms
+
+    public class UserFarmModel
+    {
+        public int Id;
+        public string Name;
+    }
+
+    public bool manageFarms = false;
+    public int userFarmsId = 0;
+    public int selectedAvailableFarmId = 0;
+    public int selectedAssignedFarmId = 0;
+    public AlertMessage? alertFarmAddedMessage;
+    public AlertMessage? alertFarmRemovedMessage;
+    private IQueryable<UserFarmModel>? availableFarms;
+    private IQueryable<UserFarmModel>? userFarms;
+
+    async Task EditFarms(int id)
+    {
+        userFarmsId = id;
+        manageFarms = true;
+        await LoadAssignedFarms();
+        await LoadAvailableFarms();
+    }
+
+
+    async private Task LoadAssignedFarms()
+    {
+        userFarms = null;
+        StateHasChanged();
+        List<UserFarmModel> assignedFarmsList = new List<UserFarmModel>();
+        var getAllAssignedFarmsResult = await _userFarmService.GetAll(new GetAllUserFarmsRequest() { UserId = userFarmsId });
+        getAllAssignedFarmsResult.UserFarms.ToList().ForEach(uf => assignedFarmsList.Add(new UserFarmModel()
+            {
+                Id = uf.FarmId,
+                Name = farms.Where(p => p.Id == uf.FarmId).FirstOrDefault().Name
+            }));
+        userFarms = assignedFarmsList.AsQueryable();
+        StateHasChanged();
+    }
+
+    async private Task LoadAvailableFarms()
+    {
+        availableFarms = null;
+        StateHasChanged();
+        List<UserFarmModel> availableFarmsList = new List<UserFarmModel>();
+        var getAllFarmsResult = await _farmService.GetAll(new GetAllFarmsRequest() { UserId = userFarmsId,  IncludeInactives = !onlyActives });
+        getAllFarmsResult.Farms.Where(r => !userFarms.Select(x => x.Id).ToList().Contains(r.Id)).ToList().ForEach(d => availableFarmsList.Add(new UserFarmModel()
+            {                 
+                Id = d.Id,
+                Name = d.Name
+            }));
+        availableFarms = availableFarmsList.AsQueryable();
+        StateHasChanged();
+    }
+
+    void CloseEditFarms()
+    {
+        userFarmsId = 0;
+        manageFarms = false;
+        userFarms = null;
+        availableFarms = null;
+    }
+
+    async Task AddFarmToUser()
+    {
+        try
+        {
+            var createUserFarmResult = await _userFarmService.Create(new CreateUserFarmRequest()
+                {
+                    UserId = userFarmsId,
+                    FarmId = selectedAvailableFarmId
+                });
+            if (createUserFarmResult != null)
+            {
+                //alertDeviceAddedMessage.Open();
+                await LoadAssignedFarms();
+                await LoadAvailableFarms();
+            }
+            else
+            {
+                alertErrorMessage.Open();
+            }
+        }
+        catch (Exception ex)
+        {
+            alertErrorMessage.Open();
+        }
+    }
+
+    async void RemoveFarmFromUser()
+    {
+        var deleteUserFarmResult = await _userFarmService.Delete(new DeleteUserFarmRequest()
+            {
+                UserId = userFarmsId,
+                FarmId = selectedAssignedFarmId
+            });
+        if (deleteUserFarmResult != null)
+        {
+            //alertDeviceRemovedMessage.Open();
+            await LoadAssignedFarms();
+            await LoadAvailableFarms();
+        }
+        else
+        {
+            alertErrorMessage.Open();
+        }
+    }
+
+    void SelectAvailable(int id) => selectedAvailableFarmId = id;
+
+    void UnselectAvailable() => selectedAvailableFarmId = 0;
+
+    void SelectAssigned(int id) => selectedAssignedFarmId = id;
+
+    void UnselectAssigned() => selectedAssignedFarmId = 0;
+    #endregion
+}

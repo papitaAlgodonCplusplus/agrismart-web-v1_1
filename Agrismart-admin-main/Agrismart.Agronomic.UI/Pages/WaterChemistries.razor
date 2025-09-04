@@ -1,0 +1,465 @@
+﻿@page "/waterchemistries"
+
+@using Agrismart.Agronomic.UI.Services.Models;
+@using Agrismart.Agronomic.UI.Pages.Components
+@using Agrismart.Agronomic.UI.Pages.InputValidators
+@using Agrismart.Agronomic.UI.Services.Interfaces
+@using Agrismart.Agronomic.UI.Services.Requests
+@using Agrismart.Agronomic.UI.Services.Requests.Commands
+@using Agrismart.Agronomic.UI.Services.Requests.Queries
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using System.ComponentModel.DataAnnotations
+@attribute [Authorize]
+
+@inject IWaterChemistryService _waterChemistryService
+@inject IWaterService _waterService
+
+<PageTitle>Químicos del Agua</PageTitle>
+
+<h2>Lista de Químicos del Agua</h2>
+<hr />
+
+<AlertMessage Title="Mensaje de sistema" @ref="@alertCreateMessage">
+    <div class="alert alert-success">
+        <p>Químico creado con éxito</p>
+    </div>
+</AlertMessage>
+
+<AlertMessage Title="Mensaje de sistema" @ref="@alertUpdateMessage">
+    <div class="alert alert-success">
+        <p>Químico actualizado con éxito</p>
+    </div>
+</AlertMessage>
+
+<AlertMessage Title="Error de sistema" @ref="@alertErrorMessage">
+    <div class="alert alert-danger">
+        <p><label>Hubo un error en la aplicación. Informe al administrador</label></p>
+    </div>
+</AlertMessage>
+
+
+@if (!createNew)
+{
+    <div class="container-fluid">
+        <div class="row align-items-end">
+            <div class="col-2">
+                <label>Agua:</label>
+                <InputSelect id="watersList" @bind-Value="@selectedWaterId" style="width: 100%" class="form-select form-select-sm">
+                    <option value="0">Todas</option>
+                    @foreach (var water in waters)
+                    {
+                        <option value="@water.Id">@water.Name</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-2">
+                <label class="form-check-label">Solo Activos</label>
+                <input type="checkbox" id="onlyActivesCheck" checked @bind-value="@onlyActives" class="form-check-input" />
+            </div>
+            <div class="col-2">
+                <button class="btn btn-primary" @onclick="GetWaterChemistriesClick">Consultar</button>
+            </div>
+            <div class="col-2">
+                <button class="btn btn-secondary" @onclick="NewWaterChemistryClick">Nuevo</button>
+            </div>
+            <div class="col-2" />
+
+        </div>
+    </div>
+}
+else
+{
+    <EditForm EditContext="editContext">
+        <DataAnnotationsValidator />
+        <div class="container-fluid">
+            <div class="row align-items-end">
+                <div class="col-1">
+                    <label>Agua:</label>
+                    <InputSelect @bind-Value="@newWaterChemistry.WaterId" style="width: 100%" class="form-select form-select-sm">
+                        <option value="0">Seleccione una opción</option>
+                        @foreach (var water in waters)
+                        {
+                            <option value="@water.Id">@water.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-1">
+                    <label>Calcio:</label>
+                    <InputNumber @bind-Value="@newWaterChemistry.Ca" style="width: 100%" class="form-control form-control-sm" />
+                </div>
+                <div class="col-1">
+                    <label>Potasio:</label>
+                    <InputNumber @bind-Value="@newWaterChemistry.K" style="width: 100%" class="form-control form-control-sm" />
+                </div>
+                <div class="col-1">
+                    <label>Magnesio:</label>
+                    <InputNumber @bind-Value="@newWaterChemistry.Mg" style="width: 100%" />
+                </div>
+                <div class="col-1">
+                    <label>Sodio:</label>
+                    <InputNumber @bind-Value="@newWaterChemistry.Na" style="width: 100%" />
+                </div>
+                <div class="col-1">
+                    <label>Metano:</label>
+                    <InputNumber @bind-Value="@newWaterChemistry.NH4" style="width: 100%" />
+                </div>
+                <div class="col-1">
+                    <label>Hierro:</label>
+                    <InputNumber @bind-Value="@newWaterChemistry.Fe" style="width: 100%" />
+                </div>
+                <div class="col-1">
+                    <label>Cobre:</label>
+                    <InputNumber @bind-Value="@newWaterChemistry.Cu" style="width: 100%" />
+                </div>
+                <div class="col-1">
+                    <label>Manganeso:</label>
+                    <InputNumber @bind-Value="@newWaterChemistry.Mn" style="width: 100%" />
+                </div>
+                <div class="col-2">
+                    <button class="btn btn-primary" @onclick="AddWaterChemistryClick">Agregar</button>
+                    <button class="btn btn-danger" @onclick="CancelAddWaterChemistryClick">Cancelar</button>
+                </div>
+            </div>
+            @if (!valid)
+            {
+                <div class="row p-3">
+                    <div class="alert alert-warning col-8" role="alert">
+                        Debe seleccionar o digitar algun valor para los atributos marcados en rojo
+                    </div>
+                </div>
+            }
+        </div>
+    </EditForm>
+}
+<hr />
+
+@if (waterChemistries == null)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+}
+else
+{
+    <QuickGrid Items="@waterChemistries" Pagination="@pagination">
+        <TemplateColumn Title="Id" Class="tinyColumn">
+            <label>@context.Id</label>
+        </TemplateColumn>
+        <TemplateColumn Title="Agua" Class="normalColumn">
+            @if (context.Id == editableId)
+            {
+                <InputSelect id="waterList" @bind-Value="@context.WaterId" style="width: 100%">
+
+                    @foreach (var water in waters)
+                    {
+                        <option value="@water.Id">@water.Name</option>
+                    }
+                </InputSelect>
+            }
+            else
+            {
+                <label>@context.Water</label>
+            }
+        </TemplateColumn>
+        <TemplateColumn Title="Calcio" Class="normalColumn" Sortable="true">
+            @if (context.Id == editableId)
+            {
+                <input @bind="@context.Ca" />
+            }
+            else
+            {
+                <label>@context.Ca</label>
+            }
+        </TemplateColumn>
+        <TemplateColumn Class="normalColumn" Title="Potasio">
+            @if (context.Id == editableId)
+            {
+                <input @bind="@context.K" />
+            }
+            else
+            {
+                <label>@context.K</label>
+            }
+        </TemplateColumn>
+       
+        <TemplateColumn Title="Activo" Class="normalColumn">
+            @if (context.Id == editableId)
+            {
+                <input type="checkbox" @bind="@context.Active" />
+            }
+            else
+            {
+                @if (context.Active)
+                {
+                    <i class="bi bi-toggle-on" />
+                }
+                else
+                {
+                    <i class="bi bi-toggle-off" />
+                }
+            }
+        </TemplateColumn>
+        <TemplateColumn Title="Acciones" Class="normalColumn">
+            @if (context.Id == editableId)
+            {
+                <button @onclick="@(() => SaveClick(@context))"><i class="bi bi-floppy-fill"></i></button>
+                <button @onclick="@(() => CancelEditClick())"><i class="bi bi-x-circle-fill"></i></button>
+            }
+            else
+            {
+                <button @onclick="@(() => EditClick(@context.Id))"><i class="bi bi-pencil-square"></i></button>
+            }
+        </TemplateColumn>
+    </QuickGrid>
+
+    <Paginator State="@pagination" />
+}
+
+@code {
+
+    #region Main
+
+    public class WaterChemistryModel
+    {
+        public int Id { get; set; }
+        public int WaterId { get; set; }
+        public string Water { get; set; }
+        public double Ca { get; set; }
+        public double K { get; set; }
+        public double Mg { get; set; }
+        public double Na { get; set; }
+        public double NH4 { get; set; }
+        public double Fe { get; set; }
+        public double Cu { get; set; }
+        public double Mn { get; set; }
+        public double Zn { get; set; }
+        public double NO3 { get; set; }
+        public double SO4 { get; set; }
+        public double Cl { get; set; }
+        public double B { get; set; }
+        public double H2PO4 { get; set; }
+        public double HCO3 { get; set; }
+        public double BO4 { get; set; }
+        public double MOO4 { get; set; }
+        public double EC { get; set; }
+        public double pH { get; set; }
+        public DateTime AnalysisDate { get; set; }
+        public bool Active { get; set; }
+    }
+
+    private AlertMessage? alertErrorMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            editContext = new EditContext(newWaterChemistry);
+
+            var getAllWatersResult = await _waterService.GetAll(new GetAllWatersRequest() { IncludeInactives = false });
+            waters = getAllWatersResult.Waters.ToList();
+
+            await GetWaterChemistriesClick();
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    #endregion
+
+    #region Search of WaterChemistries
+
+    private IQueryable<WaterChemistryModel>? waterChemistries;
+    public int selectedWaterId = 0;
+    public bool onlyActives = true;
+    public List<Water> waters = new List<Water>();
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
+
+    public async Task GetWaterChemistriesClick()
+    {
+        waterChemistries = null;
+        List<WaterChemistryModel> waterChemistriesList = new List<WaterChemistryModel>();
+        try
+        {
+
+            var getAllWaterChemistriesResult = await _waterChemistryService.GetAll(new GetAllWaterChemistriesRequest() { WaterId = selectedWaterId, IncludeInactives = !onlyActives });
+
+            if (getAllWaterChemistriesResult.WaterChemistries != null)
+            {
+                getAllWaterChemistriesResult.WaterChemistries.ToList().ForEach(wc => waterChemistriesList.Add(new WaterChemistryModel()
+                    {
+                        Id = wc.Id,
+                        WaterId = wc.WaterId,
+                        Water = waters.Where(w => w.Id == wc.WaterId).FirstOrDefault().Name,
+                        Ca = wc.Ca,
+                        K = wc.K,
+                        Mg = wc.Mg,
+                        Na = wc.Na,
+                        NH4 = wc.NH4,
+                        Fe = wc.Fe,
+                        Cu = wc.Cu,
+                        Mn = wc.Mn,
+                        Zn = wc.Zn,
+                        NO3 = wc.NO3,
+                        SO4 = wc.SO4,
+                        Cl = wc.Cl,
+                        B = wc.B,
+                        H2PO4 = wc.H2PO4,
+                        HCO3 = wc.HCO3,
+                        BO4 = wc.BO4,
+                        MOO4 = wc.MOO4,
+                        EC = wc.EC,
+                        pH = wc.pH,
+                        AnalysisDate = wc.AnalysisDate,
+                        Active = wc.Active
+                    }));
+
+                waterChemistries = waterChemistriesList.AsQueryable();
+            }
+        }
+        catch (Exception ex)
+        {
+            alertErrorMessage.Open();
+            waterChemistries = waterChemistriesList.AsQueryable();
+        }
+    }
+
+    #endregion
+
+    #region New WaterChemistry
+
+    public EditContext? editContext;
+    public WaterChemistryModel newWaterChemistry = new WaterChemistryModel();
+    public bool createNew = false;
+    public int newCatalogId = 0;
+    bool valid = true;
+    private AlertMessage alertCreateMessage { get; set; }
+
+    public async Task NewWaterChemistryClick()
+    {
+        createNew = true;
+        valid = true;
+        ClearNewModel();
+    }
+
+    public async Task CancelAddWaterChemistryClick()
+    {
+        createNew = false;
+        valid = true;
+    }
+
+    public async Task AddWaterChemistryClick()
+    {
+        try
+        {
+            valid = editContext.Validate();
+            if (valid)
+            {
+                var createWaterChemistryResult = await _waterChemistryService.Create(new CreateWaterChemistryRequest()
+                    {
+                        WaterId = newWaterChemistry.WaterId,
+                        Ca = newWaterChemistry.Ca,
+                        K = newWaterChemistry.K,
+                        Mg = newWaterChemistry.Mg,
+                        Na = newWaterChemistry.Na,
+                        NH4 = newWaterChemistry.NH4,
+                        Fe = newWaterChemistry.Fe,
+                        Cu = newWaterChemistry.Cu,
+                        Mn = newWaterChemistry.Mn,
+                        Zn = newWaterChemistry.Zn,
+                        NO3 = newWaterChemistry.NO3,
+                        SO4 = newWaterChemistry.SO4,
+                        Cl = newWaterChemistry.Cl,
+                        B = newWaterChemistry.B,
+                        H2PO4 = newWaterChemistry.H2PO4,
+                        HCO3 = newWaterChemistry.HCO3,
+                        BO4 = newWaterChemistry.BO4,
+                        MOO4 = newWaterChemistry.MOO4,
+                        EC = newWaterChemistry.EC,
+                        pH = newWaterChemistry.pH,
+                        AnalysisDate = newWaterChemistry.AnalysisDate,
+                    });
+                if (createWaterChemistryResult != null)
+                {
+                    alertCreateMessage.Open();
+                    await GetWaterChemistriesClick();
+                }
+                else
+                {
+                    alertErrorMessage.Open();
+                }
+                CancelAddWaterChemistryClick();
+            }
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    private void ClearNewModel()
+    {
+        newWaterChemistry.WaterId = 0;
+
+    }
+
+    #endregion
+
+    #region Edit WaterChemistry
+
+    public int editableId = 0;
+    private AlertMessage alertUpdateMessage { get; set; }
+
+    void EditClick(int id) => editableId = id;
+
+    void CancelEditClick() => editableId = 0;
+
+    private async Task SaveClick(WaterChemistryModel waterChemistryToSave)
+    {
+        try
+        {
+            waterChemistries = null;
+            var updateWaterChemistryResult = await _waterChemistryService.Update(new UpdateWaterChemistryRequest()
+                {
+                    Id = waterChemistryToSave.Id,
+                    WaterId = waterChemistryToSave.WaterId,
+                    Ca = waterChemistryToSave.Ca,
+                    K = waterChemistryToSave.K,
+                    Mg = waterChemistryToSave.Mg,
+                    Na = waterChemistryToSave.Na,
+                    NH4 = waterChemistryToSave.NH4,
+                    Fe = waterChemistryToSave.Fe,
+                    Cu = waterChemistryToSave.Cu,
+                    Mn = waterChemistryToSave.Mn,
+                    Zn = waterChemistryToSave.Zn,
+                    NO3 = waterChemistryToSave.NO3,
+                    SO4 = waterChemistryToSave.SO4,
+                    Cl = waterChemistryToSave.Cl,
+                    B = waterChemistryToSave.B,
+                    H2PO4 = waterChemistryToSave.H2PO4,
+                    HCO3 = waterChemistryToSave.HCO3,
+                    BO4 = waterChemistryToSave.BO4,
+                    MOO4 = waterChemistryToSave.MOO4,
+                    EC = waterChemistryToSave.EC,
+                    pH = waterChemistryToSave.pH,
+                    AnalysisDate = waterChemistryToSave.AnalysisDate,
+                    Active = waterChemistryToSave.Active
+                });
+            if (updateWaterChemistryResult != null)
+            {
+                alertUpdateMessage.Open();
+                await GetWaterChemistriesClick();
+            }
+            else
+            {
+                alertErrorMessage.Open();
+            }
+            editableId = 0;
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    #endregion
+}

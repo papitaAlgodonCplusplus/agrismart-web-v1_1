@@ -1,0 +1,1216 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="&gt;&gt;colId.Name" xml:space="preserve">
+    <value>colId</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="rowActive.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="gridControl1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>986, 644</value>
+  </data>
+  <data name="&gt;&gt;gridControl1.Name" xml:space="preserve">
+    <value>gridControl1</value>
+  </data>
+  <data name="&gt;&gt;rowDensity.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowCationMolecularWeight.Name" xml:space="preserve">
+    <value>rowCationMolecularWeight</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="gridControl1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="rowSolubility0.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="rowCationMolecularWeight.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowManufacturer.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns5" xml:space="preserve">
+    <value>Quantity</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemLookUpEdit1.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.Repository.RepositoryItemLookUpEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowSolubility40.Properties.Caption" xml:space="preserve">
+    <value>Solubility at 40 C°</value>
+  </data>
+  <data name="rowActive.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowFormula.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <assembly alias="DevExpress.Data.v24.1" name="DevExpress.Data.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+  <data name="rowDensity.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="colName.Caption" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="colSelected.Width" type="System.Int32, mscorlib">
+    <value>87</value>
+  </data>
+  <data name="&gt;&gt;colSelected.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;category.Name" xml:space="preserve">
+    <value>category</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>Inherit</value>
+  </data>
+  <data name="rowIsLiquid.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="vGridControl1.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="colFertilizer.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowSolubility40.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowSaltMolecularWeight.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowSolubility0.Properties.Caption" xml:space="preserve">
+    <value>Solubility at 0 C°</value>
+  </data>
+  <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="rowCationMolecularWeight.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="category.Properties.Caption" xml:space="preserve">
+    <value>Calculated</value>
+  </data>
+  <data name="colId.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="rowSolubility0.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowPnh4.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowFormula.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns8" xml:space="preserve">
+    <value>n2</value>
+  </data>
+  <data name="colName.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="vGridControl2.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <assembly alias="DevExpress.XtraEditors.v24.1" name="DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+  <data name="gridControl1.EmbeddedNavigator.TextLocation" type="DevExpress.XtraEditors.NavigatorButtonsTextLocation, DevExpress.XtraEditors.v24.1">
+    <value>Center</value>
+  </data>
+  <data name="colPresentation.VisibleIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="rowSolubility40.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowSaltMolecularWeight.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowPno3.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colPresentation.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowSolubility0.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;vGridControl1.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="rowCationMolecularWeight.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.AutoSize" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;colPresentation.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowPnh4.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="rowDensity.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowIspHAdjuster.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;vGridControl2.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.VGridControl, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowName.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="category.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControlItem2.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowManufacturer.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowPno3.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowId.Properties.Caption" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="colFertilizer.VisibleIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="vGridControl2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>330, 212</value>
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns11" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowCationMolecularWeight.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowPurity.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowSaltMolecularWeight.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;repositoryItemCheckEdit1.Name" xml:space="preserve">
+    <value>repositoryItemCheckEdit1</value>
+  </data>
+  <data name="rowPurity.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="&gt;&gt;vGridControl2.Name" xml:space="preserve">
+    <value>vGridControl2</value>
+  </data>
+  <data name="rowIspHAdjuster.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;$this.Name" xml:space="preserve">
+    <value>SubFrmFertilizerInputs</value>
+  </data>
+  <data name="&gt;&gt;fertilizerChemistryBindingSource.Name" xml:space="preserve">
+    <value>fertilizerChemistryBindingSource</value>
+  </data>
+  <data name="rowSolubility0.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="vGridControl2.RowHeaderWidth" type="System.Int32, mscorlib">
+    <value>175</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEdit1.Columns1" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="layoutControl1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1344, 684</value>
+  </data>
+  <data name="rowPn.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEdit1.Columns" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="&gt;&gt;vGridControl1.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="colSelected.Caption" xml:space="preserve">
+    <value>Selected</value>
+  </data>
+  <data name="&gt;&gt;rowPno3.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowPn.Properties.Caption" xml:space="preserve">
+    <value>Pn</value>
+  </data>
+  <data name="rowName.Properties.Caption" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="rowDensity.Properties.Caption" xml:space="preserve">
+    <value>Density</value>
+  </data>
+  <data name="&gt;&gt;rowName.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowSolubility40.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colSelected.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colPrice.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="rowIspHAdjuster.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.MaximumSize" type="System.Drawing.Size, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="rowActive.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;gridControl1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.GridControl, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="layoutControl1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="rowPnh4.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControl1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="category.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>None</value>
+  </data>
+  <data name="rowName.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowCationMolecularWeight.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowSaltMolecularWeight.Properties.Caption" xml:space="preserve">
+    <value>Salt Molecular Weight</value>
+  </data>
+  <data name="rowPurity.Properties.Caption" xml:space="preserve">
+    <value>Purity</value>
+  </data>
+  <data name="&gt;&gt;rowSolubility40.Name" xml:space="preserve">
+    <value>rowSolubility40</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControlGroup1.Name" xml:space="preserve">
+    <value>layoutControlGroup1</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem2.Name" xml:space="preserve">
+    <value>layoutControlItem2</value>
+  </data>
+  <data name="&gt;&gt;gridControl1.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;rowManufacturer.Name" xml:space="preserve">
+    <value>rowManufacturer</value>
+  </data>
+  <data name="rowPurity.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns1" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="&gt;&gt;colName.Name" xml:space="preserve">
+    <value>colName</value>
+  </data>
+  <data name="rowSolubility0.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowFormula.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.BackgroundImageLayout" type="System.Windows.Forms.ImageLayout, System.Windows.Forms">
+    <value>Tile</value>
+  </data>
+  <data name="&gt;&gt;colPresentation.Name" xml:space="preserve">
+    <value>colPresentation</value>
+  </data>
+  <data name="rowManufacturer.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControl1.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="rowId.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowSolubility20.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="vGridControl1.RecordWidth" type="System.Int32, mscorlib">
+    <value>117</value>
+  </data>
+  <data name="rowFormula.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns2" xml:space="preserve">
+    <value>MeasurementUnit.Name</value>
+  </data>
+  <data name="rowSolubility0.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;repositoryItemCheckEdit2.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.Repository.RepositoryItemCheckEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colId.Width" type="System.Int32, mscorlib">
+    <value>87</value>
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <assembly alias="DevExpress.Utils.v24.1" name="DevExpress.Utils.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+  <data name="gridControl1.EmbeddedNavigator.ToolTipIconType" type="DevExpress.Utils.ToolTipIconType, DevExpress.Utils.v24.1">
+    <value>None</value>
+  </data>
+  <data name="colPresentation.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="rowCationMolecularWeight.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="colPresentation.Caption" xml:space="preserve">
+    <value>Presentation</value>
+  </data>
+  <data name="layoutControlItem2.Text" xml:space="preserve">
+    <value>Chemistry</value>
+  </data>
+  <data name="rowCationMolecularWeight.Properties.Caption" xml:space="preserve">
+    <value>Cation Molecular Weight</value>
+  </data>
+  <data name="rowSolubility40.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowSolubility20.Properties.Caption" xml:space="preserve">
+    <value>Solubility at 20 C°</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem3.Name" xml:space="preserve">
+    <value>layoutControlItem3</value>
+  </data>
+  <data name="rowDensity.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowIspHAdjuster.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowAnionMolecularWeight.Properties.Caption" xml:space="preserve">
+    <value>Anion Molecular Weight</value>
+  </data>
+  <data name="&gt;&gt;gridControl1.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="rowId.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;vGridControl1.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.VGridControl, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowAnionMolecularWeight.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowSaltMolecularWeight.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colName.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowSolubility20.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowPnh4.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowAnionMolecularWeight.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowFormula.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="layoutControlGroup1.BackgroundImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowSolubility40.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowActive.Name" xml:space="preserve">
+    <value>rowActive</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControl, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowManufacturer.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem1.Name" xml:space="preserve">
+    <value>layoutControlItem1</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem3.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowPnh4.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;vGridControl2.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
+    <value>7, 15</value>
+  </data>
+  <data name="rowIsLiquid.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowAnionMolecularWeight.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowSaltMolecularWeight.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowPnh4.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;gridView1.Name" xml:space="preserve">
+    <value>gridView1</value>
+  </data>
+  <data name="category.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowSaltMolecularWeight.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.AllowHtmlTextInToolTip" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="&gt;&gt;rowPnh4.Name" xml:space="preserve">
+    <value>rowPnh4</value>
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns3" xml:space="preserve">
+    <value>Unit</value>
+  </data>
+  <data name="&gt;&gt;layoutControlGroup1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlGroup, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowSolubility40.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="&gt;&gt;rowAnionMolecularWeight.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowAnionMolecularWeight.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowActive.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowName.Name" xml:space="preserve">
+    <value>rowName</value>
+  </data>
+  <data name="rowName.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowId.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;$this.Type" xml:space="preserve">
+    <value>System.Windows.Forms.UserControl, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;colId.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowPurity.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colSelected.Name" xml:space="preserve">
+    <value>colSelected</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.BackgroundImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowActive.Properties.Caption" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="colName.VisibleIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="repositoryItemCheckEdit1.AutoHeight" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;rowSolubility0.Name" xml:space="preserve">
+    <value>rowSolubility0</value>
+  </data>
+  <data name="&gt;&gt;rowPn.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns12" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="colFertilizer.Caption" xml:space="preserve">
+    <value>Fertilizer</value>
+  </data>
+  <data name="rowName.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;fertilizerInputBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="rowDensity.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowAnionMolecularWeight.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="layoutControlItem3.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowPn.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="category.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowIsLiquid.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowManufacturer.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowSolubility20.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="colId.VisibleIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;gridView1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Views.Grid.GridView, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowActive.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowSolubility40.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="layoutControl1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="rowPurity.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowSolubility40.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns10" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="rowName.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowPno3.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="&gt;&gt;colPrice.Name" xml:space="preserve">
+    <value>colPrice</value>
+  </data>
+  <data name="&gt;&gt;rowPn.Name" xml:space="preserve">
+    <value>rowPn</value>
+  </data>
+  <data name="rowPn.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="repositoryItemLookUpEdit1.Columns2" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="&gt;&gt;colFertilizer.Name" xml:space="preserve">
+    <value>colFertilizer</value>
+  </data>
+  <data name="rowDensity.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="layoutControl1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="rowAnionMolecularWeight.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;fertilizerBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="gridControl1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="rowSolubility20.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colPrice.Width" type="System.Int32, mscorlib">
+    <value>87</value>
+  </data>
+  <data name="&gt;&gt;fertilizerInputBindingSource.Name" xml:space="preserve">
+    <value>fertilizerInputBindingSource</value>
+  </data>
+  <data name="rowSaltMolecularWeight.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControlItem1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemCheckEdit2.Name" xml:space="preserve">
+    <value>repositoryItemCheckEdit2</value>
+  </data>
+  <data name="rowSolubility20.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowPnh4.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="layoutControlItem3.Text" xml:space="preserve">
+    <value>Fertilizer</value>
+  </data>
+  <data name="rowPn.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowSaltMolecularWeight.Name" xml:space="preserve">
+    <value>rowSaltMolecularWeight</value>
+  </data>
+  <data name="rowFormula.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="&gt;&gt;rowPurity.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowPurity.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowPno3.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowSolubility20.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowId.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="rowPnh4.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowPn.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowPno3.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colPrice.VisibleIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;vGridControl1.Name" xml:space="preserve">
+    <value>vGridControl1</value>
+  </data>
+  <data name="rowManufacturer.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowFormula.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowSolubility0.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="layoutControlItem1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowPno3.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="category.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="layoutControl1.Text" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="rowCationMolecularWeight.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowPno3.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colPresentation.Width" type="System.Int32, mscorlib">
+    <value>87</value>
+  </data>
+  <data name="rowManufacturer.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowActive.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;repositoryItemLookUpEditPresentation.Name" xml:space="preserve">
+    <value>repositoryItemLookUpEditPresentation</value>
+  </data>
+  <data name="&gt;&gt;fertilizerChemistryBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="rowSolubility40.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="colFertilizer.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.Name" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="colId.Caption" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.ToolTipTitle" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowFormula.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowId.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowName.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowFormula.Name" xml:space="preserve">
+    <value>rowFormula</value>
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Buttons" type="DevExpress.XtraEditors.Controls.ButtonPredefines, DevExpress.Utils.v24.1">
+    <value>Combo</value>
+  </data>
+  <data name="colName.Width" type="System.Int32, mscorlib">
+    <value>87</value>
+  </data>
+  <data name="&gt;&gt;rowIsLiquid.Name" xml:space="preserve">
+    <value>rowIsLiquid</value>
+  </data>
+  <data name="&gt;&gt;rowAnionMolecularWeight.Name" xml:space="preserve">
+    <value>rowAnionMolecularWeight</value>
+  </data>
+  <data name="rowPn.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;fertilizerBindingSource.Name" xml:space="preserve">
+    <value>fertilizerBindingSource</value>
+  </data>
+  <data name="&gt;&gt;rowId.Name" xml:space="preserve">
+    <value>rowId</value>
+  </data>
+  <data name="rowCationMolecularWeight.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="layoutControl1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns9" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="rowPnh4.Properties.Caption" xml:space="preserve">
+    <value>Pnh4</value>
+  </data>
+  <data name="layoutControlGroup1.CaptionImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowSolubility0.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowIsLiquid.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="$this.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1344, 684</value>
+  </data>
+  <data name="&gt;&gt;rowIspHAdjuster.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowSaltMolecularWeight.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="layoutControlItem1.Text" xml:space="preserve">
+    <value>Fertilizar Input</value>
+  </data>
+  <data name="repositoryItemLookUpEdit1.Columns3" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="rowIspHAdjuster.Properties.Caption" xml:space="preserve">
+    <value>Is pH Adjuster</value>
+  </data>
+  <data name="rowActive.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="vGridControl1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="vGridControl2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>1002, 28</value>
+  </data>
+  <data name="&gt;&gt;rowPurity.Name" xml:space="preserve">
+    <value>rowPurity</value>
+  </data>
+  <data name="rowName.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="rowIsLiquid.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="gridControl1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 28</value>
+  </data>
+  <data name="rowFormula.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;colFertilizer.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowId.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowActive.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowIsLiquid.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowSolubility20.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowIspHAdjuster.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowId.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEdit1.Buttons" type="DevExpress.XtraEditors.Controls.ButtonPredefines, DevExpress.Utils.v24.1">
+    <value>Combo</value>
+  </data>
+  <data name="rowPn.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;repositoryItemLookUpEditPresentation.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.Repository.RepositoryItemLookUpEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowDensity.Name" xml:space="preserve">
+    <value>rowDensity</value>
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns7" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>Numeric</value>
+  </data>
+  <data name="rowIsLiquid.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="rowId.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowSolubility20.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowManufacturer.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns4" xml:space="preserve">
+    <value>Quantity</value>
+  </data>
+  <data name="&gt;&gt;rowPnh4.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="category.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colPrice.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowPno3.Name" xml:space="preserve">
+    <value>rowPno3</value>
+  </data>
+  <data name="layoutControlItem2.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;vGridControl2.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="colSelected.VisibleIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="rowIspHAdjuster.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="rowPno3.Properties.Caption" xml:space="preserve">
+    <value>Pno3</value>
+  </data>
+  <data name="rowIspHAdjuster.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="colPrice.Caption" xml:space="preserve">
+    <value>Price</value>
+  </data>
+  <data name="vGridControl1.RowHeaderWidth" type="System.Int32, mscorlib">
+    <value>175</value>
+  </data>
+  <data name="vGridControl1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>1002, 260</value>
+  </data>
+  <data name="rowIsLiquid.Properties.Caption" xml:space="preserve">
+    <value>Is Liquid</value>
+  </data>
+  <data name="rowPurity.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;category.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.CategoryRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colName.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowAnionMolecularWeight.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="&gt;&gt;rowSolubility0.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowSolubility20.Name" xml:space="preserve">
+    <value>rowSolubility20</value>
+  </data>
+  <data name="rowDensity.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="vGridControl1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>330, 412</value>
+  </data>
+  <data name="rowName.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowIsLiquid.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowId.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowSolubility20.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowIsLiquid.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowManufacturer.Properties.Caption" xml:space="preserve">
+    <value>Manufacturer</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemCheckEdit1.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.Repository.RepositoryItemCheckEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="repositoryItemLookUpEditPresentation.Columns6" type="System.Int32, mscorlib">
+    <value>20</value>
+  </data>
+  <data name="rowFormula.Properties.Caption" xml:space="preserve">
+    <value>Formula</value>
+  </data>
+  <data name="rowSaltMolecularWeight.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="&gt;&gt;colPrice.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colId.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowDensity.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowCationMolecularWeight.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowDensity.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="category.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowPno3.Properties.AccessibleRole" type="System.Windows.Forms.AccessibleRole, System.Windows.Forms">
+    <value>Default</value>
+  </data>
+  <data name="rowManufacturer.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="category.Properties.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;repositoryItemLookUpEdit1.Name" xml:space="preserve">
+    <value>repositoryItemLookUpEdit1</value>
+  </data>
+  <data name="&gt;&gt;rowIspHAdjuster.Name" xml:space="preserve">
+    <value>rowIspHAdjuster</value>
+  </data>
+  <data name="&gt;&gt;rowActive.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Left</value>
+  </data>
+  <data name="rowPn.Properties.SortOrder" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="colSelected.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="layoutControlGroup1.ContentImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowAnionMolecularWeight.Properties.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowPurity.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>56</value>
+  </metadata>
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="fertilizerChemistryBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>220, 17</value>
+  </metadata>
+  <metadata name="fertilizerInputBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <metadata name="fertilizerBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>447, 17</value>
+  </metadata>
+  <metadata name="$this.Language" type="System.Globalization.CultureInfo, System.Private.CoreLib, Culture=neutral, PublicKeyToken=7cec85d7bea7798e">
+    <value>es</value>
+  </metadata>
+</root>

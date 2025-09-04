@@ -1,0 +1,2485 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="&gt;&gt;colH2PO4_p1.Name" xml:space="preserve">
+    <value>colH2PO4_p1</value>
+  </data>
+  <assembly alias="DevExpress.Data.v24.1" name="DevExpress.Data.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+  <data name="colHCO3_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="gridControlBalance.EmbeddedNavigator.BackgroundImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colUnit.Caption" xml:space="preserve">
+    <value>Unidad</value>
+  </data>
+  <data name="&gt;&gt;colK.Name" xml:space="preserve">
+    <value>colK</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="colNO3_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCategory.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;ribbon.Name" xml:space="preserve">
+    <value>ribbon</value>
+  </data>
+  <data name="colSO4_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colHCO3.VisibleIndex" type="System.Int32, mscorlib">
+    <value>18</value>
+  </data>
+  <data name="barEditItem1.ImageOptions.LargeImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="colMn.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colMg_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
+  <data name="colMn.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colN.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colUnit.VisibleIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="colNa_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>9</value>
+  </data>
+  <data name="&gt;&gt;colH2PO41.Name" xml:space="preserve">
+    <value>colH2PO41</value>
+  </data>
+  <data name="&gt;&gt;colFe1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colB1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="barCheckItem1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colFe1.Name" xml:space="preserve">
+    <value>colFe1</value>
+  </data>
+  <data name="colCl_p1.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colHCO3.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colCa_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;ribbonPageGroupFertilizer.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonPageGroup, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colNO3_p1.Name" xml:space="preserve">
+    <value>colNO3_p1</value>
+  </data>
+  <data name="colMn.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.BackgroundImageLayout" type="System.Windows.Forms.ImageLayout, System.Windows.Forms">
+    <value>Tile</value>
+  </data>
+  <data name="&gt;&gt;colZn_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colS2.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colCa.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.BackgroundImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colFe1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colB1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colK_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colZn1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCa1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;colAmount.Name" xml:space="preserve">
+    <value>colAmount</value>
+  </data>
+  <data name="&gt;&gt;colSO4_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMo_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colK.Summary1" xml:space="preserve">
+    <value>K</value>
+  </data>
+  <data name="colInterpretation.Caption" xml:space="preserve">
+    <value>Intepretación</value>
+  </data>
+  <data name="&gt;&gt;colN2.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colSO4_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colZn_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colH2PO4.Caption" xml:space="preserve">
+    <value>H2PO4</value>
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey6" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colFe_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colB_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colHCO3.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;ribbonPageGroupWater.Name" xml:space="preserve">
+    <value>ribbonPageGroupWater</value>
+  </data>
+  <data name="&gt;&gt;masterDataTableBindingSource.Name" xml:space="preserve">
+    <value>masterDataTableBindingSource</value>
+  </data>
+  <data name="&gt;&gt;colCategory.Name" xml:space="preserve">
+    <value>colCategory</value>
+  </data>
+  <data name="colS.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colNO31.VisibleIndex" type="System.Int32, mscorlib">
+    <value>10</value>
+  </data>
+  <data name="&gt;&gt;ribbonPageGroupView.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonPageGroup, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colNa.Caption" xml:space="preserve">
+    <value>Na</value>
+  </data>
+  <data name="colCu1.Caption" xml:space="preserve">
+    <value>Cu</value>
+  </data>
+  <data name="colH2PO4.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colFe_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colK1.Name" xml:space="preserve">
+    <value>colK1</value>
+  </data>
+  <data name="&gt;&gt;colCl_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMn_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;colHCO3_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colH2PO4_p.Caption" xml:space="preserve">
+    <value>H2PO4 %</value>
+  </data>
+  <data name="colMo.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;colMn1.Name" xml:space="preserve">
+    <value>colMn1</value>
+  </data>
+  <data name="colK_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colNa.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colH2PO41.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;solutionQualityFeatureBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.AllowHtmlTextInToolTip" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="colZn_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="barCheckItem1.ImageOptions.SvgImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="layoutControlGroup1.CaptionImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colCl1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colCa_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCu1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>24</value>
+  </data>
+  <data name="barEditItemShowPercentages.ImageOptions.LargeImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colSO4.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colHCO31.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colS_P2.Name" xml:space="preserve">
+    <value>colS_P2</value>
+  </data>
+  <data name="ribbonPageGroupWater.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colK.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colK_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colUnit.Name" xml:space="preserve">
+    <value>colUnit</value>
+  </data>
+  <data name="&gt;&gt;colNO3_p.Name" xml:space="preserve">
+    <value>colNO3_p</value>
+  </data>
+  <data name="gridColumn1.Caption" xml:space="preserve">
+    <value>Indicador</value>
+  </data>
+  <data name="colMn_p1.Caption" xml:space="preserve">
+    <value>Mn %</value>
+  </data>
+  <data name="&gt;&gt;colCa_p.Name" xml:space="preserve">
+    <value>colCa_p</value>
+  </data>
+  <data name="colMo_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>29</value>
+  </data>
+  <data name="colSO4_p.Summary1" xml:space="preserve">
+    <value>SO4_p</value>
+  </data>
+  <data name="colNa_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>9</value>
+  </data>
+  <data name="&gt;&gt;colCa_p1.Name" xml:space="preserve">
+    <value>colCa_p1</value>
+  </data>
+  <data name="&gt;&gt;colCategory.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMo.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="&gt;&gt;colMn_p1.Name" xml:space="preserve">
+    <value>colMn_p1</value>
+  </data>
+  <data name="colNO31.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="gridControlBalance.DataMember" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;colN2.Name" xml:space="preserve">
+    <value>colN2</value>
+  </data>
+  <data name="colMn1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey4" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;gridControl2.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.GridControl, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMg_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;colNa1.Name" xml:space="preserve">
+    <value>colNa1</value>
+  </data>
+  <data name="&gt;&gt;barButtonSelectFertilizers.Name" xml:space="preserve">
+    <value>barButtonSelectFertilizers</value>
+  </data>
+  <data name="colValue.Caption" xml:space="preserve">
+    <value>Valor</value>
+  </data>
+  <data name="colSO4.Caption" xml:space="preserve">
+    <value>SO4</value>
+  </data>
+  <data name="colValue.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCa.VisibleIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;colS.Name" xml:space="preserve">
+    <value>colS</value>
+  </data>
+  <data name="&gt;&gt;layoutControlGroup1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlGroup, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMo_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>29</value>
+  </data>
+  <data name="colRule.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colN_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colMn.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colNa_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="layoutControlItem1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colP_p2.Name" xml:space="preserve">
+    <value>colP_p2</value>
+  </data>
+  <data name="&gt;&gt;colMg1.Name" xml:space="preserve">
+    <value>colMg1</value>
+  </data>
+  <data name="&gt;&gt;colH2PO4.Name" xml:space="preserve">
+    <value>colH2PO4</value>
+  </data>
+  <data name="colSO41.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colNO3_p.Summary1" xml:space="preserve">
+    <value>NO3_p</value>
+  </data>
+  <data name="colMn_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colNa1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barCheckItem1.ImageOptions.LargeImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colCl_p1.Name" xml:space="preserve">
+    <value>colCl_p1</value>
+  </data>
+  <data name="colNa_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;gridControlBalance.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="colCl1.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colFe_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colZn_p.Caption" xml:space="preserve">
+    <value>Zn %</value>
+  </data>
+  <data name="colCl.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;gridView3.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Views.Grid.GridView, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colK_p1.Name" xml:space="preserve">
+    <value>colK_p1</value>
+  </data>
+  <data name="colH2PO4.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colK.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colRule.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colH2PO41.VisibleIndex" type="System.Int32, mscorlib">
+    <value>16</value>
+  </data>
+  <data name="&gt;&gt;colS_p.Name" xml:space="preserve">
+    <value>colS_p</value>
+  </data>
+  <data name="colMo.VisibleIndex" type="System.Int32, mscorlib">
+    <value>28</value>
+  </data>
+  <data name="colCa1.Caption" xml:space="preserve">
+    <value>Ca</value>
+  </data>
+  <data name="&gt;&gt;barButtonSelectFertilizers.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.BarButtonItem, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colZn.Name" xml:space="preserve">
+    <value>colZn</value>
+  </data>
+  <data name="colHCO3_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="gridColumn1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="ribbonStatusBar.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1170, 24</value>
+  </data>
+  <data name="colCl_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colSO4_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colMn1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="barButtonItemSelectWater.ImageOptions.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;$this.Name" xml:space="preserve">
+    <value>FrmBalance</value>
+  </data>
+  <data name="colK.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colHCO3_p.Caption" xml:space="preserve">
+    <value>HCO3 %</value>
+  </data>
+  <data name="barButtonSelectFertilizers.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colFe_p1.Caption" xml:space="preserve">
+    <value>Fe %</value>
+  </data>
+  <data name="colHCO3_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>19</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.MaximumSize" type="System.Drawing.Size, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;colCl.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colMg1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colNa.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colcaption.VisibleIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>Inherit</value>
+  </data>
+  <data name="barButtonItem1.ImageOptions.LargeImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colH2PO4_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colMo_p.Name" xml:space="preserve">
+    <value>colMo_p</value>
+  </data>
+  <data name="&gt;&gt;colNa_p.Name" xml:space="preserve">
+    <value>colNa_p</value>
+  </data>
+  <data name="colMn_p.Summary1" xml:space="preserve">
+    <value>Mn_p</value>
+  </data>
+  <data name="gridColumn1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="barButtonItemSelectWater.ImageOptions.LargeImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;barEditItemShowPercentages.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.BarEditItem, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="barEditItem1.ImageOptions.LargeImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colZn_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControlGroup1.Name" xml:space="preserve">
+    <value>layoutControlGroup1</value>
+  </data>
+  <data name="colMo.Caption" xml:space="preserve">
+    <value>Mo</value>
+  </data>
+  <data name="&gt;&gt;gridControlBalance.Name" xml:space="preserve">
+    <value>gridControlBalance</value>
+  </data>
+  <data name="colZn.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colMg_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControlBalance.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.AllowHtmlTextInToolTip" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="&gt;&gt;colRule.Name" xml:space="preserve">
+    <value>colRule</value>
+  </data>
+  <data name="colFe1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>20</value>
+  </data>
+  <data name="barButtonItem1.Caption" xml:space="preserve">
+    <value>barButtonItem1</value>
+  </data>
+  <data name="colMo_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="ribbonPage1.Text" xml:space="preserve">
+    <value>Componentes</value>
+  </data>
+  <data name="colCu_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>25</value>
+  </data>
+  <data name="colCu_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colNO3_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colValue.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colCu_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colHCO3.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colNa.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colSO4_p.Name" xml:space="preserve">
+    <value>colSO4_p</value>
+  </data>
+  <data name="colNO3_p.Caption" xml:space="preserve">
+    <value>NO3 %</value>
+  </data>
+  <data name="colFe1.Caption" xml:space="preserve">
+    <value>Fe</value>
+  </data>
+  <data name="&gt;&gt;colB_p1.Name" xml:space="preserve">
+    <value>colB_p1</value>
+  </data>
+  <data name="&gt;&gt;colCaption1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colSO41.Name" xml:space="preserve">
+    <value>colSO41</value>
+  </data>
+  <data name="&gt;&gt;colNO31.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCl_p1.Summary1" xml:space="preserve">
+    <value>Cl_p</value>
+  </data>
+  <data name="colH2PO4_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>17</value>
+  </data>
+  <data name="colZn_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>31</value>
+  </data>
+  <data name="&gt;&gt;colS2.Name" xml:space="preserve">
+    <value>colS2</value>
+  </data>
+  <data name="ribbonPageGroupFertilizer.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colK1.Caption" xml:space="preserve">
+    <value>K</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.ToolTipTitle" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colMg_p.Caption" xml:space="preserve">
+    <value>Mg %</value>
+  </data>
+  <data name="&gt;&gt;colUnit.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;ribbonPage1.Name" xml:space="preserve">
+    <value>ribbonPage1</value>
+  </data>
+  <data name="colB.Summary1" xml:space="preserve">
+    <value>B</value>
+  </data>
+  <data name="&gt;&gt;barEditItem1.Name" xml:space="preserve">
+    <value>barEditItem1</value>
+  </data>
+  <data name="colCl1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>14</value>
+  </data>
+  <data name="colH2PO4_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colZn_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;gridView3.Name" xml:space="preserve">
+    <value>gridView3</value>
+  </data>
+  <data name="colMo_p.Summary1" xml:space="preserve">
+    <value>Mo_p</value>
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey1" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colInterpretation.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCu_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="barButtonSelectFertilizers.ImageOptions.SvgImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colCl_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ribbon.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <assembly alias="DevExpress.Utils.v24.1" name="DevExpress.Utils.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+  <data name="repositoryItemSpinEdit1.Buttons" type="DevExpress.XtraEditors.Controls.ButtonPredefines, DevExpress.Utils.v24.1">
+    <value>Combo</value>
+  </data>
+  <data name="colMo.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colNO31.Name" xml:space="preserve">
+    <value>colNO31</value>
+  </data>
+  <data name="colSO4_p.Caption" xml:space="preserve">
+    <value>SO4 %</value>
+  </data>
+  <data name="&gt;&gt;barButtonItem1.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.BarButtonItem, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colAmount2.Caption" xml:space="preserve">
+    <value>gridColumn2</value>
+  </data>
+  <data name="colCa.Summary1" xml:space="preserve">
+    <value>Ca</value>
+  </data>
+  <data name="colMg_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colH2PO4_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colMg1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;colMg_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colZn.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;balanceBindingSource.Name" xml:space="preserve">
+    <value>balanceBindingSource</value>
+  </data>
+  <data name="&gt;&gt;colNO3_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colB_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="&gt;&gt;colN_p.Name" xml:space="preserve">
+    <value>colN_p</value>
+  </data>
+  <data name="colMo.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colMo1.Name" xml:space="preserve">
+    <value>colMo1</value>
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Left</value>
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey3" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colMo_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCa_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemSpinEdit2.Name" xml:space="preserve">
+    <value>repositoryItemSpinEdit2</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colK.Caption" xml:space="preserve">
+    <value>K</value>
+  </data>
+  <data name="colNO3.Caption" xml:space="preserve">
+    <value>NO3</value>
+  </data>
+  <data name="colB1.Caption" xml:space="preserve">
+    <value>B</value>
+  </data>
+  <data name="colCu_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barCheckItem1.Caption" xml:space="preserve">
+    <value>barCheckItem1</value>
+  </data>
+  <data name="ribbonPageGroupWater.Text" xml:space="preserve">
+    <value>Agua</value>
+  </data>
+  <data name="ribbonPageGroupFertilizer.Text" xml:space="preserve">
+    <value>Fertilizantes</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.ToolTipIconType" type="DevExpress.Utils.ToolTipIconType, DevExpress.Utils.v24.1">
+    <value>None</value>
+  </data>
+  <data name="&gt;&gt;colCu_p1.Name" xml:space="preserve">
+    <value>colCu_p1</value>
+  </data>
+  <data name="colMn_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey2" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colMg1.Caption" xml:space="preserve">
+    <value>Mg</value>
+  </data>
+  <data name="colCu.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.MaximumSize" type="System.Drawing.Size, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="&gt;&gt;gridView1.Name" xml:space="preserve">
+    <value>gridView1</value>
+  </data>
+  <data name="barButtonSelectFertilizers.ImageOptions.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        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
+        SUVORK5CYII=
+</value>
+  </data>
+  <data name="colB_p.Summary1" xml:space="preserve">
+    <value>B_p</value>
+  </data>
+  <data name="colMo_p.Caption" xml:space="preserve">
+    <value>Mo %</value>
+  </data>
+  <data name="ribbon.ExpandCollapseItem.ImageOptions.SvgImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;colMg_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="barButtonSelectFertilizers.ImageOptions.LargeImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey5" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colSO4_p1.Caption" xml:space="preserve">
+    <value>SO4 %</value>
+  </data>
+  <data name="colK_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colNO3.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colCu.Summary1" xml:space="preserve">
+    <value>Cu</value>
+  </data>
+  <data name="barButtonSelectFertilizers.Caption" xml:space="preserve">
+    <value>Seleccionar Fertilizantes</value>
+  </data>
+  <data name="colB_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colCaption1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colB.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colCl1.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;colMo_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMn_p.Caption" xml:space="preserve">
+    <value>Mn %</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemSpinEdit2.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.Repository.RepositoryItemSpinEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colN_p2.Name" xml:space="preserve">
+    <value>colN_p2</value>
+  </data>
+  <data name="colZn_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>31</value>
+  </data>
+  <data name="colCu_p.Summary1" xml:space="preserve">
+    <value>Cu_p</value>
+  </data>
+  <data name="&gt;&gt;colCu1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMn.Caption" xml:space="preserve">
+    <value>Mn</value>
+  </data>
+  <data name="colFe_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colFe.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControl, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCategory.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCu_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.ToolTipIconType" type="DevExpress.Utils.ToolTipIconType, DevExpress.Utils.v24.1">
+    <value>None</value>
+  </data>
+  <data name="colK1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCl.Caption" xml:space="preserve">
+    <value>Cl</value>
+  </data>
+  <data name="colB_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>23</value>
+  </data>
+  <data name="colcaption.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ribbonPageGroupView.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colMo.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCa.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="ribbon.ExpandCollapseItem.ImageOptions.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="gridControl2.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="colH2PO4_p.Summary1" xml:space="preserve">
+    <value>H2PO4_p</value>
+  </data>
+  <data name="colFe_p.Caption" xml:space="preserve">
+    <value>fe %</value>
+  </data>
+  <data name="colCa.Caption" xml:space="preserve">
+    <value>Ca</value>
+  </data>
+  <data name="&gt;&gt;colCu_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colUnit.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCu.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colSO4.Summary1" xml:space="preserve">
+    <value>SO4</value>
+  </data>
+  <data name="colZn.Summary1" xml:space="preserve">
+    <value>Zn</value>
+  </data>
+  <data name="&gt;&gt;colNa1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMo1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>28</value>
+  </data>
+  <data name="colFe.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;colSO4_p1.Name" xml:space="preserve">
+    <value>colSO4_p1</value>
+  </data>
+  <data name="&gt;&gt;colCl1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colNO3.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="layoutControlGroup1.BackgroundImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colCl_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCl1.Caption" xml:space="preserve">
+    <value>Cl</value>
+  </data>
+  <data name="colB1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colMn_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colNa.VisibleIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="colCa.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colS_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colP2.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colNO3.Summary1" xml:space="preserve">
+    <value>NO3</value>
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey7" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey11" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colZn.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colSO4.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="layoutControl1.Text" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="colHCO3_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.ToolTipTitle" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colMg_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
+  <data name="ribbon.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1170, 158</value>
+  </data>
+  <data name="&gt;&gt;gridControl2.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;colNO3_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colFe_p.Name" xml:space="preserve">
+    <value>colFe_p</value>
+  </data>
+  <data name="&gt;&gt;colMo.Name" xml:space="preserve">
+    <value>colMo</value>
+  </data>
+  <data name="colCl.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colH2PO4.VisibleIndex" type="System.Int32, mscorlib">
+    <value>16</value>
+  </data>
+  <data name="colNO3_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colNO31.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colAmount2.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="layoutControl1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="colCl_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>15</value>
+  </data>
+  <data name="&gt;&gt;colP_p2.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colB1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>22</value>
+  </data>
+  <data name="colSO4_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>13</value>
+  </data>
+  <data name="colNa_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <assembly alias="DevExpress.XtraEditors.v24.1" name="DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+  <data name="gridControl2.EmbeddedNavigator.TextLocation" type="DevExpress.XtraEditors.NavigatorButtonsTextLocation, DevExpress.XtraEditors.v24.1">
+    <value>Center</value>
+  </data>
+  <data name="colB.Caption" xml:space="preserve">
+    <value>B</value>
+  </data>
+  <data name="&gt;&gt;colNa.Name" xml:space="preserve">
+    <value>colNa</value>
+  </data>
+  <data name="colCa_p.Summary1" xml:space="preserve">
+    <value>Ca_p</value>
+  </data>
+  <data name="colCl1.Summary1" xml:space="preserve">
+    <value>Cl</value>
+  </data>
+  <data name="colCl_p.Caption" xml:space="preserve">
+    <value>Cl %</value>
+  </data>
+  <data name="&gt;&gt;gridColumn1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;ribbonPageGroupFertilizer.Name" xml:space="preserve">
+    <value>ribbonPageGroupFertilizer</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem1.Name" xml:space="preserve">
+    <value>layoutControlItem1</value>
+  </data>
+  <data name="barEditItem1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colCaption1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="colCaption1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="layoutControl1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 158</value>
+  </data>
+  <data name="&gt;&gt;colCu.Name" xml:space="preserve">
+    <value>colCu</value>
+  </data>
+  <data name="&gt;&gt;gridControl2.Name" xml:space="preserve">
+    <value>gridControl2</value>
+  </data>
+  <data name="gridColumn1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barEditItem1.ImageOptions.SvgImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colInterpretation.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="layoutControl1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1170, 454</value>
+  </data>
+  <data name="ribbon.ExpandCollapseItem.ImageOptions.LargeImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;colB.Name" xml:space="preserve">
+    <value>colB</value>
+  </data>
+  <data name="colNO3.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colZn_p1.Caption" xml:space="preserve">
+    <value>Zn %</value>
+  </data>
+  <data name="ribbonPage1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colFe_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colCa1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="repositoryItemSpinEdit2.Buttons" type="DevExpress.XtraEditors.Controls.ButtonPredefines, DevExpress.Utils.v24.1">
+    <value>Combo</value>
+  </data>
+  <data name="colH2PO4_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colP2.Name" xml:space="preserve">
+    <value>colP2</value>
+  </data>
+  <data name="colMn_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>27</value>
+  </data>
+  <data name="&gt;&gt;colSO41.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colCl.Name" xml:space="preserve">
+    <value>colCl</value>
+  </data>
+  <data name="&gt;&gt;colZn_p1.Name" xml:space="preserve">
+    <value>colZn_p1</value>
+  </data>
+  <data name="barButtonSelectFertilizers.ImageOptions.LargeImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colK_p1.Caption" xml:space="preserve">
+    <value>K %</value>
+  </data>
+  <data name="&gt;&gt;ribbonStatusBar.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colMo_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colZn1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;gridColumn1.Name" xml:space="preserve">
+    <value>gridColumn1</value>
+  </data>
+  <data name="colNa.Summary1" xml:space="preserve">
+    <value>Na</value>
+  </data>
+  <data name="colMn.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colK_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colB_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControl1.Name" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;balanceBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;colInterpretation.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colHCO3.Summary1" xml:space="preserve">
+    <value>HCO3</value>
+  </data>
+  <data name="&gt;&gt;colMn.Name" xml:space="preserve">
+    <value>colMn</value>
+  </data>
+  <data name="colMg_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colMn1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>26</value>
+  </data>
+  <data name="colK_p.Caption" xml:space="preserve">
+    <value>K %</value>
+  </data>
+  <data name="colCu_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;ribbonStatusBar.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;colInterpretation.Name" xml:space="preserve">
+    <value>colInterpretation</value>
+  </data>
+  <data name="colB_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>23</value>
+  </data>
+  <data name="colNa_p.Summary1" xml:space="preserve">
+    <value>Na_p</value>
+  </data>
+  <data name="colFe_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;colZn_p.Name" xml:space="preserve">
+    <value>colZn_p</value>
+  </data>
+  <data name="&gt;&gt;ribbon.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;colCl1.Name" xml:space="preserve">
+    <value>colCl1</value>
+  </data>
+  <data name="colNO3_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;colHCO31.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="repositoryItemSpinEdit1.AutoHeight" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;colHCO3.Name" xml:space="preserve">
+    <value>colHCO3</value>
+  </data>
+  <data name="&gt;&gt;colFe_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colSO4.Name" xml:space="preserve">
+    <value>colSO4</value>
+  </data>
+  <data name="&gt;&gt;barButtonItemSelectWater.Name" xml:space="preserve">
+    <value>barButtonItemSelectWater</value>
+  </data>
+  <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
+    <value>6, 13</value>
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey8" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colNO3_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colNa_p.Caption" xml:space="preserve">
+    <value>Na %</value>
+  </data>
+  <data name="colK1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barButtonItemSelectWater.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;barEditItem1.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.BarEditItem, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colCa.Name" xml:space="preserve">
+    <value>colCa</value>
+  </data>
+  <data name="&gt;&gt;colCu1.Name" xml:space="preserve">
+    <value>colCu1</value>
+  </data>
+  <data name="&gt;&gt;colS.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colFe_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>21</value>
+  </data>
+  <data name="&gt;&gt;colP.Name" xml:space="preserve">
+    <value>colP</value>
+  </data>
+  <data name="colN2.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colH2PO41.Caption" xml:space="preserve">
+    <value>H2PO4</value>
+  </data>
+  <data name="colFe.Summary1" xml:space="preserve">
+    <value>Fe</value>
+  </data>
+  <data name="colAmount2.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="ribbonPageGroupView.Text" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="colFe_p.Summary1" xml:space="preserve">
+    <value>Fe_p</value>
+  </data>
+  <data name="repositoryItemCheckEdit1.AutoHeight" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;colAmount2.Name" xml:space="preserve">
+    <value>colAmount2</value>
+  </data>
+  <data name="gridControl2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1146, 192</value>
+  </data>
+  <data name="barEditItem1.ImageOptions.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="colFe.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barEditItemShowPercentages.ImageOptions.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;colS2.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCu1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barCheckItem1.ImageOptions.LargeImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="colK.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colValue.VisibleIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="colCl.VisibleIndex" type="System.Int32, mscorlib">
+    <value>14</value>
+  </data>
+  <data name="&gt;&gt;barButtonItemSelectWater.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.BarButtonItem, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCa_p1.Caption" xml:space="preserve">
+    <value>Ca %</value>
+  </data>
+  <data name="colK.VisibleIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="colK_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colZn.VisibleIndex" type="System.Int32, mscorlib">
+    <value>30</value>
+  </data>
+  <data name="colFe.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.AutoSize" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="colNa_p1.Caption" xml:space="preserve">
+    <value>Na %</value>
+  </data>
+  <data name="colFe.VisibleIndex" type="System.Int32, mscorlib">
+    <value>20</value>
+  </data>
+  <data name="colMo1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colMg.Summary1" xml:space="preserve">
+    <value>Mg</value>
+  </data>
+  <data name="&gt;&gt;solutionQualityFeatureBindingSource.Name" xml:space="preserve">
+    <value>solutionQualityFeatureBindingSource</value>
+  </data>
+  <data name="&gt;&gt;colB.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.AutoSize" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="&gt;&gt;$this.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonForm, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.TextLocation" type="DevExpress.XtraEditors.NavigatorButtonsTextLocation, DevExpress.XtraEditors.v24.1">
+    <value>Center</value>
+  </data>
+  <data name="gridControlBalance.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1146, 234</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Left</value>
+  </data>
+  <data name="colCa.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colCu_p.Caption" xml:space="preserve">
+    <value>Cu %</value>
+  </data>
+  <data name="colCu.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colZn_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colHCO3_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;colHCO3.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colK_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="barButtonItemSelectWater.ImageOptions.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        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
+        AElFTkSuQmCC
+</value>
+  </data>
+  <data name="colCu.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;ribbonStatusBar.Name" xml:space="preserve">
+    <value>ribbonStatusBar</value>
+  </data>
+  <data name="&gt;&gt;colK_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colZn_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colZn1.Name" xml:space="preserve">
+    <value>colZn1</value>
+  </data>
+  <data name="colB_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;ribbonPageGroupView.Name" xml:space="preserve">
+    <value>ribbonPageGroupView</value>
+  </data>
+  <data name="colP2.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colMg.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colCa.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="&gt;&gt;gridControlBalance.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="colcaption.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colSO41.Caption" xml:space="preserve">
+    <value>SO4</value>
+  </data>
+  <data name="colS_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colAmount2.VisibleIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="colCu.Caption" xml:space="preserve">
+    <value>Cu</value>
+  </data>
+  <data name="&gt;&gt;colMg_p1.Name" xml:space="preserve">
+    <value>colMg_p1</value>
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey10" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barButtonSelectFertilizers.ImageOptions.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;colHCO31.Name" xml:space="preserve">
+    <value>colHCO31</value>
+  </data>
+  <data name="colHCO3_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="layoutControlItem2.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControlItem2.Name" xml:space="preserve">
+    <value>layoutControlItem2</value>
+  </data>
+  <data name="barButtonItemSelectWater.ImageOptions.LargeImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colcaption.Caption" xml:space="preserve">
+    <value>Rubro</value>
+  </data>
+  <data name="colMg.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colMg_p1.Caption" xml:space="preserve">
+    <value>Mg %</value>
+  </data>
+  <data name="colMo.Summary1" xml:space="preserve">
+    <value>Mo</value>
+  </data>
+  <data name="&gt;&gt;colCa_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colP.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colNO3_p1.Caption" xml:space="preserve">
+    <value>NO3 %</value>
+  </data>
+  <data name="colMg.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colMn_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>27</value>
+  </data>
+  <data name="colCu_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>25</value>
+  </data>
+  <data name="colInterpretation.VisibleIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="colNa1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="colCa_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colCategory.VisibleIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="colNa_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colSO4_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colHCO31.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colCa1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;gridView2.Name" xml:space="preserve">
+    <value>gridView2</value>
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colK_p.Name" xml:space="preserve">
+    <value>colK_p</value>
+  </data>
+  <data name="&gt;&gt;barEditItemShowPercentages.Name" xml:space="preserve">
+    <value>barEditItemShowPercentages</value>
+  </data>
+  <data name="&gt;&gt;colZn1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCu1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colNa_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colHCO3.Caption" xml:space="preserve">
+    <value>HCO3</value>
+  </data>
+  <data name="&gt;&gt;barCheckItem1.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.BarCheckItem, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colNO3.Name" xml:space="preserve">
+    <value>colNO3</value>
+  </data>
+  <data name="colK_p.Summary1" xml:space="preserve">
+    <value>K_p</value>
+  </data>
+  <data name="layoutControlGroup1.ContentImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colNa1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colMn_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;masterDataTableBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="colP_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colB_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="colH2PO4_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridColumn2.ImageOptions.ImageKey9" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colZn_p.Summary1" xml:space="preserve">
+    <value>Zn_p</value>
+  </data>
+  <data name="&gt;&gt;colCu_p.Name" xml:space="preserve">
+    <value>colCu_p</value>
+  </data>
+  <data name="colMn1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colNO3_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>11</value>
+  </data>
+  <data name="colNO3_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCu_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colSO4_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>13</value>
+  </data>
+  <data name="colCl_p1.Caption" xml:space="preserve">
+    <value>Cl %</value>
+  </data>
+  <data name="barButtonItem1.ImageOptions.SvgImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;colNa.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colNO3.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colIndex.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colZn1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>30</value>
+  </data>
+  <data name="colFe.Caption" xml:space="preserve">
+    <value>Fe</value>
+  </data>
+  <data name="&gt;&gt;colS_P2.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colCu.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCu.VisibleIndex" type="System.Int32, mscorlib">
+    <value>24</value>
+  </data>
+  <data name="colCl_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>15</value>
+  </data>
+  <data name="colSO4_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colB_p1.Caption" xml:space="preserve">
+    <value>B %</value>
+  </data>
+  <data name="colNO3.VisibleIndex" type="System.Int32, mscorlib">
+    <value>10</value>
+  </data>
+  <data name="colNO3_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>11</value>
+  </data>
+  <data name="colUnit.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;gridControlBalance.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.GridControl, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;gridControl2.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;colN.Name" xml:space="preserve">
+    <value>colN</value>
+  </data>
+  <data name="colSO41.VisibleIndex" type="System.Int32, mscorlib">
+    <value>12</value>
+  </data>
+  <data name="&gt;&gt;colH2PO4_p.Name" xml:space="preserve">
+    <value>colH2PO4_p</value>
+  </data>
+  <data name="&gt;&gt;ribbon.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonControl, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMg_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colB.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colFe.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="&gt;&gt;colFe.Name" xml:space="preserve">
+    <value>colFe</value>
+  </data>
+  <data name="colMn_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colN_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colK_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemCheckEdit1.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.Repository.RepositoryItemCheckEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colHCO3_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colCa_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="colB_p.Caption" xml:space="preserve">
+    <value>B %</value>
+  </data>
+  <data name="colNa.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colAmount.VisibleIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;colValue.Name" xml:space="preserve">
+    <value>colValue</value>
+  </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>Forma de Balance</value>
+  </data>
+  <data name="&gt;&gt;colK1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMo_p.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colCa_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colH2PO4_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>17</value>
+  </data>
+  <data name="colMg_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colHCO3_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCategory.Caption" xml:space="preserve">
+    <value>Categoría</value>
+  </data>
+  <data name="colIndex.VisibleIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="colMg.Caption" xml:space="preserve">
+    <value>Mg</value>
+  </data>
+  <data name="&gt;&gt;colCa1.Name" xml:space="preserve">
+    <value>colCa1</value>
+  </data>
+  <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
+    <value>1170, 636</value>
+  </data>
+  <data name="colZn.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barButtonItem1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colB1.Name" xml:space="preserve">
+    <value>colB1</value>
+  </data>
+  <data name="&gt;&gt;colHCO3_p1.Name" xml:space="preserve">
+    <value>colHCO3_p1</value>
+  </data>
+  <data name="colCl_p1.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="&gt;&gt;colCaption1.Name" xml:space="preserve">
+    <value>colCaption1</value>
+  </data>
+  <data name="colH2PO4.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colS_P2.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.BackgroundImageLayout" type="System.Windows.Forms.ImageLayout, System.Windows.Forms">
+    <value>Tile</value>
+  </data>
+  <data name="colSO4.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colB.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colNa_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colRule.Caption" xml:space="preserve">
+    <value>Regla</value>
+  </data>
+  <data name="colHCO31.VisibleIndex" type="System.Int32, mscorlib">
+    <value>18</value>
+  </data>
+  <data name="&gt;&gt;colIndex.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colNa_p1.Name" xml:space="preserve">
+    <value>colNa_p1</value>
+  </data>
+  <data name="barCheckItem1.ImageOptions.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="ribbon.ExpandCollapseItem.ImageOptions.LargeImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;ribbonPage1.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonPage, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colZn.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colN_p2.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControl2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 250</value>
+  </data>
+  <data name="colSO4.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colZn_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colHCO3_p.Summary1" xml:space="preserve">
+    <value>HCO3_p</value>
+  </data>
+  <data name="colCa_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colZn1.Caption" xml:space="preserve">
+    <value>Zn</value>
+  </data>
+  <data name="colZn.Caption" xml:space="preserve">
+    <value>Zn</value>
+  </data>
+  <data name="&gt;&gt;colH2PO4_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colMo_p1.Name" xml:space="preserve">
+    <value>colMo_p1</value>
+  </data>
+  <data name="colIndex.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colMo1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="layoutControl1.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="colMg.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colMn_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colAmount.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMo_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="colNO31.Caption" xml:space="preserve">
+    <value>NO3</value>
+  </data>
+  <data name="&gt;&gt;colcaption.Name" xml:space="preserve">
+    <value>colcaption</value>
+  </data>
+  <data name="barEditItemShowPercentages.ImageOptions.SvgImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colMg.VisibleIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemSpinEdit1.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.Repository.RepositoryItemSpinEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="ribbonStatusBar.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 612</value>
+  </data>
+  <data name="colAmount.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colH2PO4_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="ribbon.ExpandCollapseItem.SearchTags" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colMg1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="barEditItemShowPercentages.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colMo_p1.Caption" xml:space="preserve">
+    <value>Mo %</value>
+  </data>
+  <data name="&gt;&gt;barCheckItem1.Name" xml:space="preserve">
+    <value>barCheckItem1</value>
+  </data>
+  <data name="&gt;&gt;colSO4.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colcaption.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colFe_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colNO3.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemSpinEdit1.Name" xml:space="preserve">
+    <value>repositoryItemSpinEdit1</value>
+  </data>
+  <data name="colB_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCa_p.Caption" xml:space="preserve">
+    <value>Ca %</value>
+  </data>
+  <data name="colMn1.Caption" xml:space="preserve">
+    <value>Mn</value>
+  </data>
+  <data name="colHCO3_p1.Caption" xml:space="preserve">
+    <value>HCO3 %</value>
+  </data>
+  <data name="barButtonItemSelectWater.ImageOptions.SvgImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;colN_p2.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCa_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControlBalance.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 12</value>
+  </data>
+  <data name="colHCO3.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barEditItemShowPercentages.Caption" xml:space="preserve">
+    <value>Mostrar Porcentajes</value>
+  </data>
+  <data name="colSO4_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colIndex.Name" xml:space="preserve">
+    <value>colIndex</value>
+  </data>
+  <data name="colNa_p1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colP_p.Name" xml:space="preserve">
+    <value>colP_p</value>
+  </data>
+  <data name="colCaption1.Caption" xml:space="preserve">
+    <value>Fertilizante</value>
+  </data>
+  <data name="&gt;&gt;gridView2.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Views.Grid.GridView, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colMn_p.Name" xml:space="preserve">
+    <value>colMn_p</value>
+  </data>
+  <data name="colSO4.VisibleIndex" type="System.Int32, mscorlib">
+    <value>12</value>
+  </data>
+  <data name="colMg1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;gridView1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Views.Grid.GridView, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colMg_p.Name" xml:space="preserve">
+    <value>colMg_p</value>
+  </data>
+  <data name="barButtonItem1.ImageOptions.LargeImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colNa1.Caption" xml:space="preserve">
+    <value>Na</value>
+  </data>
+  <data name="colAmount.Caption" xml:space="preserve">
+    <value>Cantidad</value>
+  </data>
+  <data name="&gt;&gt;colMo_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colH2PO41.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;colN.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCu_p1.Caption" xml:space="preserve">
+    <value>Cu %</value>
+  </data>
+  <data name="&gt;&gt;colMo1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colCl_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colAmount2.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;barButtonItem1.Name" xml:space="preserve">
+    <value>barButtonItem1</value>
+  </data>
+  <data name="&gt;&gt;colMg.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMn.Summary1" xml:space="preserve">
+    <value>Mn_p</value>
+  </data>
+  <data name="&gt;&gt;colP_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colMn.VisibleIndex" type="System.Int32, mscorlib">
+    <value>26</value>
+  </data>
+  <data name="colMo1.Caption" xml:space="preserve">
+    <value>Mo</value>
+  </data>
+  <data name="&gt;&gt;colCl_p.Name" xml:space="preserve">
+    <value>colCl_p</value>
+  </data>
+  <data name="&gt;&gt;colH2PO4_p1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colFe1.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colK.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colH2PO41.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="gridControlBalance.EmbeddedNavigator.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>Inherit</value>
+  </data>
+  <data name="&gt;&gt;colB_p.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colB.Summary" type="DevExpress.Data.SummaryItemType, DevExpress.Data.v24.1">
+    <value>Custom</value>
+  </data>
+  <data name="colH2PO4_p1.Caption" xml:space="preserve">
+    <value>H2PO4 %</value>
+  </data>
+  <data name="colAmount.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colCa1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colH2PO4.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colSO4_p.Summary2" xml:space="preserve">
+    <value>{0:n3}</value>
+  </data>
+  <data name="&gt;&gt;colH2PO4.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="barEditItemShowPercentages.ImageOptions.LargeImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="colCl_p1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colCl1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colNa_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;ribbonStatusBar.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonStatusBar, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colP.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barButtonItem1.ImageOptions.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="colCa_p.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="barEditItemShowPercentages.ImageOptions.LargeImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        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
+</value>
+  </data>
+  <data name="&gt;&gt;ribbonPageGroupWater.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonPageGroup, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="barButtonItemSelectWater.Caption" xml:space="preserve">
+    <value>Seleccionar Agua</value>
+  </data>
+  <data name="colP_p2.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colValue.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem2.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colHCO3_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>19</value>
+  </data>
+  <data name="colK1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;ribbon.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="colSO41.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;repositoryItemCheckEdit1.Name" xml:space="preserve">
+    <value>repositoryItemCheckEdit1</value>
+  </data>
+  <data name="colFe_p1.VisibleIndex" type="System.Int32, mscorlib">
+    <value>21</value>
+  </data>
+  <data name="&gt;&gt;colHCO3_p.Name" xml:space="preserve">
+    <value>colHCO3_p</value>
+  </data>
+  <data name="colHCO31.Caption" xml:space="preserve">
+    <value>HCO3</value>
+  </data>
+  <data name="&gt;&gt;colFe_p1.Name" xml:space="preserve">
+    <value>colFe_p1</value>
+  </data>
+  <data name="colB.VisibleIndex" type="System.Int32, mscorlib">
+    <value>22</value>
+  </data>
+  <data name="&gt;&gt;colB_p.Name" xml:space="preserve">
+    <value>colB_p</value>
+  </data>
+  <data name="colMn_p.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colH2PO4.Summary1" xml:space="preserve">
+    <value>H2PO4</value>
+  </data>
+  <data name="colMg_p.Summary1" xml:space="preserve">
+    <value>Mg_p</value>
+  </data>
+  <data name="&gt;&gt;colMg.Name" xml:space="preserve">
+    <value>colMg</value>
+  </data>
+  <data name="ribbon.ExpandCollapseItem.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colK_p.VisibleIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <metadata name="$this.Language" type="System.Globalization.CultureInfo, System.Private.CoreLib, Culture=neutral, PublicKeyToken=7cec85d7bea7798e">
+    <value>es</value>
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>58</value>
+  </metadata>
+  <metadata name="solutionQualityFeatureBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>417, 14</value>
+  </metadata>
+  <metadata name="balanceBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>239, 17</value>
+  </metadata>
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="masterDataTableBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+</root>

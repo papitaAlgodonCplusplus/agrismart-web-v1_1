@@ -1,0 +1,288 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Setting>
+  <Categories>
+    <Category name="PhysicalFeatures" index="1">
+      <caption>
+        <en>1-Physical Properties</en>
+        <es>1-Propiedades Físicas</es>
+      </caption>
+    </Category>
+    <Category name="Anions" index="1">
+      <caption>
+        <en>2-Anions</en>
+        <es>2-Aniones</es>
+      </caption>
+    </Category>
+    <Category name="Verifications" index="1">
+      <caption>
+        <en>3-Verifications</en>
+        <es>3-Verificaciones</es>
+      </caption>
+    </Category>
+    <Category name="Indicators" index="1">
+      <caption>
+        <en>4-Indicators</en>
+        <es>4-Indices</es>
+      </caption>
+    </Category>
+  </Categories>
+  <Features>
+    <Feature name="pH" index="1" formatString ="n2" unit="" visible="true" categoryName="PhysicalFeatures" methodName="" featureName="pH" 
+             rule="iif(val &#60; 5,'pH ácido',iif(val &#60; 6.5,'pH ligeramente ácido', iif(val &#60;7.5,'pH neutro',iif(val &#60; 8,'pH alcalino','pH muy alcalino'))))">
+      <caption>
+        <en>pH</en>
+        <es>pH</es>
+      </caption>
+      <display_name>
+        <en>Acidity</en>
+        <es>Acidez</es>
+      </display_name>
+    </Feature>
+    <Feature name="EC" index="2" formatString ="n2" unit="mS·cm-1" visible="true" categoryName="PhysicalFeatures" methodName="" featureName="EC"
+         rule="iif(val=0, 'Sin especificar',iif(val &#60; 0.75, 'Salinidad: Baja', iif(val &#60;= 1.5, 'Salinidad: Moderada', iif(val &#60;= 3, 'Salinidad: Alta', 'Salinidad: Muy alta'))))">
+      <caption>
+        <en>Electrical Conductity (CE25)</en>
+        <es>Conductividad eléctrica (CE25)</es>
+      </caption>
+      <display_name>
+        <en>Electrical Conductity (CE25)</en>
+        <es>Conductividad eléctrica (CE25)</es>
+      </display_name>
+    </Feature>
+    <Feature name="HCO3" index="3" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Anions" methodName="" featureName="HCO3"
+     rule="iif(val=0,'',iif(val &#60; 3, 'Bajo', iif(val&#60;= 6,'Medio','Alto')))">
+      <caption>
+        <en>Bicarbonato (HCO3-)</en>
+        <es>Bicarbonato (HCO3-)</es>
+      </caption>
+      <display_name>
+        <en>Bicarbonato (HCO3-)</en>
+        <es>Bicarbonato (HCO3-))</es>
+      </display_name>
+    </Feature>
+    <Feature name="CL" index="4" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Anions" methodName="" featureName="Cl"
+        rule="iif(val=0,'',iif(val &#60; 4, 'Bajo', iif(val&#60;= 10,'Medio','Alto')))">
+        <caption>
+          <en>Cloruro (Cl-)</en>
+          <es>Cloruro (Cl-="")</es>
+        </caption>
+        <display_name>
+          <en>Cloruro (Cl-)</en>
+          <es>Cloruro (Cl-))</es>
+        </display_name>
+    </Feature>
+    <Feature name="HPO4" index="5" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Anions" methodName="" featureName="H2PO4"
+      rule="iif(val=0,'',iif(val &#60; 0.1, 'Bajo', iif(val&#60;= 1,'Medio','Alto')))">
+        <caption>
+          <en>Fosfato (HPO42-)</en>
+          <es>Fosfato (HPO42-)</es>
+        </caption>
+        <display_name>
+          <en>Fosfato (HPO42-)</en>
+          <es>Fosfato (HPO42-)</es>
+        </display_name>
+      </Feature>
+    <Feature name="sumAnions" index="6" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Verifications" methodName="getSumAnions" featureName=""
+     rule="">
+      <caption>
+        <en>Sum of Anions</en>
+        <es>Suma de Aniones</es>
+      </caption>
+      <display_name>
+        <en>Sum of Anions</en>
+        <es>Suma de Aniones</es>
+      </display_name>
+    </Feature>
+    <Feature name="sumCations" index="7" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Verifications" methodName="getSumCations" featureName=""
+      rule="">
+      <caption>
+        <en>Sum of Cations</en>
+        <es>Suma de Cationes</es>
+      </caption>
+      <display_name>
+        <en>Sum of Cations</en>
+        <es>Suma de Cationes</es>
+      </display_name>
+    </Feature>
+    <Feature name="cationsAnionsDiff" index="8" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Verifications" methodName="CationAnionDiff" featureName=""
+     rule="">
+      <caption>
+        <en>Cations-Anions Difference</en>
+        <es>Diferencia entre cationes y aniones</es>
+      </caption>
+      <display_name>
+        <en>Cations-Anions Difference</en>
+        <es>Diferencia entre cationes y aniones</es>
+      </display_name>
+    </Feature>
+    <Feature name="cationsAnionsDiffPer" index="9" formatString ="n2" unit="%" visible="true" categoryName="Verifications" methodName="CationAnionDiffPer" featureName=""
+      rule="iif(val &gt; 10, 'Alta', 'En Balance')">
+      <caption>
+        <en>Cations-Anions Difference</en>
+        <es>Diferencia entre cationes - aniones respecto a cationes</es>
+      </caption>
+      <display_name>
+        <en>Cations-Anions Difference</en>
+        <es>Diferencia entre cationes - aniones respecto a cationes</es>
+      </display_name>
+    </Feature>
+    <Feature name="anionsCationDiffPer" index="10" formatString ="n2" unit="%" visible="true" categoryName="Verifications" methodName="AnionCationDiffPer" featureName=""
+      rule="iif(val &gt; 10, 'Alta', 'En Balance')">
+      <caption>
+        <en>Anions-Cation Difference</en>
+        <es>Diferencia entre cationes - aniones respecto a aniones</es>
+      </caption>
+      <display_name>
+        <en>Cations-Anions Difference</en>
+        <es>Diferencia entre cationes - aniones respecto a aniones</es>
+      </display_name>
+    </Feature>
+    <Feature name="csr" index="11" formatString ="n2" unit="%" visible="true" categoryName="Indicators" methodName="GetCSR" featureName=""
+      rule="iif(val= 0, '', iif(val &gt; 2.5, 'Agua no apropiada para riego', iif(val &gt; 1.25, 'Calidad: Dudosa', 'Calidad: Buena')))">
+      <caption>
+      <en>Carbonato sódico residual</en>
+      <es>Carbonato sódico residual</es>
+      </caption>
+      <display_name>
+        <en>Carbonato sódico residual</en>
+        <es>Carbonato sódico residual</es>
+      </display_name>
+    </Feature>
+    <Feature name="sar" index="12" formatString ="n2" unit="%" visible="true" categoryName="Indicators" methodName="GetSAR" featureName=""
+      rule="iif(val &gt; 10, 'Alta', 'En Balance')">
+      <caption>
+        <en>Relación de adsorción de sodio (SAR)</en>
+        <es>Relación de adsorción de sodio (SAR)</es>
+      </caption>
+      <display_name>
+        <en>Relación de adsorción de sodio (SAR)</en>
+        <es>Relación de adsorción de sodio (SAR)</es>
+      </display_name>
+    </Feature>
+    <Feature name="psi" index="13" formatString ="n2" unit="%" visible="true" categoryName="Indicators" methodName="GetPSI" featureName=""
+      rule="">
+      <caption>
+        <en>Porcentaje de sodio intercambiable (PSI)</en>
+        <es>Porcentaje de sodio intercambiable (PSI)</es>
+      </caption>
+      <display_name>
+        <en>Porcentaje de sodio intercambiable (PSI)</en>
+        <es>Porcentaje de sodio intercambiable (PSI)</es>
+      </display_name>
+    </Feature>
+    <Feature name="camgrel" index="14" formatString ="n2" unit="%" visible="true" categoryName="Indicators" methodName="GetCaMgRel" featureName=""
+      rule="">
+      <caption>
+        <en>Relación Ca2+ / Mg2+</en>
+        <es>Relación Ca2+ / Mg2+ </es>
+      </caption>
+      <display_name>
+        <en>Relación Ca2+ / Mg2+ </en>
+        <es>Relación Ca2+ / Mg2+ </es>
+      </display_name>
+    </Feature>
+    <Feature name="camgrel" index="15" formatString ="n2" unit="%" visible="true" categoryName="Indicators" methodName="GetCaMgRel" featureName=""
+  rule="">
+      <caption>
+        <en>Relación Ca2+ / Mg2+</en>
+        <es>Relación Ca2+ / Mg2+ </es>
+      </caption>
+      <display_name>
+        <en>Relación Ca2+ / Mg2+ </en>
+        <es>Relación Ca2+ / Mg2+ </es>
+      </display_name>
+    </Feature>
+    <Feature name="bi" index="16" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Indicators" methodName="GetBI" featureName=""
+       rule="iif(val &#62;= -5 and val &#60;= 5,'Balance',iif(val &#62; 5,'desbalance: cationes mayor que aniones', 'desbalance aniones mayor que cationes'))">
+      <caption>
+        <en>Balance Iónico</en>
+        <es>Balance Iónico</es>
+      </caption>
+      <display_name>
+        <en>Balance Iónico</en>
+        <es>Balance Iónico</es>
+      </display_name>
+    </Feature>
+    <Feature name="isc" index="17" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Indicators" methodName="GetScott" featureName=""
+          rule="iif(val &#60;= 1, 'Calidad: Buena', iif(val &#62; 1 and val &#60;= 2, 'Calidad: Regular', iif(val &#62; 2 and val &#60;= 3, 'Calidad: Mala', 'Calidad: Muy mala')))">
+      <caption>
+        <en>Índice de Scott Clásico</en>
+        <es>Índice de Scott Clásico</es>
+      </caption>
+      <display_name>
+        <en>Índice de Scott Clásico</en>
+        <es>Índice de Scott Clásico</es>
+      </display_name>
+    </Feature>
+    <Feature name="icar" index="18" formatString ="n2" unit="%" visible="true" categoryName="Indicators" methodName="GetIcar" featureName=""
+           rule="iif(val &#62;= 90, 'Calidad: Excelente', iif(val &#62;= 70 and val &#60; 90, 'Calidad: Buena', iif(val &#62;= 50 and val &#60; 70, 'Calidad: Moderada',
+       iif(val &#62;= 30 and val &#60; 50, 'Calidad: Mala', 'Agua no apta para riego'))))">
+      <caption>
+        <en>Índice de Calidad del Agua para Riego (ICAR)</en>
+        <es>Índice de Calidad del Agua para Riego (ICAR)</es>
+      </caption>
+      <display_name>
+        <en>Índice de Calidad del Agua para Riego (ICAR)</en>
+        <es>Índice de Calidad del Agua para Riego (ICAR)</es>
+      </display_name>
+    </Feature>
+    <Feature name="ik" index="19" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Indicators" methodName="GetIk" featureName=""
+           rule="iif(val &#60;= 0.5, 'Calidad: Buena', iif(val &#62; 0.5 and val &#60;= 1, 'Calidad: Regular', iif(val &#62; 1 and val &#60;= 2, 'Calidad: Mala', 
+       'Calidad: Muy mala')))">
+      <caption>
+        <en>Índice de Kovda (IK)</en>
+        <es>Índice de Kovda (IK)</es>
+      </caption>
+      <display_name>
+        <en>Índice de Kovda (IK)</en>
+        <es>Índice de Kovda (IK)</es>
+      </display_name>
+    </Feature>
+    <Feature name="isc" index="20" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Indicators" methodName="GetScott" featureName=""
+           rule="iif(val &#60;= 1, 'Calidad: Buena', iif(val &#62; 1 and val &#60;= 2, 'Calidad: Regular', iif(val &#62; 2 and val &#60;= 3, 'Calidad: Mala', 'Calidad: Muy mala')))">
+      <caption>
+        <en>Índice de Scott Clásico</en>
+        <es>Índice de Scott Clásico</es>
+      </caption>
+      <display_name>
+        <en>Índice de Scott Clásico</en>
+        <es>Índice de Scott Clásico</es>
+      </display_name>
+    </Feature>
+    <Feature name="ias" index="21" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Indicators" methodName="GetIas" featureName=""
+       rule="iif(val &#60;= 1, 'Calidad: Buena', iif(val &#62; 1 and val &#60;= 2, 'Calidad: Regular', iif(val &#62; 2 and val &#60;= 3, 'Calidad: Mala', 
+       'Calidad: Muy mala')))">
+      <caption>
+        <en>Índice de ajuste por salinidad (IAS)</en>
+        <es>Índice de ajuste por salinidad (IAS)</es>
+      </caption>
+      <display_name>
+        <en>Índice de ajuste por salinidad (IAS)</en>
+        <es>Índice de ajuste por salinidad (IAS)</es>
+      </display_name>
+    </Feature>
+    <Feature name="dt" index="22" formatString ="n2" unit="°fH" visible="true" categoryName="Indicators" methodName="GetDt" featureName=""
+       rule="iif(val &#60; 7, 'Agua muy blanda', iif(val &#62;= 7 and val &#60; 14, 'Agua blanda', iif(val &#62;= 14 and val &#60; 22, 'Agua semiblanda',
+       iif(val &#62;= 22 and val &#60; 32, 'Agua semidura', iif(val &#62;= 32 and val &#60; 54, 'Agua dura', 'Agua muy dura')))))">
+      <caption>
+        <en>Dureza en grados hidrométricos franceses</en>
+        <es>Dureza en grados hidrométricos franceses</es>
+      </caption>
+      <display_name>
+        <en>Dureza en grados hidrométricos franceses</en>
+        <es>Dureza en grados hidrométricos franceses</es>
+      </display_name>
+    </Feature>
+    <Feature name="cel" index="23" formatString ="n2" unit="meq·L-1" visible="true" categoryName="Indicators" methodName="GetElectrostaticaBalance" featureName=""
+   rule="iif(val &#60; -5, 'Afecta la obsorción de cationes', iif(val &#62;= -5 and val &#60; 5, 'Solución con buen equilibrio eléctrico', iif(val &#62;= 5, 'Afecta la obsorción de Aniones')))">
+      <caption>
+        <en>Electrostatic Charge</en>
+        <es>Carga Electrostática</es>
+      </caption>
+      <display_name>
+        <en>Electrostatic Charge</en>
+        <es>Carga Electrostática</es>
+      </display_name>
+    </Feature>
+  </Features>
+</Setting>

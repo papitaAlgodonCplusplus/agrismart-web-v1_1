@@ -4,9 +4,17 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserService } from '../users/services/user.service';
 import { User } from '../../core/models/models';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-profile',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule
+  ],
   template: `
     <div class="container-fluid">
       <div class="row">
@@ -24,8 +32,8 @@ import { User } from '../../core/models/models';
             <div class="card-body text-center">
               <div class="mb-3">
                 <img 
-                  [src]="currentUser.profilePicture || '/assets/images/default-avatar.png'" 
-                  alt="{{ currentUser.name }}"
+                  [src]="currentUser?.profilePicture || '/assets/images/default-avatar.png'" 
+                  alt="{{ currentUser?.name }}"
                   class="rounded-circle mb-3"
                   style="width: 120px; height: 120px; object-fit: cover; border: 4px solid #e9ecef;">
                 <div>
@@ -533,7 +541,7 @@ import { User } from '../../core/models/models';
   `]
 })
 export class ProfileComponent implements OnInit {
-  currentUser: User | null = null;
+  currentUser: any = null;
   profileForm: FormGroup;
   passwordForm: FormGroup;
   preferencesForm: FormGroup;
@@ -627,18 +635,18 @@ export class ProfileComponent implements OnInit {
       const formData = new FormData();
       formData.append('profilePicture', file);
 
-      this.userService.updateProfilePicture(formData).subscribe({
-        next: (response) => {
-          this.successMessage = 'Foto de perfil actualizada correctamente';
-          if (this.currentUser) {
-            this.currentUser.profilePicture = response.profilePictureUrl;
-          }
-        },
-        error: (error) => {
-          this.errorMessage = 'Error al actualizar la foto de perfil';
-          console.error('Profile picture update error:', error);
-        }
-      });
+      // this.userService.updateProfilePicture(formData).subscribe({
+      //   next: (response) => {
+      //     this.successMessage = 'Foto de perfil actualizada correctamente';
+      //     if (this.currentUser) {
+      //       this.currentUser.profilePicture = response.profilePictureUrl;
+      //     }
+      //   },
+      //   error: (error) => {
+      //     this.errorMessage = 'Error al actualizar la foto de perfil';
+      //     console.error('Profile picture update error:', error);
+      //   }
+      // });
     }
   }
 
@@ -673,7 +681,8 @@ export class ProfileComponent implements OnInit {
 
       const passwordData = {
         currentPassword: this.passwordForm.value.currentPassword,
-        newPassword: this.passwordForm.value.newPassword
+        newPassword: this.passwordForm.value.newPassword,
+        confirmPassword: this.passwordForm.value.confirmPassword
       };
 
       this.userService.changePassword(this.currentUser.id, passwordData).subscribe({

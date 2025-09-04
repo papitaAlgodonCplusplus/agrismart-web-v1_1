@@ -4,9 +4,17 @@ import { Router } from '@angular/router';
 import { FertilizerService } from '../services/fertilizer.service';
 import { Fertilizer } from '../../../core/models/models';
 import { Observable } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-fertilizer-list',
+   standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule
+  ],
   template: `
     <div class="container-fluid">
       <div class="row mb-4">

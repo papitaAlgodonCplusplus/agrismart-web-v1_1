@@ -1,0 +1,36 @@
+.tinyColumn {
+    width:20px;
+}
+
+.smallColumn {
+    width:100px;
+}
+
+.normalColumn {
+    width: 220px;
+}
+
+.bigColumn {
+    width: 300px;
+}
+
+.hugeColumn {
+    width: 400px;
+}
+
+.manageDevices {
+    height:450px;
+}
+
+.manageFarms {
+    height: 450px;
+}
+
+.agrismart-nav-link {
+    color: white;
+}
+
+    .agrismart-nav-link:hover, .agrismart-nav-link:focus, .agrismart-nav-link:active {
+        color: lightgray;
+    }
+

@@ -4,9 +4,17 @@ import { Router } from '@angular/router';
 import { FertilizerInputService } from '../services/fertilizer-input.service';
 import { FertilizerInput } from '../../../core/models/models';
 import { Observable } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-fertilizer-input-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule
+  ],
   template: `
     <div class="container-fluid">
       <div class="row mb-4">
@@ -188,7 +196,7 @@ import { Observable } from 'rxjs';
                           {{ getStatusText(input.status) }}
                         </span>
                         <div class="text-muted small" *ngIf="input.verifiedBy">
-                          Verificado por {{ input.verifiedBy?.name }}
+                          Verificado por {{ input.verifiedBy.name }}
                         </div>
                       </td>
                       <td>

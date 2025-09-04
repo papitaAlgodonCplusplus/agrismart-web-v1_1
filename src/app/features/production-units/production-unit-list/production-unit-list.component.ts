@@ -4,9 +4,17 @@ import { Router } from '@angular/router';
 import { ProductionUnitService } from '../services/production-unit.service';
 import { ProductionUnit } from '../../../core/models/models';
 import { Observable } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-production-unit-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule
+  ],
   template: `
     <div class="container-fluid">
       <div class="row mb-4">
@@ -287,7 +295,7 @@ export class ProductionUnitListComponent implements OnInit {
   constructor(
     private productionUnitService: ProductionUnitService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadFarms();
@@ -306,7 +314,7 @@ export class ProductionUnitListComponent implements OnInit {
     };
 
     this.productionUnits$ = this.productionUnitService.getAll(filters);
-    
+
     this.productionUnits$.subscribe({
       next: (units) => {
         this.isLoading = false;
@@ -362,8 +370,8 @@ export class ProductionUnitListComponent implements OnInit {
   }
 
   getTypeClass(typeName: string | undefined): string {
-    if (typeName === undefined){
-      typeName =  'Invernadero'
+    if (typeName === undefined) {
+      typeName = 'Invernadero'
     }
 
     const typeClasses: { [key: string]: string } = {

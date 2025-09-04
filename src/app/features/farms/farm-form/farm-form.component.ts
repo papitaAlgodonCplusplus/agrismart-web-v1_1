@@ -6,9 +6,18 @@ import { FarmService } from '../services/farm.service';
 import { CompanyService } from '../../companies/services/company.service';
 import { Farm } from '../../../core/models/models';
 import { Company } from '../../../core/models/models';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-farm-form',
+  
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule
+  ],
   template: `
     <div class="container-fluid">
       <div class="row">

@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[PowerBIUser]
+(
+	[PowerBiUser] NVARCHAR(50) NOT NULL,
+	[UserId] INT NOT NULL,
+	[DateCreated] DATETIME NOT NULL DEFAULT GETDATE()
+)

@@ -1,0 +1,911 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Setting>
+  <ModelStandard>
+   <GridBalance>
+        <Rows>
+          <Row name="requirements" parent="">
+            <caption>
+              <en>Requirements</en>
+              <es>Requerimientos</es>
+            </caption>
+          </Row>
+          <Row name="global" parent="requirements">
+            <caption>
+              <en>Global</en>
+              <es>Global</es>
+            </caption>
+          </Row>
+          <Row name="manteinance" parent="requirements">
+            <caption>
+              <en>Manteinance</en>
+              <es>Mantenimiento</es>
+            </caption>
+          </Row>
+          <Row name="pregnancy" parent="requirements">
+            <caption>
+              <en>Pregnancy</en>
+              <es>Preñéz</es>
+            </caption>
+          </Row>
+          <Row name="lactaction" parent="requirements">
+            <caption>
+              <en>Lactaction</en>
+              <es>Lactación</es>
+            </caption>
+          </Row>
+          <Row name="growth" parent="requirements">
+            <caption>
+              <en>Growth</en>
+              <es>Crecimiento</es>
+            </caption>
+          </Row>
+          <Row name="supplies" parent="">
+            <caption>
+              <en>Supplies</en>
+              <es>Aportes</es>
+            </caption>
+          </Row>
+        </Rows>
+        <Columns>
+          <Column name="MFC" index="1" formatString ="n2" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>MFC</en>
+              <es>MSC</es>
+            </caption>
+            <display_name>
+              <en>Margin Over Feed Cost</en>
+              <es>Margen sobre Costo de Alimentación</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="global" outputVar="IncomeMilk" methodName =""></RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetSupply" feature="MFC"></SupplyRow>
+          </Column>
+          <Column name="MFC_p" index="2" formatString ="P" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>MFC %</en>
+              <es>MSC %</es>
+            </caption>
+            <display_name>
+              <en>Margin Over Feed Cost %</en>
+              <es>Margen sobre Costo de Alimentación como %</es>
+            </display_name>
+          </Column>
+          <Column name="DM" index="3" formatString ="n2" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>DMI</en>
+              <es>CMS</es>
+            </caption>
+            <display_name>
+              <en>Dry Matter Intake</en>
+              <es>Consumo de Materia Seca</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="global" outputVar="DMILact" methodName =""></RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetSupply" feature="DM"></SupplyRow>
+          </Column>
+          <Column name="DM_p" index="4" formatString ="P" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>DMI %</en>
+              <es>CMS %</es>
+            </caption>
+            <display_name>
+              <en>Dry Matter Intake as %</en>
+              <es>Consumo de Materia Seca como %</es>
+            </display_name>
+          </Column>
+          <Column name="NEl" index="5" formatString ="n2" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>NEl</en>
+              <es>ENl</es>
+            </caption>
+            <display_name>
+              <en>Net Energy (Mcal/day)</en>
+              <es>Energía Neta (Mcal/day)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="NEMaint" methodName =""></RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="NEPreg" methodName =""></RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="NELact" methodName =""></RequirementRow>
+              <RequirementRow rowName="growth" outputVar="NEGrowth" methodName =""></RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetSupply" feature="NEl"></SupplyRow>
+          </Column>
+          <Column name="NEl_p" index="6" formatString ="P" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>NEl %</en>
+              <es>ENl %</es>
+            </caption>
+            <display_name>
+              <en>Net Energy as %</en>
+              <es>Energía Neta como %</es>
+            </display_name>
+          </Column>
+          <Column name="MP" index="7" formatString ="n2" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>MP</en>
+              <es>PM</es>
+            </caption>
+            <display_name>
+              <en>Metabolizable Protein (gr/day)</en>
+              <es>Proteína Metabolizable (gr/día)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="MPMaint" methodName =""></RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="MPPreg" methodName =""></RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="MPLact" methodName =""></RequirementRow>
+              <RequirementRow rowName="growth" outputVar="MPGrowth" methodName =""></RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetSupply" feature="MP"></SupplyRow>
+          </Column>
+          <Column name="MP_p" index="8" formatString ="P" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>MP %</en>
+              <es>PM %</es>
+            </caption>
+            <display_name>
+              <en>Metabolizable Protein as %</en>
+              <es>Proteína Metabolizable como %</es>
+            </display_name>
+          </Column>
+          <Column name="RDP" index="9" formatString ="n2" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>RDP</en>
+              <es>PDR</es>
+            </caption>
+            <display_name>
+              <en>Rumen Degradable Protein (gr/day)</en>
+              <es>Proteína Degradable en Rumen (gr/día)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="global" outputVar="RDPReq" methodName =""></RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetSupply" feature="RDP"></SupplyRow>
+          </Column>
+          <Column name="RDP_p" index="10" formatString ="P" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>RDP %</en>
+              <es>PDR %</es>
+            </caption>
+            <display_name>
+              <en>Rumen DegradableProtein as %</en>
+              <es>Proteína Degradable en Rumen como %</es>
+            </display_name>
+          </Column>
+          <Column name="RUP" index="11" formatString ="n2" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>RUP</en>
+              <es>PNDR</es>
+            </caption>
+            <display_name>
+              <en>Rumen Undegradable Protein (gr/day) </en>
+              <es>Proteína No Degradable en Rumen (gr/día)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="global" outputVar="RUPReq" methodName =""></RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetSupply" feature="RUP"></SupplyRow>
+          </Column>
+          <Column name="RUP_p" index="12" formatString ="P" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>RUP %</en>
+              <es>PNDR %</es>
+            </caption>
+            <display_name>
+              <en>Rumen UndegradableProtein as %</en>
+              <es>Proteína No Degradable en Rumen como %</es>
+            </display_name>
+          </Column>
+          <Column name="NDF" index="13" formatString ="n2" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>NDF</en>
+              <es>FND</es>
+            </caption>
+            <display_name>
+              <en>Neutro Detergent Fiber</en>
+              <es>Fibra Neutro Detergente</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="global" outputVar="FNDReq" methodName =""></RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetSupply" feature="NDF"></SupplyRow>
+          </Column>
+          <Column name="NDF_p" index="14" formatString ="P" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>NDF %</en>
+              <es>FND %</es>
+            </caption>
+            <display_name>
+              <en>Neutro Detergent Fiber as %</en>
+              <es>Fibra Neutro Detergente como %</es>
+            </display_name>
+          </Column>
+          <Column name="ADF" index="15" formatString ="n2" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>ADF</en>
+              <es>FAD</es>
+            </caption>
+            <display_name>
+              <en>Acid Detergent Fiber</en>
+              <es>Fibra Acido Detergente</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="global" outputVar="FADReq" methodName =""></RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetSupply" feature="ADF"></SupplyRow>
+          </Column>
+          <Column name="ADF_p" index="16" formatString ="P" visible="true" targetGrid="MainBalance">
+            <caption>
+              <en>ADF %</en>
+              <es>FAD %</es>
+            </caption>
+            <display_name>
+              <en>Acid Detergent Fiber as %</en>
+              <es>Fibra Acido Detergente como %</es>
+            </display_name>
+          </Column>
+          <Column name="Ca" index="17" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Ca</en>
+              <es>Ca</es>
+            </caption>
+            <display_name>
+              <en>Calcium (g/d)</en>
+              <es>Calcio (g/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="Ca"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="Ca"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="Ca"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="Ca"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="Ca"></SupplyRow>
+          </Column>
+          <Column name="Ca_p" index="18" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Ca %</en>
+              <es>Ca %</es>
+            </caption>
+            <display_name>
+              <en>Calcium as %</en>
+              <es>Calcio como %</es>
+            </display_name>
+          </Column>
+          <Column name="P" index="19" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>P</en>
+              <es>P</es>
+            </caption>
+            <display_name>
+              <en>Fosforum (g/d)</en>
+              <es>Fósforo (g/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="P"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="P"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="P"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="P"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="P"></SupplyRow>
+          </Column>
+          <Column name="P_p" index="20" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>P %</en>
+              <es>P %</es>
+            </caption>
+            <display_name>
+              <en>Fosforum as %</en>
+              <es>Fósforo como %</es>
+            </display_name>
+          </Column>
+          <Column name="Mg" index="23" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Mg</en>
+              <es>Mg</es>
+            </caption>
+            <display_name>
+              <en>Magnesium (g/d)</en>
+              <es>Magnesio (g/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="Mg"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="Mg"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="Mg"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="Mg"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="Mg"></SupplyRow>
+          </Column>
+          <Column name="Mg_p" index="24" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Mg %</en>
+              <es>Mg %</es>
+            </caption>
+            <display_name>
+              <en>Magnesium as %</en>
+              <es>Magnesio como %</es>
+            </display_name>
+          </Column>
+          <Column name="K" index="25" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>K</en>
+              <es>K</es>
+            </caption>
+            <display_name>
+              <en>Potasium (g/d)</en>
+              <es>Potasio (g/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="K"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="K"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="K"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="K"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="K"></SupplyRow>
+          </Column>
+          <Column name="K_p" index="26" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>K %</en>
+              <es>K %</es>
+            </caption>
+            <display_name>
+              <en>Potasium as %</en>
+              <es>Potasio como %</es>
+            </display_name>
+          </Column>
+          <Column name="Na" index="27" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Na</en>
+              <es>Na</es>
+            </caption>
+            <display_name>
+              <en>Sodium (g/d)</en>
+              <es>Sodio (g/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="Na"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="Na"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="Na"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="Na"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="Na"></SupplyRow>
+          </Column>
+          <Column name="Na_p" index="28" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Na %</en>
+              <es>Na %</es>
+            </caption>
+            <display_name>
+              <en>Sodium as %</en>
+              <es>Sodio como %</es>
+            </display_name>
+          </Column>
+          <Column name="S" index="29" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>S</en>
+              <es>S</es>
+            </caption>
+            <display_name>
+              <en>Sulfur (g/d)</en>
+              <es>Azufre (g/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="S"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="S"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="S"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="S"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="S"></SupplyRow>
+          </Column>
+          <Column name="S_p" index="30" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>S %</en>
+              <es>S %</es>
+            </caption>
+            <display_name>
+              <en>Sulfur as %</en>
+              <es>Azufre como %</es>
+            </display_name>
+          </Column>
+          <Column name="Co" index="31" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Co</en>
+              <es>Co</es>
+            </caption>
+            <display_name>
+              <en>Cobalt (mg/d)</en>
+              <es>Cobalto (mg/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="Co"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="Co"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="Co"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="Co"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="Co"></SupplyRow>
+          </Column>
+          <Column name="Co_p" index="32" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Cobalt %</en>
+              <es>Cobalto %</es>
+            </caption>
+            <display_name>
+              <en>Cobalt as %</en>
+              <es>Cobalto como %</es>
+            </display_name>
+          </Column>
+          <Column name="Cu" index="33" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Cu</en>
+              <es>Cu</es>
+            </caption>
+            <display_name>
+              <en>Copper (mg/d)</en>
+              <es>Cobre (mg/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="Cu"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="Cu"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="Cu"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="Cu"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="Cu"></SupplyRow>
+          </Column>
+          <Column name="Cu_p" index="34" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Cu %</en>
+              <es>Cu %</es>
+            </caption>
+            <display_name>
+              <en>Copper as %</en>
+              <es>Cobre como %</es>
+            </display_name>
+          </Column>
+          <Column name="I" index="35" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>I</en>
+              <es>I</es>
+            </caption>
+            <display_name>
+              <en>Iodine (mg/d)</en>
+              <es>Yodo (mg/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="I"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="I"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="I"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="I"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="I"></SupplyRow>
+          </Column>
+          <Column name="I_p" index="36" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>I %</en>
+              <es>I %</es>
+            </caption>
+            <display_name>
+              <en>Iodine as %</en>
+              <es>Yodo como %</es>
+            </display_name>
+          </Column>
+          <Column name="Fe" index="37" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Fe</en>
+              <es>Fe</es>
+            </caption>
+            <display_name>
+              <en>Iron (mg/d)</en>
+              <es>Hierro (mg/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="Fe"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="Fe"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="Fe"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="Fe"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="Fe"></SupplyRow>
+          </Column>
+          <Column name="Fe_p" index="38" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Fe %</en>
+              <es>Fe %</es>
+            </caption>
+            <display_name>
+              <en>Iron as %</en>
+              <es>Hierro como %</es>
+            </display_name>
+          </Column>
+          <Column name="Mn" index="39" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Mn</en>
+              <es>Mn</es>
+            </caption>
+            <display_name>
+              <en>Manganese (mg/d)</en>
+              <es>Manganesio (mg/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="Mn"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="Mn"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="Mn"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="Mn"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="Mn"></SupplyRow>
+          </Column>
+          <Column name="Mn_p" index="40" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Mn %</en>
+              <es>Mn %</es>
+            </caption>
+            <display_name>
+              <en>Maganese as %</en>
+              <es>Manganesio como %</es>
+            </display_name>
+          </Column>
+          <Column name="Cl" index="41" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Cl</en>
+              <es>Cl</es>
+            </caption>
+            <display_name>
+              <en>Chlorine (mg/d)</en>
+              <es>Cloro (mg/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="Cl"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="Cl"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="Cl"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="Cl"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="Cl"></SupplyRow>
+          </Column>
+          <Column name="Cl_p" index="42" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>CL %</en>
+              <es>CL %</es>
+            </caption>
+            <display_name>
+              <en>Chlorine as %</en>
+              <es>Cloro como %</es>
+            </display_name>
+          </Column>
+          <Column name="Se" index="43" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Se</en>
+              <es>Se</es>
+            </caption>
+            <display_name>
+              <en>Selenium (mg/d)</en>
+              <es>Selenio (mg/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="Se"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="Se"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="Se"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="Se"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="Se"></SupplyRow>
+          </Column>
+          <Column name="Se_p" index="44" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Se %</en>
+              <es>Se %</es>
+            </caption>
+            <display_name>
+              <en>Selenium as %</en>
+              <es>Selenio como %</es>
+            </display_name>
+          </Column>
+          <Column name="Zn" index="45" formatString ="n2" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Zn</en>
+              <es>Zn</es>
+            </caption>
+            <display_name>
+              <en>Zinc (mg/d)</en>
+              <es>Zinc (mg/d)</es>
+            </display_name>
+            <RequirementRows>
+              <RequirementRow rowName="manteinance" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Maintenance"></Parm>
+                  <Parm type="string" value="Zn"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="pregnancy" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Pregnancy"></Parm>
+                  <Parm type="string" value="Zn"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="lactaction" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Lactation"></Parm>
+                  <Parm type="string" value="Zn"></Parm>
+                </Parms>
+              </RequirementRow>
+              <RequirementRow rowName="growth" outputVar="" methodName ="GetMineralRequirement">
+                <Parms>
+                  <Parm type="string" value="Growth"></Parm>
+                  <Parm type="string" value="Zn"></Parm>
+                </Parms>
+              </RequirementRow>
+            </RequirementRows>
+            <SupplyRow methodName="GetMineralSupply" feature="Zn"></SupplyRow>
+          </Column>
+          <Column name="Zn_p" index="46" formatString ="P" visible="true" targetGrid="MineralBalance">
+            <caption>
+              <en>Zn %</en>
+              <es>Zn %</es>
+            </caption>
+            <display_name>
+              <en>Zinc as %</en>
+              <es>Zinc como %</es>
+            </display_name>
+          </Column>
+        </Columns>
+      </GridBalance>
+   <GridResults>
+   </GridResults>
+  </ModelStandard>
+</Setting>

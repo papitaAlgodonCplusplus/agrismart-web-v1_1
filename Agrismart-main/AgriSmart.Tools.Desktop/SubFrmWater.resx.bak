@@ -1,0 +1,1230 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="layoutControl1.Appearance.DisabledLayoutGroupCaption.FontStyleDelta" type="System.Drawing.FontStyle, System.Drawing">
+    <value>Regular</value>
+  </data>
+  <data name="rowName.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="rowCreatedDate.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;colInterpretation.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="layoutControlItem2.Text" xml:space="preserve">
+    <value>Chemistry</value>
+  </data>
+  <data name="&gt;&gt;gridControl2.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="rowpH.Properties.Caption" xml:space="preserve">
+    <value>pH</value>
+  </data>
+  <data name="&gt;&gt;rowModifiedDate.Name" xml:space="preserve">
+    <value>rowModifiedDate</value>
+  </data>
+  <data name="rowBO4.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowNa.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowHCO3.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;gridControl1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.GridControl, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowWaterId.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="colName.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colIndex.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="rowMg.Properties.Caption" xml:space="preserve">
+    <value>Mg</value>
+  </data>
+  <data name="&gt;&gt;waterChemistryBindingSource.Name" xml:space="preserve">
+    <value>waterChemistryBindingSource</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem3.Name" xml:space="preserve">
+    <value>layoutControlItem3</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Left</value>
+  </data>
+  <data name="&gt;&gt;rowName.Name" xml:space="preserve">
+    <value>rowName</value>
+  </data>
+  <data name="row.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowCreatedDate.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="vGridControl1.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="rowSO4.Properties.Caption" xml:space="preserve">
+    <value>SO4</value>
+  </data>
+  <data name="&gt;&gt;rowWaterId.Name" xml:space="preserve">
+    <value>rowWaterId</value>
+  </data>
+  <data name="&gt;&gt;rowAnalysisDate.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowEC.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowMOO4.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colInterpretation.VisibleIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;rowSO4.Name" xml:space="preserve">
+    <value>rowSO4</value>
+  </data>
+  <data name="rowCl.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowNa.Name" xml:space="preserve">
+    <value>rowNa</value>
+  </data>
+  <data name="rowModifiedBy.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowCreatedDate.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowModifiedDate.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControl1.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;rowMn.Name" xml:space="preserve">
+    <value>rowMn</value>
+  </data>
+  <data name="rowNa.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;vGridControl1.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="rowH2PO4.Properties.Caption" xml:space="preserve">
+    <value>H2PO4</value>
+  </data>
+  <data name="rowEC.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowWaterId.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowCreatedDate.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="vGridControl1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>724, 28</value>
+  </data>
+  <data name="rowNO3.Properties.Caption" xml:space="preserve">
+    <value>NO3</value>
+  </data>
+  <data name="row.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowZn.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowWaterId.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="layoutControl1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="rowBO4.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowHCO3.Properties.Caption" xml:space="preserve">
+    <value>HCO3</value>
+  </data>
+  <data name="&gt;&gt;gridControl2.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.GridControl, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowK.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowEC.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colUnit.Name" xml:space="preserve">
+    <value>colUnit</value>
+  </data>
+  <data name="rowNO3.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowCa.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="repositoryItemCheckEdit1.AutoHeight" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="rowCa.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowNa.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="layoutControl1.OptionsPrint.AppearanceItemCaption.GradientMode" type="System.Drawing.Drawing2D.LinearGradientMode, System.Drawing">
+    <value>Horizontal</value>
+  </data>
+  <data name="rowpH.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="gridControl2.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="rowMg.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowEC.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowId.Properties.Caption" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="&gt;&gt;rowCreatedDate.Name" xml:space="preserve">
+    <value>rowCreatedDate</value>
+  </data>
+  <data name="&gt;&gt;rowHCO3.Name" xml:space="preserve">
+    <value>rowHCO3</value>
+  </data>
+  <data name="&gt;&gt;rowNO3.Name" xml:space="preserve">
+    <value>rowNO3</value>
+  </data>
+  <data name="&gt;&gt;rowMn.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <assembly alias="DevExpress.Data.v17.1" name="DevExpress.Data.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+  <data name="gridControl1.EmbeddedNavigator.AllowHtmlTextInToolTip" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v17.1">
+    <value>Default</value>
+  </data>
+  <data name="layoutControl1.OptionsPrint.AppearanceGroupCaption.GradientMode" type="System.Drawing.Drawing2D.LinearGradientMode, System.Drawing">
+    <value>Horizontal</value>
+  </data>
+  <data name="colValue.VisibleIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="rowB.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowpH.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowName.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowCa.Properties.Caption" xml:space="preserve">
+    <value>Ca</value>
+  </data>
+  <data name="layoutControl1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="&gt;&gt;rowCreatedBy.Name" xml:space="preserve">
+    <value>rowCreatedBy</value>
+  </data>
+  <data name="&gt;&gt;gridControl1.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="rowCu.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.ToolTipTitle" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowK.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colCaption.Name" xml:space="preserve">
+    <value>colCaption</value>
+  </data>
+  <data name="rowMOO4.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="gridControl1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>708, 629</value>
+  </data>
+  <data name="rowName.Properties.Caption" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="colIndex.VisibleIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;rowNO3.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowpH.Name" xml:space="preserve">
+    <value>rowpH</value>
+  </data>
+  <data name="rowCl.Properties.Caption" xml:space="preserve">
+    <value>Cl</value>
+  </data>
+  <data name="&gt;&gt;colRule.Name" xml:space="preserve">
+    <value>colRule</value>
+  </data>
+  <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
+    <value>6, 13</value>
+  </data>
+  <data name="&gt;&gt;gridView2.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Views.Grid.GridView, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="layoutControl1.OptionsPrint.AppearanceGroupCaption.FontSizeDelta" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="rowBO4.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowCreatedDate.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowMn.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowMn.Properties.Caption" xml:space="preserve">
+    <value>Mn</value>
+  </data>
+  <data name="rowpH.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowModifiedDate.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowCa.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <assembly alias="DevExpress.XtraEditors.v17.1" name="DevExpress.XtraEditors.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+  <data name="gridControl2.EmbeddedNavigator.TextLocation" type="DevExpress.XtraEditors.NavigatorButtonsTextLocation, DevExpress.XtraEditors.v17.1">
+    <value>Center</value>
+  </data>
+  <data name="&gt;&gt;rowWaterId.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colIndex.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowCl.Name" xml:space="preserve">
+    <value>rowCl</value>
+  </data>
+  <data name="rowEC.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowNO3.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;$this.Type" xml:space="preserve">
+    <value>System.Windows.Forms.UserControl, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;gridControl2.Name" xml:space="preserve">
+    <value>gridControl2</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+    <value>Top, Left</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemCheckEdit1.Name" xml:space="preserve">
+    <value>repositoryItemCheckEdit1</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem3.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colName.Name" xml:space="preserve">
+    <value>colName</value>
+  </data>
+  <data name="rowModifiedDate.Properties.Caption" xml:space="preserve">
+    <value>Modified Date</value>
+  </data>
+  <data name="&gt;&gt;rowCl.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowNH4.Properties.Caption" xml:space="preserve">
+    <value>NH4</value>
+  </data>
+  <data name="&gt;&gt;rowpH.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="layoutControl1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="&gt;&gt;rowMOO4.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowEC.Name" xml:space="preserve">
+    <value>rowEC</value>
+  </data>
+  <data name="&gt;&gt;layoutControlGroup1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlGroup, DevExpress.XtraLayout.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;gridView2.Name" xml:space="preserve">
+    <value>gridView2</value>
+  </data>
+  <data name="rowId.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowMg.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowId.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowK.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowNH4.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowAnalysisDate.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colCategory.VisibleIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="rowMOO4.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowName.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.AllowHtmlTextInToolTip" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v17.1">
+    <value>Default</value>
+  </data>
+  <data name="rowName.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowMg.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.BackgroundImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colCaption.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="layoutControl1.Appearance.DisabledLayoutItem.FontSizeDelta" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="rowNH4.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControlItem2.Name" xml:space="preserve">
+    <value>layoutControlItem2</value>
+  </data>
+  <data name="rowNO3.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowNH4.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;colCategory.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colCaption.Caption" xml:space="preserve">
+    <value>Indicator</value>
+  </data>
+  <data name="rowB.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowId.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowFe.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowAnalysisDate.Name" xml:space="preserve">
+    <value>rowAnalysisDate</value>
+  </data>
+  <data name="rowCl.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowFe.Name" xml:space="preserve">
+    <value>rowFe</value>
+  </data>
+  <data name="rowAnalysisDate.Properties.Caption" xml:space="preserve">
+    <value>Analysis Date</value>
+  </data>
+  <data name="rowAnalysisDate.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowZn.Properties.Caption" xml:space="preserve">
+    <value>Zn</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>Inherit</value>
+  </data>
+  <data name="layoutControl1.OptionsPrint.AppearanceGroupCaption.Image" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colValue.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="rowCreatedBy.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="colId.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="&gt;&gt;gridView1.Name" xml:space="preserve">
+    <value>gridView1</value>
+  </data>
+  <data name="colCategory.Caption" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="rowNa.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;waterQualityFeatureBindingSource.Name" xml:space="preserve">
+    <value>waterQualityFeatureBindingSource</value>
+  </data>
+  <data name="rowModifiedBy.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowCu.Properties.Caption" xml:space="preserve">
+    <value>Cu</value>
+  </data>
+  <data name="rowZn.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowModifiedBy.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowEC.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;colValue.Name" xml:space="preserve">
+    <value>colValue</value>
+  </data>
+  <data name="rowMn.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colCaption.VisibleIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;rowB.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowModifiedDate.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colValue.Caption" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="&gt;&gt;colSelected.Name" xml:space="preserve">
+    <value>colSelected</value>
+  </data>
+  <data name="colUnit.VisibleIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;gridControl1.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;colInterpretation.Name" xml:space="preserve">
+    <value>colInterpretation</value>
+  </data>
+  <data name="&gt;&gt;waterBindingSource.Name" xml:space="preserve">
+    <value>waterBindingSource</value>
+  </data>
+  <data name="&gt;&gt;rowCreatedBy.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowHCO3.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowNO3.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowFe.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowCu.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="row.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowBO4.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.MaximumSize" type="System.Drawing.Size, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="&gt;&gt;rowBO4.Name" xml:space="preserve">
+    <value>rowBO4</value>
+  </data>
+  <data name="rowCu.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="layoutControl1.Appearance.DisabledLayoutGroupCaption.FontSizeDelta" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="rowNa.Properties.Caption" xml:space="preserve">
+    <value>Na</value>
+  </data>
+  <data name="&gt;&gt;rowZn.Name" xml:space="preserve">
+    <value>rowZn</value>
+  </data>
+  <data name="colSelected.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="gridControl2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>724, 291</value>
+  </data>
+  <data name="rowNa.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;gridView1.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Views.Grid.GridView, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowK.Properties.Caption" xml:space="preserve">
+    <value>K</value>
+  </data>
+  <data name="gridControl1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>12, 12</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.BackgroundImageLayout" type="System.Windows.Forms.ImageLayout, System.Windows.Forms">
+    <value>Tile</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.BackgroundImageLayout" type="System.Windows.Forms.ImageLayout, System.Windows.Forms">
+    <value>Tile</value>
+  </data>
+  <data name="colId.VisibleIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="rowModifiedBy.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;vGridControl1.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.VGridControl, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowB.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="row.Properties.Caption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowMn.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowName.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;gridControl1.Name" xml:space="preserve">
+    <value>gridControl1</value>
+  </data>
+  <data name="colUnit.Caption" xml:space="preserve">
+    <value>Unit</value>
+  </data>
+  <data name="&gt;&gt;waterQualityFeatureBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="layoutControl1.Text" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;gridControl2.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="colCategory.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="rowBO4.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowHCO3.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colIndex.Name" xml:space="preserve">
+    <value>colIndex</value>
+  </data>
+  <data name="&gt;&gt;rowNH4.Name" xml:space="preserve">
+    <value>rowNH4</value>
+  </data>
+  <data name="rowModifiedBy.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="row.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowZn.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowMg.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowMOO4.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colSelected.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="layoutControl1.Appearance.DisabledLayoutItem.FontStyleDelta" type="System.Drawing.FontStyle, System.Drawing">
+    <value>Regular</value>
+  </data>
+  <data name="&gt;&gt;rowMg.Name" xml:space="preserve">
+    <value>rowMg</value>
+  </data>
+  <data name="rowCreatedBy.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControl1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControl, DevExpress.XtraLayout.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.TextLocation" type="DevExpress.XtraEditors.NavigatorButtonsTextLocation, DevExpress.XtraEditors.v17.1">
+    <value>Center</value>
+  </data>
+  <data name="layoutControl1.OptionsPrint.AppearanceItemCaption.Image" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowSO4.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowH2PO4.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowModifiedDate.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;waterBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="layoutControl1.OptionsPrint.AppearanceGroupCaption.FontStyleDelta" type="System.Drawing.FontStyle, System.Drawing">
+    <value>Regular</value>
+  </data>
+  <data name="rowId.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowZn.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowB.Name" xml:space="preserve">
+    <value>rowB</value>
+  </data>
+  <data name="vGridControl1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>564, 259</value>
+  </data>
+  <data name="rowH2PO4.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="layoutControl1.Appearance.DisabledLayoutGroupCaption.GradientMode" type="System.Drawing.Drawing2D.LinearGradientMode, System.Drawing">
+    <value>Horizontal</value>
+  </data>
+  <data name="rowModifiedBy.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowHCO3.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowB.Properties.Caption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowCreatedBy.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.AccessibleName" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowModifiedDate.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowBO4.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="rowCreatedBy.Properties.Caption" xml:space="preserve">
+    <value>Created By</value>
+  </data>
+  <data name="rowBO4.Properties.Caption" xml:space="preserve">
+    <value>BO4</value>
+  </data>
+  <data name="rowCa.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;colId.Name" xml:space="preserve">
+    <value>colId</value>
+  </data>
+  <data name="rowHCO3.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowCreatedDate.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowAnalysisDate.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControl2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>564, 350</value>
+  </data>
+  <data name="rowCreatedDate.Properties.Caption" xml:space="preserve">
+    <value>Created Date</value>
+  </data>
+  <data name="rowMOO4.Properties.Caption" xml:space="preserve">
+    <value>MOO4</value>
+  </data>
+  <data name="rowH2PO4.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowCl.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;colName.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowNH4.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowModifiedDate.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowMg.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowK.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowId.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowId.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.MaximumSize" type="System.Drawing.Size, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="colInterpretation.Caption" xml:space="preserve">
+    <value>Intepretation</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;$this.Name" xml:space="preserve">
+    <value>SubFrmWater</value>
+  </data>
+  <data name="&gt;&gt;layoutControlGroup1.Name" xml:space="preserve">
+    <value>layoutControlGroup1</value>
+  </data>
+  <data name="colRule.Caption" xml:space="preserve">
+    <value>Rule</value>
+  </data>
+  <data name="rowName.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowK.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="gridControl1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;rowSO4.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colCaption.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowSO4.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowB.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowSO4.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colCategory.Name" xml:space="preserve">
+    <value>colCategory</value>
+  </data>
+  <data name="rowMn.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowpH.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.AccessibleDescription" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowH2PO4.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowMOO4.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowNa.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="colName.VisibleIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="rowWaterId.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;vGridControl1.Name" xml:space="preserve">
+    <value>vGridControl1</value>
+  </data>
+  <data name="&gt;&gt;rowK.Name" xml:space="preserve">
+    <value>rowK</value>
+  </data>
+  <data name="rowMg.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowAnalysisDate.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowSO4.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowWaterId.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="$this.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1300, 653</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem1.Name" xml:space="preserve">
+    <value>layoutControlItem1</value>
+  </data>
+  <data name="&gt;&gt;colId.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colValue.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowB.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowCreatedBy.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowCa.Name" xml:space="preserve">
+    <value>rowCa</value>
+  </data>
+  <data name="rowCreatedBy.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.BackgroundImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>Inherit</value>
+  </data>
+  <data name="rowH2PO4.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowpH.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowZn.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowFe.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowModifiedBy.Name" xml:space="preserve">
+    <value>rowModifiedBy</value>
+  </data>
+  <data name="layoutControl1.Appearance.DisabledLayoutGroupCaption.Image" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowNH4.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowCu.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="layoutControl1.OptionsPrint.AppearanceItemCaption.FontSizeDelta" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="layoutControl1.Appearance.DisabledLayoutItem.GradientMode" type="System.Drawing.Drawing2D.LinearGradientMode, System.Drawing">
+    <value>Horizontal</value>
+  </data>
+  <data name="&gt;&gt;rowMOO4.Name" xml:space="preserve">
+    <value>rowMOO4</value>
+  </data>
+  <data name="rowNO3.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowCa.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;vGridControl1.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="rowEC.Properties.Caption" xml:space="preserve">
+    <value>EC</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.Name" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="rowK.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowH2PO4.Name" xml:space="preserve">
+    <value>rowH2PO4</value>
+  </data>
+  <data name="rowFe.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="colUnit.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="rowMn.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="layoutControl1.Appearance.DisabledLayoutItem.Image" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowFe.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="rowFe.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowFe.Properties.Caption" xml:space="preserve">
+    <value>Fe</value>
+  </data>
+  <assembly alias="DevExpress.Utils.v17.1" name="DevExpress.Utils.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+  <data name="gridControl1.EmbeddedNavigator.ToolTipIconType" type="DevExpress.Utils.ToolTipIconType, DevExpress.Utils.v17.1">
+    <value>None</value>
+  </data>
+  <data name="colSelected.VisibleIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemCheckEdit1.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.Repository.RepositoryItemCheckEdit, DevExpress.XtraEditors.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;rowId.Name" xml:space="preserve">
+    <value>rowId</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem2.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="layoutControl1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1300, 653</value>
+  </data>
+  <data name="gridControl2.EmbeddedNavigator.ToolTipIconType" type="DevExpress.Utils.ToolTipIconType, DevExpress.Utils.v17.1">
+    <value>None</value>
+  </data>
+  <data name="layoutControl1.OptionsPrint.AppearanceItemCaption.FontStyleDelta" type="System.Drawing.FontStyle, System.Drawing">
+    <value>Regular</value>
+  </data>
+  <data name="&gt;&gt;rowH2PO4.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowCl.Properties.Value" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowModifiedBy.Properties.Caption" xml:space="preserve">
+    <value>Modified By</value>
+  </data>
+  <data name="rowAnalysisDate.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="rowNH4.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowCa.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowZn.Properties.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="colInterpretation.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="gridControl1.EmbeddedNavigator.ToolTipTitle" xml:space="preserve">
+    <value />
+  </data>
+  <data name="rowHCO3.Properties.RowEdit" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="&gt;&gt;colUnit.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="rowWaterId.Properties.Caption" xml:space="preserve">
+    <value>Water Id</value>
+  </data>
+  <data name="rowSO4.Properties.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowCu.Type" xml:space="preserve">
+    <value>DevExpress.XtraVerticalGrid.Rows.EditorRow, DevExpress.XtraVerticalGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="row.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;colRule.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v17.1, Version=17.1.17.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;waterChemistryBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="rowCl.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;rowCu.Name" xml:space="preserve">
+    <value>rowCu</value>
+  </data>
+  <data name="rowCu.Properties.CustomizationCaption" xml:space="preserve">
+    <value />
+  </data>
+  <metadata name="waterQualityFeatureBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>393, 17</value>
+  </metadata>
+  <metadata name="$this.Language" type="System.Globalization.CultureInfo, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>es</value>
+  </metadata>
+  <metadata name="waterBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>141</value>
+  </metadata>
+  <metadata name="waterChemistryBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>178, 17</value>
+  </metadata>
+</root>

@@ -1,0 +1,23 @@
+﻿@page "/FertilizerInput"
+
+@using Agrismart.Agronomic.UI.Services.Models;
+@using Agrismart.Agronomic.UI.Pages.Components
+@using Agrismart.Agronomic.UI.Services.Interfaces
+@using Agrismart.Agronomic.UI.Services.Requests
+@using Agrismart.Agronomic.UI.Services.Requests.Commands
+@using Agrismart.Agronomic.UI.Services.Requests.Queries
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using System.ComponentModel.DataAnnotations
+@attribute [Authorize]
+
+@inject IFertilizerInputService _fertilizerInputService
+@inject ICatalogService _catalogService
+@inject IFertilizerService _fertilizerService
+
+<PageTitle>Aportes de Fertilizante</PageTitle>
+
+<h2>Lista de Aportes de Fertilizante</h2>
+<hr />
+
+}

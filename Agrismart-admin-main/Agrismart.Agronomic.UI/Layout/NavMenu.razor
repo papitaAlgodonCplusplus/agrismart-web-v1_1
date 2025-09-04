@@ -1,0 +1,202 @@
+﻿<div class="col-auto col-md-4 col-xl-2 px-sm-2 px-0" style="background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);">
+    <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
+        <a href="/" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+            <span class="fs-5 d-none d-sm-inline"><img src="/images/agrismart50.png" style="width:95%" /></span>
+        </a>
+        <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start" id="menu" >
+            <li class="nav-item">
+                <a href="/" class="nav-link align-middle px-0 agrismart-nav-link">
+                    <i class="fs-4 bi-house"></i> <span class="ms-1 d-none d-sm-inline">Inicio</span>
+                </a>
+            </li>  
+            <AuthorizeView Roles="1">
+                <Authorized>
+                    <li>
+                        <a href="#submenu1" data-bs-toggle="collapse" class="nav-link px-0 align-middle agrismart-nav-link">
+                            <i class="fs-4 bi-buildings"></i> <span class="ms-1 d-none d-sm-inline">Entidades de Negocio</span>
+                        </a>
+                        <ul class="collapse nav flex-column ms-1" id="submenu1" data-bs-parent="#menu">
+                            <li class="w-100">
+                                <a href="clients" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Clientes</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="companies" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Compañías</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="farms" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Fincas</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="devices" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Dispositivos</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="sensors" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Sensores</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                        <li>
+                            <a href="#submenu2" data-bs-toggle="collapse" class="nav-link px-0 align-middle agrismart-nav-link">
+                            <i class="fs-4 bi-unity"></i> <span class="ms-1 d-none d-sm-inline">Producción</span>
+                            </a>
+                            <ul class="collapse nav flex-column ms-1" id="submenu2" data-bs-parent="#menu">
+                            <li class="w-100">
+                                <a href="productionunits" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Unidades de Producción</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="cropproductions" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Producciones de Cultivo</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="cropproductionirrigationsectors" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Secciones de Riego de Cultivo</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="droppers" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Goteros</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="relaymodules" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Módulos de Releé</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#submenu3" data-bs-toggle="collapse" class="nav-link px-0 align-middle agrismart-nav-link">
+                            <i class="fs-4 bi-archive"></i> <span class="ms-1 d-none d-sm-inline">Catálogos</span>
+                        </a>
+                        <ul class="collapse nav flex-column ms-1" id="submenu3" data-bs-parent="#menu">
+                            <li class="w-100">
+                                <a href="catalogs" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Catálogos</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="fertilizers" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Fertilizantes</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="fertilizerchemistries" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Química de los Fertilizantes</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="waters" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Aguas</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="waterchemistries" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Química de las Aguas</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="measurementvariables" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Variable de medición</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="containers" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Contenedores</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="growingmediums" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Medios de Crecimiento</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="calculationsettings" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Parámetros de Cálculo</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="cropphases" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Fases de Cultivo</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="cropphaseoptimals" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Optimos de Fase de Cultivo</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#submenu4" data-bs-toggle="collapse" class="nav-link px-0 align-middle agrismart-nav-link">
+                            <i class="fs-4 bi-gear-fill"></i> <span class="ms-1 d-none d-sm-inline">Administración</span>
+                        </a>
+                        <ul class="collapse nav flex-column ms-1" id="submenu4" data-bs-parent="#menu">
+                            <li class="w-100">
+                                <a href="licenses" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Licencias</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="users" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Usuarios</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="3">
+                <Authorized>
+                    <li>
+                        <a href="#submenu1" data-bs-toggle="collapse" class="nav-link px-0 align-middle agrismart-nav-link">
+                            <i class="fs-4 bi-buildings"></i> <span class="ms-1 d-none d-sm-inline">Entidades de Negocio</span>
+                        </a>
+                        <ul class="collapse show nav flex-column ms-1" id="submenu1" data-bs-parent="#menu">
+                            <li class="w-100">
+                                <a href="farms" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Fincas</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="productionunits" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Unidades de Producción</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="cropproductions" class="nav-link px-0 align-middle agrismart-nav-link">
+                                    <i class="fs-4"></i> <span class="d-none d-sm-inline">Producciones de Cultivo</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </Authorized>
+            </AuthorizeView>
+        </ul> 
+        <hr />
+        <div class="dropdown pb-4">
+            <AuthorizeView>
+                <NotAuthorized>
+                    <a href="login" class="nav-link align-middle px-0">
+                        <i class="fs-4 bi-box-arrow-in-right"></i> <span class="ms-1 d-none d-sm-inline">Ingresar</span>
+                    </a>
+                </NotAuthorized>
+                <Authorized>
+                    <a href="logout" class="nav-link align-middle px-0">
+                        <i class="fs-4 bi-box-arrow-in-left"></i> <span class="ms-1 d-none d-sm-inline">Salir</span>
+                    </a>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</div>

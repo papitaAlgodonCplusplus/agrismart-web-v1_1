@@ -1,0 +1,1059 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="gridLookUpEdit1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>101, 84</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="gridLookUpEdit1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <assembly alias="DevExpress.Utils.v24.1" name="DevExpress.Utils.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+  <data name="gridLookUpEdit1.Properties.Buttons" type="DevExpress.XtraEditors.Controls.ButtonPredefines, DevExpress.Utils.v24.1">
+    <value>Combo</value>
+  </data>
+  <metadata name="cropProductionModelBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>207, 54</value>
+  </metadata>
+  <data name="colId.Caption" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="colId.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colId.VisibleIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="colId.Width" type="System.Int32, mscorlib">
+    <value>87</value>
+  </data>
+  <data name="colName.Caption" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="colName.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colName.VisibleIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="colName.Width" type="System.Int32, mscorlib">
+    <value>87</value>
+  </data>
+  <data name="colCropId.Caption" xml:space="preserve">
+    <value>Crop</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.AutoHeight" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Buttons" type="DevExpress.XtraEditors.Controls.ButtonPredefines, DevExpress.Utils.v24.1">
+    <value>Combo</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns1" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns2" type="System.Int32, mscorlib">
+    <value>33</value>
+  </data>
+  <assembly alias="DevExpress.Data.v24.1" name="DevExpress.Data.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+  <data name="repositoryItemLookUpEditCrops.Columns3" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>Numeric</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns4" xml:space="preserve">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns5" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns6" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Far</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns7" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns8" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns9" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns10" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns11" type="System.Int32, mscorlib">
+    <value>37</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns12" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns13" xml:space="preserve">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns14" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns15" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Near</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns16" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="repositoryItemLookUpEditCrops.Columns17" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <metadata name="cropModelBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>192, 17</value>
+  </metadata>
+  <data name="colCropId.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colCropId.VisibleIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="colCropId.Width" type="System.Int32, mscorlib">
+    <value>87</value>
+  </data>
+  <data name="colProductionUnitId.Caption" xml:space="preserve">
+    <value>Production Unit</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.AutoHeight" type="System.Boolean, mscorlib">
+    <value>False</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Buttons" type="DevExpress.XtraEditors.Controls.ButtonPredefines, DevExpress.Utils.v24.1">
+    <value>Combo</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns1" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns2" type="System.Int32, mscorlib">
+    <value>20</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns3" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>Numeric</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns4" xml:space="preserve">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns5" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns6" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Far</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns7" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns8" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns9" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns10" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns11" type="System.Int32, mscorlib">
+    <value>37</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns12" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns13" xml:space="preserve">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns14" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns15" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Near</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns16" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns17" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns18" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns19" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns20" type="System.Int32, mscorlib">
+    <value>63</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns21" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns22" xml:space="preserve">
+    <value />
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns23" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns24" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Near</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns25" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="repositoryItemLookUpEditProductionUnits.Columns26" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <metadata name="productionUnitModelBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>455, 54</value>
+  </metadata>
+  <data name="colProductionUnitId.Visible" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="colProductionUnitId.VisibleIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="colProductionUnitId.Width" type="System.Int32, mscorlib">
+    <value>87</value>
+  </data>
+  <data name="gridLookUpEdit1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>469, 20</value>
+  </data>
+  <data name="gridLookUpEdit1.TabIndex" type="System.Int32, mscorlib">
+    <value>10</value>
+  </data>
+  <data name="&gt;&gt;gridLookUpEdit1.Name" xml:space="preserve">
+    <value>gridLookUpEdit1</value>
+  </data>
+  <data name="&gt;&gt;gridLookUpEdit1.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.GridLookUpEdit, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;gridLookUpEdit1.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;gridLookUpEdit1.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="textEditSessionName.Location" type="System.Drawing.Point, System.Drawing">
+    <value>101, 12</value>
+  </data>
+  <data name="textEditSessionName.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="textEditSessionName.Size" type="System.Drawing.Size, System.Drawing">
+    <value>469, 20</value>
+  </data>
+  <data name="textEditSessionName.TabIndex" type="System.Int32, mscorlib">
+    <value>9</value>
+  </data>
+  <metadata name="dxValidationProvider1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>601, 17</value>
+  </metadata>
+  <data name="&gt;&gt;textEditSessionName.Name" xml:space="preserve">
+    <value>textEditSessionName</value>
+  </data>
+  <data name="&gt;&gt;textEditSessionName.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.TextEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;textEditSessionName.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;textEditSessionName.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="btnCancel.Location" type="System.Drawing.Point, System.Drawing">
+    <value>283, 173</value>
+  </data>
+  <data name="btnCancel.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="btnCancel.Size" type="System.Drawing.Size, System.Drawing">
+    <value>77, 22</value>
+  </data>
+  <data name="btnCancel.TabIndex" type="System.Int32, mscorlib">
+    <value>8</value>
+  </data>
+  <data name="btnCancel.Text" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="&gt;&gt;btnCancel.Name" xml:space="preserve">
+    <value>btnCancel</value>
+  </data>
+  <data name="&gt;&gt;btnCancel.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.SimpleButton, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;btnCancel.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;btnCancel.ZOrder" xml:space="preserve">
+    <value>6</value>
+  </data>
+  <data name="btnContinue.Location" type="System.Drawing.Point, System.Drawing">
+    <value>198, 173</value>
+  </data>
+  <data name="btnContinue.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="btnContinue.Size" type="System.Drawing.Size, System.Drawing">
+    <value>81, 22</value>
+  </data>
+  <data name="btnContinue.TabIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
+  <data name="btnContinue.Text" xml:space="preserve">
+    <value>Continue</value>
+  </data>
+  <data name="&gt;&gt;btnContinue.Name" xml:space="preserve">
+    <value>btnContinue</value>
+  </data>
+  <data name="&gt;&gt;btnContinue.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.SimpleButton, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;btnContinue.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;btnContinue.ZOrder" xml:space="preserve">
+    <value>7</value>
+  </data>
+  <data name="lookUpEditPhase.Location" type="System.Drawing.Point, System.Drawing">
+    <value>101, 108</value>
+  </data>
+  <data name="lookUpEditPhase.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Buttons" type="DevExpress.XtraEditors.Controls.ButtonPredefines, DevExpress.Utils.v24.1">
+    <value>Combo</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns1" xml:space="preserve">
+    <value>Phase Name</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns2" type="System.Int32, mscorlib">
+    <value>43</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns3" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns4" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns5" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns6" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Near</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns7" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns8" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns9" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns10" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns11" type="System.Int32, mscorlib">
+    <value>73</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns12" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns13" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns14" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns15" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Near</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns16" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns17" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns18" xml:space="preserve">
+    <value>Sequence</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns19" xml:space="preserve">
+    <value>Sequence</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns20" type="System.Int32, mscorlib">
+    <value>66</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns21" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>Numeric</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns22" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns23" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns24" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Far</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns25" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns26" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns27" xml:space="preserve">
+    <value>StartingWeek</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns28" xml:space="preserve">
+    <value>Starting Week</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns29" type="System.Int32, mscorlib">
+    <value>91</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns30" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>Numeric</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns31" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns32" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns33" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Far</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns34" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns35" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns36" xml:space="preserve">
+    <value>EndingWeek</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns37" xml:space="preserve">
+    <value>Ending Week</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns38" type="System.Int32, mscorlib">
+    <value>84</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns39" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>Numeric</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns40" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns41" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns42" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Far</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns43" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditPhase.Properties.Columns44" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <metadata name="cropPhaseModelBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>381, 17</value>
+  </metadata>
+  <data name="lookUpEditPhase.Size" type="System.Drawing.Size, System.Drawing">
+    <value>469, 20</value>
+  </data>
+  <data name="lookUpEditPhase.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditPhase.Name" xml:space="preserve">
+    <value>lookUpEditPhase</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditPhase.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.LookUpEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditPhase.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditPhase.ZOrder" xml:space="preserve">
+    <value>8</value>
+  </data>
+  <data name="lookUpEditCompany.Location" type="System.Drawing.Point, System.Drawing">
+    <value>101, 36</value>
+  </data>
+  <data name="lookUpEditCompany.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Buttons" type="DevExpress.XtraEditors.Controls.ButtonPredefines, DevExpress.Utils.v24.1">
+    <value>Combo</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns1" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns2" type="System.Int32, mscorlib">
+    <value>23</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns3" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>Numeric</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns4" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns5" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns6" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Far</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns7" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns8" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns9" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns10" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns11" type="System.Int32, mscorlib">
+    <value>43</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns12" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns13" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns14" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns15" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Near</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns16" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns17" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns18" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns19" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns20" type="System.Int32, mscorlib">
+    <value>23</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns21" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns22" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns23" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns24" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns25" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditCompany.Properties.Columns26" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <metadata name="companyModelBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>770, 17</value>
+  </metadata>
+  <data name="lookUpEditCompany.Size" type="System.Drawing.Size, System.Drawing">
+    <value>469, 20</value>
+  </data>
+  <data name="lookUpEditCompany.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditCompany.Name" xml:space="preserve">
+    <value>lookUpEditCompany</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditCompany.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.LookUpEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditCompany.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditCompany.ZOrder" xml:space="preserve">
+    <value>9</value>
+  </data>
+  <data name="lookUpEditFarm.Location" type="System.Drawing.Point, System.Drawing">
+    <value>101, 60</value>
+  </data>
+  <data name="lookUpEditFarm.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Buttons" type="DevExpress.XtraEditors.Controls.ButtonPredefines, DevExpress.Utils.v24.1">
+    <value>Combo</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns1" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns2" type="System.Int32, mscorlib">
+    <value>23</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns3" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>Numeric</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns4" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns5" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns6" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Far</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns7" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns8" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns9" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns10" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns11" type="System.Int32, mscorlib">
+    <value>43</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns12" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns13" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns14" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns15" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Near</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns16" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns17" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns18" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns19" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns20" type="System.Int32, mscorlib">
+    <value>73</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns21" type="DevExpress.Utils.FormatType, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns22" xml:space="preserve">
+    <value />
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns23" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns24" type="DevExpress.Utils.HorzAlignment, DevExpress.Data.v24.1">
+    <value>Near</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns25" type="DevExpress.Data.ColumnSortOrder, DevExpress.Data.v24.1">
+    <value>None</value>
+  </data>
+  <data name="lookUpEditFarm.Properties.Columns26" type="DevExpress.Utils.DefaultBoolean, DevExpress.Data.v24.1">
+    <value>Default</value>
+  </data>
+  <metadata name="farmModelBindingSource.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 54</value>
+  </metadata>
+  <data name="lookUpEditFarm.Size" type="System.Drawing.Size, System.Drawing">
+    <value>469, 20</value>
+  </data>
+  <data name="lookUpEditFarm.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditFarm.Name" xml:space="preserve">
+    <value>lookUpEditFarm</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditFarm.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.LookUpEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditFarm.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;lookUpEditFarm.ZOrder" xml:space="preserve">
+    <value>10</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="layoutControl1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="layoutControl1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="layoutControl1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="layoutControlItem3.Text" xml:space="preserve">
+    <value>Crop Phase</value>
+  </data>
+  <data name="layoutControlItem6.Text" xml:space="preserve">
+    <value>Session Name</value>
+  </data>
+  <data name="layoutControlItemCompany.CustomizationFormText" xml:space="preserve">
+    <value>Company</value>
+  </data>
+  <data name="layoutControlItemCompany.Text" xml:space="preserve">
+    <value>Company</value>
+  </data>
+  <data name="layoutControlItemFarm.CustomizationFormText" xml:space="preserve">
+    <value>Farm</value>
+  </data>
+  <data name="layoutControlItemFarm.Text" xml:space="preserve">
+    <value>Farm</value>
+  </data>
+  <data name="layoutControlItem1.Text" xml:space="preserve">
+    <value>Crop Production</value>
+  </data>
+  <data name="layoutControl1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>582, 207</value>
+  </data>
+  <data name="layoutControl1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="layoutControl1.Text" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.Name" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControl, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>103</value>
+  </metadata>
+  <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
+    <value>7, 15</value>
+  </data>
+  <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
+    <value>582, 207</value>
+  </data>
+  <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>4, 3, 4, 3</value>
+  </data>
+  <data name="$this.StartPosition" type="System.Windows.Forms.FormStartPosition, System.Windows.Forms">
+    <value>CenterScreen</value>
+  </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>FrmSessionInfo</value>
+  </data>
+  <data name="&gt;&gt;splashScreenManager1.Name" xml:space="preserve">
+    <value>splashScreenManager1</value>
+  </data>
+  <data name="&gt;&gt;splashScreenManager1.Type" xml:space="preserve">
+    <value>DevExpress.XtraSplashScreen.SplashScreenManager, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;cropProductionModelBindingSource.Name" xml:space="preserve">
+    <value>cropProductionModelBindingSource</value>
+  </data>
+  <data name="&gt;&gt;cropProductionModelBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;gridLookUpEdit1View.Name" xml:space="preserve">
+    <value>gridLookUpEdit1View</value>
+  </data>
+  <data name="&gt;&gt;gridLookUpEdit1View.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Views.Grid.GridView, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colId.Name" xml:space="preserve">
+    <value>colId</value>
+  </data>
+  <data name="&gt;&gt;colId.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colName.Name" xml:space="preserve">
+    <value>colName</value>
+  </data>
+  <data name="&gt;&gt;colName.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;colCropId.Name" xml:space="preserve">
+    <value>colCropId</value>
+  </data>
+  <data name="&gt;&gt;colCropId.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemLookUpEditCrops.Name" xml:space="preserve">
+    <value>repositoryItemLookUpEditCrops</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemLookUpEditCrops.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.Repository.RepositoryItemLookUpEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;cropModelBindingSource.Name" xml:space="preserve">
+    <value>cropModelBindingSource</value>
+  </data>
+  <data name="&gt;&gt;cropModelBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;colProductionUnitId.Name" xml:space="preserve">
+    <value>colProductionUnitId</value>
+  </data>
+  <data name="&gt;&gt;colProductionUnitId.Type" xml:space="preserve">
+    <value>DevExpress.XtraGrid.Columns.GridColumn, DevExpress.XtraGrid.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemLookUpEditProductionUnits.Name" xml:space="preserve">
+    <value>repositoryItemLookUpEditProductionUnits</value>
+  </data>
+  <data name="&gt;&gt;repositoryItemLookUpEditProductionUnits.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.Repository.RepositoryItemLookUpEdit, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;productionUnitModelBindingSource.Name" xml:space="preserve">
+    <value>productionUnitModelBindingSource</value>
+  </data>
+  <data name="&gt;&gt;productionUnitModelBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;cropPhaseModelBindingSource.Name" xml:space="preserve">
+    <value>cropPhaseModelBindingSource</value>
+  </data>
+  <data name="&gt;&gt;cropPhaseModelBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;companyModelBindingSource.Name" xml:space="preserve">
+    <value>companyModelBindingSource</value>
+  </data>
+  <data name="&gt;&gt;companyModelBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;farmModelBindingSource.Name" xml:space="preserve">
+    <value>farmModelBindingSource</value>
+  </data>
+  <data name="&gt;&gt;farmModelBindingSource.Type" xml:space="preserve">
+    <value>System.Windows.Forms.BindingSource, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;layoutControlGroup1.Name" xml:space="preserve">
+    <value>layoutControlGroup1</value>
+  </data>
+  <data name="&gt;&gt;layoutControlGroup1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlGroup, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;emptySpaceItem1.Name" xml:space="preserve">
+    <value>emptySpaceItem1</value>
+  </data>
+  <data name="&gt;&gt;emptySpaceItem1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.EmptySpaceItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem3.Name" xml:space="preserve">
+    <value>layoutControlItem3</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem3.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem4.Name" xml:space="preserve">
+    <value>layoutControlItem4</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem4.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem5.Name" xml:space="preserve">
+    <value>layoutControlItem5</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem5.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;emptySpaceItem2.Name" xml:space="preserve">
+    <value>emptySpaceItem2</value>
+  </data>
+  <data name="&gt;&gt;emptySpaceItem2.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.EmptySpaceItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;emptySpaceItem3.Name" xml:space="preserve">
+    <value>emptySpaceItem3</value>
+  </data>
+  <data name="&gt;&gt;emptySpaceItem3.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.EmptySpaceItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem6.Name" xml:space="preserve">
+    <value>layoutControlItem6</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem6.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItemCompany.Name" xml:space="preserve">
+    <value>layoutControlItemCompany</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItemCompany.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItemFarm.Name" xml:space="preserve">
+    <value>layoutControlItemFarm</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItemFarm.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem1.Name" xml:space="preserve">
+    <value>layoutControlItem1</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;dxValidationProvider1.Name" xml:space="preserve">
+    <value>dxValidationProvider1</value>
+  </data>
+  <data name="&gt;&gt;dxValidationProvider1.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.DXErrorProvider.DXValidationProvider, DevExpress.XtraEditors.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;$this.Name" xml:space="preserve">
+    <value>FrmSessionInfo</value>
+  </data>
+  <data name="&gt;&gt;$this.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Form, System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+</root>

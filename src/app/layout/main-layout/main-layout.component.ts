@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { Observable } from 'rxjs';
 import { SidebarComponent } from "../sidebar/sidebar.component";
+import { RouterModule, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-main-layout',
@@ -16,7 +17,9 @@ import { SidebarComponent } from "../sidebar/sidebar.component";
       </div>
     </div>
   `,
-  imports: [SidebarComponent]
+  imports: [RouterModule, RouterOutlet],
+  standalone: true,
+  styleUrls: ['./main-layout.component.scss']
 })
 export class MainLayoutComponent implements OnInit {
   constructor(private authService: AuthService) {}

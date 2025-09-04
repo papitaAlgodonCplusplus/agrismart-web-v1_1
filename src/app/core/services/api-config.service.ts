@@ -12,7 +12,8 @@ export class ApiConfigService {
   readonly endpoints = {
     auth: {
       login: '/api/authentication/login',
-      refresh: '/api/authentication/refresh'
+      refresh: '/api/authentication/refresh',
+      refreshToken: '/api/authentication/refresh-token'
     },
     companies: '/api/companies',
     farms: '/api/farms',

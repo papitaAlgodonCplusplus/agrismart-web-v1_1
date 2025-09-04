@@ -75,6 +75,24 @@ export class AuthService {
     }
   }
 
+  public getUserRoles(): string[] {
+    const user = this.currentUserSubject.value;
+    return user?.roles || [];
+  }
+
+  public refreshToken(refreshToken: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
+      `${this.apiConfig.agronomicApiUrl}${this.apiConfig.endpoints.auth.refreshToken}`,
+      { refreshToken }
+    ).pipe(
+      tap(response => {
+        localStorage.setItem('access_token', response.token);
+        localStorage.setItem('refresh_token', response.refreshToken);
+        this.setCurrentUser(response.user);
+      })
+    );
+  }
+
   private isTokenExpired(token: string): boolean {
     // Implement token expiration check
     const decoded = this.decodeToken(token);

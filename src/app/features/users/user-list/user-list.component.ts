@@ -2,11 +2,19 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { UserService } from '../services/user.service';
-import { User } from '../../../core/models/user.model';
+import { User } from '../../../core/models/models';
 import { Observable } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-user-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule
+  ],
   template: `
     <div class="container-fluid">
       <div class="row mb-4">
@@ -163,7 +171,7 @@ import { Observable } from 'rxjs';
                           {{ user.profile?.name || 'Sin perfil' }}
                         </span>
                         <div class="text-muted small" *ngIf="user.profile?.description">
-                          {{ user.profile.description }}
+                          {{ user.profile?.description }}
                         </div>
                       </td>
                       <td>
@@ -552,7 +560,9 @@ export class UserListComponent implements OnInit {
     return user.id;
   }
 
-  getProfileClass(profileName: string): string {
+  getProfileClass(profileName: string | undefined): string {
+    if (!profileName) return 'bg-light text-dark';
+
     const profileClasses: { [key: string]: string } = {
       'Administrador': 'bg-danger',
       'Supervisor': 'bg-warning',
@@ -563,7 +573,9 @@ export class UserListComponent implements OnInit {
     return profileClasses[profileName] || 'bg-light text-dark';
   }
 
-  getProfileIcon(profileName: string): string {
+  getProfileIcon(profileName: string | undefined): string {
+    if (!profileName) return 'bi-person';
+
     const profileIcons: { [key: string]: string } = {
       'Administrador': 'bi-shield-fill-exclamation',
       'Supervisor': 'bi-eye-fill',
@@ -574,7 +586,9 @@ export class UserListComponent implements OnInit {
     return profileIcons[profileName] || 'bi-person';
   }
 
-  getStatusClass(statusName: string): string {
+  getStatusClass(statusName: string | undefined): string {
+    if (!statusName) return 'bg-light text-dark';
+
     const statusClasses: { [key: string]: string } = {
       'Conectado': 'bg-success',
       'Desconectado': 'bg-secondary',
@@ -657,7 +671,7 @@ export class UserListComponent implements OnInit {
       });
   }
 
-  isOnlineRecently(lastLoginDate: Date | string | null): boolean {
+  isOnlineRecently(lastLoginDate: Date | string | undefined): boolean {
     if (!lastLoginDate) return false;
     
     const now = new Date();

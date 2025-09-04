@@ -1,0 +1,16 @@
+﻿@page "/"
+
+@inject AuthenticationStateProvider _authenticationStateProvider
+
+<PageTitle>Inicio</PageTitle>
+
+<h2>Hola, @UserEmail</h2>
+
+Bienvenido a la aplicación Agrismart
+
+@code {
+    private string UserEmail;
+    protected override void OnInitialized() { 
+        UserEmail =  _authenticationStateProvider.GetAuthenticationStateAsync().Result.User.Identity.Name; 
+    }
+}

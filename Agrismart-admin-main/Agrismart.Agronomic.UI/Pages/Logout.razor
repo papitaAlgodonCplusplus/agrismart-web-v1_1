@@ -1,0 +1,23 @@
+﻿@page "/Logout"
+@using Agrismart.Agronomic.UI.Authentication
+@using Agrismart.Agronomic.UI.Services.Responses
+
+@inject AuthenticationStateProvider _authenticationStateProvider
+@inject NavigationManager _navigationManager
+
+@code {
+
+    protected override void OnInitialized()
+    {
+
+        var authenticationStateProvider = (AgrismartAuthenticationStateProvider)_authenticationStateProvider;
+
+
+        authenticationStateProvider.UpdateAuthenticationState(new LoginResponse());
+        authenticationStateProvider.ClearBrowserUserData();
+
+        _navigationManager.NavigateTo("/");
+    }
+
+}
+

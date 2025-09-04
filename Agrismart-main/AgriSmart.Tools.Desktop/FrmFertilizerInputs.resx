@@ -1,0 +1,525 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="&gt;&gt;panelControl.Name" xml:space="preserve">
+    <value>panelControl</value>
+  </data>
+  <data name="ribbonPageDB.Text" xml:space="preserve">
+    <value>Manteinance</value>
+  </data>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="barButtonItem1.ImageOptions.LargeImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        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
+        PPMfMxmfSs3zFRMAAAAASUVORK5CYII=
+</value>
+  </data>
+  <data name="&gt;&gt;barButtonItemInputPresentation.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.BarButtonItem, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;ribbonPageDB.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonPage, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="barButtonItem1.ImageOptions.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="ribbonPage2.Text" xml:space="preserve">
+    <value>ribbonPage2</value>
+  </data>
+  <data name="&gt;&gt;$this.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonForm, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>FrmFertilizerInputs</value>
+  </data>
+  <data name="ribbonControl1.ExpandCollapseItem.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barButtonItemInputPresentation.ImageOptions.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="ribbonPageGroupManteinanace.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="panelControl.Location" type="System.Drawing.Point, System.Drawing">
+    <value>4, 4</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="barButtonItem1.ImageOptions.SvgImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="ribbonPageGroupManteinanace.Text" xml:space="preserve">
+    <value>Manteinance</value>
+  </data>
+  <data name="barButtonItem1.ImageOptions.LargeImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barButtonItemFertilizers.ImageOptions.LargeImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="barButtonItem1.Caption" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="barButtonItemInputPresentation.ImageOptions.LargeImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControlGroup1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlGroup, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="panelControl.Size" type="System.Drawing.Size, System.Drawing">
+    <value>792, 260</value>
+  </data>
+  <data name="barButtonItemInputPresentation.ImageOptions.LargeImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;ribbonPageDB.Name" xml:space="preserve">
+    <value>ribbonPageDB</value>
+  </data>
+  <data name="&gt;&gt;$this.Name" xml:space="preserve">
+    <value>FrmFertilizerInputs</value>
+  </data>
+  <data name="layoutControl1.Text" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="ribbonControl1.ExpandCollapseItem.ImageOptions.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;layoutControlGroup1.Name" xml:space="preserve">
+    <value>layoutControlGroup1</value>
+  </data>
+  <data name="barButtonItemFertilizers.ImageOptions.SvgImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="barButtonItemFertilizers.Caption" xml:space="preserve">
+    <value>Fertilizers &amp; Chemistries</value>
+  </data>
+  <data name="layoutControl1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 158</value>
+  </data>
+  <data name="&gt;&gt;barButtonItem1.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.BarButtonItem, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControlItem1.Name" xml:space="preserve">
+    <value>layoutControlItem1</value>
+  </data>
+  <data name="barButtonItemFertilizers.ImageOptions.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        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
+        1ABjnLKtm3GX+F65JZxWx4ApL0U7JgigjJq/sglUqTPjLPG8ckopnnLuwZSZoj0TBFBWzesBu7eYMR+4
+        vB57MGWnaNcEAZRZc/BV9Atc0tdo+idwxbnz6mIpM0FcwLNB+bWa44fTQPy91rWHXVPOWpi6pOjHBAHU
+        o9ZmEh7zalqGz3tWFT2KW50ziOqzRX8mCKA+tTaCzkvDoNZgtHip+SxMvVL0awKCOtWcVh6F5/Dp/f4W
+        pn4p+jZBAHWrOYIv5dJ+fwtTzxRjmCCAOtIMtXYMP2Lu9716tIKpb4qxTBBAXTmTyDqmnbDVuXTQl4Op
+        c4oxTRBAnWtvM+N5qn6h5yxM3VOMbYIA6n50Wsm8TQ36cjDHkOJjmICg/ntnEk33+1s4x+LxcUwQwHFk
+        HWtEdy1AwDkWD5kgA5kgJi6gV3AcMsEamSADmSAmLqBXcBwywRqZIAOZICYuoFdwHDLBGpkgA5kgJi6g
+        V3AcMsEamSADmSAmLqBXcBwywRqZIAOZICYuoFdwHDLBGpkgA5kgJi6gV3AcMsEamSADmSAmLqBXcBwy
+        wRqZIAOZICYuoFdwHDLBmo9ngo+Ep6GDTDAynoYOMsHIeBo6yAQj42noIBOMjKehg0wwMp6GDjLByHga
+        OsgEI+Np6CATjIynoYNMMDKehg4ywch4GjrIBCPjaeggE4yMp6GDTDAynoYOMsHIeBo6lJkAdHtt/aMB
+        rfhgcE9DS7EJXm1hok2gFR/j52loKTbBT1uYaBNoxYd0eRpabibIfbhzlRc3ivOhVka7FL9ChpJ3FHb7
+        SLePAjQq0fNHyJQ7iAgcfqGzOAdok/tm9sBLnLn0iZ9Mz7GE2A/77ZowpqdVirl7j01w9LW1oj/mrj02
+        AR/72sLLI8RzoNbzk9pvJliMoNbg43Ab4K9MQPDHZ700QlzHFGu+MgBBAnYLU5RBjAW1Xb2w4/afGCYC
+        pSNN0T4TuHtjy+qDBRlqvXZOXE9ykc/9MgaZ2SrQDNMSTPQD13J4SWDzPY3ulykYDPDqlLdQIdqBq4aZ
+        72p6//Q/PKx7Yw8LFOIAAAAASUVORK5CYII=
+</value>
+  </data>
+  <data name="&gt;&gt;barButtonItemInputPresentation.Name" xml:space="preserve">
+    <value>barButtonItemInputPresentation</value>
+  </data>
+  <data name="barButtonItemInputPresentation.ImageOptions.SvgImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="layoutControl1.Dock" type="System.Windows.Forms.DockStyle, System.Windows.Forms">
+    <value>Fill</value>
+  </data>
+  <data name="&gt;&gt;ribbonControl1.Name" xml:space="preserve">
+    <value>ribbonControl1</value>
+  </data>
+  <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
+    <value>6, 13</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControl, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="ribbonControl1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>800, 158</value>
+  </data>
+  <data name="&gt;&gt;ribbonPageGroupFile.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonPageGroup, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="ribbonControl1.ExpandCollapseItem.ImageOptions.SvgImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="layoutControl1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>800, 268</value>
+  </data>
+  <data name="&gt;&gt;ribbonPageGroupManteinanace.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonPageGroup, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="barButtonItem1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="ribbonControl1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 0</value>
+  </data>
+  <data name="&gt;&gt;ribbonStatusBar1.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;barButtonItem1.Name" xml:space="preserve">
+    <value>barButtonItem1</value>
+  </data>
+  <data name="&gt;&gt;ribbonStatusBar1.Name" xml:space="preserve">
+    <value>ribbonStatusBar1</value>
+  </data>
+  <data name="layoutControlGroup1.CaptionImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="layoutControl1.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;ribbonPage2.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonPage, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="layoutControlGroup1.ContentImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;ribbonPage2.Name" xml:space="preserve">
+    <value>ribbonPage2</value>
+  </data>
+  <data name="&gt;&gt;panelControl.Type" xml:space="preserve">
+    <value>DevExpress.XtraEditors.PanelControl, DevExpress.Utils.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
+    <value>800, 450</value>
+  </data>
+  <data name="&gt;&gt;ribbonControl1.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonControl, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="layoutControlGroup1.BackgroundImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;ribbonControl1.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="barButtonItemFertilizers.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="ribbonStatusBar1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>800, 24</value>
+  </data>
+  <data name="&gt;&gt;ribbonPageGroupFile.Name" xml:space="preserve">
+    <value>ribbonPageGroupFile</value>
+  </data>
+  <data name="barButtonItemInputPresentation.Caption" xml:space="preserve">
+    <value>Input Presentations</value>
+  </data>
+  <data name="barButtonItemFertilizers.ImageOptions.LargeImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;layoutControlItem1.Type" xml:space="preserve">
+    <value>DevExpress.XtraLayout.LayoutControlItem, DevExpress.XtraLayout.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="barButtonItemInputPresentation.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;ribbonPageGroupManteinanace.Name" xml:space="preserve">
+    <value>ribbonPageGroupManteinanace</value>
+  </data>
+  <data name="panelControl.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="ribbonControl1.ExpandCollapseItem.SearchTags" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="barButtonItemFertilizers.ImageOptions.ImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="ribbonPageGroupFile.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barButtonItemInputPresentation.ImageOptions.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        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
+        RK5CYII=
+</value>
+  </data>
+  <data name="layoutControlItem1.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="&gt;&gt;ribbonStatusBar1.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.Ribbon.RibbonStatusBar, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="&gt;&gt;layoutControl1.Name" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;ribbonControl1.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="ribbonPageGroupFile.Text" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="&gt;&gt;barButtonItemFertilizers.Name" xml:space="preserve">
+    <value>barButtonItemFertilizers</value>
+  </data>
+  <data name="ribbonPage2.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="ribbonPageDB.ImageOptions.ImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="ribbonControl1.ExpandCollapseItem.ImageOptions.LargeImageKey" xml:space="preserve">
+    <value />
+  </data>
+  <data name="barButtonItem1.ImageOptions.LargeImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <data name="&gt;&gt;ribbonStatusBar1.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;panelControl.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;panelControl.Parent" xml:space="preserve">
+    <value>layoutControl1</value>
+  </data>
+  <data name="&gt;&gt;barButtonItemFertilizers.Type" xml:space="preserve">
+    <value>DevExpress.XtraBars.BarButtonItem, DevExpress.XtraBars.v24.1, Culture=neutral, PublicKeyToken=b88d1754d700e49a</value>
+  </data>
+  <data name="ribbonStatusBar1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>0, 426</value>
+  </data>
+  <data name="ribbonControl1.ExpandCollapseItem.ImageOptions.LargeImageIndex" type="System.Int32, mscorlib">
+    <value>-1</value>
+  </data>
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="$this.Language" type="System.Globalization.CultureInfo, System.Private.CoreLib, Culture=neutral, PublicKeyToken=7cec85d7bea7798e">
+    <value>es</value>
+  </metadata>
+</root>

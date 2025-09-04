@@ -1,0 +1,14 @@
+﻿using AgriSmart.Application.Agronomic.Responses.Commands;
+using AgriSmart.Core.Responses;
+using MediatR;
+
+namespace AgriSmart.Application.Agronomic.Commands
+{
+    public class CreateFarmCommand : IRequest<Response<CreateFarmResponse>>
+    {
+        public int CompanyId { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public int TimeZoneId { get; set; }
+    }
+}

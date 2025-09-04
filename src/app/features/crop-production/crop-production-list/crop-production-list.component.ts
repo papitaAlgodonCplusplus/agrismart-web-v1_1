@@ -1,5 +1,7 @@
 // src/app/features/crop-production/crop-production-list/crop-production-list.component.ts
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CropProductionService } from '../services/crop-production.service';
 import { CropProduction } from '../../../core/models/models';
@@ -7,6 +9,11 @@ import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-crop-production-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
   template: `
     <div class="container-fluid">
       <div class="row mb-4">
@@ -166,9 +173,9 @@ import { Observable } from 'rxjs';
                       <td>
                         <i class="bi bi-calendar-check me-1"></i>
                         {{ production.estimatedHarvestDate | date:'shortDate' }}
-                        <div class="text-muted small" *ngIf="getDaysToHarvest(production.estimatedHarvestDate) !== null">
-                          {{ getDaysToHarvest(production.estimatedHarvestDate) > 0 ? 
-                             getDaysToHarvest(production.estimatedHarvestDate) + ' días restantes' : 
+                        <div class="text-muted small" *ngIf="production.estimatedHarvestDate && getDaysToHarvest(production.estimatedHarvestDate) !== null">
+                          {{ getDaysToHarvest(production.estimatedHarvestDate)! > 0 ? 
+                             getDaysToHarvest(production.estimatedHarvestDate)! + ' días restantes' : 
                              'Listo para cosecha' }}
                         </div>
                       </td>
@@ -176,10 +183,10 @@ import { Observable } from 'rxjs';
                         <div class="progress" style="width: 100px; height: 20px;">
                           <div 
                             class="progress-bar"
-                            [class.bg-success]="production.progress >= 100"
-                            [class.bg-info]="production.progress < 100"
-                            [style.width.%]="production.progress">
-                            {{ production.progress }}%
+                            [class.bg-success]="(production.progress ?? 0) >= 100"
+                            [class.bg-info]="(production.progress ?? 0) < 100"
+                            [style.width.%]="production.progress ?? 0">
+                            {{ production.progress ?? 0 }}%
                           </div>
                         </div>
                       </td>
@@ -427,7 +434,9 @@ export class CropProductionListComponent implements OnInit {
     return production.id;
   }
 
-  getStatusClass(status: string): string {
+  getStatusClass(status: string | undefined): string {
+    if (!status) return 'bg-light text-dark';
+
     const statusClasses: { [key: string]: string } = {
       'Preparacion': 'bg-secondary',
       'Siembra': 'bg-info',
@@ -440,7 +449,9 @@ export class CropProductionListComponent implements OnInit {
     return statusClasses[status] || 'bg-light text-dark';
   }
 
-  getStatusIcon(status: string): string {
+  getStatusIcon(status: string | undefined): string {
+    if (!status) return 'bi-circle';
+
     const statusIcons: { [key: string]: string } = {
       'Preparacion': 'bi-gear',
       'Siembra': 'bi-seed',
@@ -453,7 +464,9 @@ export class CropProductionListComponent implements OnInit {
     return statusIcons[status] || 'bi-circle';
   }
 
-  getStatusText(status: string): string {
+  getStatusText(status: string | undefined): string {
+    if (!status) return 'Desconocido';
+
     const statusTexts: { [key: string]: string } = {
       'Preparacion': 'Preparación',
       'Siembra': 'Siembra',
@@ -466,7 +479,7 @@ export class CropProductionListComponent implements OnInit {
     return statusTexts[status] || status;
   }
 
-  getDaysToHarvest(harvestDate: Date | string | null): number | null {
+  getDaysToHarvest(harvestDate: Date | string | null | undefined): number | null {
     if (!harvestDate) return null;
     
     const today = new Date();

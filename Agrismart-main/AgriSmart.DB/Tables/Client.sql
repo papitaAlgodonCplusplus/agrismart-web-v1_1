@@ -1,0 +1,11 @@
+﻿CREATE TABLE [dbo].[Client]
+(
+	[Id] INT NOT NULL PRIMARY KEY IDENTITY,
+	[Name] NVARCHAR(64) NOT NULL,
+	[Description] NVARCHAR(128),
+	[Active] BIT NOT NULL DEFAULT 1, 
+	[DateCreated] DATETIME NOT NULL DEFAULT GETDATE(),
+	[DateUpdated] DATETIME NULL,
+	[CreatedBy] INT NOT NULL,
+	[UpdatedBy] INT NULL
+)

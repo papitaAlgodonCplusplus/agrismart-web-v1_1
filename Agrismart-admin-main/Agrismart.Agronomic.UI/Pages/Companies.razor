@@ -1,0 +1,435 @@
+﻿@page "/Companies"
+@using Agrismart.Agronomic.UI.Services.Models
+@using Agrismart.Agronomic.UI.Pages.Components
+@using Agrismart.Agronomic.UI.Services.Interfaces
+@using Agrismart.Agronomic.UI.Services.Requests
+@using Agrismart.Agronomic.UI.Services.Requests.Commands
+@using Agrismart.Agronomic.UI.Services.Requests.Queries
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using System.ComponentModel.DataAnnotations
+@attribute [Authorize]
+
+@inject ICompanyService _companyService
+@inject ICatalogService _catalogService
+@inject IClientService _clientService
+
+<PageTitle>Compañías</PageTitle>
+
+<h2>Lista de Compañías</h2>
+<hr />
+
+<AlertMessage Title="Mensaje de sistema" @ref="@alertCreateMessage">
+    <div class="alert alert-success">
+        <p>Compañía creada con éxito</p>
+    </div>
+</AlertMessage>
+
+<AlertMessage Title="Mensaje de sistema" @ref="@alertUpdateMessage">
+    <div class="alert alert-success">
+        <p>Compañía actualizada con éxito</p>
+    </div>
+</AlertMessage>
+
+<AlertMessage Title="Error de sistema" @ref="@alertErrorMessage">
+    <div class="alert alert-danger">
+        <p><label>Hubo un error en la aplicación. Informe al administrador</label></p>
+    </div>
+</AlertMessage>
+
+
+@if (!createNew)
+{
+    <div class="container-fluid">
+        <div class="row align-items-end">
+            <div class="col-2">
+                <label>Cliente:</label>
+                <InputSelect id="clientsList" @bind-Value="@selectedClientId" style="width: 100%" class="form-select form-select-sm">
+                    <option value="0">Todos</option>
+                    @foreach (var client in clients)
+                    {
+                        <option value="@client.Id">@client.Name</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-2">
+                <label class="form-check-label">Solo Activas</label>
+                <input type="checkbox" id="onlyActivesCheck" checked @bind-value="@onlyActives" class="form-check-input" />
+            </div>
+            <div class="col-2">
+                <button class="btn btn-primary" @onclick="GetCompaniesClick">Consultar</button>
+            </div>
+            <div class="col-2">
+                <button class="btn btn-secondary" @onclick="NewCompanyClick">Nueva</button>
+            </div>
+            <div class="col-2" />
+
+        </div>
+    </div>
+}
+else
+{
+    <EditForm EditContext="editContext">
+        <DataAnnotationsValidator />
+        <div class="container-fluid">
+            <div class="row align-items-end">
+                <div class="row">
+                    <div class="col-2">
+                        <label>Cliente:</label>
+                        <InputSelect ValueChanged="@((int value)=>ChangeClientIdForNew(value))" ValueExpression="@(()=>newCompany.ClientId)" Value="@newCompany.ClientId" style="width: 100%" class="form-select form-select-sm">
+                            <option value="0">Seleccione una opción</option>
+                            @foreach (var client in clients)
+                            {
+                                <option value="@client.Id">@client.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-2">
+                        <label>Catálogo:</label>
+                        <InputSelect @bind-Value="@newCompany.CatalogId" style="width: 100%" class="form-select form-select-sm">
+                            <option value="0">Seleccione una opción</option>
+                            @foreach (var catalog in catalogsForNew)
+                            {
+                                <option value="@catalog.Id">@catalog.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="row">                    
+                    <div class="col-3">
+                        <label>Nombre:</label>
+                        <InputText @bind-Value="@newCompany.Name" style="width: 100%" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-4">
+                        <label>Descripción:</label>
+                        <InputText @bind-Value="@newCompany.Description" style="width: 100%" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-2">
+                        <button class="btn btn-primary" @onclick="AddCompanyClick">Agregar</button>
+                        <button class="btn btn-danger" @onclick="CancelAddCompanyClick">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            @if (!valid)
+            {
+                <div class="row p-3">
+                    <div class="alert alert-warning col-8" role="alert">
+                        Debe seleccionar o digitar algun valor para los atributos marcados en rojo
+                    </div>
+                </div>
+            }
+        </div>
+    </EditForm>
+}
+<hr />
+
+@if (companies == null)
+{
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+}
+else
+{
+    <QuickGrid style="width:1750px" Items="@companies" Pagination="@pagination">
+        <TemplateColumn Title="Id">
+            <label Class="tinyColumn">@context.Id</label>
+        </TemplateColumn>
+        <TemplateColumn Title="Cliente">
+            @if (context.Id == editableId && false)
+            {
+                <InputSelect Class="normalColumn" id="clientList" @bind-Value="@context.CatalogId" style="width: 100%">                    
+                    @foreach (var client in clients)
+                    {
+                        <option value="@client.Id">@client.Name</option>
+                    }
+                </InputSelect>
+            }
+            else
+            {
+                <label Class="normalColumn">@context.Client</label>
+            }
+        </TemplateColumn>
+        <TemplateColumn Title="Catálogo">
+            @if (context.Id == editableId)
+            {              
+                <InputSelect Class="normalColumn" id="catalogsList" @bind-Value="@context.CatalogId">
+                    @foreach (var catalog in catalogs.Where(c => c.ClientId == context.ClientId).ToList())
+                    {
+                        <option value="@catalog.Id">@catalog.Name</option>
+                    }
+                </InputSelect>
+            }
+            else
+            {
+                <label Class="normalColumn">@context.Catalog</label>
+            }
+        </TemplateColumn>
+        <TemplateColumn Title="Nombre">
+            @if (context.Id == editableId)
+            {
+                <input Class="normalColumn" @bind="@context.Name" />
+            }
+            else
+            {
+                <label Class="normalColumn">@context.Name</label>
+            }
+        </TemplateColumn>
+        <TemplateColumn Title="Descripción">
+            @if (context.Id == editableId)
+            {
+                <input Class="hugeColumn" @bind="@context.Description" />
+            }
+            else
+            {
+                <label Class="hugeColumn">@context.Description</label>
+            }
+        </TemplateColumn>
+        <TemplateColumn Title="Activa">
+            <div Class="normalColumn">
+                @if (context.Id == editableId)
+                {
+                    <input type="checkbox" @bind="@context.Active" />
+                }
+                else
+                {
+                    @if (context.Active)
+                    {
+                        <i class="bi bi-toggle-on" />
+                    }
+                    else
+                    {
+                        <i class="bi bi-toggle-off" />
+                    }
+                }
+            </div>
+        </TemplateColumn>
+        <TemplateColumn Title="Acciones">
+            <div Class="normalColumn">
+                @if (context.Id == editableId)
+                {
+                    <button @onclick="@(() => SaveClick(@context))"><i class="bi bi-floppy-fill"></i></button>
+                    <button @onclick="@(() => CancelEditClick())"><i class="bi bi-x-circle-fill"></i></button>
+                }
+                else
+                {
+                    <button @onclick="@(() => EditClick(@context.Id))"><i class="bi bi-pencil-square"></i></button>
+                }
+            </div>
+        </TemplateColumn>
+    </QuickGrid>
+
+    <Paginator State="@pagination" />
+}
+
+@code {
+
+    #region Main
+
+    public class CompanyModel
+    {
+        public int Id { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar una opción")]
+        public int ClientId { get; set; }
+        public string? Client { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar una opción")]
+        public int CatalogId { get; set; }
+        public string? Catalog { get; set; }
+        [Required]
+        public string? Name { get; set; }
+        [Required]
+        public string? Description { get; set; }
+        public bool Active { get; set; }
+    }
+
+    private AlertMessage? alertErrorMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            editContext = new EditContext(newCompany);
+
+            var getAllClientsResult = await _clientService.GetAll(new GetAllClientsRequest() { IncludeInactives = false });
+            clients = getAllClientsResult.Clients.ToList();
+
+            var getAllCatalogsResult = await _catalogService.GetAll(new GetAllCatalogsRequest() { IncludeInactives = true });
+            catalogs = getAllCatalogsResult.Catalogs.ToList();
+
+            await GetCompaniesClick();
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    #endregion
+
+    #region Search of Companies
+
+    private IQueryable<CompanyModel>? companies;
+    public int selectedClientId = 0;
+    public int selectedCatalogId = 0;
+    public bool onlyActives = true;    
+    public List<Client> clients = new List<Client>();
+    public List<Catalog> catalogs = new List<Catalog>();
+    PaginationState pagination = new PaginationState() { ItemsPerPage = 20 };
+
+    public async Task GetCompaniesClick()
+    {
+        companies = null;
+        List<CompanyModel> companiesList = new List<CompanyModel>();
+        try
+        {
+            editableId = 0;
+            var getAllCompaniesResult = await _companyService.GetAll(new GetAllCompaniesRequest() { ClientId = selectedClientId, IncludeInactives = !onlyActives });
+
+            if (getAllCompaniesResult.Companies != null)
+            {
+                getAllCompaniesResult.Companies.ToList().ForEach(c => companiesList.Add(new CompanyModel()
+                    {
+                        Id = c.Id,
+                        ClientId = c.ClientId,
+                        Client = clients.Where(cl => cl.Id == c.ClientId).FirstOrDefault().Name,
+                        CatalogId = c.CatalogId,
+                        Catalog = catalogs.Where(ca => ca.Id == c.CatalogId).FirstOrDefault().Name,
+                        Name = c.Name,
+                        Description = c.Description,
+                        Active = c.Active
+                    }));
+
+                companies = companiesList.AsQueryable();
+            }
+        }
+        catch (Exception ex)
+        {
+            alertErrorMessage.Open();
+            companies = companiesList.AsQueryable();
+        }
+    }
+
+    #endregion
+
+    #region New Container
+
+    public EditContext? editContext;
+    public CompanyModel newCompany = new CompanyModel();
+    public bool createNew = false;
+    public int newClientId = 0;
+    public int newCatalogId = 0;
+    bool valid = true;
+    public List<Catalog> catalogsForNew = new List<Catalog>();
+    private AlertMessage alertCreateMessage { get; set; }
+
+
+    private async Task ChangeClientIdForNew(int selectedClientId)
+    {
+        try
+        {
+            this.newClientId = selectedClientId;
+            newCompany.ClientId = selectedClientId;
+            var getAllCatalogsResult = await _catalogService.GetAll(new GetAllCatalogsRequest() { ClientId = selectedClientId, IncludeInactives = false });
+            catalogsForNew = getAllCatalogsResult?.Catalogs.ToList();
+            if (this.newClientId == 0) catalogsForNew.Clear();
+            this.newCatalogId = 0;
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    public async Task NewCompanyClick()
+    {
+        createNew = true;
+        valid = true;
+        ClearNewModel();
+    }
+
+    public async Task CancelAddCompanyClick()
+    {
+        createNew = false;
+        valid = true;
+    }
+
+    public async Task AddCompanyClick()
+    {
+        try
+        {
+            valid = editContext.Validate();
+            if (valid)
+            {
+                var createCompanyResult = await _companyService.Create(new CreateCompanyRequest()
+                    {
+                        ClientId = newCompany.ClientId,
+                        CatalogId = newCompany.CatalogId,
+                        Name = newCompany.Name,
+                        Description = newCompany.Description
+                    });
+                if (createCompanyResult != null)
+                {
+                    alertCreateMessage.Open();
+                    await GetCompaniesClick();
+                }
+                else
+                {
+                    alertErrorMessage.Open();
+                }
+                CancelAddCompanyClick();
+            }
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    private void ClearNewModel()
+    {
+        newCompany.ClientId = 0;
+        newCompany.CatalogId = 0;
+        newCompany.Name = string.Empty;
+        newCompany.Description = string.Empty;
+    }
+
+    #endregion
+
+    #region Edit Company
+
+    public int editableId = 0;
+    private AlertMessage alertUpdateMessage { get; set; }
+
+    void EditClick(int id) => editableId = id;
+
+    void CancelEditClick() => editableId = 0;
+
+    private async Task SaveClick(CompanyModel companyToSave)
+    {
+        try
+        {
+            companies = null;
+            var updateCompanyResult = await _companyService.Update(new UpdateCompanyRequest()
+                {
+                    Id = companyToSave.Id,
+                    ClientId = companyToSave.ClientId,
+                    CatalogId = companyToSave.CatalogId,
+                    Name = companyToSave.Name,
+                    Description = companyToSave.Description,
+                    Active = companyToSave.Active
+                });
+            if (updateCompanyResult != null)
+            {
+                alertUpdateMessage.Open();
+                await GetCompaniesClick();
+            }
+            else
+            {
+                alertErrorMessage.Open();
+            }
+            editableId = 0;
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    #endregion
+}

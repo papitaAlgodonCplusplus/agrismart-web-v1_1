@@ -1,16 +1,16 @@
-// src/app/app.module.ts
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { CommonModule } from '@angular/common';
 
 import { AppRoutingModule } from './app-routing.module';
 
-// Core
+// Interceptors
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 
-// Layout
+// Layout Components (if they exist and are standalone)
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { HeaderComponent } from './layout/header/header.component';
@@ -18,103 +18,82 @@ import { HeaderComponent } from './layout/header/header.component';
 // Auth Components
 import { LoginComponent } from './features/auth/login/login.component';
 
-// Dashboard
+// Feature Components
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 
-// Companies
+// Company Components
 import { CompanyListComponent } from './features/companies/company-list/company-list.component';
 import { CompanyFormComponent } from './features/companies/company-form/company-form.component';
 
-// Farms
+// Farm Components
 import { FarmListComponent } from './features/farms/farm-list/farm-list.component';
 import { FarmFormComponent } from './features/farms/farm-form/farm-form.component';
 
-// Crops
+// Crop Components
 import { CropListComponent } from './features/crops/crop-list/crop-list.component';
 import { CropFormComponent } from './features/crops/crop-form/crop-form.component';
 
-// Devices
+// Device Components
 import { DeviceListComponent } from './features/devices/device-list/device-list.component';
 import { DeviceFormComponent } from './features/devices/device-form/device-form.component';
 
-// Production Units
+// Production Unit Components
 import { ProductionUnitListComponent } from './features/production-units/production-unit-list/production-unit-list.component';
 
-// Crop Production
+// Crop Production Components
 import { CropProductionListComponent } from './features/crop-production/crop-production-list/crop-production-list.component';
 
-// Irrigation
+// Irrigation Components
 import { IrrigationSectorListComponent } from './features/irrigation/irrigation-sector-list.component';
 
-// Fertilizers
+// Fertilizer Components
 import { FertilizerListComponent } from './features/fertilizers/fertilizer-list/fertilizer-list.component';
 
-// Fertilizer Inputs
+// Fertilizer Input Components
 import { FertilizerInputListComponent } from './features/fertilizer-inputs/fertilizer-input-list/fertilizer-input-list.component';
 
-// Users
-import { UserListComponent } from './features/users/user-list/user-list.component';
-
-// Profile
-import { ProfileComponent } from './features/profile/profile.component';
+// User Components (if they exist)
+// import { UserListComponent } from './features/users/user-list/user-list.component';
+// import { ProfileComponent } from './features/profile/profile.component';
 
 @NgModule({
   declarations: [
-    // Layout Components
-    MainLayoutComponent,
-    SidebarComponent,
-    HeaderComponent,
-    
-    // Auth Components
-    LoginComponent,
-    
-    // Dashboard
-    DashboardComponent,
-    
-    // Companies
-    CompanyListComponent,
-    CompanyFormComponent,
-    
-    // Farms
-    FarmListComponent,
-    FarmFormComponent,
-    
-    // Crops
-    CropListComponent,
-    CropFormComponent,
-    
-    // Devices
-    DeviceListComponent,
-    DeviceFormComponent,
-    
-    // Production Units
-    ProductionUnitListComponent,
-    
-    // Crop Production
-    CropProductionListComponent,
-    
-    // Irrigation
-    IrrigationSectorListComponent,
-    
-    // Fertilizers
-    FertilizerListComponent,
-    
-    // Fertilizer Inputs
-    FertilizerInputListComponent,
-    
-    // Users
-    UserListComponent,
-    
-    // Profile
-    ProfileComponent
+    // Only include non-standalone components here
+    // If UserListComponent and ProfileComponent exist and are NOT standalone, uncomment them:
+    // UserListComponent,
+    // ProfileComponent,
   ],
   imports: [
+    // Core Angular modules
     BrowserModule,
-    AppRoutingModule,
+    CommonModule,
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
+    
+    // App routing
+    AppRoutingModule,
+    
+    // Standalone components
+    MainLayoutComponent,
+    SidebarComponent,
+    HeaderComponent,
+    LoginComponent,
+    DashboardComponent,
+    CompanyListComponent,
+    CompanyFormComponent,
+    FarmListComponent,
+    FarmFormComponent,
+    CropListComponent,
+    CropFormComponent,
+    DeviceListComponent,
+    DeviceFormComponent,
+    ProductionUnitListComponent,
+    CropProductionListComponent,
+    IrrigationSectorListComponent,
+    FertilizerListComponent,
+    FertilizerInputListComponent,
   ],
   providers: [
     {
@@ -122,6 +101,10 @@ import { ProfileComponent } from './features/profile/profile.component';
       useClass: AuthInterceptor,
       multi: true
     }
+  ],
+  bootstrap: [
+    // Add your root component here, typically AppComponent
+    // AppComponent
   ]
 })
 export class AppModule { }

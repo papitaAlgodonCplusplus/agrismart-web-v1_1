@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Name>AgriSmart.DB</Name>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>4.1</ProjectVersion>
+    <ProjectGuid>{ad4bb77d-2f75-495a-8f31-e0fc9e9451b6}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
+    <OutputType>Database</OutputType>
+    <RootPath />
+    <RootNamespace>Agrismart.DB</RootNamespace>
+    <AssemblyName>Agrismart.DB</AssemblyName>
+    <ModelCollation>1033, CI</ModelCollation>
+    <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
+    <DeployToDatabase>True</DeployToDatabase>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetLanguage>CS</TargetLanguage>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SqlServerVerification>False</SqlServerVerification>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+    <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
+    <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <ItemGroup>
+    <Folder Include="Properties" />
+    <Folder Include="Tables" />
+    <Folder Include="Scripts" />
+    <Folder Include="StoreProcedures" />
+  </ItemGroup>
+  <ItemGroup>
+    <Build Include="Tables\Client.sql" />
+    <Build Include="Tables\Company.sql" />
+    <Build Include="Tables\Device.sql" />
+    <Build Include="Tables\Farm.sql" />
+    <Build Include="Tables\User.sql" />
+    <Build Include="Tables\UserFarm.sql" />
+    <Build Include="Tables\DeviceRawData.sql" />
+    <Build Include="Tables\ProductionUnit.sql" />
+    <Build Include="Tables\Measurement.sql" />
+    <Build Include="Tables\CropProductionIrrigationSector.sql" />
+    <Build Include="Tables\CropProduction.sql" />
+    <Build Include="Tables\CropProductionDevice.sql" />
+    <Build Include="Tables\Sensor.sql" />
+    <None Include="Scripts\InputPresentation_InitialData.sql" />
+    <Build Include="Tables\MeasurementType.sql" />
+    <Build Include="Tables\MeasurementUnit.sql" />
+    <Build Include="StoreProcedures\ProcessClimateMeasurements.sql" />
+    <Build Include="StoreProcedures\GetMeasurement.sql" />
+    <Build Include="Tables\PowerBIUser.sql" />
+    <Build Include="Tables\Container.sql" />
+    <Build Include="Tables\GrowingMedium.sql" />
+    <Build Include="StoreProcedures\AuthenticateDevice.sql" />
+    <Build Include="StoreProcedures\ProcessDeviceRawData.sql" />
+    <Build Include="Tables\ClimateMeasurement.sql" />
+    <Build Include="Tables\IrrigationMeasurement.sql" />
+    <Build Include="Tables\Profile.sql" />
+    <Build Include="Tables\Dropper.sql" />
+    <Build Include="Tables\Catalog.sql" />
+    <Build Include="Tables\License.sql" />
+    <Build Include="Tables\CropPhase.sql" />
+    <Build Include="Tables\CropPhaseSolutionRequirement.sql" />
+    <Build Include="Tables\FertilizerChemistry.sql" />
+    <Build Include="Tables\FertilizerInput.sql" />
+    <Build Include="Tables\InputPresentation.sql" />
+    <Build Include="Tables\Crop.sql" />
+    <Build Include="Tables\Fertilizer.sql" />
+    <Build Include="Tables\ProductionUnitType.sql" />
+    <Build Include="Tables\UserStatus.sql" />
+    <Build Include="Tables\CropPhaseOptimal.sql" />
+    <Build Include="Tables\CalculationSetting.sql" />
+    <Build Include="Tables\RelayModule.sql" />
+    <Build Include="Tables\RelayModuleCropProductionIrrigationSector.sql" />
+    <None Include="Scripts\Fertilizer_InitialData.sql" />
+    <None Include="Scripts\FertilizerChemistry_InitialData.sql" />
+    <None Include="Scripts\FertilizerInput_InitialData.sql" />
+    <None Include="Scripts\MeasurementType_InitialData.sql" />
+    <None Include="Scripts\MeasurementUnit_InitialData.sql" />
+    <None Include="Scripts\CropPhaseSolutionRequirements.sql" />
+    <None Include="Scripts\Water_InitialData.sql" />
+    <None Include="Scripts\WaterChemistry_InitialData.sql" />
+    <None Include="Scripts\CropProduction_InitialData.sql" />
+    <Build Include="Tables\ContainerType.sql" />
+    <Build Include="StoreProcedures\ProcessDeviceRawDataMod.sql" />
+    <Build Include="Tables\AnaliticalEntities.sql" />
+    <Build Include="Tables\CalculationSettingItem.sql" />
+    <Build Include="Tables\FertilizerIncompatibility.sql" />
+    <Build Include="Tables\Graph.sql" />
+    <Build Include="Tables\GraphSeries.sql" />
+    <Build Include="Tables\GrowingMediumMeasurement.sql" />
+    <Build Include="Tables\IrrigationEvent.sql" />
+    <Build Include="Tables\Kpi.sql" />
+    <Build Include="Tables\MeasurementBase.sql" />
+    <Build Include="Tables\MeasurementKPI.sql" />
+    <Build Include="Tables\MeasurementVariable.sql" />
+    <Build Include="Tables\MeasurementVariableStandard.sql" />
+    <Build Include="Tables\Water.sql" />
+    <Build Include="Tables\WaterChemistry.sql" />
+    <Build Include="Scripts\ClimateMeasurement_InitialData1.sql" />
+    <Build Include="Scripts\ClimateMeasurement_InitialData2.sql" />
+    <Build Include="Scripts\CropProductionDevice_InitialData.sql" />
+    <Build Include="Scripts\GrowingMediumMeasurement_InitialData.sql" />
+    <Build Include="Scripts\GrowingMediumMeasurement_InitialData1.sql" />
+    <Build Include="Scripts\GrowingMediumMeasurement_InitialData2.sql" />
+    <Build Include="Scripts\IrrigationMeasurement_InitialData.sql" />
+    <Build Include="Tables\TimeZone.sql" />
+    <Build Include="Tables\CropProductionIrrigationIrrigationRequest.sql" />
+    <Build Include="StoreProcedures\ProcessDeviceRawDataModBackup.sql" />
+    <Build Include="Tables\MeasurementVariableMeasurementVariableStandard.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="AgriSmart.DB.local.publish.xml" />
+    <None Include="Scripts\CropPhase_InitialData.sql" />
+    <None Include="Scripts\Crop_InitialData.sql" />
+    <None Include="Scripts\BusinessUnit_InitialData.sql" />
+    <None Include="Scripts\Catalog_InitialData.sql" />
+    <None Include="Scripts\PostDeployment.sql" />
+    <None Include="Agrismart.DB.cloud.publish.xml" />
+    <None Include="Agrismart.DB.ucrcloud.publish.xml" />
+    <None Include="SmarterASP.AgriSmart.DB.publish.xml" />
+    <None Include="Scripts\ClearTables.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <RefactorLog Include="AgriSmart.DB.refactorlog" />
+  </ItemGroup>
+</Project>

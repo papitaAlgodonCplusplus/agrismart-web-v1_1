@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Setting>
+  <Categories>
+    <Category name="AnionicRelations" index="1">
+      <caption>
+        <en>1-Anionic Relations</en>
+        <es>1-Relaciones Aniónicas</es>
+      </caption>
+    </Category>
+  </Categories>
+  <Features>
+    <Feature name="kn" index="1" formatString ="n2" unit="" visible="true" categoryName="AnionicRelations" methodName="getKNRel" featureName=""
+         rule="iif(val &#60; 5,'pH ácido',iif(val &#60; 6.5,'pH ligeramente ácido', iif(val &#60;7.5,'pH neutro',iif(val &#60; 8,'pH alcalino','pH muy alcalino'))))">
+      <caption>
+        <en>K/N</en>
+        <es>K/N</es>
+      </caption>
+      <display_name>
+        <en>Potassium Nitrogen Relation</en>
+        <es>Relación Potasio/Nitrógeno</es>
+      </display_name>
+    </Feature>
+  </Features>
+</Setting>

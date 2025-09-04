@@ -1,0 +1,13 @@
+﻿CREATE TABLE [dbo].[User]
+(
+	[Id] INT NOT NULL PRIMARY KEY IDENTITY,
+	[ProfileId] INT NOT NULL,
+	[ClientId] INT NOT NULL,
+	[UserEmail] NVARCHAR(128) NOT NULL,
+	[Password] NVARCHAR(64) NOT NULL,
+	[UserStatusId] INT NOT NULL DEFAULT 1,
+	[DateCreated] DATETIME NOT NULL DEFAULT GETDATE(),
+	[DateUpdated] DATETIME NULL,
+	[CreatedBy] INT NOT NULL,
+	[UpdatedBy] INT NULL
+)

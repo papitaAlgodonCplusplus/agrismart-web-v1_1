@@ -6,7 +6,7 @@ import { FarmService } from '../farms/services/farm.service';
 import { CropService } from '../crops/services/crop.service';
 import { DeviceService } from '../devices/services/device.service';
 import { forkJoin } from 'rxjs';
-import { DatePipe } from '@angular/common';
+import { DatePipe, CommonModule } from '@angular/common';
 
 export interface DashboardStats {
   totalCompanies: number;
@@ -34,7 +34,7 @@ export interface DashboardStats {
             <div class="card-body">
               <div class="d-flex justify-content-between">
                 <div>
-                  <h4>{{ stats?.totalCompanies }}</h4>
+                  <h4>{{ stats.totalCompanies }}</h4>
                   <p class="card-text">Empresas</p>
                 </div>
                 <i class="bi bi-building display-4"></i>
@@ -62,7 +62,7 @@ export interface DashboardStats {
             <div class="card-body">
               <div class="d-flex justify-content-between">
                 <div>
-                  <h4>{{ stats?.totalCrops }}</h4>
+                  <h4>{{ stats.totalCrops }}</h4>
                   <p class="card-text">Cultivos</p>
                 </div>
                 <i class="bi bi-flower1 display-4"></i>
@@ -76,7 +76,7 @@ export interface DashboardStats {
             <div class="card-body">
               <div class="d-flex justify-content-between">
                 <div>
-                  <h4>{{ stats?.activeDevices }}/{{ stats?.totalDevices }}</h4>
+                  <h4>{{ stats.activeDevices }}/{{ stats.totalDevices }}</h4>
                   <p class="card-text">Dispositivos</p>
                 </div>
                 <i class="bi bi-cpu display-4"></i>
@@ -204,7 +204,9 @@ export interface DashboardStats {
     .display-4 {
       opacity: 0.8;
     }
-  `]
+  `],
+  providers: [DatePipe],
+  imports: [DatePipe, CommonModule]
 })
 export class DashboardComponent implements OnInit {
   currentUser: any;

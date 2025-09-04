@@ -1,0 +1,15 @@
+﻿CREATE TABLE [dbo].[Graph]
+(
+	[Id] INT NOT NULL PRIMARY KEY IDENTITY,
+	[CatalogId] INT NOT NULL DEFAULT -1,
+	[Name] NVARCHAR(64) NOT NULL,
+	[Description] NVARCHAR(128),
+	[SummaryTimeScale] NVARCHAR(32) NOT NULL,
+	[YAxisScaleType] NVARCHAR(32) NOT NULL,
+	[Series] Text NOT NUll,
+	[Active] BIT NOT NULL DEFAULT 1, 
+	[DateCreated] DATETIME NOT NULL DEFAULT GETDATE(),
+	[DateUpdated] DATETIME NULL,
+	[CreatedBy] INT NOT NULL,
+	[UpdatedBy] INT NULL
+)
