@@ -1,11 +1,17 @@
 // src/app/features/farms/services/farm.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { ApiService } from '../../../core/services/api.service';
 import { ApiConfigService } from '../../../core/services/api-config.service';
 import { Farm } from '../../../core/models/models';
+
+// Backend response structure (matches your AgriSmart API)
+interface BackendResponse<T> {
+  success: boolean;
+  exception: any;
+  result: T;
+}
 
 export interface FarmFilters {
   onlyActive?: boolean;
@@ -72,18 +78,22 @@ export interface FarmStatistics {
   providedIn: 'root'
 })
 export class FarmService {
-  private readonly baseUrl = '/api/farms';
-
   constructor(
-    private apiService: ApiService,
     private apiConfig: ApiConfigService,
     private http: HttpClient
   ) {}
 
   /**
-   * Get all farms with optional filters
+   * Get all farms with optional filters - Backend: GET /Farm (REQUIRES AUTH)
    */
   getAll(onlyActive?: boolean, filters?: FarmFilters): Observable<Farm[]> {
+    // Check authentication
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.warn('FarmService: No authentication token - returning empty array');
+      return of([]);
+    }
+
     let params = new HttpParams();
 
     // Handle legacy boolean parameter for backward compatibility
@@ -122,48 +132,172 @@ export class FarmService {
       }
     }
 
-    return this.apiService.get<Farm[]>(this.baseUrl, params);
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<{farms: Farm[]}>>(url, { params, headers })
+      .pipe(
+        map(response => {
+          console.log('FarmService.getAll response:', response);
+          if (response.success) {
+            return response.result?.farms || [];
+          }
+          throw new Error(`Farm API failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('FarmService.getAll error:', error);
+          console.error('URL attempted:', url);
+          // Return empty array for dashboard instead of failing
+          return of([]);
+        })
+      );
   }
 
   /**
-   * Get farm by ID
+   * Get farm by ID - Backend: GET /Farm/{Id:int}
    */
   getById(id: number): Observable<Farm> {
-    return this.apiService.get<Farm>(`${this.baseUrl}/${id}`);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm/${id}`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<Farm>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('FarmService.getById response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get Farm by ID failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('FarmService.getById error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Create new farm
+   * Create new farm - Backend: POST /Farm
    */
   create(data: FarmCreateRequest): Observable<Farm> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     const payload = {
       ...data,
       isActive: data.isActive !== undefined ? data.isActive : true
     };
 
-    return this.apiService.post<Farm>(this.baseUrl, payload);
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.post<BackendResponse<Farm>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('FarmService.create response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Create Farm failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('FarmService.create error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Update farm
+   * Update farm - Backend: PUT /Farm
    */
   update(id: number, data: FarmUpdateRequest): Observable<Farm> {
-    return this.apiService.put<Farm>(`${this.baseUrl}/${id}`, data);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const payload = { ...data, id };
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Farm>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('FarmService.update response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Update Farm failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('FarmService.update error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Delete farm
+   * Delete farm - Backend: DELETE /Farm/{id} (if implemented)
    */
   delete(id: number): Observable<void> {
-    return this.apiService.delete<void>(`${this.baseUrl}/${id}`);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm/${id}`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.delete<BackendResponse<void>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('FarmService.delete response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Delete Farm failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('FarmService.delete error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Toggle farm status
+   * Toggle farm status - Custom endpoint
    */
   toggleStatus(id: number, isActive: boolean): Observable<Farm> {
-    const payload = { isActive };
-    return this.apiService.put<Farm>(`${this.baseUrl}/${id}/status`, payload);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const payload = { id, isActive };
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm/status`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Farm>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('FarmService.toggleStatus response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Toggle Farm status failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('FarmService.toggleStatus error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
@@ -225,50 +359,160 @@ export class FarmService {
   }
 
   /**
-   * Get farm statistics
+   * Get farm statistics - Custom endpoint
    */
   getStatistics(): Observable<FarmStatistics> {
-    return this.apiService.get<FarmStatistics>(`${this.baseUrl}/statistics`);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm/statistics`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<FarmStatistics>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('FarmService.getStatistics response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get Farm statistics failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('FarmService.getStatistics error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get farms near coordinates
+   * Get farms near coordinates - Custom endpoint
    */
   getNearby(latitude: number, longitude: number, radiusKm: number = 10): Observable<Farm[]> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     const params = new HttpParams()
       .set('latitude', latitude.toString())
       .set('longitude', longitude.toString())
       .set('radiusKm', radiusKm.toString());
 
-    return this.apiService.get<Farm[]>(`${this.baseUrl}/nearby`, params);
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm/nearby`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<Farm[]>>(url, { params, headers })
+      .pipe(
+        map(response => {
+          console.log('FarmService.getNearby response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get nearby farms failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('FarmService.getNearby error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get available soil types
+   * Get available soil types - Custom endpoint
    */
   getAvailableSoilTypes(): Observable<string[]> {
-    return this.apiService.get<string[]>(`${this.baseUrl}/soil-types`);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm/soil-types`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<string[]>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('FarmService.getAvailableSoilTypes response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get available soil types failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('FarmService.getAvailableSoilTypes error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get available climates
+   * Get available climates - Custom endpoint
    */
   getAvailableClimates(): Observable<string[]> {
-    return this.apiService.get<string[]>(`${this.baseUrl}/climates`);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm/climates`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<string[]>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('FarmService.getAvailableClimates response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get available climates failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('FarmService.getAvailableClimates error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Bulk update farms
+   * Bulk update farms - Custom endpoint
    */
   bulkUpdate(ids: number[], data: Partial<FarmUpdateRequest>): Observable<Farm[]> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     const payload = { ids, updateData: data };
-    return this.apiService.put<Farm[]>(`${this.baseUrl}/bulk-update`, payload);
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm/bulk-update`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Farm[]>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('FarmService.bulkUpdate response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Bulk update farms failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('FarmService.bulkUpdate error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Export to Excel
+   * Export to Excel - Custom endpoint
    */
   exportToExcel(filters?: FarmFilters): Observable<Blob> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     let params = new HttpParams();
 
     if (filters) {
@@ -280,14 +524,18 @@ export class FarmService {
       });
     }
 
-    const url = `${this.apiConfig.agronomicApiUrl}${this.baseUrl}/export/excel`;
+    const url = `${this.apiConfig.agronomicApiUrl}/Farm/export/excel`;
+    const headers = this.getAuthHeaders();
     
     return this.http.get(url, {
       params,
       responseType: 'blob',
-      headers: this.getAuthHeaders()
+      headers
     }).pipe(
-      catchError(this.handleError)
+      catchError(error => {
+        console.error('FarmService.exportToExcel error:', error);
+        return this.handleError(error);
+      })
     );
   }
 
@@ -410,6 +658,16 @@ export class FarmService {
 
   private handleError(error: any): Observable<never> {
     console.error('Farm Service Error:', error);
-    throw error;
+    
+    let errorMessage = 'An unknown error occurred';
+    if (error.error?.message) {
+      errorMessage = error.error.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    } else if (error.status) {
+      errorMessage = `HTTP ${error.status}: ${error.statusText}`;
+    }
+
+    return throwError(() => new Error(errorMessage));
   }
 }

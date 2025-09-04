@@ -1,11 +1,17 @@
 // src/app/features/devices/services/device.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, interval } from 'rxjs';
+import { Observable, interval, of, throwError } from 'rxjs';
 import { map, catchError, startWith, switchMap } from 'rxjs/operators';
-import { ApiService } from '../../../core/services/api.service';
 import { ApiConfigService } from '../../../core/services/api-config.service';
 import { Device } from '../../../core/models/models';
+
+// Backend response structure (matches your AgriSmart API)
+interface BackendResponse<T> {
+  success: boolean;
+  exception: any;
+  result: T;
+}
 
 export interface DeviceFilters {
   onlyActive?: boolean;
@@ -94,18 +100,22 @@ export interface DeviceAlert {
   providedIn: 'root'
 })
 export class DeviceService {
-  private readonly baseUrl = '/api/devices';
-
   constructor(
-    private apiService: ApiService,
     private apiConfig: ApiConfigService,
     private http: HttpClient
   ) {}
 
   /**
-   * Get all devices with optional filters
+   * Get all devices with optional filters - Backend: GET /Device (REQUIRES AUTH)
    */
   getAll(onlyActive?: boolean, filters?: DeviceFilters): Observable<Device[]> {
+    // Check authentication
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.warn('DeviceService: No authentication token - returning empty array');
+      return of([]);
+    }
+
     let params = new HttpParams();
 
     // Handle legacy boolean parameter for backward compatibility
@@ -150,76 +160,264 @@ export class DeviceService {
       }
     }
 
-    return this.apiService.get<Device[]>(this.baseUrl, params);
+    const url = `${this.apiConfig.agronomicApiUrl}/Device`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<{devices: Device[]}>>(url, { params, headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.getAll response:', response);
+          if (response.success) {
+            return response.result?.devices || [];
+          }
+          throw new Error(`Device API failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.getAll error:', error);
+          console.error('URL attempted:', url);
+          // Return empty array for dashboard instead of failing
+          return of([]);
+        })
+      );
   }
 
   /**
-   * Get device by ID
+   * Get device by ID - Backend: GET /Device/{id} (if implemented)
    */
   getById(id: number): Observable<Device> {
-    return this.apiService.get<Device>(`${this.baseUrl}/${id}`);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/${id}`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<Device>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.getById response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get Device by ID failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.getById error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Create new device
+   * Create new device - Backend: POST /Device
    */
   create(data: DeviceCreateRequest): Observable<Device> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     const payload = {
       ...data,
       status: data.status || 'Offline',
       isActive: data.isActive !== undefined ? data.isActive : true
     };
 
-    return this.apiService.post<Device>(this.baseUrl, payload);
+    const url = `${this.apiConfig.agronomicApiUrl}/Device`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.post<BackendResponse<Device>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.create response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Create Device failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.create error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Update device
+   * Update device - Backend: PUT /Device
    */
   update(id: number, data: DeviceUpdateRequest): Observable<Device> {
-    return this.apiService.put<Device>(`${this.baseUrl}/${id}`, data);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const payload = { ...data, id };
+    const url = `${this.apiConfig.agronomicApiUrl}/Device`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Device>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.update response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Update Device failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.update error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Delete device
+   * Delete device - Backend: DELETE /Device/{id} (if implemented)
    */
   delete(id: number): Observable<void> {
-    return this.apiService.delete<void>(`${this.baseUrl}/${id}`);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/${id}`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.delete<BackendResponse<void>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.delete response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Delete Device failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.delete error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Toggle device status
+   * Toggle device status - Custom endpoint
    */
   toggleStatus(id: number, isActive: boolean): Observable<Device> {
-    const payload = { isActive };
-    return this.apiService.put<Device>(`${this.baseUrl}/${id}/status`, payload);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const payload = { id, isActive };
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/status`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Device>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.toggleStatus response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Toggle Device status failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.toggleStatus error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Update device connection status
+   * Update device connection status - Custom endpoint
    */
   updateConnectionStatus(id: number, status: string, lastSeen?: Date): Observable<Device> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     const payload = { 
+      id,
       status,
       ...(lastSeen && { lastSeen: lastSeen.toISOString() })
     };
-    return this.apiService.put<Device>(`${this.baseUrl}/${id}/connection-status`, payload);
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/connection-status`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Device>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.updateConnectionStatus response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Update connection status failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.updateConnectionStatus error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Update device battery level
+   * Update device battery level - Custom endpoint
    */
   updateBatteryLevel(id: number, batteryLevel: number): Observable<Device> {
-    const payload = { batteryLevel };
-    return this.apiService.put<Device>(`${this.baseUrl}/${id}/battery`, payload);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const payload = { id, batteryLevel };
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/battery`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Device>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.updateBatteryLevel response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Update battery level failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.updateBatteryLevel error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Update device signal strength
+   * Update device signal strength - Custom endpoint
    */
   updateSignalStrength(id: number, signalStrength: number): Observable<Device> {
-    const payload = { signalStrength };
-    return this.apiService.put<Device>(`${this.baseUrl}/${id}/signal`, payload);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const payload = { id, signalStrength };
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/signal`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Device>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.updateSignalStrength response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Update signal strength failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.updateSignalStrength error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
@@ -292,10 +490,31 @@ export class DeviceService {
   }
 
   /**
-   * Get device statistics
+   * Get device statistics - Custom endpoint
    */
   getStatistics(): Observable<DeviceStatistics> {
-    return this.apiService.get<DeviceStatistics>(`${this.baseUrl}/statistics`);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/statistics`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<DeviceStatistics>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.getStatistics response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get Device statistics failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.getStatistics error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
@@ -309,14 +528,35 @@ export class DeviceService {
   }
 
   /**
-   * Get available device types
+   * Get available device types - Custom endpoint
    */
   getAvailableTypes(): Observable<string[]> {
-    return this.apiService.get<string[]>(`${this.baseUrl}/types`);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/types`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<string[]>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.getAvailableTypes response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get available types failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.getAvailableTypes error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get device readings
+   * Get device readings - Custom endpoint
    */
   getDeviceReadings(
     deviceId: number, 
@@ -324,6 +564,11 @@ export class DeviceService {
     endDate?: Date, 
     limit?: number
   ): Observable<DeviceReading[]> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     let params = new HttpParams();
     
     if (startDate) {
@@ -336,66 +581,208 @@ export class DeviceService {
       params = params.set('limit', limit.toString());
     }
 
-    return this.apiService.get<DeviceReading[]>(`${this.baseUrl}/${deviceId}/readings`, params);
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/${deviceId}/readings`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<DeviceReading[]>>(url, { params, headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.getDeviceReadings response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get device readings failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.getDeviceReadings error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get latest readings for a device
+   * Get latest readings for a device - Custom endpoint
    */
   getLatestReadings(deviceId: number, count: number = 10): Observable<DeviceReading[]> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     const params = new HttpParams().set('latest', count.toString());
-    return this.apiService.get<DeviceReading[]>(`${this.baseUrl}/${deviceId}/readings`, params);
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/${deviceId}/readings`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<DeviceReading[]>>(url, { params, headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.getLatestReadings response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get latest readings failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.getLatestReadings error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get device alerts
+   * Get device alerts - Custom endpoint
    */
   getDeviceAlerts(deviceId: number, activeOnly: boolean = true): Observable<DeviceAlert[]> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     let params = new HttpParams();
     if (activeOnly) {
       params = params.set('activeOnly', 'true');
     }
 
-    return this.apiService.get<DeviceAlert[]>(`${this.baseUrl}/${deviceId}/alerts`, params);
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/${deviceId}/alerts`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<DeviceAlert[]>>(url, { params, headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.getDeviceAlerts response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get device alerts failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.getDeviceAlerts error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get all system alerts
+   * Get all system alerts - Custom endpoint
    */
   getAllAlerts(activeOnly: boolean = true): Observable<DeviceAlert[]> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     let params = new HttpParams();
     if (activeOnly) {
       params = params.set('activeOnly', 'true');
     }
 
-    return this.apiService.get<DeviceAlert[]>(`${this.baseUrl}/alerts`, params);
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/alerts`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<DeviceAlert[]>>(url, { params, headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.getAllAlerts response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get all alerts failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.getAllAlerts error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Acknowledge alert
+   * Acknowledge alert - Custom endpoint
    */
   acknowledgeAlert(alertId: number): Observable<DeviceAlert> {
-    return this.apiService.put<DeviceAlert>(`${this.baseUrl}/alerts/${alertId}/acknowledge`, {});
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/alerts/${alertId}/acknowledge`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<DeviceAlert>>(url, {}, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.acknowledgeAlert response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Acknowledge alert failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.acknowledgeAlert error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Resolve alert
+   * Resolve alert - Custom endpoint
    */
   resolveAlert(alertId: number, resolution?: string): Observable<DeviceAlert> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     const payload = { ...(resolution && { resolution }) };
-    return this.apiService.put<DeviceAlert>(`${this.baseUrl}/alerts/${alertId}/resolve`, payload);
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/alerts/${alertId}/resolve`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<DeviceAlert>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.resolveAlert response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Resolve alert failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.resolveAlert error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Send command to device
+   * Send command to device - Custom endpoint
    */
   sendCommand(deviceId: number, command: string, parameters?: any): Observable<{
     success: boolean;
     message: string;
     commandId: string;
   }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     const payload = { command, ...(parameters && { parameters }) };
-    return this.apiService.post(`${this.baseUrl}/${deviceId}/command`, payload);
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/${deviceId}/command`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.post<BackendResponse<any>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.sendCommand response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Send command failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.sendCommand error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
@@ -420,25 +807,72 @@ export class DeviceService {
   }
 
   /**
-   * Bulk operations
+   * Bulk operations - Custom endpoint
    */
   bulkUpdate(ids: number[], data: Partial<DeviceUpdateRequest>): Observable<Device[]> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     const payload = { ids, updateData: data };
-    return this.apiService.put<Device[]>(`${this.baseUrl}/bulk-update`, payload);
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/bulk-update`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Device[]>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.bulkUpdate response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Bulk update devices failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.bulkUpdate error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Bulk status update
+   * Bulk status update - Custom endpoint
    */
   bulkStatusUpdate(ids: number[], isActive: boolean): Observable<Device[]> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     const payload = { ids, isActive };
-    return this.apiService.put<Device[]>(`${this.baseUrl}/bulk-status`, payload);
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/bulk-status`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Device[]>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('DeviceService.bulkStatusUpdate response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Bulk status update failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('DeviceService.bulkStatusUpdate error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Export to Excel
+   * Export to Excel - Custom endpoint
    */
   exportToExcel(filters?: DeviceFilters): Observable<Blob> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return throwError(() => new Error('Authentication required'));
+    }
+
     let params = new HttpParams();
 
     if (filters) {
@@ -450,14 +884,18 @@ export class DeviceService {
       });
     }
 
-    const url = `${this.apiConfig.agronomicApiUrl}${this.baseUrl}/export/excel`;
+    const url = `${this.apiConfig.agronomicApiUrl}/Device/export/excel`;
+    const headers = this.getAuthHeaders();
     
     return this.http.get(url, {
       params,
       responseType: 'blob',
-      headers: this.getAuthHeaders()
+      headers
     }).pipe(
-      catchError(this.handleError)
+      catchError(error => {
+        console.error('DeviceService.exportToExcel error:', error);
+        return this.handleError(error);
+      })
     );
   }
 
@@ -578,15 +1016,16 @@ export class DeviceService {
   }
 
   sortByStatus(devices: Device[], ascending: boolean = true): Device[] {
-    return [...devices]
-    // const statusPriority: { [key: string]: number } = {
-    //   'Online': 1,
-    //   'Offline': 2,
-    //   'Maintenance': 3,
-    //   'Error': 4
-    // };
+    const statusPriority: { [key: string]: number } = {
+      'Online': 1,
+      'Offline': 2,
+      'Maintenance': 3,
+      'Error': 4
+    };
 
-    // return [...devices].sort((a, b) => {
+    return [...devices]
+    
+    // .sort((a, b) => {
     //   const priorityA = statusPriority[a.status] || 5;
     //   const priorityB = statusPriority[b.status] || 5;
     //   const comparison = priorityA - priorityB;
@@ -781,6 +1220,16 @@ export class DeviceService {
 
   private handleError(error: any): Observable<never> {
     console.error('Device Service Error:', error);
-    throw error;
+    
+    let errorMessage = 'An unknown error occurred';
+    if (error.error?.message) {
+      errorMessage = error.error.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    } else if (error.status) {
+      errorMessage = `HTTP ${error.status}: ${error.statusText}`;
+    }
+
+    return throwError(() => new Error(errorMessage));
   }
 }

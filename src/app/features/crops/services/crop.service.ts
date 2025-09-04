@@ -1,11 +1,17 @@
 // src/app/features/crops/services/crop.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { ApiService } from '../../../core/services/api.service';
 import { ApiConfigService } from '../../../core/services/api-config.service';
 import { Crop } from '../../../core/models/models';
+
+// Backend response structure (matches your AgriSmart API)
+interface BackendResponse<T> {
+  success: boolean;
+  exception: any;
+  result: T;
+}
 
 export interface CropFilters {
   onlyActive?: boolean;
@@ -80,16 +86,13 @@ export interface CropRecommendation {
   providedIn: 'root'
 })
 export class CropService {
-  private readonly baseUrl = '/api/crops';
-
   constructor(
-    private apiService: ApiService,
     private apiConfig: ApiConfigService,
     private http: HttpClient
   ) {}
 
   /**
-   * Get all crops with optional filters
+   * Get all crops with optional filters - Backend: GET /Crop
    */
   getAll(onlyActive?: boolean, filters?: CropFilters): Observable<Crop[]> {
     let params = new HttpParams();
@@ -133,18 +136,49 @@ export class CropService {
       }
     }
 
-    return this.apiService.get<Crop[]>(this.baseUrl, params);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop`;
+    
+    return this.http.get<BackendResponse<{crops: Crop[]}>>(url, { params })
+      .pipe(
+        map(response => {
+          console.log('CropService.getAll response:', response);
+          if (response.success) {
+            return response.result?.crops || [];
+          }
+          throw new Error(`Crop API failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.getAll error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get crop by ID
+   * Get crop by ID - Backend: GET /Crop/{Id:int}
    */
   getById(id: number): Observable<Crop> {
-    return this.apiService.get<Crop>(`${this.baseUrl}/${id}`);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/${id}`;
+    
+    return this.http.get<BackendResponse<Crop>>(url)
+      .pipe(
+        map(response => {
+          console.log('CropService.getById response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get Crop by ID failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.getById error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Create new crop
+   * Create new crop - Backend: POST /Crop (if implemented)
+   * Note: Your current backend may not have this endpoint
    */
   create(data: CropCreateRequest): Observable<Crop> {
     const payload = {
@@ -152,29 +186,96 @@ export class CropService {
       isActive: data.isActive !== undefined ? data.isActive : true
     };
 
-    return this.apiService.post<Crop>(this.baseUrl, payload);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.post<BackendResponse<Crop>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.create response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Create Crop failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.create error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Update crop
+   * Update crop - Backend: PUT /Crop (if implemented)
+   * Note: Your current backend may not have this endpoint
    */
   update(id: number, data: CropUpdateRequest): Observable<Crop> {
-    return this.apiService.put<Crop>(`${this.baseUrl}/${id}`, data);
+    const payload = { ...data, id };
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Crop>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.update response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Update Crop failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.update error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Delete crop
+   * Delete crop - Backend: DELETE /Crop (if implemented)
+   * Note: Your current backend may not have this endpoint
    */
   delete(id: number): Observable<void> {
-    return this.apiService.delete<void>(`${this.baseUrl}/${id}`);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/${id}`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.delete<BackendResponse<void>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.delete response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Delete Crop failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.delete error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Toggle crop status
+   * Toggle crop status - Custom endpoint (may not exist in backend)
    */
   toggleStatus(id: number, isActive: boolean): Observable<Crop> {
-    const payload = { isActive };
-    return this.apiService.put<Crop>(`${this.baseUrl}/${id}/status`, payload);
+    const payload = { id, isActive };
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/status`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Crop>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.toggleStatus response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Toggle Crop status failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.toggleStatus error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
@@ -239,14 +340,30 @@ export class CropService {
   }
 
   /**
-   * Get crop statistics
+   * Get crop statistics - Custom endpoint (may not exist in backend)
    */
   getStatistics(): Observable<CropStatistics> {
-    return this.apiService.get<CropStatistics>(`${this.baseUrl}/statistics`);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/statistics`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<CropStatistics>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.getStatistics response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get Crop statistics failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.getStatistics error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get crop recommendations for specific conditions
+   * Get crop recommendations for specific conditions - Custom endpoint
    */
   getRecommendations(conditions: {
     climate?: string;
@@ -266,54 +383,166 @@ export class CropService {
       }
     });
 
-    return this.apiService.get<CropRecommendation[]>(`${this.baseUrl}/recommendations`, params);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/recommendations`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<CropRecommendation[]>>(url, { params, headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.getRecommendations response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get Crop recommendations failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.getRecommendations error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get available crop types
+   * Get available crop types - Custom endpoint
    */
   getAvailableTypes(): Observable<string[]> {
-    return this.apiService.get<string[]>(`${this.baseUrl}/types`);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/types`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<string[]>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.getAvailableTypes response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get available types failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.getAvailableTypes error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get available varieties for a crop type
+   * Get available varieties for a crop type - Custom endpoint
    */
   getVarietiesByType(type: string): Observable<string[]> {
     const params = new HttpParams().set('type', type);
-    return this.apiService.get<string[]>(`${this.baseUrl}/varieties`, params);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/varieties`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<string[]>>(url, { params, headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.getVarietiesByType response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get varieties by type failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.getVarietiesByType error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get available harvest seasons
+   * Get available harvest seasons - Custom endpoint
    */
   getAvailableHarvestSeasons(): Observable<string[]> {
-    return this.apiService.get<string[]>(`${this.baseUrl}/harvest-seasons`);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/harvest-seasons`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<string[]>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.getAvailableHarvestSeasons response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get harvest seasons failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.getAvailableHarvestSeasons error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get companion crops (crops that grow well together)
+   * Get companion crops (crops that grow well together) - Custom endpoint
    */
   getCompanionCrops(cropId: number): Observable<Crop[]> {
-    return this.apiService.get<Crop[]>(`${this.baseUrl}/${cropId}/companions`);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/${cropId}/companions`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<Crop[]>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.getCompanionCrops response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get companion crops failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.getCompanionCrops error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get crop rotation suggestions
+   * Get crop rotation suggestions - Custom endpoint
    */
   getRotationSuggestions(previousCropId: number): Observable<Crop[]> {
-    return this.apiService.get<Crop[]>(`${this.baseUrl}/${previousCropId}/rotation-suggestions`);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/${previousCropId}/rotation-suggestions`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<Crop[]>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.getRotationSuggestions response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get rotation suggestions failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.getRotationSuggestions error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get crops currently in production
+   * Get crops currently in production - Custom endpoint
    */
   getCropsInProduction(): Observable<Crop[]> {
-    return this.apiService.get<Crop[]>(`${this.baseUrl}/in-production`);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/in-production`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<Crop[]>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.getCropsInProduction response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get crops in production failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.getCropsInProduction error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Get crop performance metrics
+   * Get crop performance metrics - Custom endpoint
    */
   getPerformanceMetrics(cropId: number, months?: number): Observable<{
     averageYield: number;
@@ -333,19 +562,51 @@ export class CropService {
       params = params.set('months', months.toString());
     }
 
-    return this.apiService.get(`${this.baseUrl}/${cropId}/performance`, params);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/${cropId}/performance`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<any>>(url, { params, headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.getPerformanceMetrics response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Get performance metrics failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.getPerformanceMetrics error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Bulk update crops
+   * Bulk update crops - Custom endpoint
    */
   bulkUpdate(ids: number[], data: Partial<CropUpdateRequest>): Observable<Crop[]> {
     const payload = { ids, updateData: data };
-    return this.apiService.put<Crop[]>(`${this.baseUrl}/bulk-update`, payload);
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/bulk-update`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.put<BackendResponse<Crop[]>>(url, payload, { headers })
+      .pipe(
+        map(response => {
+          console.log('CropService.bulkUpdate response:', response);
+          if (response.success) {
+            return response.result;
+          }
+          throw new Error(`Bulk update crops failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('CropService.bulkUpdate error:', error);
+          return this.handleError(error);
+        })
+      );
   }
 
   /**
-   * Export to Excel
+   * Export to Excel - Custom endpoint
    */
   exportToExcel(filters?: CropFilters): Observable<Blob> {
     let params = new HttpParams();
@@ -359,14 +620,18 @@ export class CropService {
       });
     }
 
-    const url = `${this.apiConfig.agronomicApiUrl}${this.baseUrl}/export/excel`;
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop/export/excel`;
+    const headers = this.getAuthHeaders();
     
     return this.http.get(url, {
       params,
       responseType: 'blob',
-      headers: this.getAuthHeaders()
+      headers
     }).pipe(
-      catchError(this.handleError)
+      catchError(error => {
+        console.error('CropService.exportToExcel error:', error);
+        return this.handleError(error);
+      })
     );
   }
 
@@ -531,6 +796,16 @@ export class CropService {
 
   private handleError(error: any): Observable<never> {
     console.error('Crop Service Error:', error);
-    throw error;
+    
+    let errorMessage = 'An unknown error occurred';
+    if (error.error?.message) {
+      errorMessage = error.error.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    } else if (error.status) {
+      errorMessage = `HTTP ${error.status}: ${error.statusText}`;
+    }
+
+    return throwError(() => new Error(errorMessage));
   }
 }

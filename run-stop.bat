@@ -6,13 +6,13 @@ echo ========================================
 echo Stopping all AgriSmart services...
 
 :: Kill all dotnet processes related to AgriSmart
-taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-API-Agronomic*" 2>nul
-taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-API-IoT*" 2>nul  
-taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-MQTT-Broker*" 2>nul
-taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-AgronomicProcess*" 2>nul
-taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-Calculator*" 2>nul
-taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-OnDemandIrrigation*" 2>nul
-taskkill /f /fi "WINDOWTITLE eq Agrismart-Frontend*" 2>nul
+taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-API-Agronomic" 2>nul
+taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-API-IoT" 2>nul  
+taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-MQTT-Broker" 2>nul
+taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-AgronomicProcess" 2>nul
+taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-Calculator" 2>nul
+taskkill /f /fi "WINDOWTITLE eq Agrismart-main\AgriSmart-OnDemandIrrigation" 2>nul
+taskkill /f /fi "WINDOWTITLE eq Agrismart-Frontend" 2>nul
 
 :: Alternative method - kill by process name if window titles don't work
 echo Killing any remaining dotnet processes on AgriSmart ports...

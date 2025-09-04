@@ -175,53 +175,6 @@ export class AppComponent implements OnInit, OnDestroy {
     // Individual components can also handle their own shortcuts
   }
 
-  @HostListener('document:keydown', ['$event'])
-  handleKeyboardEvent(event: KeyboardEvent): void {
-    // Only handle shortcuts when not typing in inputs
-    if (event.target instanceof HTMLInputElement || 
-        event.target instanceof HTMLTextAreaElement || 
-        event.target instanceof HTMLSelectElement) {
-      return;
-    }
-
-    // Handle Ctrl+key combinations
-    if (event.ctrlKey) {
-      switch (event.key) {
-        case 'd':
-          event.preventDefault();
-          this.router.navigate(['/dashboard']);
-          break;
-        case 'c':
-          event.preventDefault();
-          this.router.navigate(['/companies']);
-          break;
-        case 'f':
-          event.preventDefault();
-          this.router.navigate(['/farms']);
-          break;
-        case 'p':
-          event.preventDefault();
-          this.router.navigate(['/crop-production']);
-          break;
-        case 'q':
-          event.preventDefault();
-          this.focusSearchInput();
-          break;
-      }
-    }
-
-    // Handle single key shortcuts
-    switch (event.key) {
-      case '?':
-        event.preventDefault();
-        this.showShortcutsModal();
-        break;
-      case 'Escape':
-        this.closeModalsAndOverlays();
-        break;
-    }
-  }
-
   private focusSearchInput(): void {
     // Find and focus the search input if it exists
     const searchInput = document.querySelector('input[placeholder*="Buscar"], input[placeholder*="buscar"]') as HTMLInputElement;
