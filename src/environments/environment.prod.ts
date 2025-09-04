@@ -1,7 +1,6 @@
-
 // src/environments/environment.prod.ts
 export const environment = {
   production: true,
-  agronomicApiUrl: 'https://api.agrismart.com/agronomic',
-  iotApiUrl: 'https://api.agrismart.com/iot'
+  agronomicApiUrl: 'https://agrismart-api.onrender.com',
+  iotApiUrl: 'https://agrismart-iot-latest.onrender.com'
 };
