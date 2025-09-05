@@ -80,7 +80,7 @@ echo ========================================
 if exist "package.json" (
     echo.
     echo Starting Angular Frontend...
-    start "AgriSmart-Frontend" cmd /c "code . && npm run build-dev && npm dev"
+    start "AgriSmart-Frontend" cmd /c "npm run build-dev && npm dev"
     echo - Frontend: http://localhost:4200
 )
 

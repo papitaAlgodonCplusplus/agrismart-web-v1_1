@@ -3,564 +3,98 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { forkJoin, of, catchError, tap, map, switchMap, mergeMap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+
+// Services
 import { ApiService } from '../../core/services/api.service';
 import { ApiConfigService } from '../../core/services/api-config.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { CompanyService } from '../companies/services/company.service';
+import { FarmService } from '../farms/services/farm.service';
+import { CropService } from '../crops/services/crop.service';
+import { DeviceService } from '../devices/services/device.service';
+import { ProductionUnitService } from '../production-units/services/production-unit.service';
+import { UserService } from '../users/services/user.service';
+import { SensorService } from '../sensors/services/sensor.service';
+import { FertilizerService } from '../fertilizers/services/fertilizer.service';
+import { WaterChemistryService } from '../water-chemistry/services/water-chemistry.service';
+import { LicenseService } from '../licenses/services/license.service';
+import { CatalogService } from '../catalogs/services/catalog.service';
 
 interface Entity {
   id?: number;
+  type?: string;
   name?: string;
+  deviceId?: number; // For devices
+  sensorLabel?: string; // For sensors
+  userEmail?: string; // For users
+  clientId?: number; // For users/licenses
+  catalogId?: number; // For fertilizers
+  active?: boolean; // Common boolean field
+  isActive?: boolean; // Alternative boolean field
   [key: string]: any;
 }
 
 interface EntityConfig {
   name: string;
+  type?: string; // Optional type field
   endpoint: string;
   displayName: string;
   icon: string;
   fields: EntityField[];
+  category: 'main' | 'config' | 'advanced';
+  useService?: boolean;
+  nameField?: string; // Field to use as display name
+  requiresCatalog?: boolean; // New property for catalog-dependent entities
 }
 
 interface EntityField {
   key: string;
   label: string;
-  type: 'text' | 'email' | 'number' | 'date' | 'textarea' | 'select' | 'boolean';
+  type: 'text' | 'email' | 'number' | 'date' | 'datetime' | 'textarea' | 'select' | 'boolean';
   required?: boolean;
   options?: { value: any; label: string }[];
+}
+
+interface AdminStats {
+  totalCompanies: number;
+  totalFarms: number;
+  totalCrops: number;
+  totalDevices: number;
+  totalProductionUnits: number;
+  totalUsers: number;
+  totalSensors: number;
+  totalFertilizers: number;
+  totalWaterChemistry: number;
+  totalLicenses: number;
+  totalCatalogs: number; // Add catalog count
+  [key: string]: number;
 }
 
 @Component({
   selector: 'app-admin',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  template: `
-    <div class="admin-container">
-      <!-- Header -->
-      <div class="admin-header">
-        <h1 class="admin-title">
-          <i class="bi bi-gear-fill"></i>
-          Panel de Administración AgriSmart
-        </h1>
-        <p class="admin-subtitle">Gestión completa de entidades del sistema</p>
-      </div>
-
-      <!-- Sidebar Navigation -->
-      <div class="admin-layout">
-        <div class="admin-sidebar">
-          <h3>Entidades</h3>
-          <ul class="entity-list">
-            <li *ngFor="let entityConfig of entityConfigs" 
-                class="entity-item"
-                [class.active]="selectedEntity === entityConfig.name"
-                (click)="selectEntity(entityConfig.name)">
-              <i [class]="entityConfig.icon"></i>
-              <span>{{ entityConfig.displayName }}</span>
-            </li>
-          </ul>
-          
-          <div class="admin-actions mt-4">
-            <button class="btn btn-outline-secondary btn-sm w-100 mb-2" 
-                    (click)="goToDashboard()">
-              <i class="bi bi-arrow-left"></i> Volver al Dashboard
-            </button>
-            <button class="btn btn-outline-danger btn-sm w-100" 
-                    (click)="logout()">
-              <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
-            </button>
-          </div>
-        </div>
-
-        <!-- Main Content Area -->
-        <div class="admin-content">
-          <div *ngIf="!selectedEntity" class="welcome-screen">
-            <div class="welcome-content">
-              <i class="bi bi-database display-1 text-muted"></i>
-              <h2>Bienvenido al Panel de Administración</h2>
-              <p class="lead">Selecciona una entidad del menú lateral para comenzar a gestionar los datos del sistema.</p>
-              <div class="stats-grid">
-                <div class="stat-card" *ngFor="let stat of entityStats">
-                  <i [class]="stat.icon"></i>
-                  <div class="stat-info">
-                    <h4>{{ stat.count }}</h4>
-                    <p>{{ stat.label }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Entity Management -->
-          <div *ngIf="selectedEntity" class="entity-management">
-            <!-- Entity Header -->
-            <div class="entity-header">
-              <h2>
-                <i [class]="getCurrentEntityConfig()?.icon"></i>
-                {{ getCurrentEntityConfig()?.displayName }}
-              </h2>
-              <div class="entity-actions">
-                <button class="btn btn-primary" (click)="showCreateForm()">
-                  <i class="bi bi-plus-lg"></i> Crear Nuevo
-                </button>
-                <button class="btn btn-outline-secondary" (click)="refreshData()">
-                  <i class="bi bi-arrow-clockwise"></i> Actualizar
-                </button>
-              </div>
-            </div>
-
-            <!-- Loading State -->
-            <div *ngIf="isLoading" class="loading-state">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
-              </div>
-              <p>Cargando datos...</p>
-            </div>
-
-            <!-- Error State -->
-            <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible" role="alert">
-              <i class="bi bi-exclamation-triangle"></i>
-              {{ errorMessage }}
-              <button type="button" class="btn-close" (click)="clearError()"></button>
-            </div>
-
-            <!-- Success Message -->
-            <div *ngIf="successMessage" class="alert alert-success alert-dismissible" role="alert">
-              <i class="bi bi-check-circle"></i>
-              {{ successMessage }}
-              <button type="button" class="btn-close" (click)="clearSuccess()"></button>
-            </div>
-
-            <!-- Search and Filters -->
-            <div class="search-filters mb-3" *ngIf="!isLoading && !errorMessage">
-              <div class="row">
-                <div class="col-md-6">
-                  <input type="text" 
-                         class="form-control" 
-                         placeholder="Buscar..." 
-                         [(ngModel)]="searchTerm"
-                         (input)="filterData()">
-                </div>
-                <div class="col-md-6">
-                  <div class="d-flex gap-2">
-                    <select class="form-select" [(ngModel)]="filterStatus" (change)="filterData()">
-                      <option value="">Todos los estados</option>
-                      <option value="true">Activos</option>
-                      <option value="false">Inactivos</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Data Table -->
-            <div class="table-container" *ngIf="!isLoading && !errorMessage">
-              <table class="table table-striped table-hover">
-                <thead class="table-dark">
-                  <tr>
-                    <th>#</th>
-                    <th *ngFor="let field of getCurrentEntityConfig()?.fields?.slice(0, 4)" 
-                        (click)="sortBy(field.key)" 
-                        class="sortable">
-                      {{ field.label }}
-                      <i class="bi bi-arrow-up-down"></i>
-                    </th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let item of filteredData; trackBy: trackByFn">
-                    <td>{{ item.id }}</td>
-                    <td *ngFor="let field of getCurrentEntityConfig()?.fields?.slice(0, 4)">
-                      <span [ngSwitch]="field.type">
-                        <span *ngSwitchCase="'boolean'">
-                          <i class="bi" [class.bi-check-circle-fill]="item[field.key]" 
-                             [class.bi-x-circle-fill]="!item[field.key]"
-                             [class.text-success]="item[field.key]"
-                             [class.text-danger]="!item[field.key]"></i>
-                        </span>
-                        <span *ngSwitchCase="'date'">
-                          {{ item[field.key] | date:'dd/MM/yyyy' }}
-                        </span>
-                        <span *ngSwitchDefault>
-                          {{ item[field.key] || '-' }}
-                        </span>
-                      </span>
-                    </td>
-                    <td>
-                      <span class="badge" 
-                            [class.bg-success]="item['isActive']" 
-                            [class.bg-secondary]="!item['isActive']">
-                        {{ item['isActive'] ? 'Activo' : 'Inactivo' }}
-                      </span>
-                    </td>
-                    <td>
-                      <div class="action-buttons">
-                        <button class="btn btn-sm btn-outline-primary" 
-                                (click)="viewItem(item)"
-                                title="Ver detalles">
-                          <i class="bi bi-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-warning" 
-                                (click)="editItem(item)"
-                                title="Editar"> 
-                          <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" 
-                                (click)="deleteItem(item)"
-                                title="Eliminar">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <!-- Empty State -->
-              <div *ngIf="filteredData.length === 0" class="empty-state">
-                <i class="bi bi-inbox display-1 text-muted"></i>
-                <h3>No hay datos disponibles</h3>
-                <p>No se encontraron registros para {{ getCurrentEntityConfig()?.displayName }}.</p>
-                <button class="btn btn-primary" (click)="showCreateForm()">
-                  <i class="bi bi-plus-lg"></i> Crear el primer registro
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal for Create/Edit -->
-      <div class="modal fade" 
-           [class.show]="showModal" 
-           [style.display]="showModal ? 'block' : 'none'"
-           id="entityModal" 
-           tabindex="-1">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">
-                {{ isEditing ? 'Editar' : 'Crear' }} {{ getCurrentEntityConfig()?.displayName }}
-              </h5>
-              <button type="button" class="btn-close" (click)="closeModal()"></button>
-            </div>
-            <div class="modal-body">
-              <form *ngIf="currentItem" (ngSubmit)="saveItem()" #entityForm="ngForm">
-                <div class="row">
-                  <div *ngFor="let field of getCurrentEntityConfig()?.fields" 
-                       class="col-md-6 mb-3"
-                       [class.col-md-12]="field.type === 'textarea'">
-                    
-                    <label [for]="field.key" class="form-label">
-                      {{ field.label }}
-                      <span *ngIf="field.required" class="text-danger">*</span>
-                    </label>
-
-                    <!-- Text Input -->
-                    <input *ngIf="field.type === 'text' || field.type === 'email'" 
-                           [type]="field.type"
-                           class="form-control"
-                           [id]="field.key"
-                           [(ngModel)]="currentItem[field.key]"
-                           [name]="field.key"
-                           [required]="field.required ?? false">
-
-                    <!-- Number Input -->
-                    <input *ngIf="field.type === 'number'" 
-                           type="number"
-                           class="form-control"
-                           [id]="field.key"
-                           [(ngModel)]="currentItem[field.key]"
-                           [name]="field.key"
-                           [required]="field.required ?? false">
-
-                    <!-- Date Input -->
-                    <input *ngIf="field.type === 'date'" 
-                           type="date"
-                           class="form-control"
-                           [id]="field.key"
-                           [(ngModel)]="currentItem[field.key]"
-                           [name]="field.key"
-                           [required]="field.required ?? false">
-
-                    <!-- Textarea -->
-                    <textarea *ngIf="field.type === 'textarea'" 
-                              class="form-control"
-                              [id]="field.key"
-                              [(ngModel)]="currentItem[field.key]"
-                              [name]="field.key"
-                              [required]="field.required ?? false"
-                              rows="3"></textarea>
-
-                    <!-- Select -->
-                    <select *ngIf="field.type === 'select'" 
-                            class="form-select"
-                            [id]="field.key"
-                            [(ngModel)]="currentItem[field.key]"
-                            [name]="field.key"
-                            [required]="field.required ?? false">
-                      <option value="">Seleccionar...</option>
-                      <option *ngFor="let option of field.options" [value]="option.value">
-                        {{ option.label }}
-                      </option>
-                    </select>
-
-                    <!-- Boolean/Checkbox -->
-                    <div *ngIf="field.type === 'boolean'" class="form-check">
-                      <input type="checkbox" 
-                             class="form-check-input"
-                             [id]="field.key"
-                             [(ngModel)]="currentItem[field.key]"
-                             [name]="field.key">
-                      <label class="form-check-label" [for]="field.key">
-                        {{ field.label }}
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="closeModal()">
-                Cancelar
-              </button>
-              <button type="button" 
-                      class="btn btn-primary" 
-                      (click)="saveItem()">
-                <i class="bi bi-save"></i> 
-                {{ isEditing ? 'Actualizar' : 'Crear' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Backdrop -->
-      <div *ngIf="showModal" class="modal-backdrop fade show"></div>
-    </div>
-  `,
-  styles: [`
-    .admin-container {
-      min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .admin-header {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 2rem;
-      text-align: center;
-      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    .admin-title {
-      color: #2c3e50;
-      margin: 0;
-      font-weight: 700;
-      font-size: 2.5rem;
-    }
-
-    .admin-subtitle {
-      color: #7f8c8d;
-      margin: 0.5rem 0 0 0;
-      font-size: 1.1rem;
-    }
-
-    .admin-layout {
-      display: flex;
-      min-height: calc(100vh - 140px);
-    }
-
-    .admin-sidebar {
-      width: 280px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 2rem;
-      box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
-    }
-
-    .entity-list {
-      list-style: none;
-      padding: 0;
-      margin: 1rem 0;
-    }
-
-    .entity-item {
-      padding: 0.75rem 1rem;
-      margin: 0.25rem 0;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      background: rgba(52, 73, 94, 0.05);
-    }
-
-    .entity-item:hover {
-      background: rgba(52, 73, 94, 0.1);
-      transform: translateX(5px);
-    }
-
-    .entity-item.active {
-      background: #3498db;
-      color: white;
-      box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-    }
-
-    .admin-content {
-      flex: 1;
-      padding: 2rem;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      margin: 1rem;
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-    }
-
-    .welcome-screen {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      text-align: center;
-    }
-
-    .welcome-content h2 {
-      color: #2c3e50;
-      margin: 1rem 0;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-top: 2rem;
-    }
-
-    .stat-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .stat-card i {
-      font-size: 2rem;
-      opacity: 0.8;
-    }
-
-    .stat-info h4 {
-      margin: 0;
-      font-size: 2rem;
-      font-weight: 700;
-    }
-
-    .stat-info p {
-      margin: 0;
-      opacity: 0.9;
-    }
-
-    .entity-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 2px solid #ecf0f1;
-    }
-
-    .entity-header h2 {
-      color: #2c3e50;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .entity-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .loading-state {
-      text-align: center;
-      padding: 3rem;
-    }
-
-    .table-container {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .table {
-      margin: 0;
-    }
-
-    .sortable {
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .sortable:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 0.25rem;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 3rem;
-      color: #7f8c8d;
-    }
-
-    .empty-state h3 {
-      margin: 1rem 0;
-    }
-
-    .modal.show {
-      background: rgba(0, 0, 0, 0.5);
-    }
-
-    .search-filters {
-      background: rgba(52, 73, 94, 0.05);
-      padding: 1rem;
-      border-radius: 8px;
-    }
-
-    @media (max-width: 768px) {
-      .admin-layout {
-        flex-direction: column;
-      }
-      
-      .admin-sidebar {
-        width: 100%;
-      }
-      
-      .entity-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: stretch;
-      }
-      
-      .entity-actions {
-        justify-content: center;
-      }
-    }
-  `]
+  templateUrl: './admin.component.html',
+  styleUrls: ['./admin.component.css']
 })
 export class AdminComponent implements OnInit {
   private apiService = inject(ApiService);
   private apiConfig = inject(ApiConfigService);
   private router = inject(Router);
+  private authService = inject(AuthService);
+  private companyService = inject(CompanyService);
+  private farmService = inject(FarmService);
+  private cropService = inject(CropService);
+  private deviceService = inject(DeviceService);
+  private productionUnitService = inject(ProductionUnitService);
+  private userService = inject(UserService);
+  private sensorService = inject(SensorService);
+  private fertilizerService = inject(FertilizerService);
+  private waterChemistryService = inject(WaterChemistryService);
+  private licenseService = inject(LicenseService);
+  private catalogService = inject(CatalogService);
 
   // State management
   selectedEntity: string = '';
@@ -572,7 +106,13 @@ export class AdminComponent implements OnInit {
   showModal = false;
   errorMessage = '';
   successMessage = '';
-  
+  rawData: any = {};
+
+  // Catalog management
+  availableCatalogs: any[] = [];
+  selectedCatalogId: number | null = null;
+  loadedUsers: Entity[] = []; // Store loaded users for catalog loading
+
   // Filtering and search
   searchTerm = '';
   filterStatus = '';
@@ -587,13 +127,32 @@ export class AdminComponent implements OnInit {
     { icon: 'bi bi-flower1', count: 0, label: 'Cultivos' }
   ];
 
-  // Entity configurations
+  // Complete statistics object
+  adminStats: AdminStats = {
+    totalCompanies: 0,
+    totalFarms: 0,
+    totalCrops: 0,
+    totalDevices: 0,
+    totalProductionUnits: 0,
+    totalUsers: 0,
+    totalSensors: 0,
+    totalFertilizers: 0,
+    totalWaterChemistry: 0,
+    totalLicenses: 0,
+    totalCatalogs: 0
+  };
+
+  // Entity configurations with proper field mapping
   entityConfigs: EntityConfig[] = [
+    // Main Management Entities
     {
       name: 'company',
-      endpoint: this.apiConfig.endpoints.company,
+      endpoint: '/Company',
       displayName: 'Compañías',
       icon: 'bi bi-building',
+      category: 'main',
+      useService: true,
+      nameField: 'name',
       fields: [
         { key: 'name', label: 'Nombre', type: 'text', required: true },
         { key: 'description', label: 'Descripción', type: 'textarea' },
@@ -602,233 +161,701 @@ export class AdminComponent implements OnInit {
         { key: 'email', label: 'Email', type: 'email' },
         { key: 'website', label: 'Sitio Web', type: 'text' },
         { key: 'taxId', label: 'ID Fiscal', type: 'text' },
-        { key: 'isActive', label: 'Activo', type: 'boolean' }
+        { key: 'active', label: 'Activo', type: 'boolean' }
       ]
     },
     {
       name: 'farm',
-      endpoint: this.apiConfig.endpoints.farm,
+      endpoint: '/Farm',
       displayName: 'Fincas',
       icon: 'bi bi-house',
+      category: 'main',
+      useService: true,
+      nameField: 'name',
       fields: [
         { key: 'name', label: 'Nombre', type: 'text', required: true },
         { key: 'description', label: 'Descripción', type: 'textarea' },
-        { key: 'companyId', label: 'Compañía', type: 'select', required: true, options: [] },
-        { key: 'location', label: 'Ubicación', type: 'text' },
-        { key: 'address', label: 'Dirección', type: 'text' },
-        { key: 'area', label: 'Área (hectáreas)', type: 'number' },
-        { key: 'climate', label: 'Clima', type: 'text' },
-        { key: 'soilType', label: 'Tipo de Suelo', type: 'text' },
-        { key: 'isActive', label: 'Activo', type: 'boolean' }
+        { key: 'companyId', label: 'ID Compañía', type: 'number', required: true },
+        { key: 'timeZoneId', label: 'ID Zona Horaria', type: 'number' },
+        { key: 'active', label: 'Activo', type: 'boolean' }
       ]
     },
     {
       name: 'crop',
-      endpoint: this.apiConfig.endpoints.crop,
+      endpoint: '/Crop',
       displayName: 'Cultivos',
       icon: 'bi bi-flower1',
+      category: 'main',
+      useService: true,
+      nameField: 'name',
       fields: [
         { key: 'name', label: 'Nombre', type: 'text', required: true },
-        { key: 'scientificName', label: 'Nombre Científico', type: 'text' },
         { key: 'description', label: 'Descripción', type: 'textarea' },
-        { key: 'type', label: 'Tipo', type: 'select', options: [
-          { value: 'Vegetal', label: 'Vegetal' },
-          { value: 'Fruta', label: 'Fruta' },
-          { value: 'Cereal', label: 'Cereal' },
-          { value: 'Hierba', label: 'Hierba' },
-          { value: 'Otro', label: 'Otro' }
-        ]},
-        { key: 'variety', label: 'Variedad', type: 'text' },
-        { key: 'growthCycleDays', label: 'Días de Ciclo', type: 'number' },
-        { key: 'harvestSeason', label: 'Temporada de Cosecha', type: 'text' },
-        { key: 'waterRequirement', label: 'Requerimiento de Agua', type: 'select', options: [
-          { value: 'Bajo', label: 'Bajo' },
-          { value: 'Medio', label: 'Medio' },
-          { value: 'Alto', label: 'Alto' }
-        ]},
-        { key: 'optimalTemperatureMin', label: 'Temp. Mínima (°C)', type: 'number' },
-        { key: 'optimalTemperatureMax', label: 'Temp. Máxima (°C)', type: 'number' },
-        { key: 'isActive', label: 'Activo', type: 'boolean' }
+        { key: 'cropBaseTemperature', label: 'Temperatura Base (°C)', type: 'number' },
+        { key: 'active', label: 'Activo', type: 'boolean' }
       ]
     },
     {
       name: 'device',
-      endpoint: this.apiConfig.endpoints.device,
+      endpoint: '/Device',
       displayName: 'Dispositivos',
       icon: 'bi bi-cpu',
+      category: 'main',
+      useService: true,
+      nameField: 'deviceId',
       fields: [
-        { key: 'name', label: 'Nombre', type: 'text', required: true },
-        { key: 'description', label: 'Descripción', type: 'textarea' },
-        { key: 'deviceType', label: 'Tipo', type: 'select', options: [
-          { value: 'Sensor', label: 'Sensor' },
-          { value: 'Actuador', label: 'Actuador' },
-          { value: 'Controlador', label: 'Controlador' },
-          { value: 'Gateway', label: 'Gateway' },
-          { value: 'Camara', label: 'Cámara' },
-          { value: 'Estacion Meteorologica', label: 'Estación Meteorológica' }
-        ]},
-        { key: 'serialNumber', label: 'Número de Serie', type: 'text' },
-        { key: 'model', label: 'Modelo', type: 'text' },
-        { key: 'manufacturer', label: 'Fabricante', type: 'text' },
-        { key: 'firmwareVersion', label: 'Versión Firmware', type: 'text' },
-        { key: 'macAddress', label: 'Dirección MAC', type: 'text' },
-        { key: 'ipAddress', label: 'Dirección IP', type: 'text' },
-        { key: 'status', label: 'Estado', type: 'select', options: [
-          { value: 'Online', label: 'En línea' },
-          { value: 'Offline', label: 'Fuera de línea' },
-          { value: 'Maintenance', label: 'Mantenimiento' },
-          { value: 'Error', label: 'Error' }
-        ]},
-        { key: 'isActive', label: 'Activo', type: 'boolean' }
+        { key: 'deviceId', label: 'ID Dispositivo', type: 'text', required: true },
+        { key: 'companyId', label: 'ID Compañía', type: 'number', required: true },
+        { key: 'active', label: 'Activo', type: 'boolean' }
       ]
     },
+    // Configuration Entities
     {
-      name: 'waterChemistry',
-      endpoint: this.apiConfig.endpoints.waterChemistry,
-      displayName: 'Química del Agua',
-      icon: 'bi bi-droplet',
+      name: 'catalog',
+      endpoint: '/Catalog',
+      displayName: 'Catálogos',
+      icon: 'bi bi-folder',
+      category: 'config',
+      useService: true,
+      nameField: 'name',
       fields: [
         { key: 'name', label: 'Nombre', type: 'text', required: true },
         { key: 'description', label: 'Descripción', type: 'textarea' },
-        { key: 'phLevel', label: 'Nivel pH', type: 'number' },
-        { key: 'electricalConductivity', label: 'Conductividad Eléctrica', type: 'number' },
-        { key: 'totalDissolvedSolids', label: 'Sólidos Disueltos Totales', type: 'number' },
-        { key: 'temperature', label: 'Temperatura (°C)', type: 'number' },
-        { key: 'isActive', label: 'Activo', type: 'boolean' }
-      ]
-    },
-    {
-      name: 'cropPhase',
-      endpoint: this.apiConfig.endpoints.cropPhase,
-      displayName: 'Fases de Cultivo',
-      icon: 'bi bi-arrow-right-circle',
-      fields: [
-        { key: 'name', label: 'Nombre', type: 'text', required: true },
-        { key: 'description', label: 'Descripción', type: 'textarea' },
-        { key: 'durationDays', label: 'Duración (días)', type: 'number' },
-        { key: 'orderSequence', label: 'Orden', type: 'number' },
-        { key: 'isActive', label: 'Activo', type: 'boolean' }
-      ]
-    },
-    {
-      name: 'productionUnit',
-      endpoint: this.apiConfig.endpoints.productionUnit,
-      displayName: 'Unidades de Producción',
-      icon: 'bi bi-grid',
-      fields: [
-        { key: 'name', label: 'Nombre', type: 'text', required: true },
-        { key: 'description', label: 'Descripción', type: 'textarea' },
-        { key: 'farmId', label: 'Finca', type: 'select', required: true, options: [] },
-        { key: 'productionUnitTypeId', label: 'Tipo', type: 'select', required: true, options: [] },
-        { key: 'area', label: 'Área (m²)', type: 'number' },
-        { key: 'capacity', label: 'Capacidad', type: 'number' },
-        { key: 'location', label: 'Ubicación', type: 'text' },
-        { key: 'isActive', label: 'Activo', type: 'boolean' }
-      ]
-    },
-    {
-      name: 'sensor',
-      endpoint: this.apiConfig.endpoints.sensor,
-      displayName: 'Sensores',
-      icon: 'bi bi-speedometer2',
-      fields: [
-        { key: 'name', label: 'Nombre', type: 'text', required: true },
-        { key: 'description', label: 'Descripción', type: 'textarea' },
-        { key: 'sensorType', label: 'Tipo de Sensor', type: 'text' },
-        { key: 'measurementVariable', label: 'Variable de Medición', type: 'text' },
-        { key: 'unit', label: 'Unidad', type: 'text' },
-        { key: 'minValue', label: 'Valor Mínimo', type: 'number' },
-        { key: 'maxValue', label: 'Valor Máximo', type: 'number' },
-        { key: 'accuracy', label: 'Precisión', type: 'number' },
+        { key: 'clientId', label: 'ID Cliente', type: 'number', required: true },
         { key: 'isActive', label: 'Activo', type: 'boolean' }
       ]
     },
     {
       name: 'user',
-      endpoint: this.apiConfig.endpoints.user,
+      endpoint: '/User',
       displayName: 'Usuarios',
       icon: 'bi bi-people',
+      category: 'config',
+      useService: true,
+      nameField: 'userEmail',
       fields: [
-        { key: 'firstName', label: 'Nombre', type: 'text', required: true },
-        { key: 'lastName', label: 'Apellido', type: 'text', required: true },
-        { key: 'email', label: 'Email', type: 'email', required: true },
-        { key: 'phoneNumber', label: 'Teléfono', type: 'text' },
-        { key: 'role', label: 'Rol', type: 'select', options: [
-          { value: '1', label: 'Administrador' },
-          { value: '2', label: 'Usuario' },
-          { value: '3', label: 'Operador' }
-        ]},
+        { key: 'userEmail', label: 'Email', type: 'email', required: true },
+        { key: 'clientId', label: 'ID Cliente', type: 'number', required: true },
+        { key: 'profileId', label: 'ID Perfil', type: 'number', required: true },
+        { key: 'userStatusId', label: 'ID Estado Usuario', type: 'number' },
+        { key: 'active', label: 'Activo', type: 'boolean' }
+      ]
+    },
+    {
+      name: 'sensor',
+      endpoint: '/Sensor',
+      displayName: 'Sensores',
+      icon: 'bi bi-thermometer-half',
+      category: 'config',
+      useService: true,
+      nameField: 'sensorLabel',
+      fields: [
+        { key: 'sensorLabel', label: 'Etiqueta Sensor', type: 'text', required: true },
+        { key: 'description', label: 'Descripción', type: 'textarea' },
+        { key: 'deviceId', label: 'ID Dispositivo', type: 'number', required: true },
+        { key: 'measurementVariableId', label: 'ID Variable Medición', type: 'number' },
+        { key: 'numberOfContainers', label: 'Número de Contenedores', type: 'number' },
+        { key: 'active', label: 'Activo', type: 'boolean' }
+      ]
+    },
+    // Advanced Entities
+    {
+      name: 'fertilizer',
+      endpoint: '/Fertilizer',
+      displayName: 'Fertilizantes',
+      icon: 'bi bi-droplet-fill',
+      category: 'advanced',
+      useService: true,
+      nameField: 'name',
+      requiresCatalog: true,
+      fields: [
+        { key: 'catalogId', label: 'ID Catálogo', type: 'select', required: true, options: [] },
+        { key: 'name', label: 'Nombre', type: 'text', required: true },
+        { key: 'brand', label: 'Marca', type: 'text' },
+        { key: 'description', label: 'Descripción', type: 'textarea' },
+        { key: 'type', label: 'Tipo', type: 'text', required: true },
+        { key: 'formulation', label: 'Formulación', type: 'text' },
+        { key: 'concentration', label: 'Concentración', type: 'number' },
+        { key: 'concentrationUnit', label: 'Unidad de Concentración', type: 'text' },
+        { key: 'applicationMethod', label: 'Método de Aplicación', type: 'text' },
+        { key: 'nitrogenPercentage', label: 'Porcentaje de Nitrógeno', type: 'number' },
+        { key: 'phosphorusPercentage', label: 'Porcentaje de Fósforo', type: 'number' },
+        { key: 'potassiumPercentage', label: 'Porcentaje de Potasio', type: 'number' },
+        { key: 'micronutrients', label: 'Micronutrientes', type: 'text' },
+        { key: 'currentStock', label: 'Stock Actual', type: 'number' },
+        { key: 'minimumStock', label: 'Stock Mínimo', type: 'number' },
+        { key: 'stockUnit', label: 'Unidad de Stock', type: 'text' },
+        { key: 'pricePerUnit', label: 'Precio por Unidad', type: 'number' },
+        { key: 'supplier', label: 'Proveedor', type: 'text' },
+        { key: 'expirationDate', label: 'Fecha de Vencimiento', type: 'date' },
+        { key: 'storageInstructions', label: 'Instrucciones de Almacenamiento', type: 'textarea' },
+        { key: 'applicationInstructions', label: 'Instrucciones de Aplicación', type: 'textarea' },
         { key: 'isActive', label: 'Activo', type: 'boolean' }
       ]
     },
     {
+      name: 'waterChemistry',
+      endpoint: '/WaterChemistry',
+      displayName: 'Química del Agua',
+      icon: 'bi bi-droplet',
+      category: 'advanced',
+      useService: true,
+      nameField: 'waterId',
+      fields: [
+        { key: 'waterId', label: 'ID del Agua', type: 'number', required: true },
+        { key: 'ca', label: 'Calcio (Ca)', type: 'number' },
+        { key: 'k', label: 'Potasio (K)', type: 'number' },
+        { key: 'mg', label: 'Magnesio (Mg)', type: 'number' },
+        { key: 'na', label: 'Sodio (Na)', type: 'number' },
+        { key: 'cl', label: 'Cloro (Cl)', type: 'number' },
+        { key: 'so4', label: 'Sulfato (SO4)', type: 'number' },
+        { key: 'hco3', label: 'Bicarbonato (HCO3)', type: 'number' },
+        { key: 'ph', label: 'pH', type: 'number' },
+        { key: 'ec', label: 'Conductividad Eléctrica (EC)', type: 'number' },
+        { key: 'tds', label: 'Sólidos Disueltos Totales (TDS)', type: 'number' },
+        { key: 'active', label: 'Activo', type: 'boolean' }
+      ]
+    },
+    {
       name: 'license',
-      endpoint: this.apiConfig.endpoints.license,
+      endpoint: '/License',
       displayName: 'Licencias',
       icon: 'bi bi-key',
+      category: 'advanced',
+      useService: true,
+      nameField: 'key',
       fields: [
-        { key: 'name', label: 'Nombre', type: 'text', required: true },
-        { key: 'description', label: 'Descripción', type: 'textarea' },
-        { key: 'licenseKey', label: 'Clave de Licencia', type: 'text', required: true },
-        { key: 'validFrom', label: 'Válida Desde', type: 'date' },
-        { key: 'validTo', label: 'Válida Hasta', type: 'date' },
-        { key: 'maxUsers', label: 'Máximo Usuarios', type: 'number' },
-        { key: 'maxDevices', label: 'Máximo Dispositivos', type: 'number' },
-        { key: 'isActive', label: 'Activo', type: 'boolean' }
+        { key: 'clientId', label: 'ID Cliente', type: 'number', required: true },
+        { key: 'key', label: 'Clave de Licencia', type: 'text', required: true },
+        { key: 'expirationDate', label: 'Fecha Expiración', type: 'datetime' },
+        { key: 'allowedCompanies', label: 'Compañías Permitidas', type: 'number' },
+        { key: 'allowedFarms', label: 'Fincas Permitidas', type: 'number' },
+        { key: 'allowedDevices', label: 'Dispositivos Permitidos', type: 'number' },
+        { key: 'active', label: 'Activo', type: 'boolean' }
       ]
     }
   ];
 
   ngOnInit(): void {
-    this.loadEntityStats();
+    this.loadAdminData();
   }
 
-  async loadEntityStats(): Promise<void> {
-    try {
-      // Load basic statistics for dashboard
-      const statsPromises = [
-        this.loadEntityCount('company'),
-        this.loadEntityCount('farm'),
-        this.loadEntityCount('device'),
-        this.loadEntityCount('crop')
-      ];
+  /**
+   * Extract data from API response with proper handling of nested structures
+   */
+  private extractResponseData(response: any, entityName: string): Entity[] {
+    if (entityName === 'license') {
+      console.warn('License response:', response);
+      return response.licenses || [];
+    }
+    if (entityName === 'catalog') {
+      console.log('Catalog response:', response);
+      if (Array.isArray(response)) {
+        return response;
+      }
+      return response.catalogs || response.result?.catalogs || [];
+    }
+    if (!response) return [];
 
-      const [companies, farms, devices, crops] = await Promise.all(statsPromises);
+    // Handle direct array responses
+    if (Array.isArray(response)) {
+      console.log('Direct array response:', response, entityName);
+      return response;
+    }
+
+    // Handle wrapped responses with result property
+    if (response.result) {
+      const result = response.result;
+      console.log('Wrapped result response:', result, entityName);
       
-      this.entityStats = [
-        { icon: 'bi bi-building', count: companies, label: 'Compañías' },
-        { icon: 'bi bi-house', count: farms, label: 'Fincas' },
-        { icon: 'bi bi-cpu', count: devices, label: 'Dispositivos' },
-        { icon: 'bi bi-flower1', count: crops, label: 'Cultivos' }
-      ];
-    } catch (error) {
-      console.error('Error loading entity statistics:', error);
+      // Handle nested structures in result
+      switch (entityName) {
+        case 'company':
+          return Array.isArray(result.companies) ? result.companies : [];
+        case 'farm':
+          return Array.isArray(result.farms) ? result.farms : [];
+        case 'crop':
+          return Array.isArray(result.crops) ? result.crops : [];
+        case 'device':
+          return Array.isArray(result.devices) ? result.devices : [];
+        case 'user':
+          return Array.isArray(result.users) ? result.users : [];
+        case 'sensor':
+          return Array.isArray(result.sensors) ? result.sensors : [];
+        case 'waterChemistry':
+          return Array.isArray(result.waterChemistries) ? result.waterChemistries : [];
+        case 'license':
+          console.log('License result response:', result);
+          return result.licenses;
+        case 'catalog':
+          return Array.isArray(result.catalogs) ? result.catalogs : [];
+        case 'fertilizer':
+          return Array.isArray(result.fertilizers) ? result.fertilizers : [];
+        default:
+          // Try direct result if it's an array
+          console.log('Direct result response:', result, entityName);
+          return Array.isArray(result) ? result : [];
+      }
+    }
+
+    // Handle object responses with nested arrays
+    if (response.waterChemistries && entityName === 'waterChemistry') {
+      return Array.isArray(response.waterChemistries) ? response.waterChemistries : [];
+    }
+
+    if (response.users && entityName === 'user') {
+      return Array.isArray(response.users) ? response.users : [];
+    }
+
+    if (response.sensors && entityName === 'sensor') {
+      return Array.isArray(response.sensors) ? response.sensors : [];
+    }
+
+    if (response.catalogs && entityName === 'catalog') {
+      return Array.isArray(response.catalogs) ? response.catalogs : [];
+    }
+
+    if (response.fertilizers && entityName === 'fertilizer') {
+      return Array.isArray(response.fertilizers) ? response.fertilizers : [];
+    }
+
+    // Fallback
+    return [];
+  }
+
+  /**
+   * Load basic entities first, then load catalogs and fertilizers based on users
+   */
+  private loadAdminData(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    // Load basic entities first (excluding catalogs and fertilizers)
+    forkJoin({
+      companies: this.companyService.getAll().pipe(
+        map(data => this.extractResponseData(data, 'company')),
+        tap(data => console.log('Companies extracted:', data)),
+        catchError(error => {
+          console.error('Companies error:', error);
+          return of([]);
+        })
+      ),
+      farms: this.farmService.getAll().pipe(
+        map(data => this.extractResponseData(data, 'farm')),
+        tap(data => console.log('Farms extracted:', data)),
+        catchError(error => {
+          console.error('Farms error:', error);
+          return of([]);
+        })
+      ),
+      crops: this.cropService.getAll().pipe(
+        map(data => this.extractResponseData(data, 'crop')),
+        tap(data => console.log('Crops extracted:', data)),
+        catchError(error => {
+          console.error('Crops error:', error);
+          return of([]);
+        })
+      ),
+      devices: this.deviceService.getAll().pipe(
+        map(data => this.extractResponseData(data, 'device')),
+        tap(data => console.log('Devices extracted:', data)),
+        catchError(error => {
+          console.error('Devices error:', error);
+          return of([]);
+        })
+      ),
+      users: this.userService.getAll().pipe(
+        map(data => this.extractResponseData(data, 'user')),
+        tap(data => console.log('Users extracted:', data)),
+        catchError(error => {
+          console.error('Users error:', error);
+          return of([]);
+        })
+      ),
+      sensors: this.sensorService.getAll().pipe(
+        map(data => this.extractResponseData(data, 'sensor')),
+        tap(data => console.log('Sensors extracted:', data)),
+        catchError(error => {
+          console.error('Sensors error:', error);
+          return of([]);
+        })
+      ),
+      licenses: this.licenseService.getAll().pipe(
+        map(data => this.extractResponseData(data, 'license')),
+        tap(data => console.log('Licenses extracted:', data)),
+        catchError(error => {
+          console.error('Licenses error:', error);
+          return of([]);
+        })
+      ),
+      waterChemistry: this.waterChemistryService.getAll().pipe(
+        map(data => this.extractResponseData(data, 'waterChemistry')),
+        tap(data => console.log('Water Chemistry extracted:', data)),
+        catchError(error => {
+          console.error('Water Chemistry error:', error);
+          return of([]);
+        })
+      ),
+      productionUnits: this.productionUnitService.getAll().pipe(
+        map(data => this.extractResponseData(data, 'productionUnit')),
+        tap(data => console.log('Production Units extracted:', data)),
+        catchError(error => {
+          console.error('Production Units error:', error);
+          return of([]);
+        })
+      )
+    }).pipe(
+      // After basic data is loaded, load catalogs and fertilizers based on users
+      switchMap((basicData) => {
+        this.rawData = basicData;
+        this.loadedUsers = basicData.users || [];
+        
+        // Get unique client IDs from users
+        const clientIds = [...new Set(this.loadedUsers.map(user => user.clientId).filter(id => id))];
+        console.log('Found client IDs:', clientIds);
+        
+        if (clientIds.length === 0) {
+          // No users with client IDs, return empty catalogs and fertilizers
+          return of({
+            ...basicData,
+            catalogs: [],
+            fertilizers: []
+          });
+        }
+
+        // Load catalogs for each client ID
+        const catalogRequests = clientIds.map(clientId => 
+          this.catalogService.getAll(clientId).pipe(
+            map(data => this.extractResponseData(data, 'catalog')),
+            tap(data => console.log(`Catalogs for client ${clientId}:`, data)),
+            catchError(error => {
+              console.error(`Catalogs error for client ${clientId}:`, error);
+              return of([]);
+            })
+          )
+        );
+
+        return forkJoin(catalogRequests).pipe(
+          map(catalogArrays => {
+            // Flatten all catalogs from all clients
+            const allCatalogs = catalogArrays.flat();
+            console.log('All catalogs combined:', allCatalogs);
+            return allCatalogs;
+          }),
+          switchMap(allCatalogs => {
+            // Store catalogs
+            this.availableCatalogs = allCatalogs;
+            this.updateFertilizerCatalogOptions();
+
+            // Set default catalog if available
+            if (this.availableCatalogs.length > 0) {
+              this.selectedCatalogId = this.availableCatalogs[0].id;
+            }
+
+            // Get unique catalog IDs for fertilizer loading
+            const catalogIds = [...new Set(allCatalogs.map(catalog => catalog.id).filter(id => id))];
+            console.log('Found catalog IDs:', catalogIds);
+
+            if (catalogIds.length === 0) {
+              return of({
+                ...basicData,
+                catalogs: allCatalogs,
+                fertilizers: []
+              });
+            }
+
+            // Load fertilizers for each catalog
+            const fertilizerRequests = catalogIds.map(catalogId =>
+              this.fertilizerService.getFertilizersWithCatalogId(catalogId).pipe(
+                map(data => this.extractResponseData(data, 'fertilizer')),
+                tap(data => console.log(`Fertilizers for catalog ${catalogId}:`, data)),
+                catchError(error => {
+                  console.error(`Fertilizers error for catalog ${catalogId}:`, error);
+                  return of([]);
+                })
+              )
+            );
+
+            return forkJoin(fertilizerRequests).pipe(
+              map(fertilizerArrays => {
+                // Flatten all fertilizers from all catalogs
+                const allFertilizers = fertilizerArrays.flat();
+                console.log('All fertilizers combined:', allFertilizers);
+                
+                return {
+                  ...basicData,
+                  catalogs: allCatalogs,
+                  fertilizers: allFertilizers
+                };
+              })
+            );
+          })
+        );
+      })
+    ).subscribe({
+      next: (data) => {
+        console.log('All admin data loaded:', data);
+        this.rawData = data;
+        this.processAdminStats(data);
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Admin data loading error:', error);
+        this.errorMessage = 'Error al cargar los datos del panel de administración. Por favor, inténtalo de nuevo.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Update fertilizer catalog field options
+   */
+  private updateFertilizerCatalogOptions(): void {
+    const fertilizerConfig = this.entityConfigs.find(config => config.name === 'fertilizer');
+    if (fertilizerConfig) {
+      const catalogField = fertilizerConfig.fields.find(field => field.key === 'catalogId');
+      if (catalogField) {
+        catalogField.options = this.availableCatalogs.map(catalog => ({
+          value: catalog.id,
+          label: catalog.name || `Catálogo ${catalog.id}`
+        }));
+      }
     }
   }
 
-  async loadEntityCount(entityName: string): Promise<number> {
-    try {
-      const config = this.entityConfigs.find(c => c.name === entityName);
-      if (!config) return 0;
-
-      const url = this.apiConfig.getAgronomicUrl(config.endpoint);
-      const data = await this.apiService.get<Entity[]>(url).toPromise();
-      return data?.length || 0;
-    } catch (error) {
-      return 0;
+  /**
+   * Load fertilizers data with catalog handling
+   */
+  private loadFertilizersData() {
+    if (this.selectedCatalogId) {
+      return this.fertilizerService.getFertilizersWithCatalogId(this.selectedCatalogId).pipe(
+        map(data => this.extractResponseData(data, 'fertilizer')),
+        tap(data => console.log('Fertilizers extracted:', data))
+      );
+    } else {
+      return this.fertilizerService.getAll().pipe(
+        map(data => this.extractResponseData(data, 'fertilizer')),
+        tap(data => console.log('Fertilizers extracted:', data))
+      );
     }
   }
 
+  /**
+   * Process admin statistics with better data handling
+   */
+  private processAdminStats(data: any): void {
+    this.adminStats = {
+      totalCompanies: data.companies?.length || 0,
+      totalFarms: data.farms?.length || 0,
+      totalCrops: data.crops?.length || 0,
+      totalDevices: data.devices?.length || 0,
+      totalProductionUnits: data.productionUnits?.length || 0,
+      totalUsers: data.users?.length || 0,
+      totalSensors: data.sensors?.length || 0,
+      totalFertilizers: data.fertilizers?.length || 0,
+      totalWaterChemistry: data.waterChemistry?.length || 0,
+      totalLicenses: data.licenses?.length || 0,
+      totalCatalogs: data.catalogs?.length || 0
+    };
+
+    // Update entity stats for header display
+    this.entityStats = [
+      { icon: 'bi bi-building', count: this.adminStats.totalCompanies, label: 'Compañías' },
+      { icon: 'bi bi-house', count: this.adminStats.totalFarms, label: 'Fincas' },
+      { icon: 'bi bi-cpu', count: this.adminStats.totalDevices, label: 'Dispositivos' },
+      { icon: 'bi bi-flower1', count: this.adminStats.totalCrops, label: 'Cultivos' }
+    ];
+  }
+
+  // ... (rest of the methods remain the same)
+  
+  /**
+   * Load entity data from API with service preference and catalog handling
+   */
+  private loadEntityData(entityName: string) {
+    const config = this.entityConfigs.find(c => c.name === entityName);
+    if (!config) {
+      return of([]);
+    }
+
+    let dataSource$;
+    
+    switch (entityName) {
+      case 'company':
+        dataSource$ = this.companyService.getAll();
+        break;
+      case 'farm':
+        dataSource$ = this.farmService.getAll();
+        break;
+      case 'crop':
+        dataSource$ = this.cropService.getAll();
+        break;
+      case 'device':
+        dataSource$ = this.deviceService.getAll();
+        break;
+      case 'user':
+        dataSource$ = this.userService.getAll();
+        break;
+      case 'sensor':
+        dataSource$ = this.sensorService.getAll();
+        break;
+      case 'waterChemistry':
+        dataSource$ = this.waterChemistryService.getAll();
+        break;
+      case 'license':
+        dataSource$ = this.licenseService.getAll();
+        break;
+      case 'catalog':
+        // For catalogs, we need to load from all client IDs
+        const clientIds = [...new Set(this.loadedUsers.map(user => user.clientId).filter(id => id))];
+        if (clientIds.length === 0) {
+          return of([]);
+        }
+        const catalogRequests = clientIds.map(clientId => 
+          this.catalogService.getAll(clientId).pipe(
+            map(data => this.extractResponseData(data, 'catalog')),
+            catchError(() => of([]))
+          )
+        );
+        return forkJoin(catalogRequests).pipe(
+          map(catalogArrays => catalogArrays.flat())
+        );
+      case 'fertilizer':
+        // Handle fertilizer with catalog requirement
+        if (this.selectedCatalogId) {
+          dataSource$ = this.fertilizerService.getFertilizersWithCatalogId(this.selectedCatalogId);
+        } else {
+          // Load fertilizers from all available catalogs
+          const catalogIds = [...new Set(this.availableCatalogs.map(catalog => catalog.id).filter(id => id))];
+          if (catalogIds.length === 0) {
+            return of([]);
+          }
+          const fertilizerRequests = catalogIds.map(catalogId =>
+            this.fertilizerService.getFertilizersWithCatalogId(catalogId).pipe(
+              map(data => this.extractResponseData(data, 'fertilizer')),
+              catchError(() => of([]))
+            )
+          );
+          return forkJoin(fertilizerRequests).pipe(
+            map(fertilizerArrays => fertilizerArrays.flat())
+          );
+        }
+        break;
+      default:
+        dataSource$ = this.apiService.get<any[]>(config.endpoint);
+    }
+
+    return dataSource$.pipe(
+      map(response => this.extractResponseData(response, entityName)),
+      catchError(error => {
+        console.error(`Error loading ${entityName}:`, error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get cached entity data from rawData
+   */
+  private getCachedEntityData(entityName: string): Entity[] {
+    const mappings: { [key: string]: string } = {
+      'company': 'companies',
+      'farm': 'farms',
+      'crop': 'crops',
+      'device': 'devices',
+      'user': 'users',
+      'sensor': 'sensors',
+      'waterChemistry': 'waterChemistry',
+      'license': 'licenses',
+      'catalog': 'catalogs',
+      'fertilizer': 'fertilizers'
+    };
+
+    const key = mappings[entityName];
+    return key && this.rawData[key] ? this.rawData[key] : [];
+  }
+
+  /**
+   * Update cached data
+   */
+  private updateCachedData(entityName: string, data: Entity[]): void {
+    const mappings: { [key: string]: string } = {
+      'company': 'companies',
+      'farm': 'farms',
+      'crop': 'crops',
+      'device': 'devices',
+      'user': 'users',
+      'sensor': 'sensors',
+      'waterChemistry': 'waterChemistry',
+      'license': 'licenses',
+      'catalog': 'catalogs',
+      'fertilizer': 'fertilizers'
+    };
+
+    const key = mappings[entityName];
+    if (key) {
+      this.rawData[key] = data;
+      this.processAdminStats(this.rawData);
+    }
+  }
+
+  /**
+   * Get entities by category for sidebar organization
+   */
+  getMainEntities(): EntityConfig[] {
+    return this.entityConfigs.filter(config => config.category === 'main');
+  }
+
+  getConfigEntities(): EntityConfig[] {
+    return this.entityConfigs.filter(config => config.category === 'config');
+  }
+
+  getAdvancedEntities(): EntityConfig[] {
+    return this.entityConfigs.filter(config => config.category === 'advanced');
+  }
+
+  /**
+   * Get entity count for badge display
+   */
+  getEntityCount(entityName: string): number {
+    const statsMapping: { [key: string]: keyof AdminStats } = {
+      'company': 'totalCompanies',
+      'farm': 'totalFarms',
+      'crop': 'totalCrops',
+      'device': 'totalDevices',
+      'user': 'totalUsers',
+      'sensor': 'totalSensors',
+      'waterChemistry': 'totalWaterChemistry',
+      'license': 'totalLicenses',
+      'catalog': 'totalCatalogs',
+      'fertilizer': 'totalFertilizers'
+    };
+
+    const statsKey = statsMapping[entityName];
+    return statsKey ? this.adminStats[statsKey] : 0;
+  }
+
+  /**
+   * Select entity and load its data
+   */
   selectEntity(entityName: string): void {
     this.selectedEntity = entityName;
-    this.loadEntityData();
+    this.loadSelectedEntityData();
   }
 
-  getCurrentEntityConfig(): EntityConfig | undefined {
-    return this.entityConfigs.find(config => config.name === this.selectedEntity);
+  /**
+   * Change catalog for fertilizer data
+   */
+  onCatalogChange(): void {
+    if (this.selectedEntity === 'fertilizer') {
+      this.loadSelectedEntityData();
+    }
   }
 
-  async loadEntityData(): Promise<void> {
+  /**
+   * Load data for selected entity with improved error handling
+   */
+  private async loadSelectedEntityData(): Promise<void> {
     const config = this.getCurrentEntityConfig();
     if (!config) return;
 
@@ -836,185 +863,479 @@ export class AdminComponent implements OnInit {
     this.clearMessages();
 
     try {
-      const url = this.apiConfig.getAgronomicUrl(config.endpoint);
-      this.entityData = await this.apiService.get<Entity[]>(url).toPromise() || [];
+      // For fertilizers, check if catalog is selected
+      if (config.name === 'fertilizer' && !this.selectedCatalogId && this.availableCatalogs.length > 0) {
+        this.errorMessage = 'Por favor, selecciona un catálogo para ver los fertilizantes.';
+        this.entityData = [];
+        this.filteredData = [];
+        this.isLoading = false;
+        return;
+      }
+
+      // Check if data is already cached from initial load
+      const cachedData = this.getCachedEntityData(config.name);
+      if (cachedData && cachedData.length > 0 && config.name !== 'fertilizer') {
+        // For non-fertilizer entities, use cached data
+        this.entityData = cachedData;
+        this.filteredData = [...this.entityData];
+        this.isLoading = false;
+        return;
+      }
+
+      // Load fresh data if not cached or if fertilizer with different catalog
+      const data = await firstValueFrom(this.loadEntityData(config.name));
+      this.entityData = Array.isArray(data) ? data : [];
       this.filteredData = [...this.entityData];
 
-      // Load related data for select fields
-      await this.loadRelatedData(config);
+      // Update cache
+      this.updateCachedData(config.name, this.entityData);
+
     } catch (error) {
-      this.errorMessage = 'Error al cargar los datos. Por favor, intente nuevamente.';
-      console.error('Error loading entity data:', error);
+      console.error(`Error loading ${config.displayName}:`, error);
+      this.errorMessage = `Error al cargar ${config.displayName.toLowerCase()}. Por favor, intente nuevamente.`;
+      this.entityData = [];
+      this.filteredData = [];
     } finally {
       this.isLoading = false;
     }
   }
 
-  async loadRelatedData(config: EntityConfig): Promise<void> {
-    for (const field of config.fields) {
-      if (field.type === 'select' && !field.options?.length) {
-        // Load related entity data for select fields
-        if (field.key === 'companyId') {
-          const companies = await this.loadEntityCount('company');
-          // Simplified - in real implementation, load actual company data
-          field.options = [
-            { value: 1, label: 'Compañía Ejemplo 1' },
-            { value: 2, label: 'Compañía Ejemplo 2' }
-          ];
-        } else if (field.key === 'farmId') {
-          field.options = [
-            { value: 1, label: 'Finca Ejemplo 1' },
-            { value: 2, label: 'Finca Ejemplo 2' }
-          ];
-        } else if (field.key === 'productionUnitTypeId') {
-          field.options = [
-            { value: 1, label: 'Invernadero' },
-            { value: 2, label: 'Campo Abierto' },
-            { value: 3, label: 'Hidropónico' }
-          ];
-        }
-      }
-    }
+  /**
+   * Get current entity configuration
+   */
+  getCurrentEntityConfig(): EntityConfig | undefined {
+    return this.entityConfigs.find(config => config.name === this.selectedEntity);
   }
 
-  filterData(): void {
+  /**
+   * Get display name for an entity item
+   */
+  getEntityDisplayName(item: Entity): string {
+    const config = this.getCurrentEntityConfig();
+    if (!config || !config.nameField) return item.name || item.id?.toString() || 'Sin nombre';
+    
+    return item[config.nameField] || item.name || item.id?.toString() || 'Sin nombre';
+  }
+
+  /**
+   * Check if current entity requires catalog selection
+   */
+  requiresCatalogSelection(): boolean {
+    const config = this.getCurrentEntityConfig();
+    return config?.requiresCatalog === true;
+  }
+
+  /**
+   * Apply filters to entity data
+   */
+  applyFilters(): void {
     let filtered = [...this.entityData];
 
-    // Apply search filter
+    // Search filter
     if (this.searchTerm) {
       const searchLower = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(item => 
-        Object.values(item).some(value => 
+      filtered = filtered.filter(item => {
+        return Object.values(item).some(value =>
           value?.toString().toLowerCase().includes(searchLower)
-        )
-      );
-    }
-
-    // Apply status filter
-    if (this.filterStatus !== '') {
-      const isActive = this.filterStatus === 'true';
-      filtered = filtered.filter(item => item['isActive'] === isActive);
-    }
-
-    // Apply sorting
-    if (this.sortField) {
-      filtered.sort((a, b) => {
-        const aVal = a[this.sortField];
-        const bVal = b[this.sortField];
-        
-        if (aVal < bVal) return this.sortDirection === 'asc' ? -1 : 1;
-        if (aVal > bVal) return this.sortDirection === 'asc' ? 1 : -1;
-        return 0;
+        );
       });
     }
 
+    // Status filter
+    if (this.filterStatus) {
+      if (this.filterStatus === 'active') {
+        filtered = filtered.filter(item => this.getBooleanValue(item, 'active') === true);
+      } else if (this.filterStatus === 'inactive') {
+        filtered = filtered.filter(item => this.getBooleanValue(item, 'active') === false);
+      }
+    }
+
     this.filteredData = filtered;
+    this.applySorting();
   }
 
-  sortBy(field: string): void {
+  /**
+   * Apply sorting to filtered data
+   */
+  applySorting(): void {
+    if (!this.sortField) return;
+
+    this.filteredData.sort((a, b) => {
+      const aValue = a[this.sortField];
+      const bValue = b[this.sortField];
+
+      let comparison = 0;
+
+      if (aValue < bValue) {
+        comparison = -1;
+      } else if (aValue > bValue) {
+        comparison = 1;
+      }
+
+      return this.sortDirection === 'desc' ? comparison * -1 : comparison;
+    });
+  }
+
+  /**
+   * Sort by field
+   */
+  sortByField(field: string): void {
     if (this.sortField === field) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
       this.sortField = field;
       this.sortDirection = 'asc';
     }
-    this.filterData();
+    this.applySorting();
   }
 
-  showCreateForm(): void {
+  /**
+   * Clear filters
+   */
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.filterStatus = '';
+    this.sortField = '';
+    this.sortDirection = 'asc';
+    this.applyFilters();
+  }
+
+  /**
+   * Refresh data
+   */
+  refreshData(): void {
+    if (this.selectedEntity) {
+      this.loadSelectedEntityData();
+    } else {
+      this.loadAdminData();
+    }
+  }
+
+  /**
+   * Modal operations
+   */
+  openCreateModal(): void {
+    this.currentItem = {};
+    
+    // For fertilizers, set default catalogId
+    if (this.selectedEntity === 'fertilizer' && this.selectedCatalogId) {
+      this.currentItem.catalogId = this.selectedCatalogId;
+    }
+    
     this.isEditing = false;
-    this.currentItem = { isActive: true };
     this.showModal = true;
-  }
-
-  viewItem(item: Entity): void {
-    // Implement view details functionality
-    console.log('Viewing item:', item);
+    this.clearMessages();
   }
 
   editItem(item: Entity): void {
-    this.isEditing = true;
     this.currentItem = { ...item };
+    this.isEditing = true;
     this.showModal = true;
+    this.clearMessages();
   }
 
-  async deleteItem(item: Entity): Promise<void> {
-    if (!confirm(`¿Está seguro de que desea eliminar este registro?`)) {
-      return;
-    }
-
-    const config = this.getCurrentEntityConfig();
-    if (!config) return;
-
-    try {
-      const url = this.apiConfig.getAgronomicUrl(`${config.endpoint}/${item.id}`);
-      await this.apiService.delete(url).toPromise();
-      
-      this.successMessage = 'Registro eliminado exitosamente.';
-      this.loadEntityData();
-    } catch (error) {
-      this.errorMessage = 'Error al eliminar el registro.';
-      console.error('Error deleting item:', error);
-    }
-  }
-
-  async saveItem(): Promise<void> {
-    const config = this.getCurrentEntityConfig();
-    if (!config) return;
-
-    try {
-      const url = this.apiConfig.getAgronomicUrl(config.endpoint);
-      
-      if (this.isEditing) {
-        await this.apiService.put(`${url}/${this.currentItem.id}`, this.currentItem).toPromise();
-        this.successMessage = 'Registro actualizado exitosamente.';
-      } else {
-        await this.apiService.post(url, this.currentItem).toPromise();
-        this.successMessage = 'Registro creado exitosamente.';
-      }
-
-      this.closeModal();
-      this.loadEntityData();
-    } catch (error) {
-      this.errorMessage = `Error al ${this.isEditing ? 'actualizar' : 'crear'} el registro.`;
-      console.error('Error saving item:', error);
-    }
+  viewItem(item: Entity): void {
+    console.log('View item:', item);
   }
 
   closeModal(): void {
     this.showModal = false;
     this.currentItem = {};
+    this.isEditing = false;
+    this.clearMessages();
   }
 
-  refreshData(): void {
-    this.loadEntityData();
+  /**
+   * Save item (create or update) with improved error handling
+   */
+  async saveItem(): Promise<void> {
+    const config = this.getCurrentEntityConfig();
+    if (!config) return;
+
+    this.isLoading = true;
+    this.clearMessages();
+
+    try {
+      await this.saveWithService(config);
+      this.successMessage = `${config.displayName.slice(0, -1)} ${this.isEditing ? 'actualizado' : 'creado'} exitosamente.`;
+      this.closeModal();
+      await this.loadSelectedEntityData();
+
+    } catch (error) {
+      console.error('Save error:', error);
+      this.errorMessage = `Error al ${this.isEditing ? 'actualizar' : 'crear'} ${config.displayName.slice(0, -1).toLowerCase()}.`;
+    } finally {
+      this.isLoading = false;
+    }
   }
 
-  clearError(): void {
-    this.errorMessage = '';
+  /**
+   * Save using specific service
+   */
+  private async saveWithService(config: EntityConfig): Promise<void> {
+    switch (config.name) {
+      case 'company':
+        if (this.isEditing) {
+          await firstValueFrom(this.companyService.update(this.currentItem.id!, this.currentItem));
+        } else {
+          await firstValueFrom(this.companyService.create(this.currentItem));
+        }
+        break;
+      case 'farm':
+        if (this.isEditing) {
+          await firstValueFrom(this.farmService.update(this.currentItem.id!, this.currentItem));
+        } else {
+          await firstValueFrom(this.farmService.create(this.currentItem));
+        }
+        break;
+      case 'crop':
+        if (this.isEditing) {
+          await firstValueFrom(this.cropService.update(this.currentItem.id!, this.currentItem));
+        } else {
+          await firstValueFrom(this.cropService.create(this.currentItem));
+        }
+        break;
+      case 'device':
+        if (this.isEditing) {
+          await firstValueFrom(this.deviceService.update(this.currentItem.id!, this.currentItem));
+        } else {
+          await firstValueFrom(this.deviceService.create(this.currentItem));
+        }
+        break;
+      case 'user':
+        if (this.isEditing) {
+          await firstValueFrom(this.userService.update(this.currentItem.id!, this.currentItem));
+        } else {
+          await firstValueFrom(this.userService.create(this.currentItem));
+        }
+        break;
+      case 'sensor':
+        if (this.isEditing) {
+          await firstValueFrom(this.sensorService.update(this.currentItem.id!, this.currentItem));
+        } else {
+          await firstValueFrom(this.sensorService.create(this.currentItem));
+        }
+        break;
+      case 'waterChemistry':
+        if (this.isEditing) {
+          await firstValueFrom(this.waterChemistryService.update(this.currentItem.id!, this.currentItem));
+        } else {
+          await firstValueFrom(this.waterChemistryService.create(this.currentItem));
+        }
+        break;
+      case 'license':
+        if (this.isEditing) {
+          await firstValueFrom(this.licenseService.update(this.currentItem.id!, this.currentItem));
+        } else {
+          await firstValueFrom(this.licenseService.create(this.currentItem));
+        }
+        break;
+      case 'catalog':
+        if (this.isEditing) {
+          await firstValueFrom(this.catalogService.update(this.currentItem.id!, this.currentItem));
+        } else {
+          await firstValueFrom(this.catalogService.create(this.currentItem));
+        }
+        break;
+      case 'fertilizer':
+        if (this.isEditing) {
+          await firstValueFrom(this.fertilizerService.update(this.currentItem.id!, this.currentItem));
+        } else {
+          await firstValueFrom(this.fertilizerService.create(this.currentItem));
+        }
+        break;
+      default:
+        await this.saveWithGenericAPI(config);
+    }
   }
 
-  clearSuccess(): void {
-    this.successMessage = '';
+  /**
+   * Save using generic API
+   */
+  private async saveWithGenericAPI(config: EntityConfig): Promise<void> {
+    const url = this.apiConfig.getAgronomicUrl(config.endpoint);
+
+    if (this.isEditing) {
+      await firstValueFrom(this.apiService.put(`${url}/${this.currentItem.id}`, this.currentItem));
+    } else {
+      await firstValueFrom(this.apiService.post(url, this.currentItem));
+    }
   }
 
-  clearMessages(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
+  /**
+   * Delete item with improved error handling
+   */
+  async deleteItem(item: Entity): Promise<void> {
+    const config = this.getCurrentEntityConfig();
+    if (!config) return;
+
+    const displayName = this.getEntityDisplayName(item);
+    if (!confirm(`¿Estás seguro de que deseas eliminar ${displayName}?`)) {
+      return;
+    }
+
+    this.isLoading = true;
+    this.clearMessages();
+
+    try {
+      await this.deleteWithService(config, item.id!);
+      this.successMessage = `${config.displayName.slice(0, -1)} eliminado exitosamente.`;
+      await this.loadSelectedEntityData();
+
+    } catch (error) {
+      console.error('Delete error:', error);
+      this.errorMessage = `Error al eliminar ${config.displayName.slice(0, -1).toLowerCase()}.`;
+    } finally {
+      this.isLoading = false;
+    }
   }
 
-  trackByFn(index: number, item: Entity): any {
-    return item.id || index;
+  /**
+   * Delete using specific service
+   */
+  private async deleteWithService(config: EntityConfig, id: number): Promise<void> {
+    switch (config.name) {
+      case 'company':
+        await firstValueFrom(this.companyService.delete(id));
+        break;
+      case 'farm':
+        await firstValueFrom(this.farmService.delete(id));
+        break;
+      case 'crop':
+        await firstValueFrom(this.cropService.delete(id));
+        break;
+      case 'device':
+        await firstValueFrom(this.deviceService.delete(id));
+        break;
+      case 'user':
+        await firstValueFrom(this.userService.delete(id));
+        break;
+      case 'sensor':
+        await firstValueFrom(this.sensorService.delete(id));
+        break;
+      case 'waterChemistry':
+        await firstValueFrom(this.waterChemistryService.delete(id));
+        break;
+      case 'license':
+        await firstValueFrom(this.licenseService.delete(id));
+        break;
+      case 'catalog':
+        await firstValueFrom(this.catalogService.delete(id));
+        break;
+      case 'fertilizer':
+        await firstValueFrom(this.fertilizerService.delete(id));
+        break;
+      default:
+        await this.deleteWithGenericAPI(config, id);
+    }
   }
 
+  /**
+   * Delete using generic API
+   */
+  private async deleteWithGenericAPI(config: EntityConfig, id: number): Promise<void> {
+    const url = this.apiConfig.getAgronomicUrl(config.endpoint);
+    await firstValueFrom(this.apiService.delete(`${url}/${id}`));
+  }
+
+  /**
+   * Navigation
+   */
   goToDashboard(): void {
     this.router.navigate(['/dashboard']);
   }
 
   logout(): void {
-    // Implement logout functionality
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
-      this.router.navigate(['/login']);
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+
+  /**
+   * Utility methods
+   */
+  clearMessages(): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  getSelectLabel(field: EntityField, value: any): string {
+    if (!field.options || !value) return value || '-';
+
+    const option = field.options.find(opt => opt.value === value);
+    return option ? option.label : value;
+  }
+
+  getFieldColumnClass(field: EntityField): string {
+    if (field.type === 'textarea') return 'col-12';
+    if (field.type === 'boolean') return 'col-12';
+    return 'col-md-6';
+  }
+
+  /**
+   * Handle different boolean field names (active vs isActive)
+   */
+  getBooleanValue(item: Entity, fieldKey: string): boolean {
+    if (fieldKey === 'active' || fieldKey === 'isActive') {
+      return item['active'] !== undefined ? item['active'] : item['isActive'] || false;
     }
+    return item[fieldKey];
+  }
+
+  setBooleanValue(item: Entity, fieldKey: string, value: boolean): void {
+    if (fieldKey === 'active' || fieldKey === 'isActive') {
+      item['active'] = value;
+      item['isActive'] = value;
+    } else {
+      item[fieldKey] = value;
+    }
+  }
+
+  /**
+   * Format date values for display
+   */
+  formatDate(value: any): string {
+    if (!value) return '-';
+    try {
+      const date = new Date(value);
+      return date.toLocaleDateString('es-ES');
+    } catch {
+      return value.toString();
+    }
+  }
+
+  /**
+   * Format datetime values for display
+   */
+  formatDateTime(value: any): string {
+    if (!value) return '-';
+    try {
+      const date = new Date(value);
+      return date.toLocaleString('es-ES');
+    } catch {
+      return value.toString();
+    }
+  }
+
+  /**
+   * TrackBy functions for performance
+   */
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  trackByEntityConfig(index: number, config: EntityConfig): string {
+    return config.name;
+  }
+
+  trackByField(index: number, field: EntityField): string {
+    return field.key;
+  }
+
+  trackByItem(index: number, item: Entity): number {
+    return item.id || index;
+  }
+
+  trackByOption(index: number, option: { value: any; label: string }): any {
+    return option.value;
   }
 }

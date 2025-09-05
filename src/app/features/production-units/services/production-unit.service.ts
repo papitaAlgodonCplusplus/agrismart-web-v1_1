@@ -22,10 +22,10 @@ export interface ProductionUnitFilters {
 }
 
 export interface ProductionUnitCreateRequest {
-  name: string;
+  name?: string;
   description?: string;
-  farmId: number;
-  productionUnitTypeId: number;
+  farmId?: number;
+  productionUnitTypeId?: number;
   area?: number;
   capacity?: number;
   location?: string;
@@ -163,14 +163,17 @@ export interface EnvironmentalConditions {
   providedIn: 'root'
 })
 export class ProductionUnitService {
-  private readonly baseUrl = '/api/production-units';
-  private readonly typesUrl = '/api/production-unit-types';
+  private readonly baseUrl: string;
+  private readonly typesUrl: string;
 
   constructor(
     private apiService: ApiService,
     private apiConfig: ApiConfigService,
     private http: HttpClient
-  ) {}
+  ) {
+    this.baseUrl = `${this.apiConfig.agronomicApiUrl}/ProductionUnit`;
+    this.typesUrl = `${this.apiConfig.agronomicApiUrl}/ProductionUnitType`;
+  }
 
   /**
    * Get all production units with optional filters

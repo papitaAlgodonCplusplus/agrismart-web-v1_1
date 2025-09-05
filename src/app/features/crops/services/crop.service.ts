@@ -27,7 +27,7 @@ export interface CropFilters {
 }
 
 export interface CropCreateRequest {
-  name: string;
+  name?: string | undefined;
   scientificName?: string;
   description?: string;
   type?: string;

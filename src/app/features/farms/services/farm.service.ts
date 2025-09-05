@@ -26,9 +26,9 @@ export interface FarmFilters {
 }
 
 export interface FarmCreateRequest {
-  name: string;
+  name?: string | undefined;
   description?: string;
-  companyId: number;
+  companyId?: number;
   location?: string;
   address?: string;
   area?: number;

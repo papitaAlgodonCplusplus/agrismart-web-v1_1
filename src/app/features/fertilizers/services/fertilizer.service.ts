@@ -2,12 +2,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { ApiService } from '../../../core/services/api.service';
 import { ApiConfigService } from '../../../core/services/api-config.service';
+import { CatalogService } from '../../catalogs/services/catalog.service';
 import { Fertilizer } from '../../../core/models/models';
 
 export interface FertilizerFilters {
+  catalogId?: number;
   onlyActive?: boolean;
   type?: string;
   npkCategory?: string;
@@ -21,10 +23,11 @@ export interface FertilizerFilters {
 }
 
 export interface FertilizerCreateRequest {
-  name: string;
+  catalogId?: number; // Now required
+  name?: string;
   brand?: string;
   description?: string;
-  type: string;
+  type?: string;
   formulation?: string;
   concentration?: number;
   concentrationUnit?: string;
@@ -133,19 +136,42 @@ export interface StockMovement {
   providedIn: 'root'
 })
 export class FertilizerService {
-  private readonly baseUrl = '/api/fertilizers';
 
   constructor(
     private apiService: ApiService,
     private apiConfig: ApiConfigService,
-    private http: HttpClient
-  ) {}
+    private http: HttpClient,
+    private catalogService: CatalogService
+  ) {
+    // No need to store baseUrl - ApiService handles URL construction
+  }
 
   /**
-   * Get all fertilizers with optional filters
+   * Get all fertilizers with catalogId (now required)
+   * If no catalogId provided, it will try to get the current user's catalog
    */
   getAll(filters?: FertilizerFilters): Observable<Fertilizer[]> {
-    let params = new HttpParams();
+    if (filters?.catalogId) {
+      return this.getFertilizersWithCatalogId(filters.catalogId, filters);
+    }
+
+    // If no catalogId provided, get from current user's catalog
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          const catalogId = catalogs[0].id; // Use first catalog
+          return this.getFertilizersWithCatalogId(catalogId, filters);
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
+  }
+
+  /**
+   * Get fertilizers with specific catalogId
+   */
+  getFertilizersWithCatalogId(catalogId: number | undefined, filters?: FertilizerFilters): Observable<Fertilizer[]> {
+    let params = new HttpParams().set('catalogId', catalogId?.toString() || '');
 
     if (filters) {
       if (filters.onlyActive !== undefined) {
@@ -180,20 +206,24 @@ export class FertilizerService {
       }
     }
 
-    return this.apiService.get<Fertilizer[]>(this.baseUrl, params);
+    return this.apiService.get<Fertilizer[]>('/Fertilizer', params);
   }
 
   /**
    * Get fertilizer by ID
    */
   getById(id: number): Observable<Fertilizer> {
-    return this.apiService.get<Fertilizer>(`${this.baseUrl}/${id}`);
+    return this.apiService.get<Fertilizer>(`/Fertilizer/${id}`);
   }
 
   /**
-   * Create new fertilizer
+   * Create new fertilizer (catalogId now required)
    */
   create(data: FertilizerCreateRequest): Observable<Fertilizer> {
+    if (!data.catalogId) {
+      throw new Error('catalogId is required for creating fertilizer');
+    }
+
     const payload = {
       ...data,
       ...(data.expirationDate && {
@@ -204,7 +234,22 @@ export class FertilizerService {
       isActive: data.isActive !== undefined ? data.isActive : true
     };
 
-    return this.apiService.post<Fertilizer>(this.baseUrl, payload);
+    return this.apiService.post<Fertilizer>('/Fertilizer', payload);
+  }
+
+  /**
+   * Create fertilizer with auto-detected catalogId
+   */
+  createWithCurrentCatalog(data: Omit<FertilizerCreateRequest, 'catalogId'>): Observable<Fertilizer> {
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          const catalogId = catalogs[0].id;
+          return this.create({ ...data, catalogId });
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
   }
 
   /**
@@ -220,14 +265,14 @@ export class FertilizerService {
       })
     };
 
-    return this.apiService.put<Fertilizer>(`${this.baseUrl}/${id}`, payload);
+    return this.apiService.put<Fertilizer>(`/Fertilizer/${id}`, payload);
   }
 
   /**
    * Delete fertilizer
    */
   delete(id: number): Observable<void> {
-    return this.apiService.delete<void>(`${this.baseUrl}/${id}`);
+    return this.apiService.delete<void>(`/Fertilizer/${id}`);
   }
 
   /**
@@ -235,7 +280,7 @@ export class FertilizerService {
    */
   toggleStatus(id: number, isActive: boolean): Observable<Fertilizer> {
     const payload = { isActive };
-    return this.apiService.put<Fertilizer>(`${this.baseUrl}/${id}/status`, payload);
+    return this.apiService.put<Fertilizer>(`/Fertilizer/${id}/status`, payload);
   }
 
   /**
@@ -251,7 +296,7 @@ export class FertilizerService {
       })
     };
 
-    return this.apiService.post<Fertilizer>(`${this.baseUrl}/${id}/stock-adjustment`, payload);
+    return this.apiService.post<Fertilizer>(`/Fertilizer/${id}/stock-adjustment`, payload);
   }
 
   /**
@@ -263,51 +308,101 @@ export class FertilizerService {
       params = params.set('limit', limit.toString());
     }
 
-    return this.apiService.get<StockMovement[]>(`${this.baseUrl}/${id}/stock-movements`, params);
+    return this.apiService.get<StockMovement[]>(`/Fertilizer/${id}/stock-movements`, params);
   }
 
   /**
-   * Get low stock fertilizers
+   * Get low stock fertilizers for specific catalog
    */
-  getLowStock(): Observable<Fertilizer[]> {
-    const params = new HttpParams().set('lowStock', 'true');
-    return this.apiService.get<Fertilizer[]>(this.baseUrl, params);
+  getLowStock(catalogId?: number): Observable<Fertilizer[]> {
+    if (catalogId) {
+      return this.getFertilizersWithCatalogId(catalogId, { lowStock: true });
+    }
+
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          return this.getFertilizersWithCatalogId(catalogs[0].id, { lowStock: true });
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
   }
 
   /**
-   * Get expiring fertilizers
+   * Get expiring fertilizers for specific catalog
    */
-  getExpiring(withinDays: number = 30): Observable<Fertilizer[]> {
-    const params = new HttpParams().set('expiringWithin', withinDays.toString());
-    return this.apiService.get<Fertilizer[]>(this.baseUrl, params);
+  getExpiring(withinDays: number = 30, catalogId?: number): Observable<Fertilizer[]> {
+    if (catalogId) {
+      return this.getFertilizersWithCatalogId(catalogId, { expiringWithin: withinDays });
+    }
+
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          return this.getFertilizersWithCatalogId(catalogs[0].id, { expiringWithin: withinDays });
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
   }
 
   /**
-   * Get fertilizers by type
+   * Get fertilizers by type for specific catalog
    */
-  getByType(type: string): Observable<Fertilizer[]> {
-    const params = new HttpParams().set('type', type);
-    return this.apiService.get<Fertilizer[]>(this.baseUrl, params);
+  getByType(type: string, catalogId?: number): Observable<Fertilizer[]> {
+    if (catalogId) {
+      return this.getFertilizersWithCatalogId(catalogId, { type });
+    }
+
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          return this.getFertilizersWithCatalogId(catalogs[0].id, { type });
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
   }
 
   /**
-   * Get fertilizers by supplier
+   * Get fertilizers by supplier for specific catalog
    */
-  getBySupplier(supplier: string): Observable<Fertilizer[]> {
-    const params = new HttpParams().set('supplier', supplier);
-    return this.apiService.get<Fertilizer[]>(this.baseUrl, params);
+  getBySupplier(supplier: string, catalogId?: number): Observable<Fertilizer[]> {
+    if (catalogId) {
+      return this.getFertilizersWithCatalogId(catalogId, { supplier });
+    }
+
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          return this.getFertilizersWithCatalogId(catalogs[0].id, { supplier });
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
   }
 
   /**
-   * Search fertilizers by name or brand
+   * Search fertilizers by name or brand for specific catalog
    */
-  search(searchTerm: string): Observable<Fertilizer[]> {
-    const params = new HttpParams().set('searchTerm', searchTerm);
-    return this.apiService.get<Fertilizer[]>(this.baseUrl, params);
+  search(searchTerm: string, catalogId?: number): Observable<Fertilizer[]> {
+    if (catalogId) {
+      return this.getFertilizersWithCatalogId(catalogId, { searchTerm });
+    }
+
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          return this.getFertilizersWithCatalogId(catalogs[0].id, { searchTerm });
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
   }
 
   /**
-   * Get fertilizer statistics
+   * Get fertilizer statistics for specific catalog
    */
   getStatistics(filters?: FertilizerFilters): Observable<FertilizerStatistics> {
     let params = new HttpParams();
@@ -321,7 +416,20 @@ export class FertilizerService {
       });
     }
 
-    return this.apiService.get<FertilizerStatistics>(`${this.baseUrl}/statistics`, params);
+    // If no catalogId in filters, get from current user's catalog
+    if (!filters?.catalogId) {
+      return this.catalogService.getCurrentUserCatalog().pipe(
+        switchMap(catalogs => {
+          if (catalogs && catalogs.length > 0) {
+            params = params.set('catalogId', catalogs[0].id.toString());
+            return this.apiService.get<FertilizerStatistics>('/Fertilizer/statistics', params);
+          }
+          throw new Error('No catalog found for current user');
+        })
+      );
+    }
+
+    return this.apiService.get<FertilizerStatistics>('/Fertilizer/statistics', params);
   }
 
   /**
@@ -341,28 +449,73 @@ export class FertilizerService {
       params = params.set('dateTo', dateTo);
     }
 
-    return this.apiService.get<FertilizerUsageReport>(`${this.baseUrl}/${id}/usage-report`, params);
+    return this.apiService.get<FertilizerUsageReport>(`/Fertilizer/${id}/usage-report`, params);
   }
 
   /**
-   * Get all suppliers
+   * Get all suppliers for specific catalog
    */
-  getSuppliers(): Observable<string[]> {
-    return this.apiService.get<string[]>(`${this.baseUrl}/suppliers`);
+  getSuppliers(catalogId?: number): Observable<string[]> {
+    let params = new HttpParams();
+    
+    if (catalogId) {
+      params = params.set('catalogId', catalogId.toString());
+      return this.apiService.get<string[]>('/Fertilizer/suppliers', params);
+    }
+
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          params = params.set('catalogId', catalogs[0].id.toString());
+          return this.apiService.get<string[]>('/Fertilizer/suppliers', params);
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
   }
 
   /**
-   * Get fertilizer types
+   * Get fertilizer types for specific catalog
    */
-  getTypes(): Observable<string[]> {
-    return this.apiService.get<string[]>(`${this.baseUrl}/types`);
+  getTypes(catalogId?: number): Observable<string[]> {
+    let params = new HttpParams();
+    
+    if (catalogId) {
+      params = params.set('catalogId', catalogId.toString());
+      return this.apiService.get<string[]>('/Fertilizer/types', params);
+    }
+
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          params = params.set('catalogId', catalogs[0].id.toString());
+          return this.apiService.get<string[]>('/Fertilizer/types', params);
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
   }
 
   /**
-   * Get application methods
+   * Get application methods for specific catalog
    */
-  getApplicationMethods(): Observable<string[]> {
-    return this.apiService.get<string[]>(`${this.baseUrl}/application-methods`);
+  getApplicationMethods(catalogId?: number): Observable<string[]> {
+    let params = new HttpParams();
+    
+    if (catalogId) {
+      params = params.set('catalogId', catalogId.toString());
+      return this.apiService.get<string[]>('/Fertilizer/application-methods', params);
+    }
+
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          params = params.set('catalogId', catalogs[0].id.toString());
+          return this.apiService.get<string[]>('/Fertilizer/application-methods', params);
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
   }
 
   /**
@@ -374,7 +527,7 @@ export class FertilizerService {
       updateData: data
     };
 
-    return this.apiService.put<Fertilizer[]>(`${this.baseUrl}/bulk-update`, payload);
+    return this.apiService.put<Fertilizer[]>('/Fertilizer/bulk-update', payload);
   }
 
   /**
@@ -384,11 +537,11 @@ export class FertilizerService {
     adjustments: { id: number; adjustment: StockAdjustmentRequest }[]
   ): Observable<Fertilizer[]> {
     const payload = { adjustments };
-    return this.apiService.post<Fertilizer[]>(`${this.baseUrl}/bulk-stock-adjustment`, payload);
+    return this.apiService.post<Fertilizer[]>('/Fertilizer/bulk-stock-adjustment', payload);
   }
 
   /**
-   * Export fertilizers to Excel
+   * Export fertilizers to Excel for specific catalog
    */
   exportToExcel(filters?: FertilizerFilters): Observable<Blob> {
     let params = new HttpParams();
@@ -402,9 +555,24 @@ export class FertilizerService {
       });
     }
 
-    const url = `${this.apiConfig.agronomicApiUrl}${this.baseUrl}/export/excel`;
-    
-    return this.http.get(url, {
+    // If no catalogId in filters, get from current user's catalog
+    if (!filters?.catalogId) {
+      return this.catalogService.getCurrentUserCatalog().pipe(
+        switchMap(catalogs => {
+          if (catalogs && catalogs.length > 0) {
+            params = params.set('catalogId', catalogs[0].id.toString());
+            return this.performExcelExport(params);
+          }
+          throw new Error('No catalog found for current user');
+        })
+      );
+    }
+
+    return this.performExcelExport(params);
+  }
+
+  private performExcelExport(params: HttpParams): Observable<Blob> {
+    return this.http.get(`${this.apiConfig.agronomicApiUrl}/Fertilizer/export/excel`, {
       params,
       responseType: 'blob',
       headers: this.getAuthHeaders()
@@ -414,28 +582,68 @@ export class FertilizerService {
   }
 
   /**
-   * Generate stock reorder report
+   * Generate stock reorder report for specific catalog
    */
-  getReorderReport(): Observable<Fertilizer[]> {
-    return this.apiService.get<Fertilizer[]>(`${this.baseUrl}/reorder-report`);
+  getReorderReport(catalogId?: number): Observable<Fertilizer[]> {
+    let params = new HttpParams();
+    
+    if (catalogId) {
+      params = params.set('catalogId', catalogId.toString());
+      return this.apiService.get<Fertilizer[]>('/Fertilizer/reorder-report', params);
+    }
+
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          params = params.set('catalogId', catalogs[0].id.toString());
+          return this.apiService.get<Fertilizer[]>('/Fertilizer/reorder-report', params);
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
   }
 
   /**
-   * Get inventory valuation
+   * Get inventory valuation for specific catalog
    */
-  getInventoryValuation(): Observable<{
+  getInventoryValuation(catalogId?: number): Observable<{
     totalValue: number;
     byType: { [type: string]: number };
     bySupplier: { [supplier: string]: number };
     lowStockValue: number;
     expiringValue: number;
   }> {
-    return this.apiService.get(`${this.baseUrl}/inventory-valuation`);
+    let params = new HttpParams();
+    
+    if (catalogId) {
+      params = params.set('catalogId', catalogId.toString());
+      return this.apiService.get<{
+        totalValue: number;
+        byType: { [type: string]: number };
+        bySupplier: { [supplier: string]: number };
+        lowStockValue: number;
+        expiringValue: number;
+      }>('/Fertilizer/inventory-valuation', params);
+    }
+
+    return this.catalogService.getCurrentUserCatalog().pipe(
+      switchMap(catalogs => {
+        if (catalogs && catalogs.length > 0) {
+          params = params.set('catalogId', catalogs[0].id.toString());
+          return this.apiService.get<{
+            totalValue: number;
+            byType: { [type: string]: number };
+            bySupplier: { [supplier: string]: number };
+            lowStockValue: number;
+            expiringValue: number;
+          }>('/Fertilizer/inventory-valuation', params);
+        }
+        throw new Error('No catalog found for current user');
+      })
+    );
   }
 
-  /**
-   * Utility methods for components
-   */
+  // Utility methods remain the same
   formatType(type: string): string {
     const typeMap: { [key: string]: string } = {
       'Organico': 'Orgánico',

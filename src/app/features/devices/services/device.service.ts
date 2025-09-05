@@ -28,9 +28,9 @@ export interface DeviceFilters {
 }
 
 export interface DeviceCreateRequest {
-  name: string;
+  name?: string | undefined;
   description?: string;
-  deviceType: string;
+  deviceType?: string;
   serialNumber?: string;
   model?: string;
   manufacturer?: string;
