@@ -1,11 +1,35 @@
 <!doctype html>
 <html lang="en">
+<!-- Add this to your src/index.html in the <head> section -->
 <head>
   <meta charset="utf-8">
-  <title>AgrismartWebV11</title>
+  <title>AgriSmart</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  
+  <!-- Prevent extension errors -->
+  <script>
+    // Suppress Chrome extension errors
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+      chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        // Ignore extension messages
+        return false;
+      });
+    }
+    
+    // Suppress console errors for extensions
+    const originalConsoleError = console.error;
+    console.error = function(...args) {
+      const message = args.join(' ');
+      if (message.includes('extension') || 
+          message.includes('runtime.lastError') || 
+          message.includes('Could not establish connection')) {
+        return; // Suppress extension-related errors
+      }
+      originalConsoleError.apply(console, args);
+    };
+  </script>
 </head>
 <body>
   <app-root></app-root>
