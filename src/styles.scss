@@ -372,3 +372,105 @@ a {
     font-weight: 500;
   }
 }
+
+/* Import Bootstrap first */
+@import '~bootstrap/dist/css/bootstrap.min.css';
+@import '~bootstrap-icons/font/bootstrap-icons.css';
+
+/* CRITICAL: Reset and prevent zoom/scaling issues */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  height: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #495057;
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+  /* Remove any min-height or max-height constraints */
+}
+
+/* CRITICAL: Fix Angular app root */
+app-root {
+  display: block;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Prevent Bootstrap container issues */
+.container-fluid {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Fix any flexbox issues that might cause zoom */
+.d-flex {
+  align-items: stretch; /* Prevent content from forcing zoom */
+}
+
+/* Fix viewport issues */
+.vh-100 {
+  height: auto !important; /* Override vh-100 that might cause issues */
+  min-height: 100vh;
+}
+
+/* Dashboard specific fixes */
+.dashboard {
+  padding: 1rem 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Card fixes to prevent overflow */
+.card {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Responsive text scaling */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px; /* Smaller base font on mobile */
+  }
+  
+  .display-6 {
+    font-size: 1.75rem !important;
+  }
+  
+  .card-title {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* Prevent any elements from forcing zoom */
+img, svg, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Table responsive fixes */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Animation performance */
+* {
+  transform: translateZ(0); /* Force hardware acceleration */
+}
