@@ -3,12 +3,16 @@ import { Routes } from '@angular/router';
 
 // Guards
 import { AuthGuard } from './core/guards/auth.guard';
+import { AdminGuard } from './core/guards/admin.guard';
 
 // Layout
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 
 // Auth Components
 import { LoginComponent } from './features/auth/login/login.component';
+
+// Admin Component
+import { AdminComponent } from './features/admin/admin.component';
 
 // Feature Components
 import { DashboardComponent } from './features/dashboard/dashboard.component';
@@ -40,6 +44,17 @@ export const routes: Routes = [
     component: LoginComponent
   },
 
+  // Admin routes (special authentication + admin role required)
+  {
+    path: 'admin',
+    component: AdminComponent,
+    canActivate: [AuthGuard, AdminGuard],
+    data: { 
+      title: 'Panel de Administración',
+      adminOnly: true 
+    }
+  },
+
   // Protected routes (authentication required)
   {
     path: '',
@@ -54,114 +69,133 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
-        component: DashboardComponent
+        component: DashboardComponent,
+        data: { title: 'Dashboard' }
       },
 
       // Companies Management
       {
         path: 'companies',
-        component: CompanyListComponent
+        component: CompanyListComponent,
+        data: { title: 'Compañías' }
       },
       {
         path: 'companies/new',
-        component: CompanyFormComponent
+        component: CompanyFormComponent,
+        data: { title: 'Nueva Compañía' }
       },
       {
         path: 'companies/:id/edit',
-        component: CompanyFormComponent
+        component: CompanyFormComponent,
+        data: { title: 'Editar Compañía' }
       },
 
       // Farms Management
       {
         path: 'farms',
-        component: FarmListComponent
+        component: FarmListComponent,
+        data: { title: 'Fincas' }
       },
       {
         path: 'farms/new',
-        component: FarmFormComponent
+        component: FarmFormComponent,
+        data: { title: 'Nueva Finca' }
       },
       {
         path: 'farms/:id/edit',
-        component: FarmFormComponent
+        component: FarmFormComponent,
+        data: { title: 'Editar Finca' }
       },
 
       // Crops Management
       {
         path: 'crops',
-        component: CropListComponent
+        component: CropListComponent,
+        data: { title: 'Cultivos' }
       },
       {
         path: 'crops/new',
-        component: CropFormComponent
+        component: CropFormComponent,
+        data: { title: 'Nuevo Cultivo' }
       },
       {
         path: 'crops/:id/edit',
-        component: CropFormComponent
+        component: CropFormComponent,
+        data: { title: 'Editar Cultivo' }
       },
 
-      // Production Units
-      {
-        path: 'production-units',
-        component: ProductionUnitListComponent
-      },
-
-      // Crop Production
-      {
-        path: 'crop-production',
-        component: CropProductionListComponent
-      },
-
-      // Devices & IoT
+      // Devices Management
       {
         path: 'devices',
-        component: DeviceListComponent
+        component: DeviceListComponent,
+        data: { title: 'Dispositivos' }
       },
       {
         path: 'devices/new',
-        component: DeviceFormComponent
+        component: DeviceFormComponent,
+        data: { title: 'Nuevo Dispositivo' }
       },
       {
         path: 'devices/:id/edit',
-        component: DeviceFormComponent
+        component: DeviceFormComponent,
+        data: { title: 'Editar Dispositivo' }
+      },
+
+      // Production Units Management
+      {
+        path: 'production-units',
+        component: ProductionUnitListComponent,
+        data: { title: 'Unidades de Producción' }
+      },
+
+      // Crop Production Management
+      {
+        path: 'crop-production',
+        component: CropProductionListComponent,
+        data: { title: 'Producción de Cultivos' }
       },
 
       // Irrigation Management
       {
-        path: 'irrigation',
-        children: [
-          {
-            path: 'sectors',
-            component: IrrigationSectorListComponent
-          },
-          {
-            path: '',
-            redirectTo: 'sectors',
-            pathMatch: 'full'
-          }
-        ]
+        path: 'irrigation-sectors',
+        component: IrrigationSectorListComponent,
+        data: { title: 'Sectores de Riego' }
       },
 
       // Fertilizers Management
       {
         path: 'fertilizers',
-        component: FertilizerListComponent
-      },
-      {
-        path: 'fertilizer-inputs',
-        component: FertilizerInputListComponent
+        component: FertilizerListComponent,
+        data: { title: 'Fertilizantes' }
       },
 
-      // User Management
+      // Fertilizer Inputs Management
+      {
+        path: 'fertilizer-inputs',
+        component: FertilizerInputListComponent,
+        data: { title: 'Aportes de Fertilizante' }
+      },
+
+      // User Profile
       {
         path: 'profile',
-        component: ProfileComponent
+        component: ProfileComponent,
+        data: { title: 'Perfil de Usuario' }
       }
     ]
   },
 
-  // Catch-all route - must be last
+  // Catch all redirect
   {
     path: '**',
     redirectTo: '/dashboard'
   }
 ];
+
+// Route configuration for title and breadcrumbs
+export interface RouteData {
+  title?: string;
+  breadcrumb?: string;
+  adminOnly?: boolean;
+  roles?: string[];
+}

@@ -68,7 +68,7 @@ export class AuthService {
         // Try multiple possible response structures
         let token = undefined;
         let userInfo = {};
-        
+
         // Structure 1: Wrapped in Response<T> (success/result)
         if (backendResponse?.success && backendResponse?.result) {
           console.log('Found success/result structure');
@@ -99,16 +99,16 @@ export class AuthService {
           console.error('Unknown response structure:', backendResponse);
           throw new Error('Unknown response format');
         }
-        
+
         console.log('Extracted token:', token);
         console.log('Extracted user info:', userInfo);
-        
+
         const finalResponse = {
           token: token,
           refreshToken: '',
           user: userInfo
         };
-        
+
         console.log('Final transformed response:', finalResponse);
         return finalResponse;
       }),
@@ -133,26 +133,20 @@ export class AuthService {
     };
   }
 
-  logout(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    this.currentUserSubject.next(null);
-    this.router.navigate(['/login']);
-  }
 
   isAuthenticated(): boolean {
     const token = localStorage.getItem('access_token');
     console.log('Token from localStorage:', token);
     console.log('Token exists:', !!token);
-    
+
     if (!token || token === 'undefined' || token === 'null') {
       return false;
     }
-    
+
     const isExpired = this.isTokenExpired(token);
     console.log('Token expired:', isExpired);
     console.log('Final authentication result:', !!token && !isExpired);
-    
+
     return !!token && !isExpired;
   }
 
@@ -196,20 +190,54 @@ export class AuthService {
     try {
       const decoded = this.decodeToken(token);
       console.log('Decoded token:', decoded);
-      
+
       if (!decoded || !decoded.exp) {
         console.log('No exp claim, considering expired');
         return true;
       }
-      
+
       const currentTime = Math.floor(Date.now() / 1000);
       const isExpired = currentTime >= decoded.exp;
       console.log('Current time:', currentTime, 'Token exp:', decoded.exp, 'Expired:', isExpired);
-      
+
       return isExpired;
     } catch (error) {
       console.error('Error decoding token:', error);
       return true;
     }
+  }
+
+  public getRedirectUrl(): string {
+    const user = this.currentUserSubject.value;
+    if (!user) {
+      return '/login';
+    }
+    // Example logic: redirect admins to /admin, others to /dashboard
+    if (user.email === 'ebrecha@iapsoft.com' || user.role === 'Admin') {
+      return '/admin';
+    }
+    return '/dashboard';
+  }
+
+  public shouldRedirectToAdmin(): boolean {
+    const user = this.currentUserSubject.value;
+    console.log('Current user for admin check:', user);
+    return user?.email === 'ebrecha@iapsoft.com' || user?.userName === 'ebrecha@iapsoft.com' || user?.role === 'Admin';
+  }
+
+  public getCurrentUser(): any {
+    return this.currentUserSubject.value;
+  }
+
+  public isAdmin(): boolean {
+    const user = this.currentUserSubject.value;
+    return user?.role === 'Admin' || user?.roleId === 1; // Assuming roleId 1 is Admin
+  }
+
+  public logout(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    this.currentUserSubject.next(null);
+    this.router.navigate(['/login']);
   }
 }

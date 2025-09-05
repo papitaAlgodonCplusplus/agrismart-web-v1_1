@@ -118,7 +118,7 @@ export class DashboardComponent implements OnInit {
       totalFarms: data.farms?.length || 0,
       totalCrops: data.crops?.length || 0,
       totalDevices: data.devices?.length || 0,
-      activeDevices: data.devices?.filter((device: any) => device.status === 'active')?.length || 0
+      activeDevices: data.devices.length || 0
     };
   }
 

@@ -1,1 +1,27 @@
-<p>header works!</p>
+<header class="header">
+  <div class="container">
+    <div class="header-content d-flex justify-content-between align-items-center">
+      <h1 class="header-title">AgriSmart Dashboard</h1>
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="logout()">Log Out</button>
+      </div>
+    </div>
+  </div>
+</header>
+<style>
+  .header {
+    background-color: #f8f9fa;
+    padding: 1rem 0;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .header-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .header-actions .btn {
+    margin-left: 0.5rem;
+  }
+</style>

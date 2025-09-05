@@ -116,7 +116,7 @@ function handle401Error(
       isRefreshing = false;
       authService.logout();
       router.navigate(['/login']);
-      return throwError(() => new Error('No refresh token available'));
+      return throwError(() => new Error('Credenciales inválidas'));
     }
   } else {
     // If we're already refreshing, wait for it to complete

@@ -208,9 +208,7 @@
             <div class="col-md-6">
               <h6 class="text-muted mb-3">Estado General</h6>
               <div class="progress mb-3" style="height: 8px;">
-                <div class="progress-bar bg-success" 
-                     [style.width.%]="getDeviceEfficiency()" 
-                     role="progressbar">
+                <div class="progress-bar bg-success" [style.width.%]="getDeviceEfficiency()" role="progressbar">
                 </div>
               </div>
               <p class="mb-0">
@@ -225,7 +223,8 @@
               </div>
               <div class="d-flex justify-content-between mb-2">
                 <span>Fincas promedio:</span>
-                <strong>{{ stats.totalCompanies > 0 ? (stats.totalFarms / stats.totalCompanies).toFixed(1) : 0 }}</strong>
+                <strong>{{ stats.totalCompanies > 0 ? (stats.totalFarms / stats.totalCompanies).toFixed(1) : 0
+                  }}</strong>
               </div>
               <div class="d-flex justify-content-between">
                 <span>Cultivos por finca:</span>

@@ -37,21 +37,21 @@ echo [2/6] Starting AgriSmart IoT API (Port: 7030)...
 start "Agrismart-main\AgriSmart-API-IoT" cmd /c "dotnet run --project .\Agrismart-main\AgriSmart.Api.Iot\AgriSmart.Api.Iot.csproj --urls https://localhost:7030"
 timeout /t 3
 
-echo [3/6] Starting MQTT Broker...
-start "Agrismart-main\AgriSmart-MQTT-Broker" cmd /c "dotnet run --project .\Agrismart-main\AgriSmart.MQTTBroker\Agrismart.MQTTBroker.csproj"
-timeout /t 3
+:: echo [3/6] Starting MQTT Broker...
+:: start "Agrismart-main\AgriSmart-MQTT-Broker" cmd /c "dotnet run --project .\Agrismart-main\AgriSmart.MQTTBroker\Agrismart.MQTTBroker.csproj"
+:: timeout /t 3
 
-echo [4/6] Starting Agronomic Process Worker...
-start "Agrismart-main\AgriSmart-AgronomicProcess" cmd /c "dotnet run --project .\Agrismart-main\AgriSmart.AgronomicProcess\AgriSmart.AgronomicProcess.csproj"
-timeout /t 3
+:: echo [4/6] Starting Agronomic Process Worker...
+:: start "Agrismart-main\AgriSmart-AgronomicProcess" cmd /c "dotnet run --project .\Agrismart-main\AgriSmart.AgronomicProcess\AgriSmart.AgronomicProcess.csproj"
+:: timeout /t 3
 
-echo [5/6] Starting Calculator Service...
-start "Agrismart-main\AgriSmart-Calculator" cmd /c "dotnet run --project .\Agrismart-main\AgriSmart.Calculator\AgriSmart.Calculator.csproj"
-timeout /t 3
+:: echo [5/6] Starting Calculator Service...
+:: start "Agrismart-main\AgriSmart-Calculator" cmd /c "dotnet run --project .\Agrismart-main\AgriSmart.Calculator\AgriSmart.Calculator.csproj"
+:: timeout /t 3
 
-echo [6/6] Starting On-Demand Irrigation Service...
-start "Agrismart-main\AgriSmart-OnDemandIrrigation" cmd /c "dotnet run --project .\Agrismart-main\AgriSmart.OnDemandIrrigation\AgriSmart.OnDemandIrrigation.csproj"
-timeout /t 3
+:: echo [6/6] Starting On-Demand Irrigation Service...
+:: start "Agrismart-main\AgriSmart-OnDemandIrrigation" cmd /c "dotnet run --project .\Agrismart-main\AgriSmart.OnDemandIrrigation\AgriSmart.OnDemandIrrigation.csproj"
+:: timeout /t 3
 
 echo.
 echo ========================================
@@ -80,7 +80,7 @@ echo ========================================
 if exist "package.json" (
     echo.
     echo Starting Angular Frontend...
-    start "AgriSmart-Frontend" cmd /c "npm start"
+    start "AgriSmart-Frontend" cmd /c "code . && npm run build-dev && npm dev"
     echo - Frontend: http://localhost:4200
 )
 
