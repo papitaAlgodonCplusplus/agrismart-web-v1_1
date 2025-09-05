@@ -1,0 +1,305 @@
+<!-- src/app/features/dashboard/dashboard.component.html -->
+<div class="dashboard">
+  <!-- Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="welcome-card">
+        <h1 class="display-6 mb-2">Dashboard - AgriSmart</h1>
+        <p class="lead text-muted mb-0">
+          Bienvenido, <strong>{{ currentUser?.name || 'Usuario' }}</strong>
+        </p>
+        <small class="text-muted">{{ currentDate | date:'fullDate':'':'es' }}</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards with Animations -->
+  <div class="row mb-4" *ngIf="stats && !isLoading">
+    <!-- Companies Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="stats-card card-primary" [class.pulse]="isLoading">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-8">
+              <h6 class="card-category text-uppercase text-muted mb-0">Empresas</h6>
+              <h2 class="card-title mb-0 counter" [attr.data-count]="stats.totalCompanies">
+                {{ stats.totalCompanies }}
+              </h2>
+              <small class="text-success">
+                <i class="bi bi-arrow-up"></i> {{ getCompanyGrowth() }}%
+              </small>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon-shape bg-gradient-primary text-white rounded-circle">
+                <i class="bi bi-building fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Farms Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="stats-card card-success">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-8">
+              <h6 class="card-category text-uppercase text-muted mb-0">Fincas</h6>
+              <h2 class="card-title mb-0 counter">{{ stats.totalFarms }}</h2>
+              <small class="text-success">
+                <i class="bi bi-arrow-up"></i> {{ getFarmGrowth() }}%
+              </small>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon-shape bg-gradient-success text-white rounded-circle">
+                <i class="bi bi-geo-alt fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Crops Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="stats-card card-warning">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-8">
+              <h6 class="card-category text-uppercase text-muted mb-0">Cultivos</h6>
+              <h2 class="card-title mb-0 counter">{{ stats.totalCrops }}</h2>
+              <small class="text-success">
+                <i class="bi bi-arrow-up"></i> {{ getCropGrowth() }}%
+              </small>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon-shape bg-gradient-warning text-white rounded-circle">
+                <i class="bi bi-flower1 fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Devices Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="stats-card card-info">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-8">
+              <h6 class="card-category text-uppercase text-muted mb-0">Dispositivos</h6>
+              <h2 class="card-title mb-0 counter">{{ stats.totalDevices }}</h2>
+              <small class="text-success">
+                <i class="bi bi-check-circle"></i> {{ getDeviceEfficiency() }}% activos
+              </small>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon-shape bg-gradient-info text-white rounded-circle">
+                <i class="bi bi-cpu fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts and Activities Section -->
+  <div class="row mb-4" *ngIf="!isLoading">
+    <!-- Quick Actions -->
+    <div class="col-lg-8 mb-4">
+      <div class="card action-card">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-lightning me-2 text-warning"></i>
+            Acciones Rápidas
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <!-- Add Company -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="action-item text-center card-hover" routerLink="/companies/new">
+                <div class="action-icon bg-gradient-primary text-white mb-2">
+                  <i class="bi bi-plus-lg"></i>
+                </div>
+                <h6 class="mb-1">Nueva Empresa</h6>
+                <small class="text-muted">Agregar empresa</small>
+              </div>
+            </div>
+
+            <!-- Add Farm -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="action-item text-center card-hover" routerLink="/farms/new">
+                <div class="action-icon bg-gradient-success text-white mb-2">
+                  <i class="bi bi-geo-alt-fill"></i>
+                </div>
+                <h6 class="mb-1">Nueva Finca</h6>
+                <small class="text-muted">Registrar finca</small>
+              </div>
+            </div>
+
+            <!-- Add Crop -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="action-item text-center card-hover" routerLink="/crops/new">
+                <div class="action-icon bg-gradient-warning text-white mb-2">
+                  <i class="bi bi-flower1"></i>
+                </div>
+                <h6 class="mb-1">Nuevo Cultivo</h6>
+                <small class="text-muted">Agregar cultivo</small>
+              </div>
+            </div>
+
+            <!-- Add Device -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="action-item text-center card-hover" routerLink="/devices/new">
+                <div class="action-icon bg-gradient-info text-white mb-2">
+                  <i class="bi bi-cpu"></i>
+                </div>
+                <h6 class="mb-1">Nuevo Dispositivo</h6>
+                <small class="text-muted">Conectar IoT</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-lg-4 mb-4">
+      <div class="card">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-clock me-2 text-info"></i>
+            Actividad Reciente
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="timeline">
+            <div class="timeline-item" *ngFor="let activity of recentActivities; trackBy: trackByIndex">
+              <div class="timeline-marker {{ getActivityTypeClass(activity.type) }} text-white">
+                <i class="{{ activity.icon }}"></i>
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-title fw-semibold">{{ activity.message }}</div>
+                <div class="timeline-time text-muted">{{ getRelativeTime(activity.time) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Stats and Quick Overview -->
+  <div class="row mb-4" *ngIf="!isLoading">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-bar-chart me-2 text-success"></i>
+            Resumen del Sistema
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="text-muted mb-3">Estado General</h6>
+              <div class="progress mb-3" style="height: 8px;">
+                <div class="progress-bar bg-success" 
+                     [style.width.%]="getDeviceEfficiency()" 
+                     role="progressbar">
+                </div>
+              </div>
+              <p class="mb-0">
+                <strong>{{ getDeviceEfficiency() }}%</strong> de dispositivos activos
+              </p>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-muted mb-3">Distribución</h6>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Empresas:</span>
+                <strong>{{ stats.totalCompanies }}</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Fincas promedio:</span>
+                <strong>{{ stats.totalCompanies > 0 ? (stats.totalFarms / stats.totalCompanies).toFixed(1) : 0 }}</strong>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span>Cultivos por finca:</span>
+                <strong>{{ stats.totalFarms > 0 ? (stats.totalCrops / stats.totalFarms).toFixed(1) : 0 }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">
+            <i class="bi bi-info-circle me-2 text-primary"></i>
+            Información Rápida
+          </h5>
+        </div>
+        <div class="card-body quick-stat">
+          <div class="stat-item d-flex justify-content-between mb-3">
+            <span class="text-muted">Empresas más activas:</span>
+            <strong>{{ getMostActiveCompany() }}</strong>
+          </div>
+          <div class="stat-item d-flex justify-content-between mb-3">
+            <span class="text-muted">Cultivo popular:</span>
+            <strong>{{ getMostPopularCrop() }}</strong>
+          </div>
+          <div class="stat-item d-flex justify-content-between mb-3">
+            <span class="text-muted">Dispositivos online:</span>
+            <strong class="text-success">{{ getOnlineDevicesCount() }}</strong>
+          </div>
+          <div class="stat-item d-flex justify-content-between mb-3">
+            <span class="text-muted">Última actualización:</span>
+            <strong>{{ getLastUpdateTime() }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State with Skeletons -->
+  <div class="row" *ngIf="isLoading">
+    <div class="col-12">
+      <div class="d-flex justify-content-center align-items-center py-5">
+        <div class="loading-animation">
+          <div class="spinner-grow text-primary me-3" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <div>
+            <h5>Cargando estadísticas...</h5>
+            <p class="text-muted mb-0">Obteniendo datos del sistema AgriSmart</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State with Action -->
+  <div class="row" *ngIf="errorMessage">
+    <div class="col-12">
+      <div class="alert alert-danger border-0 shadow-sm" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
+          <div class="flex-grow-1">
+            <h6 class="alert-heading mb-1">Error en la carga de datos</h6>
+            <p class="mb-2">{{ errorMessage }}</p>
+            <button class="btn btn-danger btn-sm" (click)="refreshStats()">
+              <i class="bi bi-arrow-clockwise me-1"></i>
+              Intentar nuevamente
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
