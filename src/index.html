@@ -1,37 +1,131 @@
 <!doctype html>
-<html lang="en">
-<!-- Add this to your src/index.html in the <head> section -->
+<html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>AgriSmart</title>
+  <title>AgriSmart - Sistema de Gestión Agrícola</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   
-  <!-- Prevent extension errors -->
-  <script>
-    // Suppress Chrome extension errors
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-      chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-        // Ignore extension messages
-        return false;
-      });
+  <!-- Bootstrap CSS from CDN (guaranteed to work) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaJ6WzBdY4kKnHqLzv7PU0i9RZQaV7YJ6L7wc5qV0hq7VlX4a9J8wK2qP1" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  
+  <!-- Custom Styles -->
+  <style>
+    :root {
+      --primary-color: #28a745;
+      --primary-dark: #1e7e34;
     }
     
-    // Suppress console errors for extensions
-    const originalConsoleError = console.error;
-    console.error = function(...args) {
-      const message = args.join(' ');
-      if (message.includes('extension') || 
-          message.includes('runtime.lastError') || 
-          message.includes('Could not establish connection')) {
-        return; // Suppress extension-related errors
-      }
-      originalConsoleError.apply(console, args);
-    };
-  </script>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+    
+    .text-primary {
+      color: var(--primary-color) !important;
+    }
+    
+    .navbar-brand {
+      color: var(--primary-color) !important;
+      font-weight: 700;
+    }
+    
+    .sidebar {
+      background-color: white;
+      min-height: 100vh;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    
+    .main-content {
+      padding: 1.5rem;
+      background-color: #f8f9fa;
+    }
+    
+    /* Loading screen */
+    .initial-loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    
+    .loading-logo {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #28a745;
+      margin-bottom: 2rem;
+    }
+    
+    .loading-spinner {
+      width: 3rem;
+      height: 3rem;
+      border: 0.25rem solid #e9ecef;
+      border-top: 0.25rem solid #28a745;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Hide loading when app loads */
+    app-root:not(:empty) + .initial-loading {
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <app-root></app-root>
+  
+  <!-- Loading screen -->
+  <div class="initial-loading" id="initial-loading">
+    <div class="loading-logo">
+      <i class="bi bi-tree"></i> AgriSmart
+    </div>
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Cargando sistema...</div>
+  </div>
+  
+  <!-- Bootstrap JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+  
+  <!-- Remove loading screen after app loads -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        const loadingElement = document.getElementById('initial-loading');
+        if (loadingElement) {
+          loadingElement.style.opacity = '0';
+          loadingElement.style.transition = 'opacity 0.5s ease';
+          setTimeout(function() {
+            loadingElement.remove();
+          }, 500);
+        }
+      }, 1500);
+    });
+  </script>
 </body>
 </html>
