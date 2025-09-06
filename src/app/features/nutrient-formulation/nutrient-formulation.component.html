@@ -1,0 +1,324 @@
+<!-- src/app/features/nutrient-formulation/nutrient-formulation.component.html -->
+<div class="container-fluid py-3">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="h3 mb-0">
+            <i class="bi bi-droplet-half text-primary me-2"></i>
+            Formulación de Soluciones Nutritivas
+          </h2>
+          <p class="text-muted mb-0">Optimización de recetas nutritivas para cultivos hidropónicos</p>
+        </div>
+        <button class="btn btn-outline-secondary" (click)="navigateBack()">
+          <i class="bi bi-arrow-left me-1"></i>
+          Volver al Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Messages -->
+  <div class="row mb-3" *ngIf="errorMessage || successMessage">
+    <div class="col-12">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert" *ngIf="errorMessage">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ errorMessage }}
+        <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+      </div>
+      <div class="alert alert-success alert-dismissible fade show" role="alert" *ngIf="successMessage">
+        <i class="bi bi-check-circle me-2"></i>
+        {{ successMessage }}
+        <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="row">
+    <!-- Left Panel - Formulation Setup -->
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-gear me-2"></i>
+            Configuración de Formulación
+          </h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="formulationForm" (ngSubmit)="calculateFormulation()">
+            <!-- Basic Parameters -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="recipeName" class="form-label">Nombre de la Receta</label>
+                <input type="text" class="form-control" id="recipeName" formControlName="recipeName">
+              </div>
+              <div class="col-md-6">
+                <label for="volumeLiters" class="form-label">Volumen (Litros)</label>
+                <input type="number" class="form-control" id="volumeLiters" formControlName="volumeLiters">
+              </div>
+            </div>
+
+            <!-- Water Source Selection -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="waterSourceId" class="form-label">Fuente de Agua</label>
+                <select class="form-select" id="waterSourceId" formControlName="waterSourceId">
+                  <option value="">Seleccionar fuente de agua</option>
+                  <option *ngFor="let water of waterSources" [value]="water.id">
+                    {{ water.name }} (pH: {{ water.phLevel }}, EC: {{ water.ecLevel }})
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="optimizeFor" class="form-label">Optimizar Para</label>
+                <select class="form-select" id="optimizeFor" formControlName="optimizeFor">
+                  <option value="cost">Menor Costo</option>
+                  <option value="nutrition">Mejor Nutrición</option>
+                  <option value="balanced">Equilibrado</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Crop Selection -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="cropId" class="form-label">Cultivo</label>
+                <select class="form-select" id="cropId" formControlName="cropId" (change)="onCropChange()">
+                  <option value="">Seleccionar cultivo</option>
+                  <option *ngFor="let crop of crops" [value]="crop.id">
+                    {{ crop.name }} ({{ crop.type }})
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="cropPhaseId" class="form-label">Fase del Cultivo</label>
+                <select class="form-select" id="cropPhaseId" formControlName="cropPhaseId" (change)="onCropPhaseChange()">
+                  <option value="">Seleccionar fase</option>
+                  <option *ngFor="let phase of cropPhases" [value]="phase.id">
+                    {{ phase.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Target Parameters -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label for="targetPh" class="form-label">pH Objetivo</label>
+                <input type="number" class="form-control" id="targetPh" formControlName="targetPh" 
+                       step="0.1" min="4" max="8">
+              </div>
+              <div class="col-md-4">
+                <label for="targetEc" class="form-label">EC Objetivo (dS/m)</label>
+                <input type="number" class="form-control" id="targetEc" formControlName="targetEc" 
+                       step="0.1" min="0.5" max="4">
+              </div>
+              <div class="col-md-4">
+                <label for="maxBudgetPerLiter" class="form-label">Presupuesto Max/L (₡)</label>
+                <input type="number" class="form-control" id="maxBudgetPerLiter" formControlName="maxBudgetPerLiter" 
+                       step="0.01" min="0">
+              </div>
+            </div>
+
+            <!-- Advanced Options Toggle -->
+            <div class="mb-3">
+              <button type="button" class="btn btn-secondary" (click)="resetForm()">
+                <i class="bi bi-arrow-clockwise me-2"></i>
+                Limpiar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div class="card mt-4" *ngIf="currentRecipe">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-check-circle text-success me-2"></i>
+            Resultados de Formulación
+          </h5>
+          <div>
+            <button class="btn btn-outline-primary btn-sm me-2" (click)="saveRecipe()" *ngIf="currentRecipe">
+              <i class="bi bi-save me-1"></i>
+              Guardar
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" (click)="exportRecipe()" *ngIf="currentRecipe">
+              <i class="bi bi-download me-1"></i>
+              Exportar
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Recipe Summary -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6 class="text-muted">Información General</h6>
+              <ul class="list-unstyled">
+                <li><strong>Receta:</strong> {{ currentRecipe.name }}</li>
+                <li><strong>Fuente de Agua:</strong> {{ getWaterSourceName(currentRecipe.waterSourceId) }}</li>
+                <li><strong>Cultivo:</strong> {{ getCropName(currentRecipe.cropId) }}</li>
+                <li><strong>Volumen:</strong> {{ currentRecipe.volumeLiters }} L</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-muted">Costos</h6>
+              <div class="cost-summary">
+                <div class="cost-item">
+                  <span>Costo Total:</span>
+                  <span class="fw-bold">₡{{ currentRecipe.totalCost.toFixed(2) }}</span>
+                </div>
+                <div class="cost-item">
+                  <span>Costo por Litro:</span>
+                  <span class="fw-bold">₡{{ (currentRecipe.totalCost / currentRecipe.volumeLiters).toFixed(3) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fertilizer Composition -->
+          <div class="mb-4">
+            <h6 class="text-muted">Composición de Fertilizantes</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Fertilizante</th>
+                    <th>Concentración (g/L)</th>
+                    <th>% N</th>
+                    <th>% P</th>
+                    <th>% K</th>
+                    <th>Costo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let fert of currentRecipe.fertilizers">
+                    <td>{{ fert.fertilizer?.name || 'N/A' }}</td>
+                    <td>{{ fert.concentration.toFixed(2) }}</td>
+                    <td>{{ fert.percentageOfN }}%</td>
+                    <td>{{ fert.percentageOfP }}%</td>
+                    <td>{{ fert.percentageOfK }}%</td>
+                    <td>₡{{ fert.costPortion.toFixed(2) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Nutritional Analysis -->
+          <div class="mb-4">
+            <h6 class="text-muted">Análisis Nutricional</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Parámetro</th>
+                    <th>Objetivo</th>
+                    <th>Logrado</th>
+                    <th>Diferencia</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let result of formulationResults">
+                    <td>{{ result.parameter }}</td>
+                    <td>{{ result.target }} {{ result.unit }}</td>
+                    <td>{{ result.achieved }} {{ result.unit }}</td>
+                    <td [class]="result.difference >= 0 ? 'text-success' : 'text-danger'">
+                      {{ result.difference > 0 ? '+' : '' }}{{ result.difference }} {{ result.unit }}
+                    </td>
+                    <td>
+                      <span [class]="getStatusClass(result.status)">
+                        <i [class]="getStatusIcon(result.status)" class="me-1"></i>
+                        {{ result.status | titlecase }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel - Saved Recipes & Tools -->
+    <div class="col-lg-4">
+      <!-- Quick Stats -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h6 class="card-title mb-0">
+            <i class="bi bi-bar-chart me-2"></i>
+            Estadísticas Rápidas
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="quick-stat">
+            <div class="stat-item">
+              <span class="stat-label">Fuentes de Agua</span>
+              <span class="stat-value">{{ waterSources.length }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Fertilizantes</span>
+              <span class="stat-value">{{ fertilizers.length }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Cultivos</span>
+              <span class="stat-value">{{ crops.length }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Recetas Guardadas</span>
+              <span class="stat-value">{{ savedRecipes.length }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saved Recipes -->
+      <div class="card">
+        <div class="card-header">
+          <h6 class="card-title mb-0">
+            <i class="bi bi-bookmark me-2"></i>
+            Recetas Guardadas
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="saved-recipes" *ngIf="savedRecipes.length > 0; else noRecipes">
+            <div class="recipe-item" *ngFor="let recipe of savedRecipes" (click)="loadRecipe(recipe)">
+              <div class="recipe-header">
+                <h6 class="recipe-name">{{ recipe.name }}</h6>
+                <small class="recipe-date">{{ recipe.createdAt | date:'shortDate' }}</small>
+              </div>
+              <div class="recipe-details">
+                <span class="recipe-crop">{{ getCropName(recipe.cropId) }}</span>
+                <span class="recipe-cost">₡{{ recipe.totalCost.toFixed(2) }}</span>
+              </div>
+              <div class="recipe-stats">
+                <small class="text-muted">
+                  {{ recipe.volumeLiters }}L • pH {{ recipe.targetPh }} • EC {{ recipe.targetEc }}
+                </small>
+              </div>
+            </div>
+          </div>
+          <ng-template #noRecipes>
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-bookmark display-6 mb-2"></i>
+              <p class="mb-0">No hay recetas guardadas</p>
+              <small>Crea tu primera formulación</small>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div class="text-center py-4" *ngIf="isLoading && !currentRecipe">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2 text-muted">Calculando formulación óptima...</p>
+      </div>
+    </div>
+  </div>
+</div>

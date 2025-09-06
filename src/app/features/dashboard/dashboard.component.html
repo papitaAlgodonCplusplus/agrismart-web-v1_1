@@ -120,7 +120,7 @@
         <div class="card-body">
           <div class="row">
             <!-- Add Company -->
-            <div class="col-md-3 col-6 mb-3">
+            <!-- <div class="col-md-3 col-6 mb-3">
               <div class="action-item text-center card-hover" routerLink="/companies/new">
                 <div class="action-icon bg-gradient-primary text-white mb-2">
                   <i class="bi bi-plus-lg"></i>
@@ -128,10 +128,10 @@
                 <h6 class="mb-1">Nueva Empresa</h6>
                 <small class="text-muted">Agregar empresa</small>
               </div>
-            </div>
+            </div> -->
 
             <!-- Add Farm -->
-            <div class="col-md-3 col-6 mb-3">
+            <!-- <div class="col-md-3 col-6 mb-3">
               <div class="action-item text-center card-hover" routerLink="/farms/new">
                 <div class="action-icon bg-gradient-success text-white mb-2">
                   <i class="bi bi-geo-alt-fill"></i>
@@ -139,10 +139,10 @@
                 <h6 class="mb-1">Nueva Finca</h6>
                 <small class="text-muted">Registrar finca</small>
               </div>
-            </div>
+            </div> -->
 
             <!-- Add Crop -->
-            <div class="col-md-3 col-6 mb-3">
+            <!-- <div class="col-md-3 col-6 mb-3">
               <div class="action-item text-center card-hover" routerLink="/crops/new">
                 <div class="action-icon bg-gradient-warning text-white mb-2">
                   <i class="bi bi-flower1"></i>
@@ -150,16 +150,79 @@
                 <h6 class="mb-1">Nuevo Cultivo</h6>
                 <small class="text-muted">Agregar cultivo</small>
               </div>
-            </div>
+            </div> -->
 
             <!-- Add Device -->
-            <div class="col-md-3 col-6 mb-3">
+            <!-- <div class="col-md-3 col-6 mb-3">
               <div class="action-item text-center card-hover" routerLink="/devices/new">
                 <div class="action-icon bg-gradient-info text-white mb-2">
                   <i class="bi bi-cpu"></i>
                 </div>
                 <h6 class="mb-1">Nuevo Dispositivo</h6>
                 <small class="text-muted">Conectar IoT</small>
+              </div>
+            </div> -->
+            <!-- Nutrient Solution Formulation -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToNutrientFormulation()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-droplet-half text-primary"></i>
+                </div>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Formulación Nutritiva</h6>
+                  <p class="quick-action-description">Crear recetas de soluciones nutritivas optimizadas</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Water Analysis -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToWaterAnalysis()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-water text-info"></i>
+                </div>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Análisis de Agua</h6>
+                  <p class="quick-action-description">Gestionar fuentes de agua y química</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fertilizer Management -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToFertilizers()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-bag text-success"></i>
+                </div>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Fertilizantes</h6>
+                  <p class="quick-action-description">Gestionar catálogo de fertilizantes</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Crop Requirements -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToCropRequirements()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-activity text-warning"></i>
+                </div>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Requerimientos</h6>
+                  <p class="quick-action-description">Ver necesidades por fase de cultivo</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
               </div>
             </div>
           </div>

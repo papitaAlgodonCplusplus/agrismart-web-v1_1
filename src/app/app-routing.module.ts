@@ -72,7 +72,6 @@ const routes: Routes = [
         path: 'companies/:id/edit',
         component: CompanyFormComponent
       },
-
       // Farms Management
       {
         path: 'farms',
@@ -164,14 +163,14 @@ const routes: Routes = [
       },
 
       // Lazy loaded feature modules (for future expansion)
-    //   {
-    //     path: 'reports',
-    //     loadChildren: () => import('./features/reports/reports.module').then(m => m.ReportsModule)
-    //   },
-    //   {
-    //     path: 'analytics',
-    //     loadChildren: () => import('./features/analytics/analytics.module').then(m => m.AnalyticsModule)
-    //   }
+      //   {
+      //     path: 'reports',
+      //     loadChildren: () => import('./features/reports/reports.module').then(m => m.ReportsModule)
+      //   },
+      //   {
+      //     path: 'analytics',
+      //     loadChildren: () => import('./features/analytics/analytics.module').then(m => m.AnalyticsModule)
+      //   }
     ]
   },
 

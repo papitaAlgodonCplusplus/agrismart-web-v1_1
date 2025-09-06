@@ -21,12 +21,12 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   }
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -100,13 +100,14 @@
 }
 
 @keyframes countUp {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px); 
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -115,9 +116,17 @@
 }
 
 @keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.7; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 /* Action Cards */
@@ -131,7 +140,7 @@
 .card-hover {
   cursor: pointer;
   transition: all 0.3s ease;
-  
+
   &:hover {
     transform: translateY(-8px);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
@@ -142,7 +151,7 @@
   padding: 1rem;
   border-radius: 10px;
   transition: all 0.3s ease;
-  
+
   &:hover {
     background-color: #f8f9fa;
   }
@@ -158,7 +167,7 @@
   margin: 0 auto;
   font-size: 1.5rem;
   transition: all 0.3s ease;
-  
+
   &:hover {
     transform: scale(1.1);
   }
@@ -168,7 +177,7 @@
 .timeline {
   position: relative;
   padding-left: 2rem;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -215,7 +224,7 @@
 .quick-stat .stat-item {
   padding: 0.5rem 0;
   border-bottom: 1px solid #f8f9fa;
-  
+
   &:last-child {
     border-bottom: none;
   }
@@ -231,7 +240,7 @@
   background-color: #e9ecef;
   border-radius: 10px;
   overflow: hidden;
-  
+
   .progress-bar {
     transition: width 0.6s ease;
   }
@@ -243,7 +252,7 @@
   border-radius: 15px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  
+
   &:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
@@ -252,7 +261,7 @@
 .card-header {
   border-bottom: 1px solid #f0f0f0;
   padding: 1.25rem;
-  
+
   h5 {
     margin-bottom: 0;
     font-weight: 600;
@@ -267,7 +276,7 @@
 /* Alert */
 .alert {
   border-radius: 12px;
-  
+
   &.alert-danger {
     background-color: #f8d7da;
     border-color: #f5c6cb;
@@ -280,7 +289,7 @@
   border-radius: 8px;
   font-weight: 500;
   transition: all 0.2s ease;
-  
+
   &:hover {
     transform: translateY(-1px);
   }
@@ -296,45 +305,45 @@
   .welcome-card {
     padding: 1.5rem;
     text-align: center;
-    
+
     h1 {
       font-size: 1.75rem;
     }
-    
+
     .lead {
       font-size: 1rem;
     }
   }
-  
+
   .card-title {
     font-size: 2rem;
   }
-  
+
   .timeline {
     padding-left: 1.5rem;
-    
+
     &::before {
       left: 0.75rem;
     }
   }
-  
+
   .timeline-marker {
     left: -1.5rem;
     width: 1.5rem;
     height: 1.5rem;
     font-size: 0.7rem;
   }
-  
+
   .action-icon {
     width: 50px;
     height: 50px;
     font-size: 1.25rem;
   }
-  
+
   .stats-card {
     margin-bottom: 1rem;
   }
-  
+
   .dashboard {
     padding: 10px 0;
   }
@@ -343,35 +352,35 @@
 @media (max-width: 576px) {
   .welcome-card {
     padding: 1rem;
-    
+
     h1 {
       font-size: 1.5rem;
     }
   }
-  
+
   .card-title {
     font-size: 1.75rem;
   }
-  
+
   .icon-shape {
     width: 40px;
     height: 40px;
-    
+
     i {
       font-size: 1rem !important;
     }
   }
-  
+
   .action-icon {
     width: 45px;
     height: 45px;
     font-size: 1rem;
   }
-  
+
   .card-body {
     padding: 1rem;
   }
-  
+
   .card-header {
     padding: 1rem;
   }
@@ -383,24 +392,24 @@
     background-color: #2d3748;
     color: #e2e8f0;
   }
-  
+
   .card {
     background-color: #2d3748;
     color: #e2e8f0;
   }
-  
+
   .card-header {
     border-bottom-color: #4a5568;
-    
+
     h5 {
       color: #e2e8f0;
     }
   }
-  
+
   .timeline::before {
     background: #4a5568;
   }
-  
+
   .text-muted {
     color: #a0aec0 !important;
   }
@@ -411,25 +420,83 @@
   .dashboard {
     padding: 0;
   }
-  
+
   .stats-card,
   .card {
     box-shadow: none;
     border: 1px solid #dee2e6;
   }
-  
+
   .welcome-card {
     background: white !important;
     color: black !important;
     border: 1px solid #dee2e6;
   }
-  
+
   .action-card,
   .timeline {
     display: none;
   }
-  
+
   .btn {
     display: none;
   }
+}
+
+
+.quick-action-card {
+  background: #fff;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.35rem;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.quick-action-card:hover {
+  border-color: #5a5c69;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  transform: translateY(-2px);
+}
+
+.quick-action-icon {
+  font-size: 2rem;
+  min-width: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-action-content {
+  flex: 1;
+}
+
+.quick-action-title {
+  font-weight: 600;
+  color: #5a5c69;
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.quick-action-description {
+  color: #858796;
+  margin-bottom: 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.quick-action-arrow {
+  color: #858796;
+  font-size: 1.1rem;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.quick-action-card:hover .quick-action-arrow {
+  opacity: 1;
+  transform: translateX(3px);
 }

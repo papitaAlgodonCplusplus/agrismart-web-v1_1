@@ -4,6 +4,7 @@ import { Routes } from '@angular/router';
 // Guards
 import { AuthGuard } from './core/guards/auth.guard';
 import { AdminGuard } from './core/guards/admin.guard';
+import { NutrientFormulationComponent } from './features/nutrient-formulation/nutrient-formulation.component';
 
 // Layout
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
@@ -49,12 +50,16 @@ export const routes: Routes = [
     path: 'admin',
     component: AdminComponent,
     canActivate: [AuthGuard, AdminGuard],
-    data: { 
+    data: {
       title: 'Panel de Administración',
-      adminOnly: true 
+      adminOnly: true
     }
   },
-
+  {
+    path: 'nutrient-formulation',
+    component: NutrientFormulationComponent,
+    data: { title: 'Formulación Nutritiva' }
+  },
   // Protected routes (authentication required)
   {
     path: '',

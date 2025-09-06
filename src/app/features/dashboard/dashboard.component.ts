@@ -9,6 +9,7 @@ import { forkJoin } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { DatePipe, CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 export interface DashboardStats {
   totalCompanies: number;
@@ -49,12 +50,13 @@ export class DashboardComponent implements OnInit {
   recentActivities: RecentActivity[] = [];
 
   constructor(
+    private router: Router,
     private authService: AuthService,
     private companyService: CompanyService,
     private farmService: FarmService,
     private cropService: CropService,
     private deviceService: DeviceService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadUserData();
@@ -191,9 +193,9 @@ export class DashboardComponent implements OnInit {
   }
 
   getLastUpdateTime(): string {
-    return new Date().toLocaleTimeString('es-ES', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date().toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   }
 
@@ -214,18 +216,47 @@ export class DashboardComponent implements OnInit {
   getRelativeTime(date: Date): string {
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Ahora mismo';
     if (diffInMinutes < 60) return `Hace ${diffInMinutes} min`;
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `Hace ${diffInHours}h`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     return `Hace ${diffInDays}d`;
   }
 
   trackByIndex(index: number, item: any): number {
     return index;
+  }
+
+
+  /**
+   * Navigate to nutrient solution formulation
+   */
+  navigateToNutrientFormulation(): void {
+    this.router.navigate(['/nutrient-formulation']);
+  }
+
+  /**
+   * Navigate to water analysis/chemistry management
+   */
+  navigateToWaterAnalysis(): void {
+    this.router.navigate(['/water-chemistry']);
+  }
+
+  /**
+   * Navigate to fertilizer management
+   */
+  navigateToFertilizers(): void {
+    this.router.navigate(['/fertilizers']);
+  }
+
+  /**
+   * Navigate to crop requirements
+   */
+  navigateToCropRequirements(): void {
+    this.router.navigate(['/crops']);
   }
 }
