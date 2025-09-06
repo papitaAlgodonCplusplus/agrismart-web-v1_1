@@ -159,6 +159,7 @@ interface FertilizerComposition {
 // src/app/core/models/fertilizer.model.ts
 export interface Fertilizer {
   id: number;
+  optimizationScore?: number;
   name: string | undefined;
   brand?: string | undefined;
   description?: string | undefined;

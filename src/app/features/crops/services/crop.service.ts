@@ -194,7 +194,7 @@ export class CropService {
     return this.http.get<BackendResponse<{ crops: Crop[] }>>(url, { params })
       .pipe(
         map(response => {
-          console.log('CropService.getAll response:', response);
+          
           if (response.success) {
             return response.result?.crops || [];
           }
@@ -216,7 +216,7 @@ export class CropService {
     return this.http.get<BackendResponse<Crop>>(url)
       .pipe(
         map(response => {
-          console.log('CropService.getById response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -245,7 +245,7 @@ export class CropService {
     return this.http.post<BackendResponse<Crop>>(url, payload, { headers })
       .pipe(
         map(response => {
-          console.log('CropService.create response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -270,7 +270,7 @@ export class CropService {
     return this.http.put<BackendResponse<Crop>>(url, payload, { headers })
       .pipe(
         map(response => {
-          console.log('CropService.update response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -294,7 +294,7 @@ export class CropService {
     return this.http.delete<BackendResponse<void>>(url, { headers })
       .pipe(
         map(response => {
-          console.log('CropService.delete response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -318,7 +318,7 @@ export class CropService {
     return this.http.put<BackendResponse<Crop>>(url, payload, { headers })
       .pipe(
         map(response => {
-          console.log('CropService.toggleStatus response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -402,7 +402,7 @@ export class CropService {
     return this.http.get<BackendResponse<CropStatistics>>(url, { headers })
       .pipe(
         map(response => {
-          console.log('CropService.getStatistics response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -442,7 +442,7 @@ export class CropService {
     return this.http.get<BackendResponse<CropRecommendation[]>>(url, { params, headers })
       .pipe(
         map(response => {
-          console.log('CropService.getRecommendations response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -465,7 +465,7 @@ export class CropService {
     return this.http.get<BackendResponse<string[]>>(url, { headers })
       .pipe(
         map(response => {
-          console.log('CropService.getAvailableTypes response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -489,7 +489,7 @@ export class CropService {
     return this.http.get<BackendResponse<string[]>>(url, { params, headers })
       .pipe(
         map(response => {
-          console.log('CropService.getVarietiesByType response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -512,7 +512,7 @@ export class CropService {
     return this.http.get<BackendResponse<string[]>>(url, { headers })
       .pipe(
         map(response => {
-          console.log('CropService.getAvailableHarvestSeasons response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -535,7 +535,7 @@ export class CropService {
     return this.http.get<BackendResponse<Crop[]>>(url, { headers })
       .pipe(
         map(response => {
-          console.log('CropService.getCompanionCrops response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -558,7 +558,7 @@ export class CropService {
     return this.http.get<BackendResponse<Crop[]>>(url, { headers })
       .pipe(
         map(response => {
-          console.log('CropService.getRotationSuggestions response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -581,7 +581,7 @@ export class CropService {
     return this.http.get<BackendResponse<Crop[]>>(url, { headers })
       .pipe(
         map(response => {
-          console.log('CropService.getCropsInProduction response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -621,7 +621,7 @@ export class CropService {
     return this.http.get<BackendResponse<any>>(url, { params, headers })
       .pipe(
         map(response => {
-          console.log('CropService.getPerformanceMetrics response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -645,7 +645,7 @@ export class CropService {
     return this.http.put<BackendResponse<Crop[]>>(url, payload, { headers })
       .pipe(
         map(response => {
-          console.log('CropService.bulkUpdate response:', response);
+          
           if (response.success) {
             return response.result;
           }
@@ -874,7 +874,7 @@ export class CropService {
 
     return this.http.get<CropPhase[]>('/CropPhase', { params }).pipe(
       map(response => {
-        console.log('CropService.getCropPhases response:', response);
+        
         return Array.isArray(response) ? response : [];
       }),
       catchError(error => {
@@ -897,7 +897,7 @@ export class CropService {
   getCropPhaseById(phaseId: number): Observable<CropPhase> {
     return this.http.get<CropPhase>(`/CropPhase/${phaseId}`).pipe(
       map(response => {
-        console.log('CropService.getCropPhaseById response:', response);
+        
         return response;
       }),
       catchError(error => {
@@ -915,7 +915,7 @@ export class CropService {
     // Try the specific endpoint that exists in backend
     return this.http.get<any>(`/CropPhaseSolutionRequirement/${phaseId}`).pipe(
       map(response => {
-        console.log('CropService.getCropPhaseSolutionRequirement response:', response);
+        
         return response || null;
       }),
       catchError(error => {
@@ -932,7 +932,7 @@ export class CropService {
   getAllCropPhaseSolutionRequirements(): Observable<CropPhaseSolutionRequirement[]> {
     return this.http.get<CropPhaseSolutionRequirement[]>('/CropPhaseSolutionRequirement').pipe(
       map(response => {
-        console.log('CropService.getAllCropPhaseSolutionRequirements response:', response);
+        
         return Array.isArray(response) ? response : [];
       }),
       catchError(error => {
@@ -949,7 +949,7 @@ export class CropService {
   getCropPhaseOptimals(): Observable<CropPhaseOptimal[]> {
     return this.http.get<CropPhaseOptimal[]>('/CropPhaseOptimal').pipe(
       map(response => {
-        console.log('CropService.getCropPhaseOptimals response:', response);
+        
         return Array.isArray(response) ? response : [];
       }),
       catchError(error => {
@@ -957,97 +957,5 @@ export class CropService {
         return this.handleError(error);
       })
     );
-  }
-
-  /**
-   * Get base nutrient requirements for different crops and phases
-   */
-  private getBaseNutrientRequirements(cropName: string, phaseName: string): any {
-    const cropLower = cropName?.toLowerCase() || '';
-    const phaseLower = phaseName?.toLowerCase() || '';
-
-    // Default values
-    let baseReq = {
-      ec: 1.5,
-      nitrogen: 150,
-      phosphorus: 30,
-      potassium: 200,
-      calcium: 120,
-      magnesium: 25,
-      sulfur: 65,
-      iron: 3,
-      boron: 0.3,
-      manganese: 0.5,
-      zinc: 0.3,
-      copper: 0.05,
-      molybdenum: 0.05
-    };
-
-    // Adjust based on crop type
-    if (cropLower.includes('tomate') || cropLower.includes('tomato')) {
-      baseReq = {
-        ...baseReq,
-        ec: 2.0,
-        nitrogen: 200,
-        phosphorus: 50,
-        potassium: 300,
-        calcium: 150
-      };
-    } else if (cropLower.includes('lechuga') || cropLower.includes('lettuce')) {
-      baseReq = {
-        ...baseReq,
-        ec: 1.2,
-        nitrogen: 120,
-        phosphorus: 25,
-        potassium: 180,
-        calcium: 80
-      };
-    } else if (cropLower.includes('pepino') || cropLower.includes('cucumber')) {
-      baseReq = {
-        ...baseReq,
-        ec: 1.8,
-        nitrogen: 180,
-        phosphorus: 40,
-        potassium: 250,
-        calcium: 130
-      };
-    } else if (cropLower.includes('pimiento') || cropLower.includes('pepper')) {
-      baseReq = {
-        ...baseReq,
-        ec: 1.6,
-        nitrogen: 160,
-        phosphorus: 35,
-        potassium: 220,
-        calcium: 120
-      };
-    }
-
-    // Adjust based on growth phase
-    if (phaseLower.includes('germinación') || phaseLower.includes('seedling')) {
-      baseReq.nitrogen *= 0.6;
-      baseReq.ec *= 0.7;
-    } else if (phaseLower.includes('vegetativo') || phaseLower.includes('vegetative')) {
-      baseReq.nitrogen *= 1.1;
-      baseReq.potassium *= 0.9;
-    } else if (phaseLower.includes('floración') || phaseLower.includes('flowering')) {
-      baseReq.nitrogen *= 0.9;
-      baseReq.phosphorus *= 1.3;
-      baseReq.potassium *= 1.2;
-    } else if (phaseLower.includes('fructificación') || phaseLower.includes('fruiting')) {
-      baseReq.nitrogen *= 0.8;
-      baseReq.phosphorus *= 1.1;
-      baseReq.potassium *= 1.4;
-    }
-
-    return baseReq;
-  }
-
-  /**
-   * Helper method to get crop name from ID
-   */
-  private getCropNameFromId(cropId: number): string {
-    // This would normally come from your crops data
-    // For now, return a default or implement lookup logic
-    return 'Unknown Crop';
   }
 }

@@ -56,7 +56,7 @@ IHost host = Host.CreateDefaultBuilder(args)
             options.SourceName = "AgrismartCalculator";
         });
     })
-    //.UseWindowsService()
+    //.UseWindowsService
     .Build();
 
 await host.RunAsync();

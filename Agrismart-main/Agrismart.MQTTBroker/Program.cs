@@ -14,7 +14,7 @@ IHost host = Host.CreateDefaultBuilder(args)
             options.SourceName = "AgrismartMqttBroker";
         });
     })
-    //.UseWindowsService()
+    //.UseWindowsService
     .Build();
 
 await host.RunAsync();

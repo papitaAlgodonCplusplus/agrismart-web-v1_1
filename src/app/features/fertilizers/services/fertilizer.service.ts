@@ -7,6 +7,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { ApiConfigService } from '../../../core/services/api-config.service';
 import { CatalogService } from '../../catalogs/services/catalog.service';
 import { Fertilizer } from '../../../core/models/models';
+import { BackendResponse } from '../../nutrient-formulation/nutrient-formulation.component';
 
 
 interface FertilizerChemistry {
@@ -208,7 +209,7 @@ export class FertilizerService {
    */
   getAll(filters?: FertilizerFilters): Observable<Fertilizer[]> {
     if (filters?.catalogId) {
-      console.log('Fetching fertilizers for catalogId:', filters.catalogId);
+      
       return this.getFertilizersWithCatalogId(filters.catalogId, filters);
     }
 
@@ -885,7 +886,7 @@ export class FertilizerService {
   getFertilizerChemistries(): Observable<FertilizerChemistry[]> {
     return this.apiService.get<FertilizerChemistry[]>('/FertilizerChemistry').pipe(
       map(response => {
-        console.log('FertilizerService.getFertilizerChemistries response:', response);
+        
         return Array.isArray(response) ? response : [];
       }),
       catchError(error => {
@@ -901,7 +902,7 @@ export class FertilizerService {
   getFertilizerChemistry(fertilizerId: number): Observable<FertilizerChemistry | null> {
     return this.apiService.get<FertilizerChemistry>(`/FertilizerChemistry/${fertilizerId}`).pipe(
       map(response => {
-        console.log('FertilizerService.getFertilizerChemistry response:', response);
+        
         return response || null;
       }),
       catchError(error => {
@@ -1198,5 +1199,124 @@ export class FertilizerService {
     });
 
     return Math.round(totalEc * 100) / 100; // Round to 2 decimals
+  }
+
+  /**
+     * Get crop phase solution requirement data
+   */
+  private getCropPhaseSolutionRequirement(phaseId: number): Observable<any> {
+    
+    const params = new HttpParams().set('PhaseId', phaseId.toString());
+    const url = `${this.apiConfig.agronomicApiUrl}/CropPhaseSolutionRequirement/GetByPhaseId`;
+    const headers = this.getAuthHeaders();
+
+    return this.http.get<BackendResponse<any>>(url, { params, headers }).pipe(
+      map(response => {
+        if (response) {
+          
+          return response.result;
+        }
+        throw new Error(`Get crop phase solution requirement failed: ${response}`);
+      }),
+      catchError(error => {
+        console.error('CropService.getCropPhaseSolutionRequirement error:', error);
+        return of(null);
+      })
+    );
+  }
+  /**
+   * Enhanced method that combines CropPhaseSolutionRequirement data with fertilizer selection
+   */
+  getFertilizersWithOptimalComposition(
+    catalogId: number | undefined,
+    cropPhaseId?: number,
+    filters?: FertilizerFilters
+  ): Observable<Fertilizer[]> {
+    
+    return forkJoin<{
+      fertilizers: Fertilizer[] | { fertilizers?: Fertilizer[]; result?: Fertilizer[]; data?: Fertilizer[] } | any;
+      solutionRequirements: any;
+    }>({
+      fertilizers: this.getFertilizersWithCatalogId(catalogId, filters),
+      solutionRequirements: cropPhaseId ?
+        this.getCropPhaseSolutionRequirement(cropPhaseId) :
+        of(null)
+    }).pipe(
+      map(({ fertilizers, solutionRequirements }) => {
+        
+        
+
+        // Extract fertilizers array from response - this is the critical fix
+        let fertilizerArray: any[] = [];
+
+        if (Array.isArray(fertilizers)) {
+          fertilizerArray = fertilizers;
+        } else if (fertilizers && typeof fertilizers === 'object') {
+          // Handle object responses
+          if (Array.isArray((fertilizers as any).fertilizers)) {
+            fertilizerArray = (fertilizers as any).fertilizers;
+          } else if (Array.isArray((fertilizers as any).result)) {
+            fertilizerArray = (fertilizers as any).result;
+          } else if (Array.isArray((fertilizers as any).data)) {
+            fertilizerArray = (fertilizers as any).data;
+          } else {
+            console.warn('Unexpected fertilizers response format:', fertilizers);
+            fertilizerArray = [];
+          }
+        } else {
+          console.warn('Invalid fertilizers response:', fertilizers);
+          fertilizerArray = [];
+        }
+
+        
+
+        if (solutionRequirements) {
+          // Enhance fertilizers with optimal composition score based on crop phase requirements
+          return fertilizerArray.map(fertilizer => ({
+            ...fertilizer,
+            optimizationScore: this.calculateOptimizationScore(fertilizer, solutionRequirements)
+          })).sort((a, b) => (b.optimizationScore || 0) - (a.optimizationScore || 0));
+        }
+
+        return fertilizerArray;
+      }),
+      catchError(error => {
+        console.error('Error in getFertilizersWithOptimalComposition:', error);
+        return of([]); // Return empty array on error
+      })
+    );
+  }
+
+
+
+  /**
+   * Calculate how well a fertilizer matches crop phase requirements
+   */
+  private calculateOptimizationScore(fertilizer: Fertilizer, requirements: any): number {
+    if (!fertilizer.composition || fertilizer.composition.length === 0 || !requirements) {
+      return 0;
+    }
+
+    const composition = fertilizer.composition[0];
+    let score = 0;
+    let factors = 0;
+
+    // Score based on N-P-K match
+    if (requirements.nitrogen && composition.nitrogen) {
+      score += Math.min(composition.nitrogen / requirements.nitrogen, 1) * 0.4;
+      factors++;
+    }
+
+    if (requirements.phosphorus && composition.phosphorus) {
+      score += Math.min(composition.phosphorus / requirements.phosphorus, 1) * 0.3;
+      factors++;
+    }
+
+    if (requirements.potassium && composition.potassium) {
+      score += Math.min(composition.potassium / requirements.potassium, 1) * 0.3;
+      factors++;
+    }
+
+    return factors > 0 ? (score / factors) * 100 : 0;
   }
 }

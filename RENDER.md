@@ -1,6 +1,6 @@
 to switch to dev:
 
-//.UseWindowsService()
+//.UseWindowsService
 enviorment.ts
 npm run build-dev
 npm run start
