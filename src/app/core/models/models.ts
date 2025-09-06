@@ -149,6 +149,13 @@ export interface IrrigationSector {
   updatedAt?: Date;
 }
 
+interface FertilizerComposition {
+  nitrogen: number;
+  phosphorus: number;
+  potassium: number;
+  micronutrients?: string | undefined;
+}
+
 // src/app/core/models/fertilizer.model.ts
 export interface Fertilizer {
   id: number;
@@ -175,6 +182,7 @@ export interface Fertilizer {
   isActive: boolean;
   createdAt: Date;
   updatedAt?: Date;
+  composition?: FertilizerComposition[];
 }
 
 // src/app/core/models/fertilizer-input.model.ts

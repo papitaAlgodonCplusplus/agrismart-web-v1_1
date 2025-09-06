@@ -1,9 +1,16 @@
 /* src/app/features/nutrient-formulation/nutrient-formulation.component.css */
 
+html, body {
+  background-color: #f5f7fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #212529;
+  overflow-y: scroll; /* Always show vertical scrollbar */
+  max-height: 100vh;
+}
+
 /* Advanced Options Animation */
 .advanced-options {
-  max-height: 0;
-  overflow: hidden;
+  overflow: scroll;
   transition: max-height 0.3s ease-in-out;
 }
 

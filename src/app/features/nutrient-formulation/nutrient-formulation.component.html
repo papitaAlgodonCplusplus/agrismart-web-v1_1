@@ -52,52 +52,70 @@
             <div class="row g-3 mb-4">
               <div class="col-md-6">
                 <label for="recipeName" class="form-label">Nombre de la Receta</label>
-                <input type="text" class="form-control" id="recipeName" formControlName="recipeName">
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="recipeName"
+                  formControlName="recipeName"
+                  placeholder="Ej: Tomate Vegetativo">
               </div>
               <div class="col-md-6">
                 <label for="volumeLiters" class="form-label">Volumen (Litros)</label>
-                <input type="number" class="form-control" id="volumeLiters" formControlName="volumeLiters">
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  id="volumeLiters"
+                  formControlName="volumeLiters"
+                  placeholder="1000">
               </div>
             </div>
 
-            <!-- Water Source Selection -->
             <div class="row g-3 mb-4">
               <div class="col-md-6">
                 <label for="waterSourceId" class="form-label">Fuente de Agua</label>
-                <select class="form-select" id="waterSourceId" formControlName="waterSourceId">
-                  <option value="">Seleccionar fuente de agua</option>
-                  <option *ngFor="let water of waterSources" [value]="water.id">
-                    {{ water.name }} (pH: {{ water.phLevel }}, EC: {{ water.ecLevel }})
+                <select 
+                  class="form-select" 
+                  id="waterSourceId"
+                  formControlName="waterSourceId">
+                  <option value="">Seleccione una fuente de agua</option>
+                  <option 
+                    *ngFor="let source of waterSources" 
+                    [value]="source.id">
+                    {{ source.name || 'Fuente ' + source.id }}
                   </option>
                 </select>
               </div>
               <div class="col-md-6">
-                <label for="optimizeFor" class="form-label">Optimizar Para</label>
-                <select class="form-select" id="optimizeFor" formControlName="optimizeFor">
-                  <option value="cost">Menor Costo</option>
-                  <option value="nutrition">Mejor Nutrición</option>
-                  <option value="balanced">Equilibrado</option>
+                <label for="cropId" class="form-label">Cultivo</label>
+                <select 
+                  class="form-select" 
+                  id="cropId"
+                  formControlName="cropId"
+                  (change)="onCropChange()">
+                  <option value="">Seleccione un cultivo</option>
+                  <option 
+                    *ngFor="let crop of crops" 
+                    [value]="crop.id">
+                    {{ crop.name }}
+                  </option>
                 </select>
               </div>
             </div>
 
-            <!-- Crop Selection -->
             <div class="row g-3 mb-4">
               <div class="col-md-6">
-                <label for="cropId" class="form-label">Cultivo</label>
-                <select class="form-select" id="cropId" formControlName="cropId" (change)="onCropChange()">
-                  <option value="">Seleccionar cultivo</option>
-                  <option *ngFor="let crop of crops" [value]="crop.id">
-                    {{ crop.name }} ({{ crop.type }})
-                  </option>
-                </select>
-              </div>
-              <div class="col-md-6">
                 <label for="cropPhaseId" class="form-label">Fase del Cultivo</label>
-                <select class="form-select" id="cropPhaseId" formControlName="cropPhaseId" (change)="onCropPhaseChange()">
-                  <option value="">Seleccionar fase</option>
-                  <option *ngFor="let phase of cropPhases" [value]="phase.id">
+                <select 
+                  class="form-select" 
+                  id="cropPhaseId"
+                  formControlName="cropPhaseId"
+                  (change)="onCropPhaseChange()">
+                  <option value="">Seleccione una fase</option>
+                  <option 
+                    *ngFor="let phase of getFilteredCropPhases()" 
+                    [value]="phase.id">
                     {{ phase.name }}
+                    <span *ngIf="phase.sequence"> (Semana {{ phase.startingWeek }}-{{ phase.endingWeek }})</span>
                   </option>
                 </select>
               </div>
@@ -107,25 +125,85 @@
             <div class="row g-3 mb-4">
               <div class="col-md-4">
                 <label for="targetPh" class="form-label">pH Objetivo</label>
-                <input type="number" class="form-control" id="targetPh" formControlName="targetPh" 
-                       step="0.1" min="4" max="8">
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  id="targetPh"
+                  formControlName="targetPh"
+                  step="0.1"
+                  min="5.5"
+                  max="8.0"
+                  placeholder="6.5">
               </div>
               <div class="col-md-4">
                 <label for="targetEc" class="form-label">EC Objetivo (dS/m)</label>
-                <input type="number" class="form-control" id="targetEc" formControlName="targetEc" 
-                       step="0.1" min="0.5" max="4">
-              </div>
-              <div class="col-md-4">
-                <label for="maxBudgetPerLiter" class="form-label">Presupuesto Max/L (₡)</label>
-                <input type="number" class="form-control" id="maxBudgetPerLiter" formControlName="maxBudgetPerLiter" 
-                       step="0.01" min="0">
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  id="targetEc"
+                  formControlName="targetEc"
+                  step="0.1"
+                  min="0.5"
+                  max="3.0"
+                  placeholder="1.5">
               </div>
             </div>
 
             <!-- Advanced Options Toggle -->
             <div class="mb-3">
-              <button type="button" class="btn btn-secondary" (click)="resetForm()">
-                <i class="bi bi-arrow-clockwise me-2"></i>
+              <button 
+                type="button" 
+                class="btn btn-outline-secondary btn-sm"
+                (click)="toggleAdvancedOptions()">
+                <i class="bi" [class]="showAdvancedOptions ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                Opciones Avanzadas
+              </button>
+            </div>
+
+            <!-- Advanced Options -->
+            <div class="advanced-options mb-4" [class.show]="showAdvancedOptions">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="maxBudgetPerLiter" class="form-label">Presupuesto Máximo por Litro</label>
+                  <div class="input-group">
+                    <span class="input-group-text">₡</span>
+                    <input 
+                      type="number" 
+                      class="form-control" 
+                      id="maxBudgetPerLiter"
+                      formControlName="maxBudgetPerLiter"
+                      placeholder="100">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check mt-4">
+                    <input 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      id="preferOrganic"
+                      formControlName="preferOrganic">
+                    <label class="form-check-label" for="preferOrganic">
+                      Preferir fertilizantes orgánicos
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2">
+              <button 
+                type="submit" 
+                class="btn btn-primary">
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+                <i class="bi bi-calculator me-1" *ngIf="!isLoading"></i>
+                {{ isLoading ? 'Calculando...' : 'Calcular Formulación' }}
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-outline-secondary"
+                (click)="resetForm()">
+                <i class="bi bi-arrow-clockwise me-1"></i>
                 Limpiar
               </button>
             </div>
@@ -135,142 +213,160 @@
 
       <!-- Results Section -->
       <div class="card mt-4" *ngIf="currentRecipe">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="card-title mb-0">
-            <i class="bi bi-check-circle text-success me-2"></i>
-            Resultados de Formulación
-          </h5>
-          <div>
-            <button class="btn btn-outline-primary btn-sm me-2" (click)="saveRecipe()" *ngIf="currentRecipe">
-              <i class="bi bi-save me-1"></i>
-              Guardar
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" (click)="exportRecipe()" *ngIf="currentRecipe">
-              <i class="bi bi-download me-1"></i>
-              Exportar
-            </button>
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-clipboard-data me-2"></i>
+              Resultados de la Formulación
+            </h5>
+            <div class="btn-group">
+              <button 
+                class="btn btn-success btn-sm"
+                (click)="saveRecipe()"
+                [disabled]="!currentRecipe">
+                <i class="bi bi-bookmark-plus me-1"></i>
+                Guardar Receta
+              </button>
+              <button 
+                class="btn btn-outline-primary btn-sm"
+                (click)="exportRecipe()"
+                [disabled]="!currentRecipe">
+                <i class="bi bi-download me-1"></i>
+                Exportar
+              </button>
+            </div>
           </div>
         </div>
         <div class="card-body">
           <!-- Recipe Summary -->
           <div class="row mb-4">
-            <div class="col-md-6">
-              <h6 class="text-muted">Información General</h6>
-              <ul class="list-unstyled">
-                <li><strong>Receta:</strong> {{ currentRecipe.name }}</li>
-                <li><strong>Fuente de Agua:</strong> {{ getWaterSourceName(currentRecipe.waterSourceId) }}</li>
-                <li><strong>Cultivo:</strong> {{ getCropName(currentRecipe.cropId) }}</li>
-                <li><strong>Volumen:</strong> {{ currentRecipe.volumeLiters }} L</li>
-              </ul>
+            <div class="col-md-8">
+              <h6 class="text-muted">{{ currentRecipe.name }}</h6>
+              <p class="mb-1">
+                <strong>Cultivo:</strong> {{ getCropName(currentRecipe.cropId) }}
+                <span *ngIf="currentRecipe.cropPhaseId"> - {{ getCropPhaseName(currentRecipe.cropPhaseId) }}</span>
+              </p>
+              <p class="mb-1">
+                <strong>Fuente de Agua:</strong> {{ getWaterSourceName(currentRecipe.waterSourceId) }}
+              </p>
+              <p class="mb-0">
+                <strong>Volumen:</strong> {{ currentRecipe.volumeLiters }}L
+              </p>
             </div>
-            <div class="col-md-6">
-              <h6 class="text-muted">Costos</h6>
+            <div class="col-md-4">
               <div class="cost-summary">
-                <div class="cost-item">
-                  <span>Costo Total:</span>
-                  <span class="fw-bold">₡{{ currentRecipe.totalCost.toFixed(2) }}</span>
+                <h6 class="mb-2">Resumen de Costos</h6>
+                <div class="cost-item" *ngFor="let fert of currentRecipe.fertilizers">
+                  <span>{{ fert.fertilizer?.name || 'Fertilizante' }}</span>
+                  <span>₡{{ fert.costPortion.toFixed(2) }}</span>
                 </div>
                 <div class="cost-item">
-                  <span>Costo por Litro:</span>
-                  <span class="fw-bold">₡{{ (currentRecipe.totalCost / currentRecipe.volumeLiters).toFixed(3) }}</span>
+                  <strong>Total</strong>
+                  <strong>₡{{ currentRecipe.totalCost.toFixed(2) }}</strong>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Fertilizer Composition -->
-          <div class="mb-4">
-            <h6 class="text-muted">Composición de Fertilizantes</h6>
-            <div class="table-responsive">
-              <table class="table table-sm">
-                <thead>
-                  <tr>
-                    <th>Fertilizante</th>
-                    <th>Concentración (g/L)</th>
-                    <th>% N</th>
-                    <th>% P</th>
-                    <th>% K</th>
-                    <th>Costo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let fert of currentRecipe.fertilizers">
-                    <td>{{ fert.fertilizer?.name || 'N/A' }}</td>
-                    <td>{{ fert.concentration.toFixed(2) }}</td>
-                    <td>{{ fert.percentageOfN }}%</td>
-                    <td>{{ fert.percentageOfP }}%</td>
-                    <td>{{ fert.percentageOfK }}%</td>
-                    <td>₡{{ fert.costPortion.toFixed(2) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <!-- Nutrient Results Table -->
+          <div class="table-responsive mb-4">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Parámetro</th>
+                  <th>Objetivo</th>
+                  <th>Obtenido</th>
+                  <th>Diferencia</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let result of formulationResults">
+                  <td>{{ result.parameter }}</td>
+                  <td>{{ result.target }} {{ result.unit }}</td>
+                  <td>{{ result.achieved }} {{ result.unit }}</td>
+                  <td [class]="result.difference >= 0 ? 'text-success' : 'text-warning'">
+                    {{ result.difference >= 0 ? '+' : '' }}{{ result.difference }} {{ result.unit }}
+                  </td>
+                  <td>
+                    <i class="bi me-1" [class]="getStatusIcon(result.status)"></i>
+                    <span [class]="getStatusClass(result.status)">
+                      {{ result.status === 'optimal' ? 'Óptimo' : 
+                         result.status === 'acceptable' ? 'Aceptable' : 'Crítico' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-          <!-- Nutritional Analysis -->
-          <div class="mb-4">
-            <h6 class="text-muted">Análisis Nutricional</h6>
-            <div class="table-responsive">
-              <table class="table table-sm">
-                <thead>
-                  <tr>
-                    <th>Parámetro</th>
-                    <th>Objetivo</th>
-                    <th>Logrado</th>
-                    <th>Diferencia</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let result of formulationResults">
-                    <td>{{ result.parameter }}</td>
-                    <td>{{ result.target }} {{ result.unit }}</td>
-                    <td>{{ result.achieved }} {{ result.unit }}</td>
-                    <td [class]="result.difference >= 0 ? 'text-success' : 'text-danger'">
-                      {{ result.difference > 0 ? '+' : '' }}{{ result.difference }} {{ result.unit }}
-                    </td>
-                    <td>
-                      <span [class]="getStatusClass(result.status)">
-                        <i [class]="getStatusIcon(result.status)" class="me-1"></i>
-                        {{ result.status | titlecase }}
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <!-- Fertilizer Mix Table -->
+          <div class="table-responsive">
+            <h6>Mezcla de Fertilizantes</h6>
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Fertilizante</th>
+                  <th>Concentración (g/L)</th>
+                  <th>% N</th>
+                  <th>% P</th>
+                  <th>% K</th>
+                  <th>Costo Porción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let fert of currentRecipe.fertilizers">
+                  <td>
+                    <div>
+                      <strong>{{ fert.fertilizer?.name || 'N/A' }}</strong>
+                      <br>
+                      <small class="text-muted">{{ fert.fertilizer?.type || 'N/A' }}</small>
+                    </div>
+                  </td>
+                  <td>{{ fert.concentration.toFixed(2) }}</td>
+                  <td>{{ fert.percentageOfN.toFixed(1) }}%</td>
+                  <td>{{ fert.percentageOfP.toFixed(1) }}%</td>
+                  <td>{{ fert.percentageOfK.toFixed(1) }}%</td>
+                  <td>₡{{ fert.costPortion.toFixed(2) }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Right Panel - Saved Recipes & Tools -->
+    <!-- Right Panel - Quick Stats & Saved Recipes -->
     <div class="col-lg-4">
       <!-- Quick Stats -->
       <div class="card mb-4">
         <div class="card-header">
           <h6 class="card-title mb-0">
-            <i class="bi bi-bar-chart me-2"></i>
+            <i class="bi bi-graph-up me-2"></i>
             Estadísticas Rápidas
           </h6>
         </div>
         <div class="card-body">
           <div class="quick-stat">
             <div class="stat-item">
+              <span class="stat-label">Fertilizantes Disponibles</span>
+              <span class="stat-value">{{ fertilizers.length }}</span>
+            </div>
+            <div class="stat-item">
               <span class="stat-label">Fuentes de Agua</span>
               <span class="stat-value">{{ waterSources.length }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">Fertilizantes</span>
-              <span class="stat-value">{{ fertilizers.length }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Cultivos</span>
+              <span class="stat-label">Cultivos Disponibles</span>
               <span class="stat-value">{{ crops.length }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">Recetas Guardadas</span>
-              <span class="stat-value">{{ savedRecipes.length }}</span>
+              <span class="stat-label">Fases de Cultivo</span>
+              <span class="stat-value">{{ cropPhases.length }}</span>
+            </div>
+            <div class="stat-item" *ngIf="currentRecipe">
+              <span class="stat-label">Costo por Litro</span>
+              <span class="stat-value">₡{{ (currentRecipe.totalCost / currentRecipe.volumeLiters).toFixed(2) }}</span>
             </div>
           </div>
         </div>
@@ -281,23 +377,54 @@
         <div class="card-header">
           <h6 class="card-title mb-0">
             <i class="bi bi-bookmark me-2"></i>
-            Recetas Guardadas
+            Recetas Guardadas ({{ savedRecipes.length }})
           </h6>
         </div>
         <div class="card-body">
           <div class="saved-recipes" *ngIf="savedRecipes.length > 0; else noRecipes">
-            <div class="recipe-item" *ngFor="let recipe of savedRecipes" (click)="loadRecipe(recipe)">
+            <div 
+              class="recipe-item" 
+              *ngFor="let recipe of savedRecipes"
+              (click)="loadRecipe(recipe)">
               <div class="recipe-header">
                 <h6 class="recipe-name">{{ recipe.name }}</h6>
-                <small class="recipe-date">{{ recipe.createdAt | date:'shortDate' }}</small>
+                <small class="recipe-date">
+                  {{ recipe.createdAt | date:'short' }}
+                </small>
               </div>
               <div class="recipe-details">
                 <span class="recipe-crop">{{ getCropName(recipe.cropId) }}</span>
-                <span class="recipe-cost">₡{{ recipe.totalCost.toFixed(2) }}</span>
+                <div class="dropdown">
+                  <button 
+                    class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                    type="button" 
+                    data-bs-toggle="dropdown"
+                    (click)="$event.stopPropagation()">
+                    <i class="bi bi-three-dots"></i>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a class="dropdown-item" href="#" (click)="loadRecipe(recipe); $event.preventDefault()">
+                        <i class="bi bi-eye me-2"></i>Cargar
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="#" (click)="exportRecipe(); $event.preventDefault()">
+                        <i class="bi bi-download me-2"></i>Exportar
+                      </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <a class="dropdown-item text-danger" href="#" (click)="deleteRecipe(recipe); $event.preventDefault()">
+                        <i class="bi bi-trash me-2"></i>Eliminar
+                      </a>
+                    </li>
+                  </ul>
+                </div>
               </div>
               <div class="recipe-stats">
                 <small class="text-muted">
-                  {{ recipe.volumeLiters }}L • pH {{ recipe.targetPh }} • EC {{ recipe.targetEc }}
+                  {{ recipe.volumeLiters }}L • pH {{ recipe.targetPh }} • EC {{ recipe.targetEc }} • ₡{{ recipe.totalCost.toFixed(2) }}
                 </small>
               </div>
             </div>

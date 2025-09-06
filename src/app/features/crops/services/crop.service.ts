@@ -1,10 +1,63 @@
 // src/app/features/crops/services/crop.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { ApiConfigService } from '../../../core/services/api-config.service';
 import { Crop } from '../../../core/models/models';
+
+
+interface CropPhase {
+  id: number;
+  cropId: number;
+  catalogId: number;
+  name: string;
+  description?: string;
+  sequence?: number;
+  startingWeek?: number;
+  endingWeek?: number;
+  active: boolean;
+  dateCreated?: Date;
+  dateUpdated?: Date;
+  createdBy?: number;
+  updatedBy?: number;
+}
+
+interface CropPhaseSolutionRequirement {
+  id: number;
+  phaseId: number;
+  ec?: number;
+  hco3?: number;
+  no3?: number;
+  h2po4?: number;
+  so4?: number;
+  cl?: number;
+  nh4?: number;
+  k?: number;
+  ca?: number;
+  mg?: number;
+  na?: number;
+  fe?: number;
+  b?: number;
+  cu?: number;
+  zn?: number;
+  mn?: number;
+  mo?: number;
+  n?: number;
+  s?: number;
+  p?: number;
+  active: boolean;
+}
+
+interface CropPhaseOptimal {
+  id: number;
+  catalogId: number;
+  name: string;
+  description?: string;
+  value: number;
+  active: boolean;
+}
+
 
 // Backend response structure (matches your AgriSmart API)
 interface BackendResponse<T> {
@@ -43,7 +96,7 @@ export interface CropCreateRequest {
   isActive?: boolean;
 }
 
-export interface CropUpdateRequest extends Partial<CropCreateRequest> {}
+export interface CropUpdateRequest extends Partial<CropCreateRequest> { }
 
 export interface CropStatistics {
   totalCrops: number;
@@ -89,7 +142,7 @@ export class CropService {
   constructor(
     private apiConfig: ApiConfigService,
     private http: HttpClient
-  ) {}
+  ) { }
 
   /**
    * Get all crops with optional filters - Backend: GET /Crop
@@ -137,8 +190,8 @@ export class CropService {
     }
 
     const url = `${this.apiConfig.agronomicApiUrl}/Crop`;
-    
-    return this.http.get<BackendResponse<{crops: Crop[]}>>(url, { params })
+
+    return this.http.get<BackendResponse<{ crops: Crop[] }>>(url, { params })
       .pipe(
         map(response => {
           console.log('CropService.getAll response:', response);
@@ -159,7 +212,7 @@ export class CropService {
    */
   getById(id: number): Observable<Crop> {
     const url = `${this.apiConfig.agronomicApiUrl}/Crop/${id}`;
-    
+
     return this.http.get<BackendResponse<Crop>>(url)
       .pipe(
         map(response => {
@@ -321,9 +374,9 @@ export class CropService {
    * Get crops by growth cycle range
    */
   getByGrowthCycleRange(minDays: number, maxDays: number): Observable<Crop[]> {
-    const filters: CropFilters = { 
-      minGrowthCycleDays: minDays, 
-      maxGrowthCycleDays: maxDays 
+    const filters: CropFilters = {
+      minGrowthCycleDays: minDays,
+      maxGrowthCycleDays: maxDays
     };
     return this.getAll(undefined, filters);
   }
@@ -332,9 +385,9 @@ export class CropService {
    * Get crops suitable for temperature range
    */
   getBySuitableTemperature(minTemp: number, maxTemp: number): Observable<Crop[]> {
-    const filters: CropFilters = { 
-      minTemperature: minTemp, 
-      maxTemperature: maxTemp 
+    const filters: CropFilters = {
+      minTemperature: minTemp,
+      maxTemperature: maxTemp
     };
     return this.getAll(undefined, filters);
   }
@@ -622,7 +675,7 @@ export class CropService {
 
     const url = `${this.apiConfig.agronomicApiUrl}/Crop/export/excel`;
     const headers = this.getAuthHeaders();
-    
+
     return this.http.get(url, {
       params,
       responseType: 'blob',
@@ -688,15 +741,15 @@ export class CropService {
     if (!crop.optimalTemperatureMin && !crop.optimalTemperatureMax) {
       return true; // No temperature requirements specified
     }
-    
+
     if (crop.optimalTemperatureMin && currentTemp < crop.optimalTemperatureMin) {
       return false;
     }
-    
+
     if (crop.optimalTemperatureMax && currentTemp > crop.optimalTemperatureMax) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -796,7 +849,7 @@ export class CropService {
 
   private handleError(error: any): Observable<never> {
     console.error('Crop Service Error:', error);
-    
+
     let errorMessage = 'An unknown error occurred';
     if (error.error?.message) {
       errorMessage = error.error.message;
@@ -807,5 +860,194 @@ export class CropService {
     }
 
     return throwError(() => new Error(errorMessage));
+  }
+
+
+  /**
+   * Get crop phases for a specific crop
+   */
+  getCropPhases(cropId?: number): Observable<CropPhase[]> {
+    let params = new HttpParams();
+    if (cropId) {
+      params = params.set('cropId', cropId.toString());
+    }
+
+    return this.http.get<CropPhase[]>('/CropPhase', { params }).pipe(
+      map(response => {
+        console.log('CropService.getCropPhases response:', response);
+        return Array.isArray(response) ? response : [];
+      }),
+      catchError(error => {
+        console.error('CropService.getCropPhases error:', error);
+        return this.handleError(error);
+      })
+    );
+  }
+
+  /**
+   * Get all crop phases
+   */
+  getAllCropPhases(): Observable<CropPhase[]> {
+    return this.getCropPhases();
+  }
+
+  /**
+   * Get crop phase by ID
+   */
+  getCropPhaseById(phaseId: number): Observable<CropPhase> {
+    return this.http.get<CropPhase>(`/CropPhase/${phaseId}`).pipe(
+      map(response => {
+        console.log('CropService.getCropPhaseById response:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('CropService.getCropPhaseById error:', error);
+        return this.handleError(error);
+      })
+    );
+  }
+
+  /**
+   * Get crop phase solution requirements by phase ID
+   * This might not exist in backend, so we'll try different approaches
+   */
+  getCropPhaseSolutionRequirement(phaseId: number): Observable<CropPhaseSolutionRequirement | null> {
+    // Try the specific endpoint that exists in backend
+    return this.http.get<any>(`/CropPhaseSolutionRequirement/${phaseId}`).pipe(
+      map(response => {
+        console.log('CropService.getCropPhaseSolutionRequirement response:', response);
+        return response || null;
+      }),
+      catchError(error => {
+        console.warn('CropPhaseSolutionRequirement endpoint not available:', error);
+        // Return null if endpoint doesn't exist, component will handle gracefully
+        return of(null);
+      })
+    );
+  }
+
+  /**
+   * Get all crop phase solution requirements
+   */
+  getAllCropPhaseSolutionRequirements(): Observable<CropPhaseSolutionRequirement[]> {
+    return this.http.get<CropPhaseSolutionRequirement[]>('/CropPhaseSolutionRequirement').pipe(
+      map(response => {
+        console.log('CropService.getAllCropPhaseSolutionRequirements response:', response);
+        return Array.isArray(response) ? response : [];
+      }),
+      catchError(error => {
+        console.warn('CropPhaseSolutionRequirement endpoint not available:', error);
+        // Return empty array if endpoint doesn't exist
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get crop phase optimals
+   */
+  getCropPhaseOptimals(): Observable<CropPhaseOptimal[]> {
+    return this.http.get<CropPhaseOptimal[]>('/CropPhaseOptimal').pipe(
+      map(response => {
+        console.log('CropService.getCropPhaseOptimals response:', response);
+        return Array.isArray(response) ? response : [];
+      }),
+      catchError(error => {
+        console.error('CropService.getCropPhaseOptimals error:', error);
+        return this.handleError(error);
+      })
+    );
+  }
+
+  /**
+   * Get base nutrient requirements for different crops and phases
+   */
+  private getBaseNutrientRequirements(cropName: string, phaseName: string): any {
+    const cropLower = cropName?.toLowerCase() || '';
+    const phaseLower = phaseName?.toLowerCase() || '';
+
+    // Default values
+    let baseReq = {
+      ec: 1.5,
+      nitrogen: 150,
+      phosphorus: 30,
+      potassium: 200,
+      calcium: 120,
+      magnesium: 25,
+      sulfur: 65,
+      iron: 3,
+      boron: 0.3,
+      manganese: 0.5,
+      zinc: 0.3,
+      copper: 0.05,
+      molybdenum: 0.05
+    };
+
+    // Adjust based on crop type
+    if (cropLower.includes('tomate') || cropLower.includes('tomato')) {
+      baseReq = {
+        ...baseReq,
+        ec: 2.0,
+        nitrogen: 200,
+        phosphorus: 50,
+        potassium: 300,
+        calcium: 150
+      };
+    } else if (cropLower.includes('lechuga') || cropLower.includes('lettuce')) {
+      baseReq = {
+        ...baseReq,
+        ec: 1.2,
+        nitrogen: 120,
+        phosphorus: 25,
+        potassium: 180,
+        calcium: 80
+      };
+    } else if (cropLower.includes('pepino') || cropLower.includes('cucumber')) {
+      baseReq = {
+        ...baseReq,
+        ec: 1.8,
+        nitrogen: 180,
+        phosphorus: 40,
+        potassium: 250,
+        calcium: 130
+      };
+    } else if (cropLower.includes('pimiento') || cropLower.includes('pepper')) {
+      baseReq = {
+        ...baseReq,
+        ec: 1.6,
+        nitrogen: 160,
+        phosphorus: 35,
+        potassium: 220,
+        calcium: 120
+      };
+    }
+
+    // Adjust based on growth phase
+    if (phaseLower.includes('germinación') || phaseLower.includes('seedling')) {
+      baseReq.nitrogen *= 0.6;
+      baseReq.ec *= 0.7;
+    } else if (phaseLower.includes('vegetativo') || phaseLower.includes('vegetative')) {
+      baseReq.nitrogen *= 1.1;
+      baseReq.potassium *= 0.9;
+    } else if (phaseLower.includes('floración') || phaseLower.includes('flowering')) {
+      baseReq.nitrogen *= 0.9;
+      baseReq.phosphorus *= 1.3;
+      baseReq.potassium *= 1.2;
+    } else if (phaseLower.includes('fructificación') || phaseLower.includes('fruiting')) {
+      baseReq.nitrogen *= 0.8;
+      baseReq.phosphorus *= 1.1;
+      baseReq.potassium *= 1.4;
+    }
+
+    return baseReq;
+  }
+
+  /**
+   * Helper method to get crop name from ID
+   */
+  private getCropNameFromId(cropId: number): string {
+    // This would normally come from your crops data
+    // For now, return a default or implement lookup logic
+    return 'Unknown Crop';
   }
 }

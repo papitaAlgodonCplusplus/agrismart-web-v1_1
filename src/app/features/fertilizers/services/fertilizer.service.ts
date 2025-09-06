@@ -1,12 +1,68 @@
 // src/app/features/fertilizers/services/fertilizer.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { ApiService } from '../../../core/services/api.service';
 import { ApiConfigService } from '../../../core/services/api-config.service';
 import { CatalogService } from '../../catalogs/services/catalog.service';
 import { Fertilizer } from '../../../core/models/models';
+
+
+interface FertilizerChemistry {
+  id: number;
+  fertilizerId: number;
+  purity: number;
+  density: number;
+  solubility0: number;
+  solubility20: number;
+  solubility40: number;
+  formula: string;
+  valence: number;
+  isPhAdjuster: boolean;
+  active: boolean;
+}
+
+interface EnhancedFertilizer extends Fertilizer {
+  chemistry?: FertilizerChemistry;
+  costPerUnit?: number; // pricePerUnit adjusted for purity
+  isOrganic?: boolean;
+  nutrientContent?: {
+    nitrogenPpm: number;
+    phosphorusPpm: number;
+    potassiumPpm: number;
+    calciumPpm?: number;
+    magnesiumPpm?: number;
+    sulfurPpm?: number;
+    ironPpm?: number;
+  };
+}
+
+interface NutrientTarget {
+  nitrogen: number;
+  phosphorus: number;
+  potassium: number;
+  calcium?: number;
+  magnesium?: number;
+  sulfur?: number;
+  iron?: number;
+}
+
+interface FertilizerRecommendation {
+  fertilizer: EnhancedFertilizer;
+  concentration: number; // grams per liter
+  contributedNutrients: {
+    nitrogen: number;
+    phosphorus: number;
+    potassium: number;
+    calcium?: number;
+    magnesium?: number;
+    sulfur?: number;
+  };
+  cost: number;
+  priority: number; // 1-10 scale
+}
+
 
 export interface FertilizerFilters {
   catalogId?: number;
@@ -47,7 +103,7 @@ export interface FertilizerCreateRequest {
   isActive?: boolean;
 }
 
-export interface FertilizerUpdateRequest extends Partial<FertilizerCreateRequest> {}
+export interface FertilizerUpdateRequest extends Partial<FertilizerCreateRequest> { }
 
 export interface StockAdjustmentRequest {
   adjustmentType: 'increase' | 'decrease' | 'set';
@@ -152,6 +208,7 @@ export class FertilizerService {
    */
   getAll(filters?: FertilizerFilters): Observable<Fertilizer[]> {
     if (filters?.catalogId) {
+      console.log('Fetching fertilizers for catalogId:', filters.catalogId);
       return this.getFertilizersWithCatalogId(filters.catalogId, filters);
     }
 
@@ -227,8 +284,8 @@ export class FertilizerService {
     const payload = {
       ...data,
       ...(data.expirationDate && {
-        expirationDate: typeof data.expirationDate === 'string' 
-          ? data.expirationDate 
+        expirationDate: typeof data.expirationDate === 'string'
+          ? data.expirationDate
           : data.expirationDate.toISOString()
       }),
       isActive: data.isActive !== undefined ? data.isActive : true
@@ -259,8 +316,8 @@ export class FertilizerService {
     const payload = {
       ...data,
       ...(data.expirationDate && {
-        expirationDate: typeof data.expirationDate === 'string' 
-          ? data.expirationDate 
+        expirationDate: typeof data.expirationDate === 'string'
+          ? data.expirationDate
           : data.expirationDate.toISOString()
       })
     };
@@ -290,8 +347,8 @@ export class FertilizerService {
     const payload = {
       ...adjustment,
       ...(adjustment.expirationDate && {
-        expirationDate: typeof adjustment.expirationDate === 'string' 
-          ? adjustment.expirationDate 
+        expirationDate: typeof adjustment.expirationDate === 'string'
+          ? adjustment.expirationDate
           : adjustment.expirationDate.toISOString()
       })
     };
@@ -436,8 +493,8 @@ export class FertilizerService {
    * Get fertilizer usage report
    */
   getUsageReport(
-    id: number, 
-    dateFrom?: string, 
+    id: number,
+    dateFrom?: string,
     dateTo?: string
   ): Observable<FertilizerUsageReport> {
     let params = new HttpParams();
@@ -457,7 +514,7 @@ export class FertilizerService {
    */
   getSuppliers(catalogId?: number): Observable<string[]> {
     let params = new HttpParams();
-    
+
     if (catalogId) {
       params = params.set('catalogId', catalogId.toString());
       return this.apiService.get<string[]>('/Fertilizer/suppliers', params);
@@ -479,7 +536,7 @@ export class FertilizerService {
    */
   getTypes(catalogId?: number): Observable<string[]> {
     let params = new HttpParams();
-    
+
     if (catalogId) {
       params = params.set('catalogId', catalogId.toString());
       return this.apiService.get<string[]>('/Fertilizer/types', params);
@@ -501,7 +558,7 @@ export class FertilizerService {
    */
   getApplicationMethods(catalogId?: number): Observable<string[]> {
     let params = new HttpParams();
-    
+
     if (catalogId) {
       params = params.set('catalogId', catalogId.toString());
       return this.apiService.get<string[]>('/Fertilizer/application-methods', params);
@@ -586,7 +643,7 @@ export class FertilizerService {
    */
   getReorderReport(catalogId?: number): Observable<Fertilizer[]> {
     let params = new HttpParams();
-    
+
     if (catalogId) {
       params = params.set('catalogId', catalogId.toString());
       return this.apiService.get<Fertilizer[]>('/Fertilizer/reorder-report', params);
@@ -614,7 +671,7 @@ export class FertilizerService {
     expiringValue: number;
   }> {
     let params = new HttpParams();
-    
+
     if (catalogId) {
       params = params.set('catalogId', catalogId.toString());
       return this.apiService.get<{
@@ -819,5 +876,327 @@ export class FertilizerService {
 
   filterByNPKCategory(fertilizers: Fertilizer[], category: string): Fertilizer[] {
     return fertilizers.filter(fertilizer => this.calculateNPKCategory(fertilizer) === category);
+  }
+
+
+  /**
+   * Get fertilizer chemistry data for all fertilizers
+   */
+  getFertilizerChemistries(): Observable<FertilizerChemistry[]> {
+    return this.apiService.get<FertilizerChemistry[]>('/FertilizerChemistry').pipe(
+      map(response => {
+        console.log('FertilizerService.getFertilizerChemistries response:', response);
+        return Array.isArray(response) ? response : [];
+      }),
+      catchError(error => {
+        console.error('FertilizerService.getFertilizerChemistries error:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get fertilizer chemistry by fertilizer ID
+   */
+  getFertilizerChemistry(fertilizerId: number): Observable<FertilizerChemistry | null> {
+    return this.apiService.get<FertilizerChemistry>(`/FertilizerChemistry/${fertilizerId}`).pipe(
+      map(response => {
+        console.log('FertilizerService.getFertilizerChemistry response:', response);
+        return response || null;
+      }),
+      catchError(error => {
+        console.warn('FertilizerChemistry not found for fertilizer:', fertilizerId, error);
+        return of(null);
+      })
+    );
+  }
+
+  /**
+   * Get enhanced fertilizers with chemistry data
+   */
+  getEnhancedFertilizers(catalogId?: number): Observable<EnhancedFertilizer[]> {
+    return forkJoin({
+      fertilizers: this.getAll(catalogId ? { catalogId } : undefined),
+      chemistries: this.getFertilizerChemistries()
+    }).pipe(
+      map(({ fertilizers, chemistries }) => {
+        return fertilizers.map(fertilizer => {
+          const chemistry = chemistries.find(c => c.fertilizerId === fertilizer.id);
+          const enhanced: EnhancedFertilizer = {
+            ...fertilizer,
+            chemistry,
+            nutrientContent: this.calculateNutrientContent(fertilizer, chemistry)
+          };
+          return enhanced;
+        });
+      }),
+      catchError(error => {
+        console.error('FertilizerService.getEnhancedFertilizers error:', error);
+        return this.handleError(error);
+      })
+    );
+  }
+
+  /**
+   * Calculate actual nutrient content based on fertilizer composition and chemistry
+   */
+  private calculateNutrientContent(fertilizer: Fertilizer, chemistry?: FertilizerChemistry): any {
+    const purity = chemistry?.purity || 100; // Assume 100% if no chemistry data
+    const purityFactor = purity / 100;
+
+    type Composition = {
+      nitrogen?: number;
+      phosphorus?: number;
+      potassium?: number;
+      calcium?: number;
+      magnesium?: number;
+      sulfur?: number;
+      iron?: number;
+    };
+    let composition: Composition = {};
+    if (Array.isArray(fertilizer.composition) && fertilizer.composition.length > 0) {
+      composition = fertilizer.composition[0];
+    } else if (typeof fertilizer.composition === 'object' && fertilizer.composition !== null) {
+      composition = fertilizer.composition as Composition;
+    }
+    return {
+      nitrogenPpm: (composition.nitrogen || 0) * purityFactor * 10, // Convert % to ppm base
+      phosphorusPpm: (composition.phosphorus || 0) * purityFactor * 10,
+      potassiumPpm: (composition.potassium || 0) * purityFactor * 10,
+      calciumPpm: (composition.calcium || 0) * purityFactor * 10,
+      magnesiumPpm: (composition.magnesium || 0) * purityFactor * 10,
+      sulfurPpm: (composition.sulfur || 0) * purityFactor * 10,
+      ironPpm: (composition.iron || 0) * purityFactor * 10
+    };
+  }
+
+  /**
+   * Find optimal fertilizer combinations for nutrient targets
+   */
+  findOptimalFertilizerMix(
+    targets: NutrientTarget,
+    volumeLiters: number,
+    availableFertilizers: EnhancedFertilizer[],
+    constraints?: {
+      maxBudget?: number;
+      maxFertilizers?: number;
+      preferOrganic?: boolean;
+      excludeFertilizers?: number[];
+    }
+  ): FertilizerRecommendation[] {
+    const maxFertilizers = constraints?.maxFertilizers || 4;
+    const excludeIds = new Set(constraints?.excludeFertilizers || []);
+
+    // Filter available fertilizers
+    let candidates = availableFertilizers.filter(f =>
+      f.isActive &&
+      !excludeIds.has(f.id) &&
+      (constraints?.preferOrganic ? f.isOrganic : true)
+    );
+
+    // Sort by nutrient efficiency and cost
+    candidates = candidates.sort((a, b) => {
+      const aScore = this.calculateFertilizerScore(a, targets);
+      const bScore = this.calculateFertilizerScore(b, targets);
+      return bScore - aScore;
+    });
+
+    const recommendations: FertilizerRecommendation[] = [];
+    const remainingTargets = { ...targets };
+    let totalCost = 0;
+
+    // Greedy algorithm to select fertilizers
+    for (let i = 0; i < Math.min(candidates.length, maxFertilizers); i++) {
+      const fertilizer = candidates[i];
+
+      // Calculate optimal concentration for this fertilizer
+      const concentration = this.calculateOptimalConcentration(
+        fertilizer,
+        remainingTargets,
+        volumeLiters
+      );
+
+      if (concentration > 0) {
+        const contributedNutrients = this.calculateContributedNutrients(
+          fertilizer,
+          concentration,
+          volumeLiters
+        );
+
+        const cost = concentration * volumeLiters * (fertilizer.costPerUnit || 0) / 1000; // Convert to kg
+
+        if (!constraints?.maxBudget || totalCost + cost <= constraints.maxBudget) {
+          recommendations.push({
+            fertilizer,
+            concentration,
+            contributedNutrients,
+            cost,
+            priority: 10 - i // Higher priority for earlier selections
+          });
+
+          // Update remaining targets
+          remainingTargets.nitrogen = Math.max(0, remainingTargets.nitrogen - contributedNutrients.nitrogen);
+          remainingTargets.phosphorus = Math.max(0, remainingTargets.phosphorus - contributedNutrients.phosphorus);
+          remainingTargets.potassium = Math.max(0, remainingTargets.potassium - contributedNutrients.potassium);
+
+          totalCost += cost;
+
+          // Stop if targets are mostly met
+          if (this.areTargetsMet(remainingTargets, targets, 0.9)) {
+            break;
+          }
+        }
+      }
+    }
+
+    return recommendations;
+  }
+
+  /**
+   * Calculate fertilizer score based on nutrient efficiency and cost
+   */
+  private calculateFertilizerScore(fertilizer: EnhancedFertilizer, targets: NutrientTarget): number {
+    const content = fertilizer.nutrientContent || {
+      nitrogenPpm: 0, phosphorusPpm: 0, potassiumPpm: 0
+    };
+
+    // Calculate nutrient value score
+    const nValue = Math.min(content.nitrogenPpm / targets.nitrogen, 1) * 0.4;
+    const pValue = Math.min(content.phosphorusPpm / targets.phosphorus, 1) * 0.3;
+    const kValue = Math.min(content.potassiumPpm / targets.potassium, 1) * 0.3;
+
+    const nutrientScore = nValue + pValue + kValue;
+
+    // Calculate cost efficiency (lower cost = higher score)
+    const costScore = fertilizer.costPerUnit ? Math.min(10 / fertilizer.costPerUnit, 1) : 0.5;
+
+    // Organic bonus
+    const organicBonus = fertilizer.isOrganic ? 0.1 : 0;
+
+    return nutrientScore * 0.7 + costScore * 0.3 + organicBonus;
+  }
+
+  /**
+   * Calculate optimal concentration for a fertilizer
+   */
+  private calculateOptimalConcentration(
+    fertilizer: EnhancedFertilizer,
+    targets: NutrientTarget,
+    volumeLiters: number
+  ): number {
+    const content = fertilizer.nutrientContent;
+    if (!content) return 0;
+
+    // Find limiting nutrient (the one that requires highest concentration)
+    const concentrations = [];
+
+    if (targets.nitrogen > 0 && content.nitrogenPpm > 0) {
+      concentrations.push((targets.nitrogen * volumeLiters) / content.nitrogenPpm);
+    }
+
+    if (targets.phosphorus > 0 && content.phosphorusPpm > 0) {
+      concentrations.push((targets.phosphorus * volumeLiters) / content.phosphorusPpm);
+    }
+
+    if (targets.potassium > 0 && content.potassiumPpm > 0) {
+      concentrations.push((targets.potassium * volumeLiters) / content.potassiumPpm);
+    }
+
+    if (concentrations.length === 0) return 0;
+
+    // Use the minimum concentration that provides some benefit
+    const minConcentration = Math.min(...concentrations);
+
+    // Apply solubility constraints if chemistry data available
+    const maxSolubility = fertilizer.chemistry?.solubility20 || 1000; // g/L at 20°C
+
+    return Math.min(minConcentration, maxSolubility) * 0.8; // 80% of max for safety
+  }
+
+  /**
+   * Calculate nutrients contributed by a fertilizer at given concentration
+   */
+  private calculateContributedNutrients(
+    fertilizer: EnhancedFertilizer,
+    concentration: number,
+    volumeLiters: number
+  ): any {
+    const content = fertilizer.nutrientContent;
+    if (!content) return { nitrogen: 0, phosphorus: 0, potassium: 0 };
+
+    const factor = concentration / volumeLiters / 1000; // Convert to proper scale
+
+    return {
+      nitrogen: content.nitrogenPpm * factor,
+      phosphorus: content.phosphorusPpm * factor,
+      potassium: content.potassiumPpm * factor,
+      calcium: (content.calciumPpm || 0) * factor,
+      magnesium: (content.magnesiumPpm || 0) * factor,
+      sulfur: (content.sulfurPpm || 0) * factor
+    };
+  }
+
+  /**
+   * Check if nutrient targets are sufficiently met
+   */
+  private areTargetsMet(remaining: NutrientTarget, original: NutrientTarget, threshold: number): boolean {
+    const nMet = (original.nitrogen - remaining.nitrogen) / original.nitrogen >= threshold;
+    const pMet = (original.phosphorus - remaining.phosphorus) / original.phosphorus >= threshold;
+    const kMet = (original.potassium - remaining.potassium) / original.potassium >= threshold;
+
+    return nMet && pMet && kMet;
+  }
+
+  /**
+   * Get fertilizers suitable for pH adjustment
+   */
+  getPhAdjusters(): Observable<EnhancedFertilizer[]> {
+    return this.getEnhancedFertilizers().pipe(
+      map(fertilizers => fertilizers.filter(f =>
+        f.chemistry?.isPhAdjuster ||
+        (typeof f.name === 'string' && (
+          f.name.toLowerCase().includes('ácido') ||
+          f.name.toLowerCase().includes('acid') ||
+          f.name.toLowerCase().includes('cal') ||
+          f.name.toLowerCase().includes('lime')
+        ))
+      ))
+    );
+  }
+
+  /**
+   * Estimate pH effect of fertilizer mix
+   */
+  estimatePhEffect(recommendations: FertilizerRecommendation[], baseWaterPh: number): number {
+    let phAdjustment = 0;
+
+    recommendations.forEach(rec => {
+      const chemistry = rec.fertilizer.chemistry;
+      if (chemistry) {
+        // Simplified pH calculation based on fertilizer chemistry
+        if (chemistry.isPhAdjuster) {
+          const acidic = chemistry.valence < 0;
+          const strength = Math.abs(chemistry.valence) * rec.concentration / 1000;
+          phAdjustment += acidic ? -strength : strength;
+        }
+      }
+    });
+
+    return Math.max(5.5, Math.min(8.0, baseWaterPh + phAdjustment));
+  }
+
+  /**
+   * Calculate total EC contribution from fertilizer mix
+   */
+  calculateTotalEc(recommendations: FertilizerRecommendation[], baseWaterEc: number): number {
+    let totalEc = baseWaterEc;
+
+    recommendations.forEach(rec => {
+      // Simplified EC calculation: higher concentration = higher EC
+      const ecContribution = rec.concentration * 0.001; // Rough conversion factor
+      totalEc += ecContribution;
+    });
+
+    return Math.round(totalEc * 100) / 100; // Round to 2 decimals
   }
 }
