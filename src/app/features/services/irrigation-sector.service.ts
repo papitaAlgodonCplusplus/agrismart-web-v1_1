@@ -1,7 +1,7 @@
 // src/app/features/services/irrigation-sector.service.ts - ENHANCED FOR IRRIGATION ENGINEERING MODULE
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, interval } from 'rxjs';
+import { Observable, forkJoin, interval } from 'rxjs';
 import { map, catchError, startWith, switchMap } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { ApiConfigService } from '../../core/services/api-config.service';
@@ -12,9 +12,9 @@ import { IrrigationSector } from '../../core/models/models';
 // ============================================================================
 
 export interface Container {
-type: any;
-capacity: any;
-currentVolume: any;
+  type: any;
+  capacity: any;
+  currentVolume: any;
   id: number;
   catalogId: number;
   name: string;
@@ -41,9 +41,9 @@ export interface Dropper {
 }
 
 export interface GrowingMedium {
-drainage: number;
-waterRetention: number;
-type: any;
+  drainage: number;
+  waterRetention: number;
+  type: any;
   id: number;
   catalogId: number;
   name: string;
@@ -58,7 +58,7 @@ type: any;
 }
 
 export interface IrrigationEvent {
-duration: number;
+  duration: number;
   id: number;
   cropProductionId: number;
   dateTimeStart: Date;
@@ -73,10 +73,10 @@ duration: number;
 }
 
 export interface IrrigationMeasurement {
-pressure: number;
-timestamp: string|Date;
-temperature: number;
-humidity: number;
+  pressure: number;
+  timestamp: string | Date;
+  temperature: number;
+  humidity: number;
   id: number;
   recordDateTime: Date;
   cropProductionId: number;
@@ -91,9 +91,9 @@ humidity: number;
 }
 
 export interface HydraulicCalculation {
-frictionFactor: any;
-reynoldsNumber: any;
-velocity: any;
+  frictionFactor: any;
+  reynoldsNumber: any;
+  velocity: any;
   flowRate: number; // L/h
   pressure: number; // bar
   pipeSize: number; // mm
@@ -119,9 +119,9 @@ export interface EvapotranspirationData {
 }
 
 export interface IrrigationScheduleOptimization {
-optimalConditions: any;
-waterSavings: number;
-nextOptimalTime: string|Date;
+  optimalConditions: any;
+  waterSavings: number;
+  nextOptimalTime: string | Date;
   cropProductionId: number;
   optimalStartTime: string;
   recommendedDuration: number; // minutes
@@ -139,8 +139,8 @@ nextOptimalTime: string|Date;
 }
 
 export interface FlowRateCalculation {
-uniformity: number;
-flowRatePerArea: any;
+  uniformity: number;
+  flowRatePerArea: any;
   containerId: number;
   dropperId: number;
   numberOfDroppers: number;
@@ -152,15 +152,33 @@ flowRatePerArea: any;
 }
 
 export interface IrrigationSystemStatus {
-lastUpdate: string|Date;
-activeSectors: any;
-  systemPressure: number; // bar
-  totalFlowRate: number; // L/h
-  activeZones: number;
-  pumpStatus: 'running' | 'stopped' | 'maintenance';
-  filterStatus: 'clean' | 'needs_cleaning' | 'clogged';
-  valveStatuses: { [zoneId: number]: 'open' | 'closed' | 'partial' };
+  lastUpdate: string | Date;
+  // Enhanced properties for system status monitoring
+  farmId: number;
+  systemStatus: string;
+  devices: any;
+  activeDevices: number;
+  totalDevices: number;
+  zones: {
+    deviceId: number;
+    deviceIdentifier: string;
+    status: string;
+    sensors: {
+      id: number;
+      label: string;
+      type: string;
+      active: boolean;
+    }[];
+  }[];
   alerts: IrrigationAlert[];
+  // Legacy/optional properties for backward compatibility
+  activeSectors?: any;
+  systemPressure?: number; // bar
+  totalFlowRate?: number; // L/h
+  activeZones?: number;
+  pumpStatus?: 'running' | 'stopped' | 'maintenance';
+  filterStatus?: 'clean' | 'needs_cleaning' | 'clogged';
+  valveStatuses?: { [zoneId: number]: 'open' | 'closed' | 'partial' };
 }
 
 // Existing interfaces...
@@ -302,7 +320,7 @@ export interface IrrigationStatistics {
 }
 
 export interface IrrigationAlert {
-timestamp: string|Date;
+  timestamp: string | Date;
   id: number;
   irrigationSectorId: number;
   alertType: 'low_pressure' | 'high_temperature' | 'low_humidity' | 'sensor_failure' | 'pump_failure' | 'water_shortage';
@@ -347,7 +365,7 @@ export class IrrigationSectorService {
    * CONTAINERS API - /Container endpoint
    */
   getAllContainers(onlyActive: boolean = true): Observable<Container[]> {
-    const params = new HttpParams().set('onlyActive', onlyActive.toString());
+    const params = new HttpParams().set('IncludeInactives', !onlyActive.toString());
 
     return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Container`, {
       params,
@@ -409,7 +427,7 @@ export class IrrigationSectorService {
    * DROPPERS API - /Dropper endpoint
    */
   getAllDroppers(onlyActive: boolean = true): Observable<Dropper[]> {
-    const params = new HttpParams().set('onlyActive', onlyActive.toString());
+    const params = new HttpParams().set('IncludeInactives', !onlyActive.toString());
 
     return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Dropper`, {
       params,
@@ -471,7 +489,7 @@ export class IrrigationSectorService {
    * GROWING MEDIUMS API - /GrowingMedium endpoint
    */
   getAllGrowingMediums(onlyActive: boolean = true): Observable<GrowingMedium[]> {
-    const params = new HttpParams().set('onlyActive', onlyActive.toString());
+    const params = new HttpParams().set('IncludeInactives', !onlyActive.toString());
 
     return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/GrowingMedium`, {
       params,
@@ -673,23 +691,6 @@ export class IrrigationSectorService {
     );
   }
 
-  /**
-   * IoT REAL-TIME SENSOR DATA
-   */
-  getRealTimeSensorData(cropProductionId: number): Observable<any> {
-    return this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceRawData/latest`, {
-      params: new HttpParams().set('cropProductionId', cropProductionId.toString()),
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`IoT data retrieval failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
 
   /**
    * ON-DEMAND IRRIGATION TRIGGER
@@ -719,25 +720,6 @@ export class IrrigationSectorService {
     );
   }
 
-  /**
-   * SYSTEM STATUS MONITORING
-   */
-  getIrrigationSystemStatus(farmId?: number): Observable<IrrigationSystemStatus> {
-    const params = farmId ? new HttpParams().set('farmId', farmId.toString()) : new HttpParams();
-
-    return this.http.get<any>(`${this.apiConfig.iotApiUrl}/IrrigationSystem/status`, {
-      params,
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`System status retrieval failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
 
   // ============================================================================
   // EXISTING IRRIGATION SECTOR METHODS (Enhanced)
@@ -1066,5 +1048,147 @@ export class IrrigationSectorService {
   private handleError(error: any): Observable<never> {
     console.error('Irrigation Sector Service Error:', error);
     throw error;
+  }
+
+  /**
+ * IoT REAL-TIME SENSOR DATA
+ * Workaround: Get all devices and sensors, then filter/map for specific crop production
+ */
+  getRealTimeSensorData(cropProductionId: number): Observable<any> {
+    // Since there's no direct endpoint for latest sensor data by cropProductionId,
+    // we'll get all devices and sensors, then create a mapped response
+    return forkJoin({
+      devices: this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceSensor/devices`, {
+        headers: this.getAuthHeaders()
+      }),
+      sensors: this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceSensor/sensors`, {
+        headers: this.getAuthHeaders()
+      })
+    }).pipe(
+      map(({ devices, sensors }) => {
+        // Create a mapped response structure for real-time data
+        // You'll need to filter by cropProductionId based on your business logic
+        const mappedData = {
+          cropProductionId: cropProductionId,
+          devices: devices || [],
+          sensors: sensors || [],
+          lastUpdated: new Date().toISOString(),
+          // Add mock real-time data structure until actual endpoint is available
+          sensorReadings: sensors?.map((sensor: any) => ({
+            sensorId: sensor.id,
+            sensorLabel: sensor.sensorLabel,
+            measurementVariableId: sensor.measurementVariableId,
+            value: null, // Would come from actual sensor data endpoint
+            timestamp: new Date().toISOString(),
+            status: 'online' // Mock status
+          })) || []
+        };
+
+        return mappedData;
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * SYSTEM STATUS MONITORING
+   * Workaround: Get devices and create irrigation system status from available data
+   */
+  getIrrigationSystemStatus(farmId?: number): Observable<IrrigationSystemStatus> {
+    return this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceSensor/devices`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(devices => {
+        // Create irrigation system status from available device data
+        const irrigationDevices = devices.filter((device: any) =>
+          device.deviceId?.toLowerCase().includes('flujo') ||
+          device.deviceId?.toLowerCase().includes('suelo') ||
+          device.deviceId?.toLowerCase().includes('riego') ||
+          device.deviceId?.toLowerCase().includes('presion') ||
+          device.deviceId?.toLowerCase().includes('humedad') ||
+          device.deviceId?.toLowerCase().includes('temperatura')
+        ) || [];
+
+        const status: IrrigationSystemStatus = {
+          farmId: farmId || 0,
+          systemStatus: irrigationDevices.length > 0 ? 'operational' : 'offline',
+          activeDevices: irrigationDevices.length,
+          totalDevices: devices?.length || 0,
+          devices: devices,
+          lastUpdate: new Date().toISOString(),
+          zones: irrigationDevices.map((device: any) => ({
+            deviceId: device.id,
+            deviceIdentifier: device.deviceId,
+            status: device.active ? 'active' : 'inactive',
+            sensors: device.sensors
+          })),
+          alerts: [] // Would be populated from actual monitoring data
+        };
+
+        return status;
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * HELPER METHOD: Get Device Authentication (if needed for sensor access)
+   */
+  authenticateDevice(deviceId: string, password: string): Observable<any> {
+    return this.http.post<any>(`${this.apiConfig.iotApiUrl}/Security/AuthenticateDevice`, {
+      deviceId: deviceId,
+      password: password
+    }, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Device authentication failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * HELPER METHOD: Submit new sensor data (if needed for testing)
+   */
+  submitDeviceRawData(deviceData: any): Observable<any> {
+    return this.http.post<any>(`${this.apiConfig.iotApiUrl}/DeviceRawData`, deviceData, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Device data submission failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * HELPER METHOD: Submit MQTT sensor data
+   */
+  submitMqttDeviceData(mqttData: {
+    recordDate: string;
+    clientId: string;
+    userId: string;
+    deviceId: string;
+    sensor: string;
+    payload: string;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.apiConfig.iotApiUrl}/DeviceRawData/Mqtt`, mqttData, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`MQTT data submission failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
   }
 }

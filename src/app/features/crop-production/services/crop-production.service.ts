@@ -235,7 +235,7 @@ export interface CropProductionAlert {
   providedIn: 'root'
 })
 export class CropProductionService {
-  private readonly baseUrl = '/api/crop-productions';
+  private readonly baseUrl = '/CropProduction';
 
   constructor(
     private apiService: ApiService,

@@ -409,12 +409,29 @@
    UTILITY CLASSES
    ============================================================================ */
 
-.text-green-600 { color: #059669; }
-.text-blue-600 { color: #2563eb; }
-.text-yellow-600 { color: #d97706; }
-.text-orange-600 { color: #ea580c; }
-.text-red-600 { color: #dc2626; }
-.text-gray-600 { color: #4b5563; }
+.text-green-600 {
+  color: #059669;
+}
+
+.text-blue-600 {
+  color: #2563eb;
+}
+
+.text-yellow-600 {
+  color: #d97706;
+}
+
+.text-orange-600 {
+  color: #ea580c;
+}
+
+.text-red-600 {
+  color: #dc2626;
+}
+
+.text-gray-600 {
+  color: #4b5563;
+}
 
 /* ============================================================================
    MESSAGE STYLES
@@ -458,6 +475,7 @@
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -472,63 +490,63 @@
   .on-demand-irrigation-container {
     padding: 1rem;
   }
-  
+
   .page-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
-  
+
   .header-actions {
     justify-content: space-between;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .details-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .sensor-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .status-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .calculation-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .conditions-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .technical-calculations {
     grid-template-columns: 1fr;
   }
-  
+
   .history-section {
     grid-template-columns: 1fr;
   }
-  
+
   .et-chart {
     overflow-x: auto;
   }
-  
+
   .form-actions {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .action-buttons {
     justify-content: center;
     flex-wrap: wrap;
   }
-  
+
   .execution-section {
     flex-direction: column;
   }
@@ -538,47 +556,47 @@
   .status-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .sensor-item {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .recommendation-header {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .recommendation-icon {
     align-self: center;
   }
-  
+
   .event-item {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .event-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
   }
-  
+
   .conditions-list {
     grid-template-columns: 1fr;
   }
-  
+
   .measurements-table {
     font-size: 0.75rem;
   }
-  
+
   .measurements-table th,
   .measurements-table td {
     padding: 0.5rem 0.25rem;
   }
-}component.css */
+}
 
-.on-demand-irrigation-container {
+component.css */ .on-demand-irrigation-container {
   padding: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
@@ -1175,4 +1193,527 @@
   margin: 0 0 0.5rem 0;
   color: #1f2937;
   font-size: 1.25rem;
+}
+
+/* Additional CSS styles to be added to the existing CSS file */
+
+/* ============================================================================
+   FOOTER STYLES
+   ============================================================================ */
+
+.footer-info {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.info-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.info-item i {
+  font-size: 1rem;
+}
+
+/* ============================================================================
+   STATISTICS SECTION STYLES
+   ============================================================================ */
+
+.statistics-section {
+  margin-bottom: 1.5rem;
+}
+
+/* ============================================================================
+   RESPONSIVE IMPROVEMENTS FOR FOOTER
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .info-grid {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .info-item {
+    justify-content: center;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ============================================================================
+   ENHANCED DETAIL SECTION STYLES
+   ============================================================================ */
+
+.detail-section .detail-item:hover {
+  background-color: #f0f9ff;
+  transition: background-color 0.2s ease;
+}
+
+/* ============================================================================
+   IMPROVED TABLE STYLES
+   ============================================================================ */
+
+.measurements-table .text-center {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  padding: 2rem;
+}
+
+/* ============================================================================
+   ENHANCED FORM VALIDATION STYLES
+   ============================================================================ */
+
+.form-control.ng-invalid.ng-touched {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-control.ng-valid.ng-touched {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* ============================================================================
+   LOADING ANIMATION IMPROVEMENTS
+   ============================================================================ */
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fa-spin {
+  animation: spin 1s infinite linear;
+}
+
+/* ============================================================================
+   ENHANCED BUTTON HOVER EFFECTS
+   ============================================================================ */
+
+.btn:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-danger:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* ============================================================================
+   IMPROVED CALCULATION RESULT ANIMATIONS
+   ============================================================================ */
+
+.calculation-results-card {
+  animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   ENHANCED SENSOR DATA VISUAL FEEDBACK
+   ============================================================================ */
+
+.sensor-item:hover .sensor-icon {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+.sensor-value.text-red-600 {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* ============================================================================
+   IMPROVED RECOMMENDATION BADGE STYLES
+   ============================================================================ */
+
+.text-low-600 {
+  color: #059669;
+}
+
+.text-medium-600 {
+  color: #d97706;
+}
+
+.text-high-600 {
+  color: #ea580c;
+}
+
+.text-critical-600 {
+  color: #dc2626;
+}
+
+/* ============================================================================
+   ENHANCED EVENT LIST ANIMATIONS
+   ============================================================================ */
+
+.event-item {
+  transition: all 0.2s ease;
+}
+
+.event-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================================================
+   IMPROVED SCROLL BEHAVIOR
+   ============================================================================ */
+
+.events-list,
+.measurements-table {
+  scroll-behavior: smooth;
+}
+
+.events-list::-webkit-scrollbar,
+.measurements-table::-webkit-scrollbar {
+  width: 6px;
+}
+
+.events-list::-webkit-scrollbar-track,
+.measurements-table::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.events-list::-webkit-scrollbar-thumb,
+.measurements-table::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.events-list::-webkit-scrollbar-thumb:hover,
+.measurements-table::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ============================================================================
+   ENHANCED FORM SECTION SPACING
+   ============================================================================ */
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+/* ============================================================================
+   IMPROVED ACCESSIBILITY
+   ============================================================================ */
+
+.btn:focus,
+.form-control:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   ENHANCED MOBILE RESPONSIVENESS
+   ============================================================================ */
+
+@media (max-width: 480px) {
+  .page-header {
+    padding: 1rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-large {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .sensor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Devices Table Styles */
+.devices-table-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.devices-table-card .card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.devices-table-card .card-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.devices-summary {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.devices-table {
+  overflow-x: auto;
+}
+
+.devices-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.devices-table th,
+.devices-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.devices-table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.device-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.device-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.device-icon.suelo {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.device-icon.presion {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.device-icon.ph {
+  background-color: #f3e8ff;
+  color: #7c3aed;
+}
+
+.device-icon.flujo {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.device-icon.meteo {
+  background-color: #fce7f3;
+  color: #ec4899;
+}
+
+.device-icon.default {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.device-details {
+  flex: 1;
+}
+
+.device-name {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 2px;
+}
+
+.device-id {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.status-active {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-inactive {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.device-type {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.device-type.suelo {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.device-type.presion {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.device-type.ph {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+}
+
+.device-type.flujo {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.device-type.meteo {
+  background-color: #fce7f3;
+  color: #be185d;
+}
+
+.device-type.default {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.device-active {
+  background-color: #fefefe;
+}
+
+.device-inactive {
+  background-color: #f9fafb;
+  opacity: 0.7;
+}
+
+.devices-table tr:hover {
+  background-color: #f8fafc;
+}
+
+.text-center {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  padding: 32px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .devices-table {
+    font-size: 0.8rem;
+  }
+
+  .devices-table th,
+  .devices-table td {
+    padding: 8px 12px;
+  }
+
+  .device-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .device-details {
+    display: none;
+  }
 }

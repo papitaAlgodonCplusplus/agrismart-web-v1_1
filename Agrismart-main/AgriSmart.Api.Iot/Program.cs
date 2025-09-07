@@ -11,7 +11,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Configuration;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -31,7 +30,6 @@ builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, F
 LoggerProviderOptions.RegisterProviderOptions<FileLoggingConfiguration, FileLoggerProvider>(builder.Services);
 
 //Command Handlers
-
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(AuthenticateDeviceHandler).Assembly);
@@ -56,10 +54,20 @@ builder.Services.AddTransient<IDeviceRawDataCommandRepository, DeviceRawDataComm
 builder.Services.AddTransient<ISensorQueryRepository, SensorQueryRepository>();
 builder.Services.AddTransient<IDeviceSensorQueryRepository, DeviceSensorCacheRepository>();
 
-
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add CORS configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "https://agrismart-web-v1-1-6yb7.onrender.com")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddHttpContextAccessor();
 
@@ -71,6 +79,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Use CORS middleware (must be before UseAuthentication and UseAuthorization)
+app.UseCors("AllowAngularApp");
 
 app.UseHttpsRedirection();
 

@@ -66,30 +66,124 @@ interface OnDemandCalculationResult {
     };
 }
 
+
+// Create a separate interface for the API response structure
+// This should be added to your types or interfaces file
+
+export interface CropProductionApiResponse {
+    id: number;
+    name: string;
+    cropId: number;
+    productionUnitId: number;
+    containerId: number;
+    dropperId: number;
+    growingMediumId: number;
+    startDate: string;
+    endDate: string;
+    length: number;
+    width: number;
+    active: boolean;
+    numberOfDroppersPerContainer: number;
+    plantsPerContainer: number;
+    betweenContainerDistance: number;
+    betweenPlantDistance: number;
+    betweenRowDistance: number;
+    depletionPercentage: number;
+    drainThreshold: number;
+    altitude: number;
+    latitude: number;
+    longitude: number;
+    windSpeedMeasurementHeight: number;
+    dateCreated: string;
+    dateUpdated?: string;
+    createdBy: number;
+    updatedBy?: number;
+}
+
+// Extended CropProduction interface to include the missing properties
+export interface ExtendedCropProduction extends CropProduction {
+    // API response properties
+    name?: string;
+    containerId: number;
+    dropperId: number;
+    growingMediumId: number;
+    length: number;
+    width: number;
+    startDate: string;
+    endDate: string;
+    active: boolean;
+    numberOfDroppersPerContainer: number;
+    plantsPerContainer?: number;
+    betweenContainerDistance?: number;
+    betweenPlantDistance?: number;
+    betweenRowDistance?: number;
+    depletionPercentage?: number;
+    drainThreshold?: number;
+    altitude?: number;
+    latitude?: number;
+    longitude?: number;
+    windSpeedMeasurementHeight?: number;
+}
+
+// Extended interfaces for other entities
+export interface ExtendedContainer {
+    id: number;
+    name: string;
+    catalogId: number;
+    containerTypeId: number;
+    height: number;
+    width: number;
+    length: number;
+    upperDiameter: number;
+    lowerDiameter: number;
+    active: boolean;
+    dateCreated: string;
+    dateUpdated?: string;
+    createdBy: number;
+    updatedBy?: number;
+}
+
+export interface ExtendedDropper {
+    id: number;
+    name: string;
+    catalogId: number;
+    flowRate: number;
+    active: boolean;
+    dateCreated: string;
+    dateUpdated?: string;
+    createdBy: number;
+    updatedBy?: number;
+}
+
+export interface ExtendedGrowingMedium {
+    id: number;
+    name: string;
+    catalogId: number;
+    containerCapacityPercentage: number;
+    permanentWiltingPoint: number;
+    fiveKpaHumidity: number;
+    active: boolean;
+    dateCreated: string;
+    dateUpdated?: string;
+    createdBy: number;
+    updatedBy?: number;
+}
+
+
 @Component({
     selector: 'app-on-demand-irrigation',
     templateUrl: './on-demand-irrigation.component.html',
     styleUrls: ['./on-demand-irrigation.component.css'],
     standalone: true,
     providers: [DatePipe],
-    imports: [CommonModule, 
-    ReactiveFormsModule,]
+    imports: [CommonModule,
+        ReactiveFormsModule,]
 })
 export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     private destroy$ = new Subject<void>();
 
     // Form and data
     irrigationForm!: FormGroup;
-    cropProductions: CropProduction[] = [];
-    containers: Container[] = [];
-    droppers: Dropper[] = [];
-    growingMediums: GrowingMedium[] = [];
-
-    // Selected data
-    selectedCropProduction: CropProduction | null = null;
-    selectedContainer: Container | null = null;
-    selectedDropper: Dropper | null = null;
-    selectedGrowingMedium: GrowingMedium | null = null;
 
     // Calculation results
     calculationResult: OnDemandCalculationResult | null = null;
@@ -116,6 +210,18 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     // Error handling
     errorMessage = '';
     successMessage = '';
+
+    // Update these property types
+    cropProductions: ExtendedCropProduction[] = [];
+    containers: ExtendedContainer[] = [];
+    droppers: ExtendedDropper[] = [];
+    growingMediums: ExtendedGrowingMedium[] = [];
+
+    selectedCropProduction: ExtendedCropProduction | null = null;
+    selectedContainer: ExtendedContainer | null = null;
+    selectedDropper: ExtendedDropper | null = null;
+    selectedGrowingMedium: ExtendedGrowingMedium | null = null;
+
 
     constructor(
         private fb: FormBuilder,
@@ -178,41 +284,6 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             });
     }
 
-    private loadInitialData(): void {
-        this.isLoading = true;
-
-        // Load crop productions
-        this.cropProductionService.getAll({ onlyActive: true })
-            .pipe(
-                switchMap(cropProductions => {
-                    this.cropProductions = cropProductions;
-
-                    // Load containers, droppers, and growing mediums in parallel
-                    return Promise.all([
-                        this.irrigationService.getAllContainers(true).toPromise(),
-                        this.irrigationService.getAllDroppers(true).toPromise(),
-                        this.irrigationService.getAllGrowingMediums(true).toPromise()
-                    ]);
-                }),
-                takeUntil(this.destroy$)
-            )
-            .subscribe({
-                next: ([containers, droppers, growingMediums]) => {
-                    this.containers = containers || [];
-                    this.droppers = droppers || [];
-                    this.growingMediums = growingMediums || [];
-                    this.isLoading = false;
-                },
-                error: (error) => {
-                    this.handleError('Error loading initial data', error);
-                    this.isLoading = false;
-                }
-            });
-
-        // Load system status
-        this.loadSystemStatus();
-    }
-
     private setupRealTimeUpdates(): void {
         if (this.autoRefresh) {
             interval(30000) // Update every 30 seconds
@@ -229,6 +300,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         return this.irrigationService.getIrrigationSystemStatus()
             .pipe(
                 map(status => {
+                    console.log('System Status:', status);
                     this.systemStatus = status;
                     return status;
                 }),
@@ -259,7 +331,12 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             this.irrigationService.getContainerById(this.selectedCropProduction.containerId)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe(container => {
-                    this.selectedContainer = container;
+                    // Map dateCreated and dateUpdated to string if needed
+                    this.selectedContainer = {
+                        ...container,
+                        dateCreated: typeof container.dateCreated === 'string' ? container.dateCreated : container.dateCreated?.toISOString?.() ?? '',
+                        dateUpdated: new Date(Date.now()).toISOString()
+                    };
                     this.updateCalculations();
                 });
         }
@@ -269,7 +346,11 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             this.irrigationService.getDropperById(this.selectedCropProduction.dropperId)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe(dropper => {
-                    this.selectedDropper = dropper;
+                    this.selectedDropper = {
+                        ...dropper,
+                        dateCreated: typeof dropper.dateCreated === 'string' ? dropper.dateCreated : dropper.dateCreated?.toISOString?.() ?? '',
+                        dateUpdated: Date.now().toString()
+                    };
                     this.updateCalculations();
                 });
         }
@@ -279,7 +360,19 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             this.irrigationService.getGrowingMediumById(this.selectedCropProduction.growingMediumId)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe(growingMedium => {
-                    this.selectedGrowingMedium = growingMedium;
+                    this.selectedGrowingMedium = {
+                        id: growingMedium.id,
+                        name: growingMedium.name,
+                        catalogId: growingMedium.catalogId ?? 0,
+                        containerCapacityPercentage: growingMedium.containerCapacityPercentage ?? 0,
+                        permanentWiltingPoint: growingMedium.permanentWiltingPoint ?? 0,
+                        fiveKpaHumidity: (growingMedium as any).fiveKpaHumidity ?? 0,
+                        active: growingMedium.active ?? true,
+                        dateCreated: typeof growingMedium.dateCreated === 'string' ? growingMedium.dateCreated : growingMedium.dateCreated?.toISOString?.() ?? '',
+                        dateUpdated: Date.now().toString(),
+                        createdBy: growingMedium.createdBy ?? 0,
+                        updatedBy: growingMedium.createdBy,
+                    };
                     this.updateCalculations();
                 });
         }
@@ -417,77 +510,6 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         //     });
     }
 
-    private performOnDemandCalculation(): void {
-        // Simulate on-demand irrigation calculation based on real factors
-        const realTimeData = this.realTimeData$.value;
-        const formValue = this.irrigationForm.value;
-
-        // Calculate water deficit based on ET and recent irrigation
-        const avgET = this.evapotranspirationData.length > 0
-            ? this.evapotranspirationData.reduce((sum, data) => sum + data.cropET, 0) / this.evapotranspirationData.length
-            : 5; // Default 5mm/day
-
-        const daysSinceLastIrrigation = this.recentEvents.length > 0
-            ? Math.max(1, Math.floor((Date.now() - new Date(this.recentEvents[0].dateTimeStart).getTime()) / (24 * 60 * 60 * 1000)))
-            : 1;
-
-        const waterDeficit = avgET * daysSinceLastIrrigation;
-        const soilMoisture = realTimeData?.soilMoisture || 50;
-        const temperature = realTimeData?.temperature || 25;
-        const humidity = realTimeData?.humidity || 60;
-
-        // Determine if irrigation is needed
-        const shouldIrrigate =
-            soilMoisture < formValue.minSoilMoisture ||
-            temperature > formValue.maxTemperature ||
-            humidity < formValue.minHumidity ||
-            waterDeficit > 10; // mm
-
-        // Calculate recommended duration and water amount
-        const flowRate = this.flowRateCalculation?.totalFlowRate ||
-            (this.selectedDropper!.flowRate * this.selectedCropProduction!.numberOfDroppersPerContainer);
-
-        const area = Number(this.selectedCropProduction!.area) || 0;
-        const requiredWater = waterDeficit * area / 1000; // Convert mm to liters
-        const recommendedDuration = Math.max(15, Math.min(240, requiredWater / flowRate * 60)); // 15-240 minutes
-
-        // Determine priority
-        let priority: 'low' | 'medium' | 'high' | 'critical' = 'medium';
-        if (soilMoisture < 20 || temperature > 40) priority = 'critical';
-        else if (soilMoisture < 30 || temperature > 35) priority = 'high';
-        else if (soilMoisture > 50 && temperature < 30) priority = 'low';
-
-        this.calculationResult = {
-            shouldIrrigate,
-            recommendedDuration,
-            waterAmount: requiredWater,
-            reason: this.generateRecommendationReason(soilMoisture, temperature, humidity, waterDeficit),
-            priority,
-            conditions: {
-                soilMoisture,
-                temperature,
-                humidity,
-                lastIrrigation: this.recentEvents.length > 0 ? new Date(this.recentEvents[0].dateTimeStart) : null
-            },
-            calculations: {
-                evapotranspiration: avgET,
-                waterDeficit,
-                flowRate,
-                efficiency: this.flowRateCalculation?.applicationEfficiency || 85
-            }
-        };
-
-        // Update form with recommendations
-        if (formValue.irrigationMode === 'automatic') {
-            this.irrigationForm.patchValue({
-                duration: Math.round(recommendedDuration),
-                waterAmount: Math.round(requiredWater),
-                priority
-            });
-        }
-
-        this.isCalculating = false;
-    }
 
     private generateRecommendationReason(soilMoisture: number, temperature: number, humidity: number, waterDeficit: number): string {
         const reasons = [];
@@ -747,5 +769,470 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
 
     get isSystemHealthy(): boolean {
         return this.systemStatus?.alerts?.filter(alert => alert.severity === 'critical' || alert.severity === 'high').length === 0;
+    }
+
+
+    // Mapping function to convert API response to extended interface
+    private mapApiResponseToCropProduction(apiResponse: CropProductionApiResponse): ExtendedCropProduction {
+        //   area(containerId: any, dropperId: any, numberOfDroppersPerContainer: any, area: any): unknown;
+        return {
+            // Standard CropProduction properties
+            id: apiResponse.id,
+            code: apiResponse.name, // Using name as code since API doesn't have separate code
+            cropId: apiResponse.cropId,
+            productionUnitId: apiResponse.productionUnitId,
+            plantingDate: new Date(apiResponse.startDate),
+            estimatedHarvestDate: apiResponse.endDate ? new Date(apiResponse.endDate) : undefined,
+            status: apiResponse.active ? 'Activo' : 'Inactivo',
+            plantedArea: apiResponse.length * apiResponse.width,
+            isActive: apiResponse.active,
+            createdAt: new Date(apiResponse.dateCreated),
+            updatedAt: apiResponse.dateUpdated ? new Date(apiResponse.dateUpdated) : undefined,
+            area: apiResponse.length * apiResponse.width,
+
+            // Extended properties from API
+            name: apiResponse.name,
+            containerId: apiResponse.containerId,
+            dropperId: apiResponse.dropperId,
+            growingMediumId: apiResponse.growingMediumId,
+            length: apiResponse.length,
+            width: apiResponse.width,
+            startDate: apiResponse.startDate,
+            endDate: apiResponse.endDate,
+            active: apiResponse.active,
+            numberOfDroppersPerContainer: apiResponse.numberOfDroppersPerContainer,
+            plantsPerContainer: apiResponse.plantsPerContainer,
+            betweenContainerDistance: apiResponse.betweenContainerDistance,
+            betweenPlantDistance: apiResponse.betweenPlantDistance,
+            betweenRowDistance: apiResponse.betweenRowDistance,
+            depletionPercentage: apiResponse.depletionPercentage,
+            drainThreshold: apiResponse.drainThreshold,
+            altitude: apiResponse.altitude,
+            latitude: apiResponse.latitude,
+            longitude: apiResponse.longitude,
+            windSpeedMeasurementHeight: apiResponse.windSpeedMeasurementHeight
+        };
+    }
+
+    // Updated loadInitialData method
+    private loadInitialData(): void {
+        this.isLoading = true;
+
+        // Load crop productions with proper mapping
+        this.cropProductionService.getAll()
+            .pipe(
+                map((response: any) => {
+                    // Handle the response structure from your log
+                    const data = response?.cropProductions || response || [];
+                    console.log('Raw Crop Productions Response:', response);
+
+                    // Map the API response to our extended interface
+                    const mappedData = Array.isArray(data)
+                        ? data.map(item => this.mapApiResponseToCropProduction(item))
+                        : [];
+
+                    return mappedData;
+                }),
+                switchMap(cropProductions => {
+                    console.log('Mapped Crop Productions:', cropProductions);
+                    this.cropProductions = cropProductions;
+
+                    // Load containers, droppers, and growing mediums in parallel
+                    return Promise.all([
+                        this.irrigationService.getAllContainers(true).toPromise(),
+                        this.irrigationService.getAllDroppers(true).toPromise(),
+                        this.irrigationService.getAllGrowingMediums(true).toPromise()
+                    ]);
+                }),
+                takeUntil(this.destroy$)
+            )
+            .subscribe({
+                next: ([containers, droppers, growingMediums]) => {
+                    console.log('Containers:', containers);
+                    console.log('Droppers:', droppers);
+                    console.log('Growing Mediums:', growingMediums);
+                    this.containers = (containers || []).map((container: Container) => ({
+                        ...container,
+                        dateCreated: typeof container.dateCreated === 'string'
+                            ? container.dateCreated
+                            : container.dateCreated?.toISOString?.() ?? '',
+                        dateUpdated: Date.now().toString()
+                    }));
+                    this.droppers = (droppers || []).map((dropper: Dropper) => ({
+                        ...dropper,
+                        dateCreated: typeof dropper.dateCreated === 'string'
+                            ? dropper.dateCreated
+                            : dropper.dateCreated?.toISOString?.() ?? '',
+                        dateUpdated: Date.now().toString()
+                    }));
+                    this.growingMediums = (growingMediums || []).map((medium: GrowingMedium) => ({
+                        id: medium.id,
+                        name: medium.name,
+                        catalogId: medium.catalogId ?? 0,
+                        containerCapacityPercentage: medium.containerCapacityPercentage ?? 0,
+                        permanentWiltingPoint: medium.permanentWiltingPoint ?? 0,
+                        fiveKpaHumidity: (medium as any).fiveKpaHumidity ?? 0,
+                        active: medium.active ?? true,
+                        dateCreated: typeof medium.dateCreated === 'string'
+                            ? medium.dateCreated
+                            : medium.dateCreated?.toISOString?.() ?? '',
+                        dateUpdated: Date.now().toString(),
+                        createdBy: medium.createdBy ?? 0,
+                        updatedBy: medium.createdBy,
+                    }));
+                    this.isLoading = false;
+                },
+                error: (error) => {
+                    this.handleError('Error loading initial data', error);
+                    this.isLoading = false;
+                }
+            });
+
+        // Load system status
+        this.loadSystemStatus();
+    }
+
+    // Safe property access methods
+    getCropProductionName(): string {
+        return this.selectedCropProduction?.name || this.selectedCropProduction?.code || '';
+    }
+
+    getCropProductionArea(): number {
+        if (!this.selectedCropProduction) return 0;
+
+        // Try to get from calculated area or from length/width
+        if (this.selectedCropProduction.plantedArea) {
+            return this.selectedCropProduction.plantedArea;
+        }
+
+        if (this.selectedCropProduction.length && this.selectedCropProduction.width) {
+            return this.selectedCropProduction.length * this.selectedCropProduction.width;
+        }
+
+        return 0;
+    }
+
+    getCropProductionDimensions(): string {
+        if (!this.selectedCropProduction?.length || !this.selectedCropProduction?.width) {
+            return 'N/A';
+        }
+        return `${this.selectedCropProduction.length}m × ${this.selectedCropProduction.width}m`;
+    }
+
+    getCropProductionStatus(): string {
+        return this.selectedCropProduction?.active ? 'Activo' : 'Inactivo';
+    }
+
+    getPlantingDate(): string {
+        if (this.selectedCropProduction?.startDate) {
+            return this.formatDate(this.selectedCropProduction.startDate);
+        }
+        if (this.selectedCropProduction?.plantingDate) {
+            return this.formatDate(this.selectedCropProduction.plantingDate);
+        }
+        return 'N/A';
+    }
+
+    getHarvestDate(): string {
+        if (this.selectedCropProduction?.endDate) {
+            return this.formatDate(this.selectedCropProduction.endDate);
+        }
+        if (this.selectedCropProduction?.estimatedHarvestDate) {
+            return this.formatDate(this.selectedCropProduction.estimatedHarvestDate);
+        }
+        return 'N/A';
+    }
+
+    // Safe access for container properties
+    getContainerDimensions(): string {
+        if (!this.selectedContainer) return 'N/A';
+        return `${this.selectedContainer.length || 0}cm × ${this.selectedContainer.width || 0}cm × ${this.selectedContainer.height || 0}cm`;
+    }
+
+    // Safe access for dropper properties
+    getTotalFlowRate(): number {
+        if (!this.selectedDropper || !this.selectedCropProduction?.numberOfDroppersPerContainer) {
+            return 0;
+        }
+        return this.selectedDropper.flowRate * this.selectedCropProduction.numberOfDroppersPerContainer;
+    }
+
+    // Safe access for growing medium properties
+    getGrowingMediumWaterRetention(): number {
+        return this.selectedGrowingMedium?.containerCapacityPercentage || 0;
+    }
+
+    getGrowingMediumDrainage(): number {
+        // Calculate drainage as complement of water retention
+        const retention = this.getGrowingMediumWaterRetention();
+        return retention > 0 ? (100 - retention) : 0;
+    }
+
+    // Update the performOnDemandCalculation method
+    private performOnDemandCalculation(): void {
+        const realTimeData = this.realTimeData$.value;
+        const formValue = this.irrigationForm.value;
+
+        // Calculate water deficit based on ET and recent irrigation
+        const avgET = this.evapotranspirationData.length > 0
+            ? this.evapotranspirationData.reduce((sum, data) => sum + data.cropET, 0) / this.evapotranspirationData.length
+            : 5; // Default 5mm/day
+
+        const daysSinceLastIrrigation = this.recentEvents.length > 0
+            ? Math.max(1, Math.floor((Date.now() - new Date(this.recentEvents[0].dateTimeStart).getTime()) / (24 * 60 * 60 * 1000)))
+            : 1;
+
+        const waterDeficit = avgET * daysSinceLastIrrigation;
+        const soilMoisture = realTimeData?.soilMoisture || 50;
+        const temperature = realTimeData?.temperature || 25;
+        const humidity = realTimeData?.humidity || 60;
+
+        // Determine if irrigation is needed
+        const shouldIrrigate =
+            soilMoisture < formValue.minSoilMoisture ||
+            temperature > formValue.maxTemperature ||
+            humidity < formValue.minHumidity ||
+            waterDeficit > 10; // mm
+
+        // Calculate recommended duration and water amount using safe access
+        const flowRate = this.flowRateCalculation?.totalFlowRate || this.getTotalFlowRate();
+        const area = this.getCropProductionArea();
+        const requiredWater = waterDeficit * area / 1000; // Convert mm to liters
+        const recommendedDuration = Math.max(15, Math.min(240, requiredWater / (flowRate || 1) * 60)); // 15-240 minutes
+
+        // Determine priority
+        let priority: 'low' | 'medium' | 'high' | 'critical' = 'medium';
+        if (soilMoisture < 20 || temperature > 40) priority = 'critical';
+        else if (soilMoisture < 30 || temperature > 35) priority = 'high';
+        else if (soilMoisture > 50 && temperature < 30) priority = 'low';
+
+        this.calculationResult = {
+            shouldIrrigate,
+            recommendedDuration,
+            waterAmount: requiredWater,
+            reason: this.generateRecommendationReason(soilMoisture, temperature, humidity, waterDeficit),
+            priority,
+            conditions: {
+                soilMoisture,
+                temperature,
+                humidity,
+                lastIrrigation: this.recentEvents.length > 0 ? new Date(this.recentEvents[0].dateTimeStart) : null
+            },
+            calculations: {
+                evapotranspiration: avgET,
+                waterDeficit,
+                flowRate,
+                efficiency: this.flowRateCalculation?.applicationEfficiency || 85
+            }
+        };
+
+        // Update form with recommendations
+        if (formValue.irrigationMode === 'automatic') {
+            this.irrigationForm.patchValue({
+                duration: Math.round(recommendedDuration),
+                waterAmount: Math.round(requiredWater),
+                priority
+            });
+        }
+
+        this.isCalculating = false;
+    }
+
+    // Add these methods to your OnDemandIrrigationComponent class
+
+    /**
+     * Get device icon based on device ID
+     */
+    getDeviceIcon(deviceId: string): string {
+        const deviceType = this.getDeviceTypeFromId(deviceId);
+
+        const iconMap: { [key: string]: string } = {
+            'suelo': 'bi-moisture',
+            'presion': 'bi-speedometer2',
+            'ph': 'bi-droplet-half',
+            'flujo': 'bi-water',
+            'meteo': 'bi-cloud-sun',
+            'default': 'bi-cpu'
+        };
+
+        return iconMap[deviceType] || iconMap['default'];
+    }
+
+    /**
+     * Get device type from device ID
+     */
+    private getDeviceTypeFromId(deviceId: string): string {
+        const lowerDeviceId = deviceId.toLowerCase();
+
+        if (lowerDeviceId.includes('suelo')) return 'suelo';
+        if (lowerDeviceId.includes('presion')) return 'presion';
+        if (lowerDeviceId.includes('ph')) return 'ph';
+        if (lowerDeviceId.includes('flujo')) return 'flujo';
+        if (lowerDeviceId.includes('meteo') || lowerDeviceId.includes('meteorolog')) return 'meteo';
+
+        return 'default';
+    }
+
+    /**
+     * Get human-readable device type
+     */
+    getDeviceType(deviceId: string): string {
+        const deviceType = this.getDeviceTypeFromId(deviceId);
+
+        const typeMap: { [key: string]: string } = {
+            'suelo': 'Humedad Suelo',
+            'presion': 'Presión',
+            'ph': 'pH',
+            'flujo': 'Flujo',
+            'meteo': 'Meteorológica',
+            'default': 'Otro'
+        };
+
+        return typeMap[deviceType] || typeMap['default'];
+    }
+
+    /**
+     * Get device type CSS class
+     */
+    getDeviceTypeClass(deviceId: string): string {
+        return this.getDeviceTypeFromId(deviceId);
+    }
+
+    /**
+     * Get device status color class
+     */
+    getDeviceStatusClass(isActive: boolean): string {
+        return isActive ? 'status-active' : 'status-inactive';
+    }
+
+    /**
+     * Get device row class based on status
+     */
+    getDeviceRowClass(device: any): string {
+        return device.active ? 'device-active' : 'device-inactive';
+    }
+
+    /**
+     * Count devices by type
+     */
+    getDeviceCountByType(): { [type: string]: number } {
+        if (!this.systemStatus?.devices) return {};
+
+        return this.systemStatus.devices.reduce((counts: { [x: string]: any; }, device: { deviceId: string; }) => {
+            const type = this.getDeviceTypeFromId(device.deviceId);
+            counts[type] = (counts[type] || 0) + 1;
+            return counts;
+        }, {} as { [type: string]: number });
+    }
+
+    /**
+     * Get active devices count by type
+     */
+    getActiveDeviceCountByType(): { [type: string]: number } {
+        if (!this.systemStatus?.devices) return {};
+
+        return this.systemStatus.devices
+            .filter((device: { active: any; }) => device.active)
+            .reduce((counts: { [x: string]: any; }, device: { deviceId: string; }) => {
+                const type = this.getDeviceTypeFromId(device.deviceId);
+                counts[type] = (counts[type] || 0) + 1;
+                return counts;
+            }, {} as { [type: string]: number });
+    }
+
+    /**
+     * Filter devices by type
+     */
+    getDevicesByType(type: string): any[] {
+        if (!this.systemStatus?.devices) return [];
+
+        return this.systemStatus.devices.filter((device: { deviceId: string; }) =>
+            this.getDeviceTypeFromId(device.deviceId) === type
+        );
+    }
+
+    /**
+     * Check if device is critical for irrigation
+     */
+    isIrrigationCriticalDevice(deviceId: string): boolean {
+        const criticalTypes = ['flujo', 'presion', 'suelo'];
+        const deviceType = this.getDeviceTypeFromId(deviceId);
+        return criticalTypes.includes(deviceType);
+    }
+
+    /**
+     * Get device health status
+     */
+    getDeviceHealth(device: any): 'healthy' | 'warning' | 'critical' {
+        if (!device.active) return 'critical';
+
+        // Add more logic based on last update time, sensor readings, etc.
+        const lastUpdate = device.dateUpdated || device.dateCreated;
+        const hoursSinceUpdate = (Date.now() - new Date(lastUpdate).getTime()) / (1000 * 60 * 60);
+
+        if (hoursSinceUpdate > 24) return 'warning';
+        if (hoursSinceUpdate > 72) return 'critical';
+
+        return 'healthy';
+    }
+
+    /**
+     * Sort devices by priority (critical irrigation devices first)
+     */
+    sortDevicesByPriority(devices: any[]): any[] {
+        return [...devices].sort((a, b) => {
+            const aIsCritical = this.isIrrigationCriticalDevice(a.deviceId);
+            const bIsCritical = this.isIrrigationCriticalDevice(b.deviceId);
+
+            if (aIsCritical && !bIsCritical) return -1;
+            if (!aIsCritical && bIsCritical) return 1;
+
+            // If both are critical or both are not, sort by active status
+            if (a.active && !b.active) return -1;
+            if (!a.active && b.active) return 1;
+
+            // Finally, sort alphabetically
+            return a.deviceId.localeCompare(b.deviceId);
+        });
+    }
+
+    /**
+     * Get device summary statistics
+     */
+    getDeviceSummaryStats(): {
+        total: number;
+        active: number;
+        byType: { [type: string]: { total: number; active: number } };
+        criticalOffline: number;
+    } {
+        if (!this.systemStatus?.devices) {
+            return { total: 0, active: 0, byType: {}, criticalOffline: 0 };
+        }
+
+        const devices = this.systemStatus.devices;
+        const byType: { [type: string]: { total: number; active: number } } = {};
+        let criticalOffline = 0;
+
+        devices.forEach((device: { deviceId: string; active: any; }) => {
+            const type = this.getDeviceTypeFromId(device.deviceId);
+
+            if (!byType[type]) {
+                byType[type] = { total: 0, active: 0 };
+            }
+
+            byType[type].total++;
+            if (device.active) {
+                byType[type].active++;
+            } else if (this.isIrrigationCriticalDevice(device.deviceId)) {
+                criticalOffline++;
+            }
+        });
+
+        return {
+            total: devices.length,
+            active: devices.filter((d: { active: any; }) => d.active).length,
+            byType,
+            criticalOffline
+        };
     }
 }
