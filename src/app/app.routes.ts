@@ -29,7 +29,7 @@ import { DeviceFormComponent } from './features/devices/device-form/device-form.
 // Production & Irrigation
 import { ProductionUnitListComponent } from './features/production-units/production-unit-list/production-unit-list.component';
 import { CropProductionListComponent } from './features/crop-production/crop-production-list/crop-production-list.component';
-import { IrrigationSectorListComponent } from './features/irrigation/irrigation-sector-list.component';
+import { OnDemandIrrigationComponent } from './features/irrigation/on-demand-irrigation.component';
 
 // Fertilizers & Inputs
 import { FertilizerListComponent } from './features/fertilizers/fertilizer-list/fertilizer-list.component';
@@ -162,9 +162,9 @@ export const routes: Routes = [
 
       // Irrigation Management
       {
-        path: 'irrigation-sectors',
-        component: IrrigationSectorListComponent,
-        data: { title: 'Sectores de Riego' }
+        path: 'irrigation-on-demand',
+        component: OnDemandIrrigationComponent,
+        data: { title: 'Riego Bajo Demanda' }
       },
 
       // Fertilizers Management

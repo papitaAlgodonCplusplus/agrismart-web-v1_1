@@ -106,6 +106,11 @@ export interface ProductionUnit {
 
 // src/app/core/models/crop-production.model.ts
 export interface CropProduction {
+  containerId: any;
+  dropperId: any;
+  growingMediumId: any;
+  numberOfDroppersPerContainer: number;
+  area(containerId: any, dropperId: any, numberOfDroppersPerContainer: any, area: any): unknown;
   id: number;
   code?: string | undefined;
   cropId: number;

@@ -231,6 +231,9 @@ export class DashboardComponent implements OnInit {
     return index;
   }
 
+  navigateToIrrigationRequirements(): void {
+    this.router.navigate(['/irrigation-on-demand']);
+  }
 
   /**
    * Navigate to nutrient solution formulation

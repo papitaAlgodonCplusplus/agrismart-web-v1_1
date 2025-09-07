@@ -1,4 +1,4 @@
-// src/app/features/irrigation/services/irrigation-sector.service.ts
+// src/app/features/services/irrigation-sector.service.ts - ENHANCED FOR IRRIGATION ENGINEERING MODULE
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, interval } from 'rxjs';
@@ -7,6 +7,163 @@ import { ApiService } from '../../core/services/api.service';
 import { ApiConfigService } from '../../core/services/api-config.service';
 import { IrrigationSector } from '../../core/models/models';
 
+// ============================================================================
+// ENHANCED INTERFACES FOR IRRIGATION ENGINEERING MODULE
+// ============================================================================
+
+export interface Container {
+type: any;
+capacity: any;
+currentVolume: any;
+  id: number;
+  catalogId: number;
+  name: string;
+  containerTypeId: number;
+  height: number;
+  width: number;
+  length: number;
+  lowerDiameter: number;
+  upperDiameter: number;
+  volume?: number;
+  active: boolean;
+  dateCreated: Date;
+  createdBy: number;
+}
+
+export interface Dropper {
+  id: number;
+  catalogId: number;
+  name: string;
+  flowRate: number;
+  active: boolean;
+  dateCreated: Date;
+  createdBy: number;
+}
+
+export interface GrowingMedium {
+drainage: number;
+waterRetention: number;
+type: any;
+  id: number;
+  catalogId: number;
+  name: string;
+  containerCapacityPercentage?: number;
+  permanentWiltingPoint?: number;
+  easelyAvailableWaterPercentage?: number;
+  reserveWaterPercentage?: number;
+  totalAvailableWaterPercentage?: number;
+  active: boolean;
+  dateCreated: Date;
+  createdBy: number;
+}
+
+export interface IrrigationEvent {
+duration: number;
+  id: number;
+  cropProductionId: number;
+  dateTimeStart: Date;
+  dateTimeEnd?: Date;
+  plannedDuration: number;
+  actualDuration?: number;
+  status: 'scheduled' | 'running' | 'completed' | 'cancelled' | 'failed';
+  triggeredBy: 'manual' | 'scheduled' | 'sensor' | 'automatic';
+  waterAmount?: number;
+  notes?: string;
+  createdAt: Date;
+}
+
+export interface IrrigationMeasurement {
+pressure: number;
+timestamp: string|Date;
+temperature: number;
+humidity: number;
+  id: number;
+  recordDateTime: Date;
+  cropProductionId: number;
+  eventId?: number;
+  dateTimeStart: Date;
+  dateTimeEnd: Date;
+  irrigationVolume: number;
+  drainVolume: number;
+  measurementVariableId?: number;
+  recordValue?: number;
+  dateCreated: Date;
+}
+
+export interface HydraulicCalculation {
+frictionFactor: any;
+reynoldsNumber: any;
+velocity: any;
+  flowRate: number; // L/h
+  pressure: number; // bar
+  pipeSize: number; // mm
+  frictionLoss: number; // bar
+  staticHead: number; // m
+  dynamicHead: number; // m
+  totalHead: number; // m
+  efficiency: number; // %
+  powerRequired: number; // kW
+}
+
+export interface EvapotranspirationData {
+  date: Date;
+  cropProductionId: number;
+  referenceET: number; // mm/day
+  cropET: number; // mm/day
+  cropCoefficient: number;
+  temperature: number; // °C
+  humidity: number; // %
+  windSpeed: number; // m/s
+  solarRadiation: number; // MJ/m²/day
+  precipitation: number; // mm
+}
+
+export interface IrrigationScheduleOptimization {
+optimalConditions: any;
+waterSavings: number;
+nextOptimalTime: string|Date;
+  cropProductionId: number;
+  optimalStartTime: string;
+  recommendedDuration: number; // minutes
+  waterAmount: number; // liters
+  frequency: number; // times per day
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  conditions: {
+    soilMoisture: number;
+    temperature: number;
+    humidity: number;
+    weather: string;
+  };
+  efficiency: number; // %
+  costPerIrrigation: number;
+}
+
+export interface FlowRateCalculation {
+uniformity: number;
+flowRatePerArea: any;
+  containerId: number;
+  dropperId: number;
+  numberOfDroppers: number;
+  totalFlowRate: number; // L/h
+  pressureRequired: number; // bar
+  irrigationArea: number; // m²
+  precipitationRate: number; // mm/h
+  applicationEfficiency: number; // %
+}
+
+export interface IrrigationSystemStatus {
+lastUpdate: string|Date;
+activeSectors: any;
+  systemPressure: number; // bar
+  totalFlowRate: number; // L/h
+  activeZones: number;
+  pumpStatus: 'running' | 'stopped' | 'maintenance';
+  filterStatus: 'clean' | 'needs_cleaning' | 'clogged';
+  valveStatuses: { [zoneId: number]: 'open' | 'closed' | 'partial' };
+  alerts: IrrigationAlert[];
+}
+
+// Existing interfaces...
 export interface IrrigationSectorFilters {
   onlyActive?: boolean;
   irrigationStatus?: string;
@@ -145,6 +302,7 @@ export interface IrrigationStatistics {
 }
 
 export interface IrrigationAlert {
+timestamp: string|Date;
   id: number;
   irrigationSectorId: number;
   alertType: 'low_pressure' | 'high_temperature' | 'low_humidity' | 'sensor_failure' | 'pump_failure' | 'water_shortage';
@@ -172,7 +330,6 @@ export interface WeatherConditions {
 @Injectable({
   providedIn: 'root'
 })
-
 export class IrrigationSectorService {
   private readonly baseUrl = '/api/irrigation-sectors';
 
@@ -180,7 +337,411 @@ export class IrrigationSectorService {
     private apiService: ApiService,
     private apiConfig: ApiConfigService,
     private http: HttpClient
-  ) {}
+  ) { }
+
+  // ============================================================================
+  // ENHANCED API METHODS FOR IRRIGATION ENGINEERING MODULE
+  // ============================================================================
+
+  /**
+   * CONTAINERS API - /Container endpoint
+   */
+  getAllContainers(onlyActive: boolean = true): Observable<Container[]> {
+    const params = new HttpParams().set('onlyActive', onlyActive.toString());
+
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Container`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.containers || [];
+        }
+        throw new Error(`Container API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  getContainerById(id: number): Observable<Container> {
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Container/${id}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Container API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  createContainer(container: Partial<Container>): Observable<Container> {
+    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/Container`, container, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Container API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  updateContainer(container: Container): Observable<Container> {
+    return this.http.put<any>(`${this.apiConfig.agronomicApiUrl}/Container`, container, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Container API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * DROPPERS API - /Dropper endpoint
+   */
+  getAllDroppers(onlyActive: boolean = true): Observable<Dropper[]> {
+    const params = new HttpParams().set('onlyActive', onlyActive.toString());
+
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Dropper`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.droppers || [];
+        }
+        throw new Error(`Dropper API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  getDropperById(id: number): Observable<Dropper> {
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Dropper/${id}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Dropper API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  createDropper(dropper: Partial<Dropper>): Observable<Dropper> {
+    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/Dropper`, dropper, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Dropper API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  updateDropper(dropper: Dropper): Observable<Dropper> {
+    return this.http.put<any>(`${this.apiConfig.agronomicApiUrl}/Dropper`, dropper, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Dropper API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * GROWING MEDIUMS API - /GrowingMedium endpoint
+   */
+  getAllGrowingMediums(onlyActive: boolean = true): Observable<GrowingMedium[]> {
+    const params = new HttpParams().set('onlyActive', onlyActive.toString());
+
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/GrowingMedium`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.growingMediums || [];
+        }
+        throw new Error(`GrowingMedium API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  getGrowingMediumById(id: number): Observable<GrowingMedium> {
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/GrowingMedium/${id}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`GrowingMedium API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * IRRIGATION EVENTS API - Based on backend configuration
+   */
+  getIrrigationEvents(startDate: string, endDate: string, cropProductionId?: number): Observable<IrrigationEvent[]> {
+    let params = new HttpParams()
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+
+    if (cropProductionId) {
+      params = params.set('cropProductionId', cropProductionId.toString());
+    }
+
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/IrrigationEvent`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.irrigationEvents || [];
+        }
+        throw new Error(`IrrigationEvent API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  createIrrigationEvent(event: Partial<IrrigationEvent>): Observable<IrrigationEvent> {
+    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/IrrigationEvent`, event, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`IrrigationEvent API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * IRRIGATION MEASUREMENTS API
+   */
+  getIrrigationMeasurements(startDate: string, endDate: string, cropProductionId?: number): Observable<IrrigationMeasurement[]> {
+    let params = new HttpParams()
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+
+    if (cropProductionId) {
+      params = params.set('cropProductionId', cropProductionId.toString());
+    }
+
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/IrrigationMeasurement`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.irrigationMeasurements || [];
+        }
+        throw new Error(`IrrigationMeasurement API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * HYDRAULIC CALCULATIONS - using Calculator API
+   */
+  calculateHydraulics(
+    flowRate: number,
+    pipeSize: number,
+    pipeLength: number,
+    elevation: number,
+    fittings: { type: string; quantity: number }[]
+  ): Observable<HydraulicCalculation> {
+    const payload = {
+      flowRate,
+      pipeSize,
+      pipeLength,
+      elevation,
+      fittings
+    };
+
+    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/Calculator/hydraulics`, payload, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Hydraulic calculation failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * EVAPOTRANSPIRATION CALCULATIONS
+   */
+  calculateEvapotranspiration(
+    cropProductionId: number,
+    startDate: string,
+    endDate: string
+  ): Observable<EvapotranspirationData[]> {
+    const params = new HttpParams()
+      .set('cropProductionId', cropProductionId.toString())
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Calculator/evapotranspiration`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.evapotranspirationData || [];
+        }
+        throw new Error(`Evapotranspiration calculation failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * IRRIGATION SCHEDULE OPTIMIZATION
+   */
+  optimizeIrrigationSchedule(cropProductionId: number): Observable<IrrigationScheduleOptimization> {
+    const payload = { cropProductionId };
+
+    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/Calculator/irrigation-optimization`, payload, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Irrigation optimization failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * FLOW RATE AND PRESSURE CALCULATIONS
+   */
+  calculateFlowRate(
+    containerId: number,
+    dropperId: number,
+    numberOfDroppers: number,
+    irrigationArea: number
+  ): Observable<FlowRateCalculation> {
+    const payload = {
+      containerId,
+      dropperId,
+      numberOfDroppers,
+      irrigationArea
+    };
+
+    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/Calculator/flow-rate`, payload, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Flow rate calculation failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * IoT REAL-TIME SENSOR DATA
+   */
+  getRealTimeSensorData(cropProductionId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceRawData/latest`, {
+      params: new HttpParams().set('cropProductionId', cropProductionId.toString()),
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`IoT data retrieval failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * ON-DEMAND IRRIGATION TRIGGER
+   */
+  triggerOnDemandIrrigation(
+    cropProductionId: number,
+    duration?: number,
+    reason: string = 'manual'
+  ): Observable<any> {
+    const payload = {
+      cropProductionId,
+      duration,
+      reason,
+      triggeredBy: 'manual'
+    };
+
+    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/OnDemandIrrigation/trigger`, payload, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`On-demand irrigation failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * SYSTEM STATUS MONITORING
+   */
+  getIrrigationSystemStatus(farmId?: number): Observable<IrrigationSystemStatus> {
+    const params = farmId ? new HttpParams().set('farmId', farmId.toString()) : new HttpParams();
+
+    return this.http.get<any>(`${this.apiConfig.iotApiUrl}/IrrigationSystem/status`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`System status retrieval failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  // ============================================================================
+  // EXISTING IRRIGATION SECTOR METHODS (Enhanced)
+  // ============================================================================
 
   /**
    * Get all irrigation sectors with optional filters
@@ -189,197 +750,19 @@ export class IrrigationSectorService {
     let params = new HttpParams();
 
     if (filters) {
-      if (filters.onlyActive !== undefined) {
-        params = params.set('onlyActive', filters.onlyActive.toString());
-      }
-      if (filters.irrigationStatus) {
-        params = params.set('irrigationStatus', filters.irrigationStatus);
-      }
-      if (filters.cropProductionId) {
-        params = params.set('cropProductionId', filters.cropProductionId.toString());
-      }
-      if (filters.searchTerm) {
-        params = params.set('searchTerm', filters.searchTerm);
-      }
-      if (filters.hasErrors !== undefined) {
-        params = params.set('hasErrors', filters.hasErrors.toString());
-      }
-      if (filters.isIrrigating !== undefined) {
-        params = params.set('isIrrigating', filters.isIrrigating.toString());
-      }
-      if (filters.farmId) {
-        params = params.set('farmId', filters.farmId.toString());
-      }
-      if (filters.temperatureMin !== undefined) {
-        params = params.set('temperatureMin', filters.temperatureMin.toString());
-      }
-      if (filters.temperatureMax !== undefined) {
-        params = params.set('temperatureMax', filters.temperatureMax.toString());
-      }
-      if (filters.humidityMin !== undefined) {
-        params = params.set('humidityMin', filters.humidityMin.toString());
-      }
-      if (filters.humidityMax !== undefined) {
-        params = params.set('humidityMax', filters.humidityMax.toString());
-      }
-      if (filters.waterFlowMin !== undefined) {
-        params = params.set('waterFlowMin', filters.waterFlowMin.toString());
-      }
-      if (filters.waterFlowMax !== undefined) {
-        params = params.set('waterFlowMax', filters.waterFlowMax.toString());
-      }
-      if (filters.scheduleEnabled !== undefined) {
-        params = params.set('scheduleEnabled', filters.scheduleEnabled.toString());
-      }
+      Object.keys(filters).forEach(key => {
+        const value = (filters as any)[key];
+        if (value !== undefined && value !== null && value !== '') {
+          params = params.set(key, value.toString());
+        }
+      });
     }
 
-    return this.apiService.get<IrrigationSector[]>(this.baseUrl, params);
+    const id = filters?.cropProductionId ? `/${filters.cropProductionId}` : '';
+
+    return this.apiService.get<IrrigationSector[]>(`${this.baseUrl}${id}`, params);
   }
 
-  /**
-   * Get irrigation sector by ID
-   */
-  getById(id: number): Observable<IrrigationSector> {
-    return this.apiService.get<IrrigationSector>(`${this.baseUrl}/${id}`);
-  }
-
-  /**
-   * Create new irrigation sector
-   */
-  create(data: IrrigationSectorCreateRequest): Observable<IrrigationSector> {
-    const payload = {
-      ...data,
-      isActive: data.isActive !== undefined ? data.isActive : true,
-      irrigationStatus: 'stopped',
-      isIrrigating: false,
-      hasError: false,
-      scheduleEnabled: data.scheduleSettings?.enabled || false
-    };
-
-    return this.apiService.post<IrrigationSector>(this.baseUrl, payload);
-  }
-
-  /**
-   * Update irrigation sector
-   */
-  update(id: number, data: IrrigationSectorUpdateRequest): Observable<IrrigationSector> {
-    return this.apiService.put<IrrigationSector>(`${this.baseUrl}/${id}`, data);
-  }
-
-  /**
-   * Delete irrigation sector
-   */
-  delete(id: number): Observable<void> {
-    return this.apiService.delete<void>(`${this.baseUrl}/${id}`);
-  }
-
-  /**
-   * Toggle irrigation on/off
-   */
-  toggleIrrigation(id: number, isIrrigating: boolean): Observable<IrrigationSector> {
-    const payload = {
-      action: isIrrigating ? 'start' : 'stop',
-      overrideSchedule: true,
-      reason: 'manual_control'
-    };
-
-    return this.apiService.post<IrrigationSector>(`${this.baseUrl}/${id}/toggle`, payload);
-  }
-
-  /**
-   * Start irrigation manually
-   */
-  startIrrigation(id: number, controlRequest?: IrrigationControlRequest): Observable<IrrigationSector> {
-    const payload = {
-      action: 'start',
-      ...controlRequest
-    };
-
-    return this.apiService.post<IrrigationSector>(`${this.baseUrl}/${id}/control`, payload);
-  }
-
-  /**
-   * Stop irrigation
-   */
-  stopIrrigation(id: number, reason?: string): Observable<IrrigationSector> {
-    const payload = {
-      action: 'stop',
-      reason: reason || 'manual_stop'
-    };
-
-    return this.apiService.post<IrrigationSector>(`${this.baseUrl}/${id}/control`, payload);
-  }
-
-  /**
-   * Pause irrigation
-   */
-  pauseIrrigation(id: number, reason?: string): Observable<IrrigationSector> {
-    const payload = {
-      action: 'pause',
-      reason: reason || 'manual_pause'
-    };
-
-    return this.apiService.post<IrrigationSector>(`${this.baseUrl}/${id}/control`, payload);
-  }
-
-  /**
-   * Resume paused irrigation
-   */
-  resumeIrrigation(id: number): Observable<IrrigationSector> {
-    const payload = {
-      action: 'resume',
-      reason: 'manual_resume'
-    };
-
-    return this.apiService.post<IrrigationSector>(`${this.baseUrl}/${id}/control`, payload);
-  }
-
-  /**
-   * Schedule irrigation
-   */
-  scheduleIrrigation(id: number, scheduleData: IrrigationScheduleRequest): Observable<any> {
-    const payload = {
-      ...scheduleData,
-      startDate: typeof scheduleData.startDate === 'string' 
-        ? scheduleData.startDate 
-        : scheduleData.startDate.toISOString(),
-      ...(scheduleData.endDate && {
-        endDate: typeof scheduleData.endDate === 'string' 
-          ? scheduleData.endDate 
-          : scheduleData.endDate.toISOString()
-      })
-    };
-
-    return this.apiService.post<any>(`${this.baseUrl}/${id}/schedule`, payload);
-  }
-
-  /**
-   * Get irrigation schedule for sector
-   */
-  getSchedule(id: number): Observable<any[]> {
-    return this.apiService.get<any[]>(`${this.baseUrl}/${id}/schedule`);
-  }
-
-  /**
-   * Update irrigation schedule
-   */
-  updateSchedule(id: number, scheduleId: number, scheduleData: Partial<IrrigationScheduleRequest>): Observable<any> {
-    const payload = {
-      ...scheduleData,
-      ...(scheduleData.startDate && {
-        startDate: typeof scheduleData.startDate === 'string' 
-          ? scheduleData.startDate 
-          : scheduleData.startDate.toISOString()
-      }),
-      ...(scheduleData.endDate && {
-        endDate: typeof scheduleData.endDate === 'string' 
-          ? scheduleData.endDate 
-          : scheduleData.endDate.toISOString()
-      })
-    };
-
-    return this.apiService.put<any>(`${this.baseUrl}/${id}/schedule/${scheduleId}`, payload);
-  }
 
   /**
    * Delete irrigation schedule
@@ -393,7 +776,7 @@ export class IrrigationSectorService {
    */
   getHistory(id: number, dateFrom?: string, dateTo?: string): Observable<IrrigationHistory[]> {
     let params = new HttpParams();
-    
+
     if (dateFrom) {
       params = params.set('dateFrom', dateFrom);
     }
@@ -416,7 +799,7 @@ export class IrrigationSectorService {
    */
   getSensorHistory(id: number, sensorType?: string, hoursBack?: number): Observable<SensorReading[]> {
     let params = new HttpParams();
-    
+
     if (sensorType) {
       params = params.set('sensorType', sensorType);
     }
@@ -432,7 +815,7 @@ export class IrrigationSectorService {
    */
   getStatistics(farmId?: number, dateFrom?: string, dateTo?: string): Observable<IrrigationStatistics> {
     let params = new HttpParams();
-    
+
     if (farmId) {
       params = params.set('farmId', farmId.toString());
     }
@@ -447,7 +830,7 @@ export class IrrigationSectorService {
   }
 
   /**
-   * Get active alerts
+   * Get alerts for irrigation sectors
    */
   getAlerts(id?: number): Observable<IrrigationAlert[]> {
     const url = id ? `${this.baseUrl}/${id}/alerts` : `${this.baseUrl}/alerts`;
@@ -521,6 +904,10 @@ export class IrrigationSectorService {
     );
   }
 
+  getById(id: number): Observable<IrrigationSector> {
+    return this.apiService.get<IrrigationSector>(`${this.baseUrl}/${id}`);
+  }
+
   /**
    * Bulk operations
    */
@@ -548,8 +935,8 @@ export class IrrigationSectorService {
     const payload = {
       sectorIds,
       ...scheduleData,
-      startDate: typeof scheduleData.startDate === 'string' 
-        ? scheduleData.startDate 
+      startDate: typeof scheduleData.startDate === 'string'
+        ? scheduleData.startDate
         : scheduleData.startDate.toISOString()
     };
 
@@ -561,7 +948,7 @@ export class IrrigationSectorService {
    */
   exportData(filters?: any, format: 'csv' | 'excel' | 'pdf' = 'csv'): Observable<Blob> {
     let params = new HttpParams().set('format', format);
-    
+
     if (filters) {
       Object.keys(filters).forEach(key => {
         if (filters[key] !== undefined && filters[key] !== null) {
