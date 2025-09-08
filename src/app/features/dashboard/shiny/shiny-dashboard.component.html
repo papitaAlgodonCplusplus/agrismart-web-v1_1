@@ -1,0 +1,819 @@
+<!-- src/app/features/dashboard/shiny-dashboard/shiny-dashboard.component.html -->
+<div class="shiny-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+      <h1 class="dashboard-title mb-0">
+        AgriSmart Dashboard
+      </h1>
+      <div class="header-info" *ngIf="companyData">
+        <small class="text-muted">{{ companyData.name }}</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ámbito - Scope Selection Box -->
+  <div class="scope-section mb-4">
+    <div class="card border-primary">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-geo-alt-fill me-2"></i>
+          Ámbito
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Seleccione una Finca:</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="selectedFarm" 
+              (change)="onFarmChange()"
+              [disabled]="isLoading">
+              <option value="">-- Seleccione una Finca --</option>
+              <option *ngFor="let farm of farms" [value]="farm.id">{{ farm.name }}</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Selecciona una Unidad de Producción:</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="selectedProductionUnit" 
+              (change)="onProductionUnitChange()"
+              [disabled]="!selectedFarm || isLoading">
+              <option value="">-- Seleccione una Unidad --</option>
+              <option *ngFor="let unit of productionUnits" [value]="unit.id">{{ unit.name }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold">Selecciona una Producción de Cultivo:</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="selectedCropProduction" 
+              (change)="onCropProductionChange()"
+              [disabled]="!selectedProductionUnit || isLoading">
+              <option value="">-- Seleccione una Producción --</option>
+              <option *ngFor="let crop of cropProductions" [value]="crop.id">
+                {{ crop.code }} - {{ crop?.name }}
+                <span *ngIf="crop.status"> ({{ crop.status }})</span>
+              </option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Crop Phase Information -->
+        <div class="row mt-3" *ngIf="selectedCropProduction && cropPhases.length > 0">
+          <div class="col-12">
+            <div class="crop-phases-info">
+              <h6 class="mb-2">Fases del Cultivo:</h6>
+              <div class="d-flex flex-wrap gap-2">
+                <span 
+                  *ngFor="let phase of cropPhases" 
+                  class="badge bg-secondary">
+                  {{ phase.name }} ({{ phase.sequence }} días)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoading" class="text-center mb-4">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2 text-muted">Cargando datos del sistema...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="alert alert-danger mb-4" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {{ errorMessage }}
+    <button type="button" class="btn-close" aria-label="Close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <!-- Data Summary Stats -->
+  <div class="row mb-4" *ngIf="selectedCropProduction">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-3">
+              <div class="summary-stat">
+                <span class="summary-number text-primary">{{ measurementVariables.length }}</span>
+                <small class="text-muted d-block">Variables Disponibles</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="summary-stat">
+                <span class="summary-number text-success">{{ dynamicGraphs.length }}</span>
+                <small class="text-muted d-block">Gráficos Configurados</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="summary-stat">
+                <span class="summary-number text-warning">{{ measurementData.length }}</span>
+                <small class="text-muted d-block">Puntos de Datos</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button 
+        class="nav-link" 
+        [class.active]="activeTab === 'climate_dashboard'"
+        (click)="setActiveTab('climate_dashboard')"
+        type="button">
+        <i class="bi bi-cloud-sun-fill me-2"></i>
+        Dashboard Clima
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button 
+        class="nav-link" 
+        [class.active]="activeTab === 'hourly_dashboard'"
+        (click)="setActiveTab('hourly_dashboard')"
+        type="button">
+        <i class="bi bi-graph-up me-2"></i>
+        Dashboard Horario
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button 
+        class="nav-link" 
+        [class.active]="activeTab === 'analytics_dashboard'"
+        (click)="setActiveTab('analytics_dashboard')"
+        type="button">
+        <i class="bi bi-bar-chart me-2"></i>
+         Entidades Analíticas
+      </button>
+    </li>
+  </ul>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    
+    <!-- Climate Dashboard Tab -->
+    <div 
+      class="tab-pane fade" 
+      [class.show]="activeTab === 'climate_dashboard'" 
+      [class.active]="activeTab === 'climate_dashboard'">
+      
+      <!-- Climate Gauges Row -->
+      <div class="row mb-4">
+        <!-- Temperature Gauge -->
+        <div class="col-lg-3 mb-3">
+          <div class="card climate-card">
+            <div class="card-header text-center">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-thermometer-half text-danger me-2"></i>
+                Temperatura
+              </h6>
+            </div>
+            <div class="card-body text-center position-relative">
+              <div class="gauge-container">
+                <canvas #temperatureGauge width="200" height="200"></canvas>
+                <div class="gauge-value">
+                  <span class="gauge-number">{{ (climateData$ | async)?.temperature | number:'1.1-1' }}</span>
+                  <span class="gauge-unit">°C</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wind Speed Gauge -->
+        <div class="col-lg-3 mb-3">
+          <div class="card climate-card">
+            <div class="card-header text-center">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-wind text-info me-2"></i>
+                Velocidad del Viento
+              </h6>
+            </div>
+            <div class="card-body text-center position-relative">
+              <div class="gauge-container">
+                <canvas #windSpeedGauge width="200" height="200"></canvas>
+                <div class="gauge-value">
+                  <span class="gauge-number">{{ (climateData$ | async)?.windSpeed | number:'1.1-1' }}</span>
+                  <span class="gauge-unit">km/h</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wind Direction -->
+        <div class="col-lg-3 mb-3">
+          <div class="card climate-card">
+            <div class="card-header text-center">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-compass text-warning me-2"></i>
+                Dirección del Viento
+              </h6>
+            </div>
+            <div class="card-body text-center">
+              <div class="wind-direction-container mb-3">
+                <i 
+                  class="bi bi-arrow-up wind-arrow" 
+                  [style.transform]="'rotate(' + ((climateData$ | async)?.windDirection || 0) + 'deg)'">
+                </i>
+              </div>
+              <div class="wind-direction-text">
+                <span class="wind-direction-label">{{ getWindDirectionText((climateData$ | async)?.windDirection || 0) }}</span>
+                <br>
+                <small class="text-muted">({{ (climateData$ | async)?.windDirection | number:'1.0-0' }}°)</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pressure -->
+        <div class="col-lg-3 mb-3">
+          <div class="card climate-card">
+            <div class="card-header text-center">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-speedometer text-success me-2"></i>
+                Presión Atmosférica
+              </h6>
+            </div>
+            <div class="card-body text-center">
+              <div class="climate-value-large">
+                <span class="climate-number">{{ (climateData$ | async)?.pressure | number:'1.0-0' }}</span>
+                <span class="climate-unit">hPa</span>
+              </div>
+              <div class="mt-3">
+                <small class="text-muted">
+                  <i class="bi bi-clock me-1"></i>
+                  Actualizado: {{ (climateData$ | async)?.lastUpdate | date:'HH:mm:ss' }}
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Climate Time Series Chart -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-graph-up me-2"></i>
+                Últimas 24 horas - Datos Climáticos
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas #climateChart height="360"></canvas>
+              </div>
+              <div *ngIf="climateBaseData.length === 0" class="text-center text-muted py-4">
+                <i class="bi bi-info-circle me-2"></i>
+                No hay datos climáticos disponibles para mostrar
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hourly Dashboard Tab -->
+    <div 
+      class="tab-pane fade" 
+      [class.show]="activeTab === 'hourly_dashboard'" 
+      [class.active]="activeTab === 'hourly_dashboard'">
+      
+      <div class="row">
+        <!-- Main Chart Column -->
+        <div class="col-lg-8 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <h6 class="card-title mb-0">
+                  <i class="bi bi-graph-up me-2"></i>
+                  Tendencia de Mediciones
+                </h6>
+                <div class="chart-controls">
+                  <!-- FIXED: Use graph.id instead of graph.name -->
+                  <select 
+                    class="form-select form-select-sm" 
+                    [(ngModel)]="selectedGraph" 
+                    (change)="onGraphChange()">
+                    <option value="">-- Seleccionar Gráfico --</option>
+                    <option *ngFor="let graph of dynamicGraphs" [value]="graph.id">
+                      {{ graph.name }} ({{ graph.series.length }} variables)
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas #mainChart></canvas>
+              </div>
+              <div *ngIf="isLoadingData" class="chart-loading-overlay">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Cargando datos...</span>
+                </div>
+              </div>
+              <div *ngIf="!isLoadingData && measurementData.length === 0 && selectedCropProduction && selectedSeries.length > 0" class="text-center text-muted py-4">
+                <i class="bi bi-info-circle me-2"></i>
+                No hay datos de medición disponibles para el rango seleccionado
+              </div>
+              <div *ngIf="!selectedGraph && dynamicGraphs.length > 0" class="text-center text-muted py-4">
+                <i class="bi bi-graph-up me-2"></i>
+                Seleccione un gráfico para ver las mediciones
+              </div>
+              <div *ngIf="dynamicGraphs.length === 0 && selectedCropProduction" class="text-center text-muted py-4">
+                <i class="bi bi-exclamation-circle me-2"></i>
+                No hay gráficos disponibles. Asegúrese de que existan variables de medición.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls Column -->
+        <div class="col-lg-4">
+          <!-- Graph Selection -->
+          <div class="card mb-3">
+            <div class="card-header">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-graph-up-arrow me-2"></i>
+                Selección de Gráfico
+              </h6>
+            </div>
+            <div class="card-body">
+              <!-- FIXED: Use graph.id instead of graph.name -->
+              <select 
+                class="form-select mb-2" 
+                [(ngModel)]="selectedGraph" 
+                (change)="onGraphChange()">
+                <option value="">-- Seleccionar Gráfico --</option>
+                <option *ngFor="let graph of dynamicGraphs" [value]="graph.id">
+                  {{ graph.name }} ({{ graph.series.length }} variables)
+                </option>
+              </select>
+              <small class="text-muted">
+                Gráficos disponibles: {{ dynamicGraphs.length }}
+                <span *ngIf="selectedGraph"> | Seleccionado: {{ getCurrentGraph()?.name }}</span>
+              </small>
+            </div>
+          </div>
+
+          <!-- Series Selection - Enhanced -->
+          <div class="card mb-3" *ngIf="selectedGraph && getCurrentGraph()">
+            <div class="card-header">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-list-check me-2"></i>
+                Variables del Gráfico
+              </h6>
+            </div>
+            <div class="card-body">
+              <div *ngFor="let series of getCurrentGraph()?.series" class="form-check mb-2">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  [id]="'graph-series-' + series.measurementVariableId"
+                  [checked]="isSeriesSelected(series.measurementVariableId)"
+                  (change)="onSeriesChange(series.measurementVariableId, $event)">
+                <label class="form-check-label" [for]="'graph-series-' + series.measurementVariableId">
+                  {{ series.name || getMeasurementVariableName(series.measurementVariableId) }}
+                  <small class="text-muted d-block">
+                    {{ getMeasurementVariableUnit(series.measurementVariableId) }}
+                  </small>
+                </label>
+              </div>
+              <div *ngIf="getCurrentGraph()?.series?.length === 0" class="text-muted text-center py-2">
+                <i class="bi bi-info-circle me-2"></i>
+                No hay series configuradas para este gráfico
+              </div>
+            </div>
+          </div>
+
+          <!-- Plot Elements -->
+          <div class="card mb-3">
+            <div class="card-header">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-sliders me-2"></i>
+                Elementos del Gráfico
+              </h6>
+            </div>
+            <div class="card-body">
+              <div *ngFor="let option of plotElementOptions" class="form-check mb-2">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  [id]="'element_' + option.id"
+                  [checked]="isPlotElementSelected(option.id)"
+                  (change)="onPlotElementChange(option.id, $event)">
+                <label class="form-check-label" [for]="'element_' + option.id">
+                  {{ option.label }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- All Measurement Variables -->
+          <div class="card mb-3">
+            <div class="card-header">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-list-ul me-2"></i>
+                Todas las Variables
+              </h6>
+            </div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+              <div *ngIf="measurementVariables.length === 0" class="text-muted text-center py-3">
+                <i class="bi bi-info-circle me-2"></i>
+                No hay variables disponibles
+              </div>
+              <div *ngFor="let variable of measurementVariables" class="form-check mb-2">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  [id]="'series_' + variable.id"
+                  [checked]="isSeriesSelected(variable.id)"
+                  (change)="onSeriesChange(variable.id, $event)">
+                <label class="form-check-label" [for]="'series_' + variable.id">
+                  {{ variable.name.replace('_', ' ') }}
+                  <small class="text-muted d-block">{{ variable.measurementUnit?.symbol || '' }}</small>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Date Range -->
+          <div class="card mb-3">
+            <div class="card-header">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-calendar-range me-2"></i>
+                Rango de Fechas
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-6">
+                  <label class="form-label small">Desde:</label>
+                  <input 
+                    type="date" 
+                    class="form-control form-control-sm"
+                    [(ngModel)]="dateRange.start"
+                    (change)="loadMeasurementData()">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small">Hasta:</label>
+                  <input 
+                    type="date" 
+                    class="form-control form-control-sm"
+                    [(ngModel)]="dateRange.end"
+                    (change)="loadMeasurementData()">
+                </div>
+              </div>
+              <div class="mt-2">
+                <small class="text-muted">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Últimos {{ getDaysDifference() }} días seleccionados
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Date Ranges -->
+          <div class="card mb-3">
+            <div class="card-header">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-clock-history me-2"></i>
+                Rangos Rápidos
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="d-grid gap-2">
+                <button class="btn btn-outline-secondary btn-sm" (click)="setQuickDateRange(7)">
+                  Últimos 7 días
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" (click)="setQuickDateRange(30)">
+                  Últimos 30 días
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" (click)="setQuickDateRange(90)">
+                  Últimos 90 días
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graph and Series Management -->
+      <div class="row mt-4">
+        <div class="col-md-6 mb-3">
+          <div class="card">
+            <div class="card-header">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-graph-up-arrow me-2"></i>
+                Gestión de Gráficos
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row align-items-end">
+                <div class="col-8">
+                  <!-- FIXED: Use graph.id instead of graph.name -->
+                  <select 
+                    class="form-select" 
+                    [(ngModel)]="selectedGraph" 
+                    (change)="onGraphChange()">
+                    <option value="">-- Seleccionar Gráfico --</option>
+                    <option *ngFor="let graph of dynamicGraphs" [value]="graph.id">{{ graph.name }}</option>
+                  </select>
+                </div>
+                <div class="col-4">
+                  <div class="btn-group w-100" role="group">
+                    <button 
+                      type="button" 
+                      class="btn btn-primary btn-sm" 
+                      (click)="openGraphModal()"
+                      title="Nuevo Gráfico">
+                      <i class="bi bi-plus-lg"></i>
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn btn-outline-primary btn-sm" 
+                      (click)="openGraphModal()" 
+                      [disabled]="!selectedGraph"
+                      title="Editar Gráfico">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <div class="card">
+            <div class="card-header">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-list-ul me-2"></i>
+                Gestión de Series
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row align-items-end">
+                <div class="col-8">
+                  <select class="form-select" [disabled]="!selectedGraph">
+                    <option value="">-- Seleccionar Serie --</option>
+                    <option *ngFor="let series of getCurrentGraph()?.series" [value]="series.measurementVariableId">
+                      {{ series.name || getMeasurementVariableName(series.measurementVariableId) }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-4">
+                  <div class="btn-group w-100" role="group">
+                    <button 
+                      type="button" 
+                      class="btn btn-success btn-sm" 
+                      (click)="openSeriesModal()"
+                      [disabled]="!selectedGraph"
+                      title="Nueva Serie">
+                      <i class="bi bi-plus-lg"></i>
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn btn-outline-success btn-sm" 
+                      (click)="openSeriesModal()"
+                      [disabled]="!selectedGraph"
+                      title="Editar Serie">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Box -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                Resumen de Datos
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row text-center">
+                <div class="col-md-3">
+                  <div class="summary-stat">
+                    <span class="summary-number text-primary">{{ measurementData.length }}</span>
+                    <small class="text-muted d-block">Puntos de Datos</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="summary-stat">
+                    <span class="summary-number text-success">{{ selectedSeries.length }}</span>
+                    <small class="text-muted d-block">Series Activas</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="summary-stat">
+                    <span class="summary-number text-info">{{ selectedPlotElements.length }}</span>
+                    <small class="text-muted d-block">Elementos Visibles</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="summary-stat">
+                    <span class="summary-number text-warning">{{ dynamicGraphs.length }}</span>
+                    <small class="text-muted d-block">Gráficos Disponibles</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Dashboard Tab -->
+    <div 
+      class="tab-pane fade" 
+      [class.show]="activeTab === 'analytics_dashboard'" 
+      [class.active]="activeTab === 'analytics_dashboard'">
+      
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-bar-chart me-2"></i>
+                Entidades Analíticas Disponibles
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div *ngFor="let entity of analyticalEntities" class="col-md-4 mb-3">
+                  <div class="card h-100 analytical-entity-card">
+                    <div class="card-body">
+                      <h6 class="card-title">{{ entity.name }}</h6>
+                      <p class="card-text">{{ entity.description || 'Sin descripción' }}</p>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-secondary">{{ entity.type }}</span>
+                        <button class="btn btn-sm btn-primary" (click)="executeAnalyticalEntity(entity)">
+                          Ejecutar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="analyticalEntities.length === 0" class="text-center text-muted py-4">
+                <i class="bi bi-info-circle me-2"></i>
+                No hay entidades analíticas disponibles
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Graph Modal -->
+<div 
+  class="modal fade" 
+  [class.show]="showGraphModal" 
+  [style.display]="showGraphModal ? 'block' : 'none'"
+  tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Configuración de Gráfico</h5>
+        <button type="button" class="btn-close" (click)="closeGraphModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-12 mb-3">
+            <label class="form-label">Nombre del Gráfico:</label>
+            <input type="text" class="form-control" placeholder="Ingrese nombre del gráfico">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Escala de Tiempo:</label>
+            <select class="form-select">
+              <option value="hour">Hora</option>
+              <option value="day" selected>Día</option>
+              <option value="week">Semana</option>
+              <option value="month">Mes</option>
+              <option value="daysOfGrowth">Días de Crecimiento</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Tipo de Escala del Eje Y:</label>
+            <select class="form-select">
+              <option value="auto" selected>Automático</option>
+              <option value="cero">Iniciar en Cero</option>
+            </select>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">Descripción:</label>
+            <textarea class="form-control" rows="3" placeholder="Descripción opcional del gráfico"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeGraphModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="saveGraph()">Aceptar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Series Modal -->
+<div 
+  class="modal fade" 
+  [class.show]="showSeriesModal" 
+  [style.display]="showSeriesModal ? 'block' : 'none'"
+  tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Configuración de Serie</h5>
+        <button type="button" class="btn-close" (click)="closeSeriesModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Variable:</label>
+            <select class="form-select">
+              <option *ngFor="let variable of measurementVariables" [value]="variable.id">
+                {{ variable.name }} ({{ variable.measurementUnit?.symbol || '' }})
+              </option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Tipo de Geometría:</label>
+            <select class="form-select">
+              <option value="Line">Línea</option>
+              <option value="Point">Punto</option>
+              <option value="Bar">Barra</option>
+              <option value="PointRange">Punto y Rango</option>
+              <option value="RefLine">Línea de Referencia</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Eje Y:</label>
+            <select class="form-select">
+              <option value="Primary">Primario</option>
+              <option value="Secondary">Secundario</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Color de la Serie:</label>
+            <input type="color" class="form-control form-control-color" value="#ff6b6b">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Grosor de Línea:</label>
+            <input type="number" class="form-control" value="2" min="1" max="10">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Transparencia:</label>
+            <input type="range" class="form-range" min="0" max="1" step="0.1" value="1">
+          </div>
+          <div class="col-12 mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="seriesVisible" checked>
+              <label class="form-check-label" for="seriesVisible">Visible</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="createStats" checked>
+              <label class="form-check-label" for="createStats">Incluir Estadísticas (Min, Max, Suma)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger">Borrar</button>
+        <button type="button" class="btn btn-secondary" (click)="closeSeriesModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="saveSeries()">Aceptar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div 
+  class="modal-backdrop fade" 
+  [class.show]="showGraphModal || showSeriesModal"
+  *ngIf="showGraphModal || showSeriesModal">
+</div>

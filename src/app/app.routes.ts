@@ -30,6 +30,8 @@ import { DeviceFormComponent } from './features/devices/device-form/device-form.
 import { ProductionUnitListComponent } from './features/production-units/production-unit-list/production-unit-list.component';
 import { CropProductionListComponent } from './features/crop-production/crop-production-list/crop-production-list.component';
 import { OnDemandIrrigationComponent } from './features/irrigation/on-demand-irrigation.component';
+// shiny-dashboard
+import { ShinyDashboardComponent } from './features/dashboard/shiny/shiny-dashboard.component';
 
 // Fertilizers & Inputs
 import { FertilizerListComponent } from './features/fertilizers/fertilizer-list/fertilizer-list.component';
@@ -151,6 +153,13 @@ export const routes: Routes = [
         path: 'production-units',
         component: ProductionUnitListComponent,
         data: { title: 'Unidades de Producción' }
+      },
+
+      // Shiny Dashboard
+      {
+        path: 'shiny-dashboard',
+        component: ShinyDashboardComponent,
+        data: { title: 'Dashboard Avanzado' }
       },
 
       // Crop Production Management

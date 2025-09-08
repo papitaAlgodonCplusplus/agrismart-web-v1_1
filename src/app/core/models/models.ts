@@ -128,6 +128,7 @@ export interface CropProduction {
   description?: string | undefined;
   isActive: boolean;
   createdAt: Date;
+  name: string | undefined; // computed: crop.name + ' - ' + productionUnit.name
   updatedAt?: Date;
 }
 

@@ -43,7 +43,7 @@ export interface ProductionUnitCreateRequest {
   isActive?: boolean;
 }
 
-export interface ProductionUnitUpdateRequest extends Partial<ProductionUnitCreateRequest> {}
+export interface ProductionUnitUpdateRequest extends Partial<ProductionUnitCreateRequest> { }
 
 export interface ProductionUnitCapacityUpdate {
   capacity: number;
@@ -171,8 +171,8 @@ export class ProductionUnitService {
     private apiConfig: ApiConfigService,
     private http: HttpClient
   ) {
-    this.baseUrl = `${this.apiConfig.agronomicApiUrl}/ProductionUnit`;
-    this.typesUrl = `${this.apiConfig.agronomicApiUrl}/ProductionUnitType`;
+    this.baseUrl = `/ProductionUnit`;
+    this.typesUrl = `/ProductionUnitType`;
   }
 
   /**
@@ -272,19 +272,15 @@ export class ProductionUnitService {
    * Get production units by farm
    */
   getByFarm(farmId: number, onlyActive?: boolean): Observable<ProductionUnit[]> {
-    let params = new HttpParams().set('farmId', farmId.toString());
-    if (onlyActive !== undefined) {
-      params = params.set('onlyActive', onlyActive.toString());
-    }
+    let params = new HttpParams().set('FarmId', farmId.toString()); // Ensure string conversion
 
-    return this.apiService.get<ProductionUnit[]>(this.baseUrl, params);
+    return this.apiService.get<ProductionUnit[]>('/ProductionUnit', params);
   }
-
   /**
    * Get production units by type
    */
   getByType(productionUnitTypeId: number): Observable<ProductionUnit[]> {
-    const params = new HttpParams().set('productionUnitTypeId', productionUnitTypeId.toString());
+    const params = new HttpParams().set('ProductionUnitTypeId', productionUnitTypeId.toString());
     return this.apiService.get<ProductionUnit[]>(this.baseUrl, params);
   }
 
@@ -292,9 +288,9 @@ export class ProductionUnitService {
    * Get available production units for planting
    */
   getAvailableForPlanting(farmId?: number): Observable<ProductionUnit[]> {
-    let params = new HttpParams().set('availableForPlanting', 'true');
+    let params = new HttpParams().set('AvailableForPlanting', 'true');
     if (farmId) {
-      params = params.set('farmId', farmId.toString());
+      params = params.set('FarmId', farmId.toString());
     }
 
     return this.apiService.get<ProductionUnit[]>(this.baseUrl, params);
@@ -304,7 +300,7 @@ export class ProductionUnitService {
    * Get production units with active productions
    */
   getWithActiveProductions(): Observable<ProductionUnit[]> {
-    const params = new HttpParams().set('hasActiveProductions', 'true');
+    const params = new HttpParams().set('HasActiveProductions', 'true');
     return this.apiService.get<ProductionUnit[]>(this.baseUrl, params);
   }
 
@@ -365,18 +361,18 @@ export class ProductionUnitService {
     const payload = {
       ...maintenance,
       ...(maintenance.scheduledDate && {
-        scheduledDate: typeof maintenance.scheduledDate === 'string' 
-          ? maintenance.scheduledDate 
+        scheduledDate: typeof maintenance.scheduledDate === 'string'
+          ? maintenance.scheduledDate
           : maintenance.scheduledDate.toISOString()
       }),
       ...(maintenance.completedDate && {
-        completedDate: typeof maintenance.completedDate === 'string' 
-          ? maintenance.completedDate 
+        completedDate: typeof maintenance.completedDate === 'string'
+          ? maintenance.completedDate
           : maintenance.completedDate.toISOString()
       }),
       ...(maintenance.nextMaintenanceDate && {
-        nextMaintenanceDate: typeof maintenance.nextMaintenanceDate === 'string' 
-          ? maintenance.nextMaintenanceDate 
+        nextMaintenanceDate: typeof maintenance.nextMaintenanceDate === 'string'
+          ? maintenance.nextMaintenanceDate
           : maintenance.nextMaintenanceDate.toISOString()
       })
     };
@@ -408,7 +404,7 @@ export class ProductionUnitService {
    * Get upcoming maintenance
    */
   getUpcomingMaintenance(days: number = 7): Observable<ProductionUnitMaintenanceRecord[]> {
-    const params = new HttpParams().set('upcomingDays', days.toString());
+    const params = new HttpParams().set('UpcomingDays', days.toString());
     return this.apiService.get<ProductionUnitMaintenanceRecord[]>(`${this.baseUrl}/maintenance/upcoming`, params);
   }
 
@@ -487,7 +483,7 @@ export class ProductionUnitService {
     }
 
     const url = `${this.apiConfig.agronomicApiUrl}${this.baseUrl}/export/excel`;
-    
+
     return this.http.get(url, {
       params,
       responseType: 'blob',

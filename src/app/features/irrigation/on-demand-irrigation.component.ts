@@ -103,7 +103,7 @@ export interface CropProductionApiResponse {
 // Extended CropProduction interface to include the missing properties
 export interface ExtendedCropProduction extends CropProduction {
     // API response properties
-    name?: string;
+    name: string;
     containerId: number;
     dropperId: number;
     growingMediumId: number;

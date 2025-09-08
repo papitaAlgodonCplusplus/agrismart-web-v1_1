@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { ApiConfigService } from '../../../core/services/api-config.service';
-import { Company } from '../../../core/models/models';
+import { ApiService } from '../../../core/services/api.service';
 
 // Backend response structure (matches your AgriSmart API)
 interface BackendResponse<T> {
@@ -26,6 +26,7 @@ export interface CompanyFilters {
 export class CompanyService {
   constructor(
     private apiConfig: ApiConfigService,
+    private apiService: ApiService,
     private http: HttpClient
   ) { }
 
@@ -75,23 +76,10 @@ export class CompanyService {
    * Get company by ID - matches backend GET /Company/GetById
    */
   getById(id: number): Observable<any> {
-    const url = `${this.apiConfig.agronomicApiUrl}/Company/GetById`;
-    const params = new HttpParams().set('Id', id.toString());
-
-    return this.http.get<BackendResponse<any>>(url, { params })
-      .pipe(
-        map(response => {
-          console.log('CompanyService.getById raw response:', response);
-          if (response.success) {
-            return response.result;
-          }
-          throw new Error(`Get Company by ID failed: ${response.exception}`);
-        }),
-        catchError(error => {
-          console.error('CompanyService.getById error:', error);
-          throw error;
-        })
-      );
+    console.log('CompanyService.getById called with ID:', id);
+    const url = `/Company/GetById`;
+    const params = new HttpParams().set('Id', id);
+    return this.apiService.get<any[]>(url, params);
   }
 
   /**

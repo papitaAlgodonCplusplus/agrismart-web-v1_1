@@ -532,6 +532,11 @@ export class CropProductionService {
     return this.apiService.put<CropProductionAlert>(`${this.baseUrl}/alerts/${alertId}/acknowledge`, {});
   }
 
+  getByProductionUnit(productionUnitId: number): Observable<CropProduction[]> {
+    const filter = { productionUnitId };
+    return this.getAll(filter);
+  }
+
   /**
    * Resolve alert
    */

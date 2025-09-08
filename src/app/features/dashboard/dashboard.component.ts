@@ -235,6 +235,10 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/irrigation-on-demand']);
   }
 
+  navigateToShinyDashboard(): void {
+    this.router.navigate(['/shiny-dashboard']);
+  }
+
   /**
    * Navigate to nutrient solution formulation
    */

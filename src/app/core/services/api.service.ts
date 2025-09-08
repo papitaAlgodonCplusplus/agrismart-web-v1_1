@@ -29,6 +29,19 @@ export class ApiService {
     });
   }
 
+  getBlob(url: string, params?: HttpParams): Observable<Blob> {
+    return this.http.get(
+      `${this.apiConfig.agronomicApiUrl}${url}`,
+      {
+        headers: this.getHeaders(),
+        params,
+        responseType: 'blob'
+      }
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   private getFormHeaders(): HttpHeaders {
     const token = localStorage.getItem('access_token');
     return new HttpHeaders({
