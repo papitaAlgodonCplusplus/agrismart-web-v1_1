@@ -250,6 +250,7 @@ export class DashboardComponent implements OnInit {
    * Navigate to water analysis/chemistry management
    */
   navigateToWaterAnalysis(): void {
+    console.log("going to water")
     this.router.navigate(['/water-chemistry']);
   }
 

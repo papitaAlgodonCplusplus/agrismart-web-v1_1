@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FertilizerService } from '../services/fertilizer.service';
+import { AuthService } from '../../../core/auth/auth.service';
 import { Fertilizer } from '../../../core/models/models';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -9,7 +10,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 
 @Component({
   selector: 'app-fertilizer-list',
-   standalone: true,
+  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -370,6 +371,7 @@ export class FertilizerListComponent implements OnInit {
   successMessage = '';
 
   constructor(
+    private authService: AuthService,
     private fertilizerService: FertilizerService,
     private router: Router
   ) { }
@@ -383,16 +385,18 @@ export class FertilizerListComponent implements OnInit {
     this.errorMessage = '';
 
     const filters = {
-      onlyActive: this.onlyActive,
-      type: this.selectedType,
-      npkCategory: this.selectedNPKCategory,
-      searchTerm: this.searchTerm.trim()
+      user: this.authService.getCurrentUser(),
+      // onlyActive: this.onlyActive,
+      // type: this.selectedType,
+      // npkCategory: this.selectedNPKCategory,
+      // searchTerm: this.searchTerm.trim()
     };
 
     this.fertilizers$ = this.fertilizerService.getAll(filters);
 
     this.fertilizers$.subscribe({
       next: (fertilizers) => {
+        console.log("retr fertilizers ", this.fertilizers$)
         this.isLoading = false;
         console.log(`Loaded ${fertilizers.length} fertilizers`);
       },
@@ -435,9 +439,7 @@ export class FertilizerListComponent implements OnInit {
     }
   }
 
-  trackByFn(index: number, fertilizer: Fertilizer): number {
-    return fertilizer?.id;
-  }
+ 
 
   getTypeClass(type: string | undefined): string {
     if (type === undefined) {
@@ -492,10 +494,20 @@ export class FertilizerListComponent implements OnInit {
   }
 
   getOrganicCount(fertilizers: Fertilizer[]): number {
+    // Add safety check to ensure fertilizers is an array
+    if (!Array.isArray(fertilizers)) {
+      console.warn('Expected fertilizers to be an array, got:', fertilizers);
+      return 0;
+    }
     return fertilizers.filter(f => f.type === 'Organico').length;
   }
 
   getLowStockCount(fertilizers: Fertilizer[]): number {
+    // Add safety check to ensure fertilizers is an array
+    if (!Array.isArray(fertilizers)) {
+      console.warn('Expected fertilizers to be an array, got:', fertilizers);
+      return 0;
+    }
     return fertilizers.filter(f =>
       f.currentStock !== undefined &&
       f.minimumStock !== undefined &&
@@ -504,6 +516,12 @@ export class FertilizerListComponent implements OnInit {
   }
 
   getExpiringCount(fertilizers: Fertilizer[]): number {
+    // Add safety check to ensure fertilizers is an array
+    if (!Array.isArray(fertilizers)) {
+      console.warn('Expected fertilizers to be an array, got:', fertilizers);
+      return 0;
+    }
+
     const thirtyDaysFromNow = new Date();
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
@@ -511,5 +529,10 @@ export class FertilizerListComponent implements OnInit {
       f.expirationDate &&
       new Date(f.expirationDate) <= thirtyDaysFromNow
     ).length;
+  }
+
+  // Also update the trackByFn method for better performance
+  trackByFn(index: number, fertilizer: Fertilizer): number | null {
+    return fertilizer?.id || null;
   }
 }

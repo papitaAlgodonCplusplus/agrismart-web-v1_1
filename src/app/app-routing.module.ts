@@ -25,7 +25,9 @@ import { DeviceFormComponent } from './features/devices/device-form/device-form.
 // Production & Irrigation
 import { ProductionUnitListComponent } from './features/production-units/production-unit-list/production-unit-list.component';
 import { CropProductionListComponent } from './features/crop-production/crop-production-list/crop-production-list.component';
-import { IrrigationSectorListComponent } from './features/irrigation/irrigation-sector-list.component'
+import { OnDemandIrrigationComponent } from './features/irrigation/on-demand-irrigation.component';
+import { WaterChemistryComponent } from './features/water/water-chemistry.component';
+
 
 // Fertilizers & Inputs
 import { FertilizerListComponent } from './features/fertilizers/fertilizer-list/fertilizer-list.component';
@@ -132,7 +134,7 @@ const routes: Routes = [
         children: [
           {
             path: 'sectors',
-            component: IrrigationSectorListComponent
+            component: OnDemandIrrigationComponent
           },
           {
             path: '',
@@ -141,7 +143,11 @@ const routes: Routes = [
           }
         ]
       },
-
+      // Fertilizers Management
+      {
+        path: 'water-chemistry',
+        component: WaterChemistryComponent
+      },
       // Fertilizers Management
       {
         path: 'fertilizers',

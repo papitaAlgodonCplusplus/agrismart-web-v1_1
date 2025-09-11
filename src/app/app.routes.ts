@@ -36,6 +36,7 @@ import { ShinyDashboardComponent } from './features/dashboard/shiny/shiny-dashbo
 // Fertilizers & Inputs
 import { FertilizerListComponent } from './features/fertilizers/fertilizer-list/fertilizer-list.component';
 import { FertilizerInputListComponent } from './features/fertilizer-inputs/fertilizer-input-list/fertilizer-input-list.component';
+import { WaterChemistryComponent } from './features/water/water-chemistry.component'
 
 // Users & Administration
 import { ProfileComponent } from './features/profile/profile.component';
@@ -175,7 +176,11 @@ export const routes: Routes = [
         component: OnDemandIrrigationComponent,
         data: { title: 'Riego Bajo Demanda' }
       },
-
+      // Fertilizers Management
+      {
+        path: 'water-chemistry',
+        component: WaterChemistryComponent
+      },
       // Fertilizers Management
       {
         path: 'fertilizers',

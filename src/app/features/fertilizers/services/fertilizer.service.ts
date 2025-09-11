@@ -67,6 +67,7 @@ interface FertilizerRecommendation {
 
 export interface FertilizerFilters {
   catalogId?: number;
+  user?: any;
   onlyActive?: boolean;
   type?: string;
   npkCategory?: string;
@@ -193,6 +194,7 @@ export interface StockMovement {
   providedIn: 'root'
 })
 export class FertilizerService {
+  user: any;
 
   constructor(
     private apiService: ApiService,
@@ -208,16 +210,22 @@ export class FertilizerService {
    * If no catalogId provided, it will try to get the current user's catalog
    */
   getAll(filters?: FertilizerFilters): Observable<Fertilizer[]> {
+    console.log("Getting all Fertilizers with filters: ", filters)
     if (filters?.catalogId) {
-      
       return this.getFertilizersWithCatalogId(filters.catalogId, filters);
     }
 
+    if (filters?.user) {
+      this.user = filters.user;
+    }
+
     // If no catalogId provided, get from current user's catalog
-    return this.catalogService.getCurrentUserCatalog().pipe(
-      switchMap(catalogs => {
-        if (catalogs && catalogs.length > 0) {
-          const catalogId = catalogs[0].id; // Use first catalog
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
+      switchMap(response => {
+        console.log("retrieve catalogs ", response)
+        // TODO Map for all catalogs
+        if (response.catalogs && response.catalogs.length > 0) {
+          const catalogId = response.catalogs[0].id; // Use first catalog
           return this.getFertilizersWithCatalogId(catalogId, filters);
         }
         throw new Error('No catalog found for current user');
@@ -225,11 +233,11 @@ export class FertilizerService {
     );
   }
 
-  /**
-   * Get fertilizers with specific catalogId
-   */
+  // In your fertilizer.service.ts, update the getFertilizersWithCatalogId method:
+
   getFertilizersWithCatalogId(catalogId: number | undefined, filters?: FertilizerFilters): Observable<Fertilizer[]> {
-    let params = new HttpParams().set('catalogId', catalogId?.toString() || '');
+    console.log("get ferts by catalog id: ", catalogId)
+    let params = new HttpParams().set('CatalogId', catalogId?.toString() || '');
 
     if (filters) {
       if (filters.onlyActive !== undefined) {
@@ -264,7 +272,34 @@ export class FertilizerService {
       }
     }
 
-    return this.apiService.get<Fertilizer[]>('/Fertilizer', params);
+    return this.apiService.get<any>('/Fertilizer', params).pipe(
+      map(response => {
+        console.log('Raw API response:', response);
+
+        // Handle different response formats from the API
+        if (Array.isArray(response)) {
+          return response;
+        } else if (response && typeof response === 'object') {
+          // Try different possible response structures
+          if (Array.isArray(response.data)) {
+            return response.data;
+          } else if (Array.isArray(response.result)) {
+            return response.result;
+          } else if (Array.isArray(response.fertilizers)) {
+            return response.fertilizers;
+          } else if (Array.isArray(response.items)) {
+            return response.items;
+          }
+        }
+
+        console.warn('Unexpected API response format:', response);
+        return []; // Return empty array as fallback
+      }),
+      catchError(error => {
+        console.error('Error fetching fertilizers:', error);
+        return of([]); // Return empty array on error
+      })
+    );
   }
 
   /**
@@ -299,8 +334,9 @@ export class FertilizerService {
    * Create fertilizer with auto-detected catalogId
    */
   createWithCurrentCatalog(data: Omit<FertilizerCreateRequest, 'catalogId'>): Observable<Fertilizer> {
-    return this.catalogService.getCurrentUserCatalog().pipe(
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
+        console.log("retrieved catalogs ", catalogs)
         if (catalogs && catalogs.length > 0) {
           const catalogId = catalogs[0].id;
           return this.create({ ...data, catalogId });
@@ -377,7 +413,7 @@ export class FertilizerService {
       return this.getFertilizersWithCatalogId(catalogId, { lowStock: true });
     }
 
-    return this.catalogService.getCurrentUserCatalog().pipe(
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
         if (catalogs && catalogs.length > 0) {
           return this.getFertilizersWithCatalogId(catalogs[0].id, { lowStock: true });
@@ -395,7 +431,7 @@ export class FertilizerService {
       return this.getFertilizersWithCatalogId(catalogId, { expiringWithin: withinDays });
     }
 
-    return this.catalogService.getCurrentUserCatalog().pipe(
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
         if (catalogs && catalogs.length > 0) {
           return this.getFertilizersWithCatalogId(catalogs[0].id, { expiringWithin: withinDays });
@@ -413,7 +449,7 @@ export class FertilizerService {
       return this.getFertilizersWithCatalogId(catalogId, { type });
     }
 
-    return this.catalogService.getCurrentUserCatalog().pipe(
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
         if (catalogs && catalogs.length > 0) {
           return this.getFertilizersWithCatalogId(catalogs[0].id, { type });
@@ -431,7 +467,7 @@ export class FertilizerService {
       return this.getFertilizersWithCatalogId(catalogId, { supplier });
     }
 
-    return this.catalogService.getCurrentUserCatalog().pipe(
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
         if (catalogs && catalogs.length > 0) {
           return this.getFertilizersWithCatalogId(catalogs[0].id, { supplier });
@@ -449,7 +485,7 @@ export class FertilizerService {
       return this.getFertilizersWithCatalogId(catalogId, { searchTerm });
     }
 
-    return this.catalogService.getCurrentUserCatalog().pipe(
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
         if (catalogs && catalogs.length > 0) {
           return this.getFertilizersWithCatalogId(catalogs[0].id, { searchTerm });
@@ -476,7 +512,7 @@ export class FertilizerService {
 
     // If no catalogId in filters, get from current user's catalog
     if (!filters?.catalogId) {
-      return this.catalogService.getCurrentUserCatalog().pipe(
+      return this.catalogService.getCurrentUserCatalog(this.user).pipe(
         switchMap(catalogs => {
           if (catalogs && catalogs.length > 0) {
             params = params.set('catalogId', catalogs[0].id.toString());
@@ -521,7 +557,7 @@ export class FertilizerService {
       return this.apiService.get<string[]>('/Fertilizer/suppliers', params);
     }
 
-    return this.catalogService.getCurrentUserCatalog().pipe(
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
         if (catalogs && catalogs.length > 0) {
           params = params.set('catalogId', catalogs[0].id.toString());
@@ -543,7 +579,7 @@ export class FertilizerService {
       return this.apiService.get<string[]>('/Fertilizer/types', params);
     }
 
-    return this.catalogService.getCurrentUserCatalog().pipe(
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
         if (catalogs && catalogs.length > 0) {
           params = params.set('catalogId', catalogs[0].id.toString());
@@ -565,7 +601,7 @@ export class FertilizerService {
       return this.apiService.get<string[]>('/Fertilizer/application-methods', params);
     }
 
-    return this.catalogService.getCurrentUserCatalog().pipe(
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
         if (catalogs && catalogs.length > 0) {
           params = params.set('catalogId', catalogs[0].id.toString());
@@ -615,7 +651,7 @@ export class FertilizerService {
 
     // If no catalogId in filters, get from current user's catalog
     if (!filters?.catalogId) {
-      return this.catalogService.getCurrentUserCatalog().pipe(
+      return this.catalogService.getCurrentUserCatalog(this.user).pipe(
         switchMap(catalogs => {
           if (catalogs && catalogs.length > 0) {
             params = params.set('catalogId', catalogs[0].id.toString());
@@ -650,7 +686,7 @@ export class FertilizerService {
       return this.apiService.get<Fertilizer[]>('/Fertilizer/reorder-report', params);
     }
 
-    return this.catalogService.getCurrentUserCatalog().pipe(
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
         if (catalogs && catalogs.length > 0) {
           params = params.set('catalogId', catalogs[0].id.toString());
@@ -684,7 +720,7 @@ export class FertilizerService {
       }>('/Fertilizer/inventory-valuation', params);
     }
 
-    return this.catalogService.getCurrentUserCatalog().pipe(
+    return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
         if (catalogs && catalogs.length > 0) {
           params = params.set('catalogId', catalogs[0].id.toString());
@@ -886,7 +922,7 @@ export class FertilizerService {
   getFertilizerChemistries(): Observable<FertilizerChemistry[]> {
     return this.apiService.get<FertilizerChemistry[]>('/FertilizerChemistry').pipe(
       map(response => {
-        
+
         return Array.isArray(response) ? response : [];
       }),
       catchError(error => {
@@ -902,7 +938,7 @@ export class FertilizerService {
   getFertilizerChemistry(fertilizerId: number): Observable<FertilizerChemistry | null> {
     return this.apiService.get<FertilizerChemistry>(`/FertilizerChemistry/${fertilizerId}`).pipe(
       map(response => {
-        
+
         return response || null;
       }),
       catchError(error => {
@@ -1205,7 +1241,7 @@ export class FertilizerService {
      * Get crop phase solution requirement data
    */
   private getCropPhaseSolutionRequirement(phaseId: number): Observable<any> {
-    
+
     const params = new HttpParams().set('PhaseId', phaseId.toString());
     const url = `${this.apiConfig.agronomicApiUrl}/CropPhaseSolutionRequirement/GetByPhaseId`;
     const headers = this.getAuthHeaders();
@@ -1213,7 +1249,7 @@ export class FertilizerService {
     return this.http.get<BackendResponse<any>>(url, { params, headers }).pipe(
       map(response => {
         if (response) {
-          
+
           return response.result;
         }
         throw new Error(`Get crop phase solution requirement failed: ${response}`);
@@ -1232,7 +1268,7 @@ export class FertilizerService {
     cropPhaseId?: number,
     filters?: FertilizerFilters
   ): Observable<Fertilizer[]> {
-    
+
     return forkJoin<{
       fertilizers: Fertilizer[] | { fertilizers?: Fertilizer[]; result?: Fertilizer[]; data?: Fertilizer[] } | any;
       solutionRequirements: any;
@@ -1243,8 +1279,8 @@ export class FertilizerService {
         of(null)
     }).pipe(
       map(({ fertilizers, solutionRequirements }) => {
-        
-        
+
+
 
         // Extract fertilizers array from response - this is the critical fix
         let fertilizerArray: any[] = [];
@@ -1268,7 +1304,7 @@ export class FertilizerService {
           fertilizerArray = [];
         }
 
-        
+
 
         if (solutionRequirements) {
           // Enhance fertilizers with optimal composition score based on crop phase requirements

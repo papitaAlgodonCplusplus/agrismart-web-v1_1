@@ -39,6 +39,7 @@ export interface Catalog {
     }
 
     getByClientId(clientId: number): Observable<Catalog[]> {
+        console.log("Get by Client Id FERT: ", clientId)
         const params = new HttpParams().set('ClientId', clientId.toString());
         return this.apiService.get<Catalog[]>('/Catalog', params);
     }
@@ -59,12 +60,9 @@ export interface Catalog {
      * Get current user's default catalog
      * This assumes you have a way to get the current user's clientId
      */
-    getCurrentUserCatalog(): Observable<Catalog[]> {
-        // You'll need to implement this based on how you get the current user's clientId
-        // For now, this is a placeholder that you can modify based on your auth system
-        const currentUser = this.getCurrentUser();
-        if (currentUser && currentUser.clientId) {
-            return this.getByClientId(currentUser.clientId);
+    getCurrentUserCatalog(user: any): Observable<any> {
+        if (user && user['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid']) {
+            return this.getByClientId(user['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid']);
         }
         return this.getAll();
     }
