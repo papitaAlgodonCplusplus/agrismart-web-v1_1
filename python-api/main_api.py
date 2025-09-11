@@ -5,9 +5,11 @@ All missing functionality implemented across modular files
 """
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware  # ADD THIS LINE
 from models import (
     FertilizerRequest, FertilizerDosage, CalculationStatus, MLModelConfig
 )
+import uvicorn
 from nutrient_calculator import EnhancedFertilizerCalculator
 from fertilizer_database import EnhancedFertilizerDatabase
 from pdf_generator import EnhancedPDFReportGenerator
