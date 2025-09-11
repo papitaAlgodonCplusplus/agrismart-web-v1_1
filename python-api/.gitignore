@@ -1,0 +1,12 @@
+/.claude
+/reports
+/venv
+/__pycache__
+/.pytest_cache
+*.pdf
+*.log
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+nul
