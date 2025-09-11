@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: fertilizer-calculator-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main_api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: API_ENVIRONMENT
+        value: production
+      - key: SWAGGER_API_URL
+        value: http://162.248.52.111:8082  # Your external Swagger API
+    healthCheckPath: /
+    autoDeploy: true

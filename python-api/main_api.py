@@ -27,10 +27,29 @@ from models import LinearProgrammingResultConstrained
 # Add this line after other initializations
 lp_optimizer = LinearProgrammingOptimizer()
 
+
+# Environment configuration
+PORT = int(os.getenv("PORT", 8000))
+API_ENVIRONMENT = os.getenv("API_ENVIRONMENT", "development")
+SWAGGER_API_URL = os.getenv("SWAGGER_API_URL", "http://162.248.52.111:8082")
+
+
+# Initialize FastAPI app
 app = FastAPI(
-    title="Complete Modular Fertilizer Calculator",
-    version="5.0.0",
-    description="Professional hydroponic nutrient calculation system with ML optimization"
+    title="Fertilizer Calculator API",
+    description="Advanced fertilizer calculation system with Swagger integration",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# Configure CORS for frontend access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Initialize all components
@@ -2113,88 +2132,19 @@ def analyze_constraint_compliance(dosages, constraints, achieved, targets):
 
 @app.get("/")
 async def root():
-    """Root endpoint with complete API information"""
+    """API health check and information"""
     return {
-        "message": "Complete Modular Fertilizer Calculator API v5.0.0",
-        "version": "5.0.0",
-        "status": "fully_operational",
-        "description": "Professional hydroponic nutrient calculation system with ML optimization and real API integration",
-        "key_features": {
-            "modular_architecture": [
-                "Separated concerns across specialized modules",
-                "Nutrient calculator with advanced algorithms",
-                "Complete fertilizer database with pattern matching",
-                "ML optimizer with multiple algorithms",
-                "Professional PDF report generation",
-                "Real Swagger API integration"
-            ],
-            "optimization_methods": [
-                "Deterministic optimization (strategic nutrient prioritization)",
-                "Machine learning optimization (RandomForest/XGBoost)",
-                "Comparative analysis of all methods"
-            ],
-            "api_integration": [
-                "Real Swagger API calls to http://162.248.52.111:8082",
-                "Automatic authentication and token management",
-                "Fertilizer chemistry data fetching",
-                "Crop requirements and water analysis integration",
-                "Enhanced error handling and fallbacks"
-            ],
-            "pdf_generation": [
-                "Professional Excel-like calculation tables",
-                "Complete nutrient contribution analysis",
-                "Ionic balance verification",
-                "Cost analysis and optimization suggestions",
-                "Comprehensive verification results"
-            ]
-        },
+        "message": "Fertilizer Calculator API",
+        "version": "1.0.0",
+        "environment": API_ENVIRONMENT,
+        "swagger_api": SWAGGER_API_URL,
         "endpoints": {
-            "swagger_integration": {
-                "url": "/swagger-integrated-calculation",
-                "method": "GET",
-                "description": "Complete real API integration with live data",
-                "parameters": "catalog_id, phase_id, water_id, use_ml"
-            },
-            "ml_training": {
-                "url": "/train-ml-model?n_samples=5000&model_type=RandomForest",
-                "method": "POST",
-                "description": "Train ML model with synthetic data"
-            },
-            "method_comparison": {
-                "url": "/test-optimization-methods",
-                "method": "GET",
-                "description": "Compare all optimization methods"
-            },
-            "database_info": {
-                "url": "/fertilizer-database",
-                "method": "GET",
-                "description": "Get complete fertilizer database information"
-            }
-        },
-        "database_coverage": {
-            "fertilizer_types": ["Acids", "Nitrates", "Sulfates", "Phosphates", "Micronutrients"],
-            "total_fertilizers": "15+ with complete compositions",
-            "pattern_matching": "Name and formula based intelligent matching",
-            "fallback_support": "Default compositions for unknown fertilizers"
-        },
-        "ml_capabilities": {
-            "algorithms": ["RandomForest", "XGBoost"],
-            "features": "31 engineered features from targets and water analysis",
-            "training": "Synthetic data generation with realistic ranges",
-            "prediction": "Multi-output regression for all fertilizer dosages"
-        },
-        "quick_tests": {
-            "system_test": "GET /test",
-            "real_api_integration": "GET /swagger-integrated-calculation",
-            "database_test": "GET /fertilizer-database",
-            "ml_training": "POST /train-ml-model",
-            "method_comparison": "GET /test-optimization-methods"
-        },
-        "documentation": "/docs",
-        "reports_directory": "./reports/",
-        "ml_ready": ml_optimizer.is_trained if ml_optimizer else False
+            "docs": "/docs",
+            "swagger_calculation": "/swagger-integrated-calculation",
+            "health": "/health"
+        }
     }
-
+    
 def adjust_targets_for_water_chemistry(target_concentrations: Dict[str, float],
                                        water_analysis: Dict[str, float]) -> tuple[Dict[str, float], Dict[str, float]]:
     """
@@ -2251,46 +2201,11 @@ def adjust_targets_for_water_chemistry(target_concentrations: Dict[str, float],
 
     return fertilizer_targets, expected_final_concentrations
 
+
 if __name__ == "__main__":
-    import uvicorn
-    import socket
-
-    print("[START] Complete Modular Fertilizer Calculator API v5.0.0")
-    print("[INFO] FEATURES: All modules implemented and integrated")
-    print("[INFO] METHODS: Deterministic, Machine Learning")
-    print("[INFO] API: Real Swagger integration with live data")
-    print("[INFO] PDF: Professional Excel-like reports")
-    print("=" * 70)
-
-    # Find available port
-    def is_port_available(port):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            try:
-                s.bind(('127.0.0.1', port))
-                return True
-            except OSError:
-                return False
-
-    ports_to_try = [8000, 8001, 8002, 8003, 8004, 8005]
-    available_port = None
-
-    for port in ports_to_try:
-        if is_port_available(port):
-            available_port = port
-            break
-
-    if available_port is None:
-        print("[ERROR] No available ports found")
-        exit(1)
-
-    print(f"\n[SERVER] http://localhost:{available_port}")
-    print(f"[DOCS] http://localhost:{available_port}/docs")
-    print(f"[TEST] http://localhost:{available_port}/test")
-    print(
-        f"[SWAGGER] http://localhost:{available_port}/swagger-integrated-calculation")
-    print(f"[ML] http://localhost:{available_port}/train-ml-model")
-    print(
-        f"[COMPARE] http://localhost:{available_port}/test-optimization-methods")
-    print("\n[READY] Complete fertilizer calculation system operational!")
-
-    uvicorn.run(app, host="0.0.0.0", port=available_port)
+    uvicorn.run(
+        "main_api:app",
+        host="0.0.0.0",
+        port=PORT,
+        reload=API_ENVIRONMENT == "development"
+    )
