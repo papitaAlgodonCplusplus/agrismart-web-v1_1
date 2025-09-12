@@ -274,7 +274,6 @@ export class FertilizerService {
 
     return this.apiService.get<any>('/Fertilizer', params).pipe(
       map(response => {
-        console.log('Raw API response:', response);
 
         // Handle different response formats from the API
         if (Array.isArray(response)) {

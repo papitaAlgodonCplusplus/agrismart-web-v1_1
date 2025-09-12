@@ -165,7 +165,7 @@ a {
 /* Tables */
 .table {
   border-radius: var(--border-radius-md);
-  overflow: hidden;
+  overflow: auto;
   
   th {
     background-color: var(--light-gray);
@@ -386,7 +386,7 @@ html {
   font-size: 16px;
   scroll-behavior: smooth;
   height: 100%;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: auto; /* Prevent horizontal scroll */
 }
 
 body {
@@ -397,7 +397,7 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: auto; /* Prevent horizontal scroll */
   /* Remove any min-height or max-height constraints */
 }
 
@@ -411,7 +411,7 @@ app-root {
 /* Prevent Bootstrap container issues */
 .container-fluid {
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 
 .row {

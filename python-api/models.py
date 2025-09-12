@@ -144,12 +144,20 @@ class CalculationStatus(BaseModel):
 class FertilizerComposition(BaseModel):
     cations: Dict[str, float]
     anions: Dict[str, float]
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation"""
+        return self.dict()
 
 class FertilizerChemistry(BaseModel):
     formula: str
     purity: float  
     solubility: float
     is_ph_adjuster: bool
+     
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation"""
+        return self.dict()
 
 class Fertilizer(BaseModel):
     name: str
@@ -159,6 +167,11 @@ class Fertilizer(BaseModel):
     density: Optional[float] = 1.0
     chemistry: FertilizerChemistry
     composition: FertilizerComposition
+    
+    # ADD THIS METHOD TO FIX THE ERROR:
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation for compatibility"""
+        return self.dict()
 
 class CalculationSettings(BaseModel):
     volume_liters: float = 1000

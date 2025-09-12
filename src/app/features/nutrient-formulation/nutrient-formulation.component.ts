@@ -2,13 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { HttpParams, HttpHeaders } from '@angular/common/http';
+import { HttpParams, HttpHeaders, HttpClient } from '@angular/common/http';
 import { forkJoin, Observable, of, catchError, tap, map } from 'rxjs';
 import { WaterChemistryService, WaterChemistry } from '../water-chemistry/services/water-chemistry.service';
 import { FertilizerService } from '../fertilizers/services/fertilizer.service';
 import { CropService } from '../crops/services/crop.service';
 import { ApiService } from '../../core/services/api.service';
-import { CatalogService } from '../catalogs/services/catalog.service';
+import { CatalogService, Catalog } from '../catalogs/services/catalog.service';
 import { AuthService } from '../../core/auth/auth.service';
 interface CropPhaseOptimal {
     id: number;
@@ -22,6 +22,144 @@ interface CropPhaseOptimal {
     sulfurOptimal?: number;
     phOptimal?: number;
     ecOptimal?: number;
+}
+
+// Interfaces for the new API response
+interface CalculationResponse {
+    user_info: UserInfo;
+    optimization_method: string;
+    linear_programming_enabled: boolean;
+    integration_metadata: IntegrationMetadata;
+    optimization_summary: OptimizationSummary;
+    performance_metrics: PerformanceMetrics;
+    cost_analysis: CostAnalysis;
+    calculation_results: CalculationResults;
+    linear_programming_analysis: LinearProgrammingAnalysis;
+    data_sources: DataSources;
+}
+
+interface UserInfo {
+    clientId: number;
+    userEmail: string;
+    password: string;
+    profileId: number;
+    userStatusId: number;
+    id: number;
+    dateCreated: string;
+    dateUpdated?: string;
+    createdBy: number;
+    updatedBy?: number;
+}
+
+interface IntegrationMetadata {
+    data_source: string;
+    user_id: number;
+    catalog_id: number;
+    phase_id: number;
+    water_id: number;
+    fertilizers_analyzed: number;
+    fertilizers_processed: number;
+    micronutrients_added: number;
+    optimization_method: string;
+    calculation_timestamp: string;
+    safety_caps_applied: boolean;
+    strict_caps_mode: boolean;
+    api_endpoints_used: string[];
+}
+
+interface OptimizationSummary {
+    method: string;
+    status: string;
+    active_fertilizers: number;
+    total_dosage_g_per_L: number;
+    average_deviation_percent: number;
+    solver_time_seconds: number;
+    ionic_balance_error: number;
+    success_rate_percent: number;
+}
+
+interface PerformanceMetrics {
+    fertilizers_fetched: number;
+    fertilizers_processed: number;
+    micronutrients_auto_added: number;
+    fertilizers_matched: number;
+    active_dosages: number;
+    optimization_method: string;
+    micronutrient_coverage: string;
+    safety_status: string;
+    precision_achieved: string;
+}
+
+interface CostAnalysis {
+    total_cost_crc: number;
+    cost_per_liter_crc: number;
+    cost_per_m3_crc: number;
+    api_price_coverage_percent: number;
+    fertilizer_costs: { [key: string]: number };
+    cost_percentages: { [key: string]: number };
+    pricing_sources: {
+        api_prices_used: number;
+        fallback_prices_used: number;
+    };
+    regional_factor: number;
+    region: string;
+}
+
+interface CalculationResults {
+    fertilizer_dosages: { [key: string]: FertilizerDosage };
+    achieved_concentrations: { [key: string]: number };
+    deviations_percent: { [key: string]: number };
+    optimization_method: string;
+    optimization_status: string;
+    objective_value: number;
+    ionic_balance_error: number;
+    solver_time_seconds: number;
+    active_fertilizers: number;
+    total_dosage_g_per_L: number;
+    calculation_status: {
+        success: boolean;
+        warnings: string[];
+        iterations: number;
+        convergence_error: number;
+    };
+    cost_analysis: CostAnalysis;
+    pricing_info: any;
+    verification_results: VerificationResult[];
+    pdf_report: {
+        generated: boolean;
+        filename: string;
+        integration_method: string;
+    };
+}
+
+interface FertilizerDosage {
+    dosage_ml_per_L: number;
+    dosage_g_per_L: number;
+}
+
+interface VerificationResult {
+    parameter: string;
+    target_value: number;
+    actual_value: number;
+    percentage_deviation: number;
+    status: string;
+}
+
+interface LinearProgrammingAnalysis {
+    excellent_nutrients: number;
+    good_nutrients: number;
+    deviation_nutrients: number;
+    total_nutrients: number;
+}
+
+interface DataSources {
+    fertilizers_api: string;
+    requirements_api: string;
+    water_api: string;
+    user_api: string;
+    micronutrient_supplementation: string;
+    optimization_engine: string;
+    safety_system: string;
 }
 interface CropPhaseSolutionRequirement {
     id: number;
@@ -224,8 +362,25 @@ export class NutrientFormulationComponent implements OnInit {
     successMessage = '';
     showAdvancedOptions = false;
     Message!: string;
+
+    calculationForm!: FormGroup;
+
+    // Data arrays
+    catalogs: Catalog[] = [];
+    // Results
+    calculationResults: CalculationResponse | null = null;
+
+    showResults = false;
+
+    // Chart data
+    fertilizerChartData: any[] = [];
+    nutrientChartData: any[] = [];
+    costChartData: any[] = [];
+    public Math = Math;
+
     constructor(
         private fb: FormBuilder,
+        private http: HttpClient,
         private router: Router,
         private authService: AuthService,
         private waterChemistryService: WaterChemistryService,
@@ -235,10 +390,33 @@ export class NutrientFormulationComponent implements OnInit {
         private apiService: ApiService
     ) {
         this.formulationForm = this.createForm();
+        this.calculationForm = this.createCalculationForm(); // Add this line
+    }
+
+    // Add this new method to create the calculation form
+    private createCalculationForm(): FormGroup {
+        return this.fb.group({
+            user_id: [1, [Validators.required, Validators.min(1)]],
+            catalog_id: [null, Validators.required],
+            phase_id: [null, Validators.required],
+            water_id: [null, Validators.required],
+            volume_liters: [1000, [Validators.required, Validators.min(1), Validators.max(100000)]],
+            use_ml: [true],
+            apply_safety_caps: [true],
+            strict_caps: [false]
+        });
     }
     ngOnInit(): void {
+        // Ensure forms are initialized
+        if (!this.formulationForm) {
+            this.formulationForm = this.createForm();
+        }
+        if (!this.calculationForm) {
+            this.calculationForm = this.createCalculationForm();
+        }
         this.loadSavedRecipes();
         this.loadInitialData();
+        this.loadFormData();
     }
     private createForm(): FormGroup {
         return this.fb.group({
@@ -365,25 +543,6 @@ export class NutrientFormulationComponent implements OnInit {
         a.download = `receta-${this.currentRecipe.name}.json`;
         a.click();
         URL.revokeObjectURL(url);
-    }
-    resetForm(): void {
-        this.formulationForm.reset();
-        this.currentRecipe = null;
-        this.formulationResults = [];
-        this.errorMessage = '';
-        this.Message = '';
-        this.formulationForm.patchValue({
-            recipeName: 'Nueva Receta',
-            volumeLiters: 1000,
-            targetPh: 6.5,
-            targetEc: 1.5,
-            maxBudgetPerLiter: 100,
-            preferOrganic: false,
-            excludeFertilizers: []
-        });
-    }
-    navigateBack(): void {
-        this.router.navigate(['/dashboard']);
     }
     getWaterSourceName(id: number): string {
         const source = this.waterSources.find(w => w.id === id);
@@ -1772,5 +1931,254 @@ export class NutrientFormulationComponent implements OnInit {
         } else {
             return description || 'Receta sin nombre';
         }
+    }
+
+
+
+    private loadFormData(): void {
+        this.isLoading = true;
+
+        forkJoin({
+            catalogs: this.loadCatalogs(),
+            waterSources: this.loadWaterSources(),
+            cropPhases: this.loadCropPhases()
+        }).pipe(
+            catchError(error => {
+                console.error('Error loading form data:', error);
+                this.errorMessage = 'Error al cargar los datos del formulario';
+                return of({ catalogs: [], waterSources: [], cropPhases: [] });
+            })
+        ).subscribe({
+            next: (data: any) => {
+                console.log('Form data loaded:', data);
+                this.catalogs = data.catalogs.catalogs;
+                this.waterSources = data.waterSources.waterChemistries;
+                this.cropPhases = data.cropPhases.cropPhases;
+                this.isLoading = false;
+            },
+            error: (error) => {
+                console.error('Error in loadFormData:', error);
+                this.errorMessage = 'Error al cargar los datos del formulario';
+                this.isLoading = false;
+            }
+        });
+    }
+
+    private loadCatalogs(): Observable<Catalog[]> {
+        // Use your existing catalog service or API service
+        return this.catalogService?.getAll()
+    }
+
+    private loadWaterSources(): Observable<WaterChemistry[]> {
+        return this.waterChemistryService.getAll();
+    }
+
+    private loadCropPhases(): Observable<CropPhase[]> {
+        return this.apiService.get<CropPhase[]>('/CropPhase') || of([
+            { id: 1, cropId: 1, catalogId: 1, name: 'Fase de Crecimiento', active: true }
+        ]);
+    }
+
+    onSubmit(): void {
+        if (this.calculationForm.valid) {
+            this.performCalculation();
+        } else {
+            this.markFormGroupTouched();
+        }
+    }
+
+    private performCalculation(): void {
+        this.isLoading = true;
+        this.errorMessage = '';
+        this.successMessage = '';
+        this.showResults = false;
+
+        const formData = this.calculationForm.value;
+
+        // Build the API URL with query parameters
+        const apiUrl = 'https://fertilizer-calculator-api.onrender.com/swagger-integrated-calculation';
+
+        let params = new HttpParams()
+            .set('user_id', formData.user_id.toString())
+            .set('catalog_id', formData.catalog_id.toString())
+            .set('phase_id', formData.phase_id.toString())
+            .set('water_id', formData.water_id.toString())
+            .set('volume_liters', formData.volume_liters.toString())
+            .set('use_ml', formData.use_ml.toString())
+            .set('apply_safety_caps', formData.apply_safety_caps.toString())
+            .set('strict_caps', formData.strict_caps.toString());
+
+        console.log('calling API URL: ', apiUrl + '?' + params.toString());
+
+        this.http.get<CalculationResponse>(apiUrl, { params }).pipe(
+            tap(response => {
+                console.log('API Response:', response);
+            }),
+            catchError(error => {
+                console.error('API Error:', error);
+                this.errorMessage = `Error en la calculadora de nutrientes: ${error.message || 'Error desconocido'}`;
+                return of(null);
+            })
+        ).subscribe({
+            next: (response) => {
+                this.isLoading = false;
+                if (response) {
+                    this.calculationResults = response;
+                    this.processResults();
+                    this.showResults = true;
+                    this.successMessage = 'Cálculo completado exitosamente';
+
+                    // Scroll to results
+                    setTimeout(() => {
+                        const resultsElement = document.getElementById('calculation-results');
+                        if (resultsElement) {
+                            resultsElement.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }, 100);
+                }
+            },
+            error: (error) => {
+                this.isLoading = false;
+                this.errorMessage = `Error inesperado: ${error.message}`;
+            }
+        });
+    }
+
+    private processResults(): void {
+        if (!this.calculationResults) return;
+
+        // Process fertilizer dosages for chart
+        const fertilizerDosages = this.calculationResults.calculation_results.fertilizer_dosages;
+        this.fertilizerChartData = Object.entries(fertilizerDosages)
+            .filter(([name, dosage]) => dosage.dosage_g_per_L > 0)
+            .map(([name, dosage]) => ({
+                name: name,
+                dosage_g_per_L: dosage.dosage_g_per_L,
+                dosage_ml_per_L: dosage.dosage_ml_per_L
+            }))
+            .sort((a, b) => b.dosage_g_per_L - a.dosage_g_per_L);
+
+        // Process achieved vs target concentrations for chart
+        const achievedConc = this.calculationResults.calculation_results.achieved_concentrations;
+        const verificationResults = this.calculationResults.calculation_results.verification_results;
+
+        this.nutrientChartData = verificationResults.map(result => ({
+            parameter: result.parameter,
+            target: result.target_value,
+            actual: result.actual_value,
+            deviation: Math.abs(result.percentage_deviation),
+            status: result.status
+        }));
+
+        // Process cost breakdown for chart
+        const costBreakdown = this.calculationResults.cost_analysis.fertilizer_costs;
+        this.costChartData = Object.entries(costBreakdown)
+            .filter(([name, cost]) => cost > 0)
+            .map(([name, cost]) => ({
+                name: name,
+                cost: cost,
+                percentage: this.calculationResults!.cost_analysis.cost_percentages[name] || 0
+            }))
+            .sort((a, b) => b.cost - a.cost);
+    }
+
+    private markFormGroupTouched(): void {
+        Object.keys(this.calculationForm.controls).forEach(key => {
+            const control = this.calculationForm.get(key);
+            control?.markAsTouched();
+        });
+    }
+
+    // Helper methods for templates
+    getActiveFertilizers(): Array<{ name: string, dosage: FertilizerDosage }> {
+        if (!this.calculationResults) return [];
+
+        const dosages = this.calculationResults.calculation_results.fertilizer_dosages;
+        return Object.entries(dosages)
+            .filter(([name, dosage]) => dosage.dosage_g_per_L > 0)
+            .map(([name, dosage]) => ({ name, dosage }));
+    }
+
+    getExcellentNutrients(): VerificationResult[] {
+        if (!this.calculationResults) return [];
+        return this.calculationResults.calculation_results.verification_results
+            .filter(result => result.status === 'Excellent');
+    }
+
+    getDeviationNutrients(): VerificationResult[] {
+        if (!this.calculationResults) return [];
+        return this.calculationResults.calculation_results.verification_results
+            .filter(result => result.status !== 'Excellent');
+    }
+
+    getTotalCostFormatted(): string {
+        if (!this.calculationResults) return '0';
+        return new Intl.NumberFormat('es-CR', {
+            style: 'currency',
+            currency: 'CRC'
+        }).format(this.calculationResults.cost_analysis.total_cost_crc);
+    }
+
+    getCostPerLiterFormatted(): string {
+        if (!this.calculationResults) return '0';
+        return new Intl.NumberFormat('es-CR', {
+            style: 'currency',
+            currency: 'CRC'
+        }).format(this.calculationResults.cost_analysis.cost_per_liter_crc);
+    }
+
+    formatCurrency(value: number): string {
+        return new Intl.NumberFormat('es-CR', {
+            style: 'currency',
+            currency: 'CRC'
+        }).format(value);
+    }
+
+    formatNumber(value: number, decimals: number = 2): string {
+        return value.toFixed(decimals);
+    }
+
+    formatPercent(value: number): string {
+        return `${(Math.abs(value) * 100).toFixed(4)}%`;
+    }
+
+    resetForm(): void {
+        this.calculationForm.reset({
+            user_id: 1,
+            catalog_id: 1,
+            phase_id: 1,
+            water_id: 1,
+            volume_liters: 1000,
+            use_ml: true,
+            apply_safety_caps: true,
+            strict_caps: true
+        });
+        this.calculationResults = null;
+        this.showResults = false;
+        this.errorMessage = '';
+        this.successMessage = '';
+    }
+
+    navigateBack(): void {
+        this.router.navigate(['/dashboard']);
+    }
+
+    // Export functionality
+    exportResults(): void {
+        if (!this.calculationResults) return;
+
+        const dataStr = JSON.stringify(this.calculationResults, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+        const exportFileDefaultName = `nutrient-calculation-${Date.now()}.json`;
+
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    }
+
+    printResults(): void {
+        window.print();
     }
 }

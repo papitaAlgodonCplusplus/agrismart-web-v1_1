@@ -771,8 +771,34 @@ async def swagger_integrated_calculation_with_linear_programming(
                         fert_name, exact_price_mapping, keyword_price_mapping
                     )
                     
-                    # Create enhanced fertilizer data with price
-                    enhanced_fert_data = fert_data.copy()
+                    # FIXED: Create enhanced fertilizer data properly
+                    # Ensure fert_data is a dictionary, not a Fertilizer object
+                    if hasattr(fert_data, 'dict'):
+                        # If it's a Pydantic model, convert to dict
+                        enhanced_fert_data = fert_data.dict()
+                    elif hasattr(fert_data, 'to_dict'):
+                        # If it has to_dict method
+                        enhanced_fert_data = fert_data.to_dict()
+                    elif isinstance(fert_data, dict):
+                        # If it's already a dictionary
+                        enhanced_fert_data = fert_data.copy()
+                    else:
+                        # Fallback: try to convert Fertilizer object to dict
+                        try:
+                            enhanced_fert_data = fertilizer.dict()
+                        except:
+                            # Last resort: create basic dict from fertilizer
+                            enhanced_fert_data = {
+                                'name': fertilizer.name,
+                                'percentage': fertilizer.percentage,
+                                'molecular_weight': fertilizer.molecular_weight,
+                                'salt_weight': fertilizer.salt_weight,
+                                'density': fertilizer.density,
+                                'chemistry': fertilizer.chemistry.dict() if hasattr(fertilizer.chemistry, 'dict') else {},
+                                'composition': fertilizer.composition.dict() if hasattr(fertilizer.composition, 'dict') else {}
+                            }
+                    
+                    # Now safely add price information
                     enhanced_fert_data['price'] = price_from_api
                     enhanced_fert_data['price_match_type'] = match_type
                     
@@ -788,7 +814,9 @@ async def swagger_integrated_calculation_with_linear_programming(
                         
                 except Exception as e:
                     print(f"  [FAILED] Error processing {fert_data.get('name', 'Unknown')}: {e}")
-            
+                    # Continue processing other fertilizers instead of failing completely
+                    continue
+                
             print(f"\n💰 PRICE MATCHING SUMMARY:")
             print(f"[SUCCESS] Prices found: {price_matches_found}/{len(api_fertilizers)} ({price_matches_found/len(api_fertilizers)*100:.1f}%)")
             print(f"[FAILED] No prices: {price_matches_failed}/{len(api_fertilizers)} ({price_matches_failed/len(api_fertilizers)*100:.1f}%)")
