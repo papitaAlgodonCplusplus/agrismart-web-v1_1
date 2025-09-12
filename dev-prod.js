@@ -94,12 +94,16 @@ function updateEnvironmentFile(isDev) {
 
     if (isDev) {
       // Dev mode: comment lines 8,9 and uncomment lines 4,5
-      if (lines[7] && !lines[7].trim().startsWith('//')) {
-        lines[7] = '//' + lines[7];
-        modified = true;
-      }
       if (lines[8] && !lines[8].trim().startsWith('//')) {
         lines[8] = '//' + lines[8];
+        modified = true;
+      }
+      if (lines[9] && !lines[9].trim().startsWith('//')) {
+        lines[9] = '//' + lines[9];
+        modified = true;
+      }
+      if (lines[10] && !lines[10].trim().startsWith('//')) {
+        lines[10] = '//' + lines[10];
         modified = true;
       }
       if (lines[3] && lines[3].trim().startsWith('//')) {
@@ -110,14 +114,22 @@ function updateEnvironmentFile(isDev) {
         lines[4] = lines[4].replace(/^(\s*)\/\//, '$1');
         modified = true;
       }
-    } else {
-      // Prod mode: uncomment lines 8,9 and comment lines 4,5
-      if (lines[7] && lines[7].trim().startsWith('//')) {
-        lines[7] = lines[7].replace(/^(\s*)\/\//, '$1');
+      if (lines[5] && lines[5].trim().startsWith('//')) {
+        lines[5] = lines[5].replace(/^(\s*)\/\//, '$1');
         modified = true;
       }
+    } else {
+      // Prod mode: uncomment lines 8,9 and comment lines 4,5
       if (lines[8] && lines[8].trim().startsWith('//')) {
         lines[8] = lines[8].replace(/^(\s*)\/\//, '$1');
+        modified = true;
+      }
+      if (lines[9] && lines[9].trim().startsWith('//')) {
+        lines[9] = lines[9].replace(/^(\s*)\/\//, '$1');
+        modified = true;
+      }
+      if (lines[10] && lines[10].trim().startsWith('//')) {
+        lines[10] = lines[10].replace(/^(\s*)\/\//, '$1');
         modified = true;
       }
       if (lines[3] && !lines[3].trim().startsWith('//')) {
@@ -126,6 +138,10 @@ function updateEnvironmentFile(isDev) {
       }
       if (lines[4] && !lines[4].trim().startsWith('//')) {
         lines[4] = '//' + lines[4];
+        modified = true;
+      }
+      if (lines[5] && !lines[5].trim().startsWith('//')) {
+        lines[5] = '//' + lines[5];
         modified = true;
       }
     }

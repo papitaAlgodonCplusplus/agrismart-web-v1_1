@@ -646,7 +646,10 @@ def find_best_price_match(fertilizer_name, exact_mapping, keyword_mapping):
     
     # 4. No se encontró coincidencia
     return None, "no_match"
-
+import base64
+import os
+from fastapi import Query, HTTPException
+from fastapi.responses import JSONResponse
 
 @app.get("/swagger-integrated-calculation")
 async def swagger_integrated_calculation_with_linear_programming(
@@ -658,7 +661,9 @@ async def swagger_integrated_calculation_with_linear_programming(
     # NEW: Enable LP optimization
     linear_programming: bool = Query(default=True),
     apply_safety_caps: bool = Query(default=True),     # Safety caps
-    strict_caps: bool = Query(default=True)             # Strict safety mode
+    strict_caps: bool = Query(default=True),             # Strict safety mode
+    # NEW PARAMETER: Return PDF content in response
+    include_pdf_data: bool = Query(default=False, description="Include PDF file as base64 in response")
 ):
     """
     [INFO] ENHANCED SWAGGER API INTEGRATION WITH LINEAR PROGRAMMING OPTIMIZATION
@@ -676,11 +681,13 @@ async def swagger_integrated_calculation_with_linear_programming(
     - [CHECK] Professional PDF reports
     - [CHECK] Ionic balance optimization
     - [CHECK] Cost and dosage minimization
+    - [NEW] Optional PDF data return as base64
 
     Parameters:
     - linear_programming: Enable LP optimization (True) or use deterministic (False)
     - apply_safety_caps: Apply nutrient safety caps before optimization
     - strict_caps: Use strict safety limits for maximum protection
+    - include_pdf_data: Include PDF file content as base64 in response (default: False)
 
     The LP optimizer prioritizes (in order):
     1. [TARGET] Minimize deviations from target concentrations (HIGHEST PRIORITY)
@@ -704,6 +711,7 @@ async def swagger_integrated_calculation_with_linear_programming(
             f"[INFO] Safety Caps: {apply_safety_caps} (Strict: {strict_caps})")
         print(f"[INFO] User ID: {user_id}")
         print(f"[SECTION] Volume: {volume_liters:,} L")
+        print(f"[INFO] Include PDF Data: {include_pdf_data}")
         calculation_results = {}
 
         # Initialize Swagger client and authenticate
@@ -721,10 +729,6 @@ async def swagger_integrated_calculation_with_linear_programming(
             print(
                 f"[INFO] User: {user_info.get('userEmail', 'N/A')} (ID: {user_id})")
 
-            # Fetch comprehensive data from API
-            print(f"\n📡 Fetching comprehensive data from API...")
-
-           
             # Fetch comprehensive data from API
             print(f"\n📡 Fetching comprehensive data from API...")
             
@@ -878,7 +882,7 @@ async def swagger_integrated_calculation_with_linear_programming(
                     )
 
                 # Create calculation results in standard format
-                print(f"\n[INFO] QIESP :")
+                print(f"\n[INFO] Creating calculation results...")
                 calculation_results = {
                     'fertilizer_dosages': fertilizer_dosages,
                     'achieved_concentrations': lp_result.achieved_concentrations,
@@ -1132,6 +1136,10 @@ async def swagger_integrated_calculation_with_linear_programming(
                 print(f"[CHECK] Deterministic calculation completed")
 
         # ===== PDF REPORT GENERATION =====
+        pdf_filename = None
+        pdf_base64 = None
+        pdf_metadata = {}
+        
         try:
             print(f"\n[INFO] Generating comprehensive PDF report...")
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1168,10 +1176,38 @@ async def swagger_integrated_calculation_with_linear_programming(
 
             pdf_generator.generate_comprehensive_pdf(
                 calculation_data, pdf_filename)
+            
+            # NEW: Read PDF file and convert to base64 if requested
+            if include_pdf_data and os.path.exists(pdf_filename):
+                try:
+                    with open(pdf_filename, 'rb') as pdf_file:
+                        pdf_content = pdf_file.read()
+                        pdf_base64 = base64.b64encode(pdf_content).decode('utf-8')
+                        
+                    # Get PDF metadata
+                    pdf_size = len(pdf_content)
+                    pdf_metadata = {
+                        "filename": os.path.basename(pdf_filename),
+                        "full_path": pdf_filename,
+                        "size_bytes": pdf_size,
+                        "size_mb": round(pdf_size / (1024 * 1024), 2),
+                        "content_type": "application/pdf",
+                        "encoding": "base64"
+                    }
+                    
+                    print(f"[SUCCESS] PDF encoded to base64: {pdf_size} bytes")
+                    
+                except Exception as e:
+                    print(f"[ERROR] Failed to encode PDF to base64: {e}")
+                    pdf_base64 = None
+                    pdf_metadata = {"error": str(e)}
+            
             calculation_results['pdf_report'] = {
                 "generated": True,
                 "filename": pdf_filename,
-                "integration_method": f"swagger_api_linear_programming"
+                "integration_method": f"swagger_api_linear_programming",
+                "include_data": include_pdf_data,
+                "base64_included": pdf_base64 is not None
             }
 
             print(
@@ -1187,6 +1223,7 @@ async def swagger_integrated_calculation_with_linear_programming(
                 "error": str(e),
                 "integration_method": f"swagger_api_linear_programming"
             }
+            
         # ===== CREATE COMPREHENSIVE API RESPONSE =====
         response = {
             "user_info": user_info,
@@ -1262,6 +1299,37 @@ async def swagger_integrated_calculation_with_linear_programming(
                 "micronutrient_supplementation": "Local Database Auto-Addition",
                 "optimization_engine": "Advanced Linear Programming (PuLP/SciPy)" if linear_programming else "Deterministic Chemistry",
                 "safety_system": "Integrated Nutrient Caps"
+            },
+            
+            # NEW: PDF DATA SECTION - Only included if include_pdf_data=True
+            **({"pdf_data": {
+                "content_base64": pdf_base64,
+                "metadata": pdf_metadata,
+                "usage_instructions": {
+                    "description": "PDF content encoded as base64 string",
+                    "decode_example": "base64.b64decode(pdf_data['content_base64'])",
+                    "save_example": "with open('report.pdf', 'wb') as f: f.write(base64.b64decode(content))"
+                }
+            }} if include_pdf_data and pdf_base64 else {}),
+            
+            # Enhanced calculation data for building the PDF
+            "calculation_data_used": {
+                "water_analysis": water_analysis,
+                "target_concentrations": target_concentrations,
+                "fertilizer_database": [fert.to_dict() for fert in enhanced_fertilizers],
+                "api_fertilizers_raw": fertilizers_data,
+                "user_info": user_info,
+                "volume_liters": volume_liters,
+                "safety_caps": {
+                    "applied": apply_safety_caps,
+                    "strict_mode": strict_caps
+                },
+                "price_matching_summary": {
+                    "matches_found": price_matches_found,
+                    "matches_failed": price_matches_failed,
+                    "exact_mappings": len(exact_price_mapping),
+                    "keyword_mappings": len(keyword_price_mapping)
+                }
             }
         }
 
@@ -1277,6 +1345,9 @@ async def swagger_integrated_calculation_with_linear_programming(
             f"[INFO] Linear Programming: {'ENABLED' if linear_programming else 'DISABLED'}")
         print(
             f"[INFO] Safety Caps: {'APPLIED' if apply_safety_caps else 'DISABLED'}")
+        print(f"[INFO] PDF Data Included: {'YES' if include_pdf_data and pdf_base64 else 'NO'}")
+        if pdf_base64:
+            print(f"[INFO] PDF Size: {pdf_metadata.get('size_mb', 0)} MB")
         print(f"[INFO] API Fertilizers: {len(api_fertilizers)}")
         print(f"[INFO] Enhanced Fertilizers: {len(enhanced_fertilizers)}")
         print(
@@ -1307,7 +1378,6 @@ async def swagger_integrated_calculation_with_linear_programming(
         traceback.print_exc()
         raise HTTPException(
             status_code=500, detail=f"Enhanced integration error: {str(e)}")
-
 
 @app.get("/swagger-integrated-calculation-with-constraints")
 async def swagger_integrated_calculation_with_constraints(
@@ -1716,7 +1786,8 @@ async def swagger_integrated_calculation_with_constraints(
         
         print(f"{'='*80}")
         
-        return response
+        return 
+    
         
     except Exception as e:
         print(f"\n[FAILED] Constrained calculation failed: {str(e)}")
