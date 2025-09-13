@@ -1,7 +1,7 @@
 // src/app/features/crop-production/services/crop-production.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, interval } from 'rxjs';
+import { Observable, interval, of } from 'rxjs';
 import { map, catchError, startWith, switchMap } from 'rxjs/operators';
 import { ApiService } from '../../../core/services/api.service';
 import { ApiConfigService } from '../../../core/services/api-config.service';
@@ -241,7 +241,7 @@ export class CropProductionService {
     private apiService: ApiService,
     private apiConfig: ApiConfigService,
     private http: HttpClient
-  ) {}
+  ) { }
 
   /**
    * Get all crop productions with optional filters
@@ -322,12 +322,12 @@ export class CropProductionService {
   create(data: CropProductionCreateRequest): Observable<CropProduction> {
     const payload = {
       ...data,
-      plantingDate: typeof data.plantingDate === 'string' 
-        ? data.plantingDate 
+      plantingDate: typeof data.plantingDate === 'string'
+        ? data.plantingDate
         : data.plantingDate.toISOString(),
       ...(data.estimatedHarvestDate && {
-        estimatedHarvestDate: typeof data.estimatedHarvestDate === 'string' 
-          ? data.estimatedHarvestDate 
+        estimatedHarvestDate: typeof data.estimatedHarvestDate === 'string'
+          ? data.estimatedHarvestDate
           : data.estimatedHarvestDate.toISOString()
       }),
       status: data.status || 'Preparacion',
@@ -345,18 +345,18 @@ export class CropProductionService {
     const payload = {
       ...data,
       ...(data.plantingDate && {
-        plantingDate: typeof data.plantingDate === 'string' 
-          ? data.plantingDate 
+        plantingDate: typeof data.plantingDate === 'string'
+          ? data.plantingDate
           : data.plantingDate.toISOString()
       }),
       ...(data.estimatedHarvestDate && {
-        estimatedHarvestDate: typeof data.estimatedHarvestDate === 'string' 
-          ? data.estimatedHarvestDate 
+        estimatedHarvestDate: typeof data.estimatedHarvestDate === 'string'
+          ? data.estimatedHarvestDate
           : data.estimatedHarvestDate.toISOString()
       }),
       ...(data.actualHarvestDate && {
-        actualHarvestDate: typeof data.actualHarvestDate === 'string' 
-          ? data.actualHarvestDate 
+        actualHarvestDate: typeof data.actualHarvestDate === 'string'
+          ? data.actualHarvestDate
           : data.actualHarvestDate.toISOString()
       })
     };
@@ -386,14 +386,23 @@ export class CropProductionService {
     return this.apiService.post<CropProduction>(`${this.baseUrl}/${id}/next-stage`, payload);
   }
 
+  getCropProduction(cropId: number): Observable<CropProduction | null> {
+    return this.apiService.get<CropProduction[]>(this.baseUrl, new HttpParams().set('cropId', cropId.toString())).pipe(
+      map(productions => productions.length > 0 ? productions[0] : null),
+      catchError(() => {
+        return of(null);
+      })
+    );
+  }
+
   /**
    * Record harvest
    */
   recordHarvest(id: number, harvestData: HarvestRecord): Observable<CropProduction> {
     const payload = {
       ...harvestData,
-      harvestDate: typeof harvestData.harvestDate === 'string' 
-        ? harvestData.harvestDate 
+      harvestDate: typeof harvestData.harvestDate === 'string'
+        ? harvestData.harvestDate
         : harvestData.harvestDate.toISOString()
     };
 
@@ -412,8 +421,8 @@ export class CropProductionService {
    */
   clone(id: number, newPlantingDate: Date | string, productionUnitId?: number): Observable<CropProduction> {
     const payload = {
-      plantingDate: typeof newPlantingDate === 'string' 
-        ? newPlantingDate 
+      plantingDate: typeof newPlantingDate === 'string'
+        ? newPlantingDate
         : newPlantingDate.toISOString(),
       ...(productionUnitId && { productionUnitId })
     };
@@ -426,7 +435,7 @@ export class CropProductionService {
    */
   getStatistics(farmId?: number, dateFrom?: string, dateTo?: string): Observable<CropProductionStatistics> {
     let params = new HttpParams();
-    
+
     if (farmId) {
       params = params.set('farmId', farmId.toString());
     }
@@ -495,9 +504,9 @@ export class CropProductionService {
   getRecentlyPlanted(days: number = 30): Observable<CropProduction[]> {
     const dateFrom = new Date();
     dateFrom.setDate(dateFrom.getDate() - days);
-    
-    return this.getAll({ 
-      plantingDateFrom: dateFrom.toISOString().split('T')[0] 
+
+    return this.getAll({
+      plantingDateFrom: dateFrom.toISOString().split('T')[0]
     });
   }
 
@@ -506,7 +515,7 @@ export class CropProductionService {
    */
   getProductionCalendar(year?: number, month?: number): Observable<any[]> {
     let params = new HttpParams();
-    
+
     if (year) {
       params = params.set('year', year.toString());
     }
@@ -609,12 +618,12 @@ export class CropProductionService {
   }
 
   bulkHarvest(ids: number[], harvestData: Partial<HarvestRecord>): Observable<CropProduction[]> {
-    const payload = { 
-      ids, 
+    const payload = {
+      ids,
       ...harvestData,
       ...(harvestData.harvestDate && {
-        harvestDate: typeof harvestData.harvestDate === 'string' 
-          ? harvestData.harvestDate 
+        harvestDate: typeof harvestData.harvestDate === 'string'
+          ? harvestData.harvestDate
           : harvestData.harvestDate.toISOString()
       })
     };
@@ -631,7 +640,7 @@ export class CropProductionService {
    */
   exportData(filters?: any, format: 'csv' | 'excel' | 'pdf' = 'csv'): Observable<Blob> {
     let params = new HttpParams().set('format', format);
-    
+
     if (filters) {
       Object.keys(filters).forEach(key => {
         if (filters[key] !== undefined && filters[key] !== null) {
@@ -748,7 +757,7 @@ export class CropProductionService {
       'Fructificacion': 95,
       'Cosecha': 100
     };
-    
+
     const threshold = stageThresholds[status] || 100;
     return progress >= threshold;
   }
@@ -763,12 +772,12 @@ export class CropProductionService {
       'Cosecha',
       'Finalizada'
     ];
-    
+
     const currentIndex = statusFlow.indexOf(currentStatus);
     if (currentIndex === -1 || currentIndex === statusFlow.length - 1) {
       return null;
     }
-    
+
     return statusFlow[currentIndex + 1];
   }
 
@@ -826,15 +835,15 @@ export class CropProductionService {
   private getAuthHeaders(includeContentType: boolean = true): { [header: string]: string } {
     const token = localStorage.getItem('access_token');
     const headers: { [header: string]: string } = {};
-    
+
     if (includeContentType) {
       headers['Content-Type'] = 'application/json';
     }
-    
+
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     return headers;
   }
 

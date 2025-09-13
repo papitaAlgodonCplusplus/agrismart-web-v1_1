@@ -1,4 +1,4 @@
-// src/app/features/services/irrigation-sector.service.ts - ENHANCED FOR IRRIGATION ENGINEERING MODULE
+// src/app/features/services/irrigation-sector.service.ts - FIXED FOR CORRECT API ENDPOINTS
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, forkJoin, interval } from 'rxjs';
@@ -8,7 +8,7 @@ import { ApiConfigService } from '../../core/services/api-config.service';
 import { IrrigationSector } from '../../core/models/models';
 
 // ============================================================================
-// ENHANCED INTERFACES FOR IRRIGATION ENGINEERING MODULE
+// INTERFACES MATCHING ACTUAL API RESPONSES
 // ============================================================================
 
 export interface Container {
@@ -57,6 +57,83 @@ export interface GrowingMedium {
   createdBy: number;
 }
 
+// API Response structures matching the documented endpoints
+export interface CropProductionIrrigationSectorResponse {
+  success: boolean;
+  exception: string;
+  result: {
+    cropProductionIrrigationSectors: CropProductionIrrigationSector[];
+  };
+}
+
+export interface CropProductionIrrigationSector {
+  id: number;
+  dateCreated: string;
+  dateUpdated: string;
+  createdBy: number;
+  updatedBy: number;
+  cropProductionId: number;
+  name: string;
+  polygon: string;
+  active: boolean;
+}
+
+export interface IrrigationMeasurementResponse {
+  success: boolean;
+  exception: string;
+  result: {
+    irrigationMeasurements: IrrigationMeasurement[];
+  };
+}
+
+export interface IrrigationMeasurement {
+  id: number;
+  eventId: number;
+  measurementVariableId: number;
+  recordValue: number;
+}
+
+export interface IrrigationRequestResponse {
+  success: boolean;
+  exception: string;
+  result: {
+    irrigationRequests: IrrigationRequest[];
+  };
+}
+
+export interface IrrigationRequest {
+  id: number;
+  dateCreated: string;
+  dateUpdated: string;
+  createdBy: number;
+  updatedBy: number;
+  cropProductionId: number;
+  irrigate: boolean;
+  irrigationTime: number;
+  dateStarted: string;
+  dateEnded: string;
+}
+
+export interface RelayModuleCropProductionIrrigationSectorResponse {
+  success: boolean;
+  exception: string;
+  result: {
+    relayModuleCropProductionIrrigationSectors: RelayModuleCropProductionIrrigationSector[];
+  };
+}
+
+export interface RelayModuleCropProductionIrrigationSector {
+  id: number;
+  relayModuleId: number;
+  cropProductionIrrigationSectorId: number;
+  active: boolean;
+  dateCreated: string;
+  dateUpdated: string;
+  createdBy: number;
+  updatedBy: number;
+}
+
+// Extended interfaces for frontend functionality
 export interface IrrigationEvent {
   duration: number;
   id: number;
@@ -70,24 +147,6 @@ export interface IrrigationEvent {
   waterAmount?: number;
   notes?: string;
   createdAt: Date;
-}
-
-export interface IrrigationMeasurement {
-  pressure: number;
-  timestamp: string | Date;
-  temperature: number;
-  humidity: number;
-  id: number;
-  recordDateTime: Date;
-  cropProductionId: number;
-  eventId?: number;
-  dateTimeStart: Date;
-  dateTimeEnd: Date;
-  irrigationVolume: number;
-  drainVolume: number;
-  measurementVariableId?: number;
-  recordValue?: number;
-  dateCreated: Date;
 }
 
 export interface HydraulicCalculation {
@@ -153,7 +212,6 @@ export interface FlowRateCalculation {
 
 export interface IrrigationSystemStatus {
   lastUpdate: string | Date;
-  // Enhanced properties for system status monitoring
   farmId: number;
   systemStatus: string;
   devices: any;
@@ -171,17 +229,8 @@ export interface IrrigationSystemStatus {
     }[];
   }[];
   alerts: IrrigationAlert[];
-  // Legacy/optional properties for backward compatibility
-  activeSectors?: any;
-  systemPressure?: number; // bar
-  totalFlowRate?: number; // L/h
-  activeZones?: number;
-  pumpStatus?: 'running' | 'stopped' | 'maintenance';
-  filterStatus?: 'clean' | 'needs_cleaning' | 'clogged';
-  valveStatuses?: { [zoneId: number]: 'open' | 'closed' | 'partial' };
 }
 
-// Existing interfaces...
 export interface IrrigationSectorFilters {
   onlyActive?: boolean;
   irrigationStatus?: string;
@@ -197,50 +246,22 @@ export interface IrrigationSectorFilters {
   waterFlowMin?: number;
   waterFlowMax?: number;
   scheduleEnabled?: boolean;
+  // Additional filters matching API parameters
+  companyId?: number;
+  productionUnitId?: number;
+  includeInactives?: boolean;
 }
 
 export interface IrrigationSectorCreateRequest {
   name: string;
   description?: string;
   cropProductionId: number;
-  irrigationSettings?: {
-    waterFlowRate: number;
-    duration: number;
-    intervalHours: number;
-    optimalTemperature?: number;
-    optimalHumidity?: number;
-  };
-  scheduleSettings?: {
-    enabled: boolean;
-    startTime?: string;
-    endTime?: string;
-    daysOfWeek?: string[];
-    waterAmount?: number;
-  };
-  sensorSettings?: {
-    temperatureSensorId?: number;
-    humiditySensorId?: number;
-    flowSensorId?: number;
-    pressureSensorId?: number;
-  };
-  alertSettings?: {
-    lowWaterPressure?: boolean;
-    highTemperature?: number;
-    lowHumidity?: number;
-    systemFailure?: boolean;
-  };
-  location?: string;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
-  isActive?: boolean;
+  polygon?: string;
+  active?: boolean;
 }
 
 export interface IrrigationSectorUpdateRequest extends Partial<IrrigationSectorCreateRequest> {
-  irrigationStatus?: string;
-  hasError?: boolean;
-  errorMessage?: string;
+  id: number;
 }
 
 export interface IrrigationScheduleRequest {
@@ -349,7 +370,11 @@ export interface WeatherConditions {
   providedIn: 'root'
 })
 export class IrrigationSectorService {
-  private readonly baseUrl = '/api/irrigation-sectors';
+  // API endpoint paths matching the documented endpoints
+  private readonly cropProductionIrrigationSectorUrl = '/CropProductionIrrigationSector';
+  private readonly irrigationMeasurementUrl = '/IrrigationMeasurement';
+  private readonly irrigationRequestUrl = '/IrrigationRequest';
+  private readonly relayModuleUrl = '/RelayModuleCropProductionIrrigationSector';
 
   constructor(
     private apiService: ApiService,
@@ -358,14 +383,146 @@ export class IrrigationSectorService {
   ) { }
 
   // ============================================================================
-  // ENHANCED API METHODS FOR IRRIGATION ENGINEERING MODULE
+  // ACTUAL API METHODS USING DOCUMENTED ENDPOINTS
   // ============================================================================
 
   /**
-   * CONTAINERS API - /Container endpoint
+   * GET /CropProductionIrrigationSector - Get irrigation sectors
    */
-  getAllContainers(onlyActive: boolean = true): Observable<Container[]> {
-    const params = new HttpParams().set('IncludeInactives', !onlyActive.toString());
+  getAllIrrigationSectors(filters?: IrrigationSectorFilters): Observable<CropProductionIrrigationSector[]> {
+    let params = new HttpParams();
+
+    if (filters) {
+      if (filters.companyId) params = params.set('CompanyId', filters.companyId.toString());
+      if (filters.farmId) params = params.set('FarmId', filters.farmId.toString());
+      if (filters.productionUnitId) params = params.set('ProductionUnitId', filters.productionUnitId.toString());
+      if (filters.cropProductionId) params = params.set('CropProductionId', filters.cropProductionId.toString());
+      if (filters.includeInactives !== undefined) params = params.set('IncludeInactives', filters.includeInactives.toString());
+    }
+
+    return this.http.get<CropProductionIrrigationSectorResponse>(`${this.apiConfig.agronomicApiUrl}${this.cropProductionIrrigationSectorUrl}`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.cropProductionIrrigationSectors || [];
+        }
+        throw new Error(`CropProductionIrrigationSector API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * GET /IrrigationMeasurement - Get irrigation measurements
+   */
+  getIrrigationMeasurements(
+    cropProductionId?: number,
+    startingDateTime?: string,
+    endingDateTime?: string
+  ): Observable<IrrigationMeasurement[]> {
+    let params = new HttpParams();
+
+    if (cropProductionId) params = params.set('CropProductionId', cropProductionId.toString());
+    if (startingDateTime) params = params.set('StartingDateTime', startingDateTime);
+    if (endingDateTime) params = params.set('EndingDateTime', endingDateTime);
+
+    return this.http.get<IrrigationMeasurementResponse>(`${this.apiConfig.agronomicApiUrl}${this.irrigationMeasurementUrl}`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.irrigationMeasurements || [];
+        }
+        throw new Error(`IrrigationMeasurement API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * GET /IrrigationRequest - Get irrigation requests
+   */
+  getIrrigationRequests(filters?: {
+    clientId?: number;
+    companyId?: number;
+    farmId?: number;
+    productionUnitId?: number;
+    cropProductionId?: number;
+  }): Observable<IrrigationRequest[]> {
+    let params = new HttpParams();
+
+    if (filters) {
+      if (filters.clientId) params = params.set('ClientId', filters.clientId.toString());
+      if (filters.companyId) params = params.set('CompanyId', filters.companyId.toString());
+      if (filters.farmId) params = params.set('FarmId', filters.farmId.toString());
+      if (filters.productionUnitId) params = params.set('ProductionUnitId', filters.productionUnitId.toString());
+      if (filters.cropProductionId) params = params.set('CropProductionId', filters.cropProductionId.toString());
+    }
+
+    return this.http.get<IrrigationRequestResponse>(`${this.apiConfig.agronomicApiUrl}${this.irrigationRequestUrl}`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.irrigationRequests || [];
+        }
+        throw new Error(`IrrigationRequest API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * POST /IrrigationRequest - Create irrigation request
+   */
+  createIrrigationRequest(request: Partial<IrrigationRequest>): Observable<IrrigationRequest> {
+    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}${this.irrigationRequestUrl}`, request, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`IrrigationRequest creation failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * GET /RelayModuleCropProductionIrrigationSector - Get relay module connections
+   */
+  getRelayModuleConnections(relayModuleId?: number): Observable<RelayModuleCropProductionIrrigationSector[]> {
+    let params = new HttpParams();
+    if (relayModuleId) params = params.set('RelayModuleId', relayModuleId.toString());
+
+    return this.http.get<RelayModuleCropProductionIrrigationSectorResponse>(`${this.apiConfig.agronomicApiUrl}${this.relayModuleUrl}`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.relayModuleCropProductionIrrigationSectors || [];
+        }
+        throw new Error(`RelayModuleCropProductionIrrigationSector API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  // ============================================================================
+  // CATALOG AND CONFIGURATION DATA (IF ENDPOINTS EXIST)
+  // ============================================================================
+
+  /**
+   * GET /Container endpoint (if available)
+   */
+  getAllContainers(includeInactives: boolean = false): Observable<Container[]> {
+    const params = new HttpParams().set('IncludeInactives', includeInactives.toString());
 
     return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Container`, {
       params,
@@ -381,53 +538,11 @@ export class IrrigationSectorService {
     );
   }
 
-  getContainerById(id: number): Observable<Container> {
-    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Container/${id}`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`Container API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
-  createContainer(container: Partial<Container>): Observable<Container> {
-    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/Container`, container, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`Container API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
-  updateContainer(container: Container): Observable<Container> {
-    return this.http.put<any>(`${this.apiConfig.agronomicApiUrl}/Container`, container, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`Container API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
   /**
-   * DROPPERS API - /Dropper endpoint
+   * GET /Dropper endpoint (if available)
    */
-  getAllDroppers(onlyActive: boolean = true): Observable<Dropper[]> {
-    const params = new HttpParams().set('IncludeInactives', !onlyActive.toString());
+  getAllDroppers(includeInactives: boolean = false): Observable<Dropper[]> {
+    const params = new HttpParams().set('IncludeInactives', includeInactives.toString());
 
     return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Dropper`, {
       params,
@@ -443,53 +558,11 @@ export class IrrigationSectorService {
     );
   }
 
-  getDropperById(id: number): Observable<Dropper> {
-    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Dropper/${id}`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`Dropper API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
-  createDropper(dropper: Partial<Dropper>): Observable<Dropper> {
-    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/Dropper`, dropper, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`Dropper API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
-  updateDropper(dropper: Dropper): Observable<Dropper> {
-    return this.http.put<any>(`${this.apiConfig.agronomicApiUrl}/Dropper`, dropper, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`Dropper API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
   /**
-   * GROWING MEDIUMS API - /GrowingMedium endpoint
+   * GET /GrowingMedium endpoint (if available)
    */
-  getAllGrowingMediums(onlyActive: boolean = true): Observable<GrowingMedium[]> {
-    const params = new HttpParams().set('IncludeInactives', !onlyActive.toString());
+  getAllGrowingMediums(includeInactives: boolean = false): Observable<GrowingMedium[]> {
+    const params = new HttpParams().set('IncludeInactives', includeInactives.toString());
 
     return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/GrowingMedium`, {
       params,
@@ -505,88 +578,88 @@ export class IrrigationSectorService {
     );
   }
 
-  getGrowingMediumById(id: number): Observable<GrowingMedium> {
-    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/GrowingMedium/${id}`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`GrowingMedium API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
+  // ============================================================================
+  // IoT SENSOR DATA (Using available IoT endpoints)
+  // ============================================================================
 
   /**
-   * IRRIGATION EVENTS API - Based on backend configuration
+   * Get real-time sensor data from IoT API
    */
-  getIrrigationEvents(startDate: string, endDate: string, cropProductionId?: number): Observable<IrrigationEvent[]> {
-    let params = new HttpParams()
-      .set('startDate', startDate)
-      .set('endDate', endDate);
-
-    if (cropProductionId) {
-      params = params.set('cropProductionId', cropProductionId.toString());
-    }
-
-    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/IrrigationEvent`, {
-      params,
-      headers: this.getAuthHeaders()
+  getRealTimeSensorData(cropProductionId: number): Observable<any> {
+    return forkJoin({
+      devices: this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceSensor/devices`, {
+        headers: this.getAuthHeaders()
+      }).pipe(catchError(() => [])),
+      sensors: this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceSensor/sensors`, {
+        headers: this.getAuthHeaders()
+      }).pipe(catchError(() => []))
     }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result?.irrigationEvents || [];
-        }
-        throw new Error(`IrrigationEvent API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
-  createIrrigationEvent(event: Partial<IrrigationEvent>): Observable<IrrigationEvent> {
-    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/IrrigationEvent`, event, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`IrrigationEvent API failed: ${response.exception}`);
+      map(({ devices, sensors }) => {
+        const mappedData = {
+          cropProductionId: cropProductionId,
+          devices: devices || [],
+          sensors: sensors || [],
+          lastUpdated: new Date().toISOString(),
+          sensorReadings: sensors?.map((sensor: any) => ({
+            sensorId: sensor.id,
+            sensorLabel: sensor.sensorLabel,
+            measurementVariableId: sensor.measurementVariableId,
+            value: null,
+            timestamp: new Date().toISOString(),
+            status: 'online'
+          })) || []
+        };
+        return mappedData;
       }),
       catchError(this.handleError)
     );
   }
 
   /**
-   * IRRIGATION MEASUREMENTS API
+   * Get irrigation system status
    */
-  getIrrigationMeasurements(startDate: string, endDate: string, cropProductionId?: number): Observable<IrrigationMeasurement[]> {
-    let params = new HttpParams()
-      .set('startDate', startDate)
-      .set('endDate', endDate);
-
-    if (cropProductionId) {
-      params = params.set('cropProductionId', cropProductionId.toString());
-    }
-
-    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/IrrigationMeasurement`, {
-      params,
+  getIrrigationSystemStatus(farmId?: number): Observable<IrrigationSystemStatus> {
+    return this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceSensor/devices`, {
       headers: this.getAuthHeaders()
     }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result?.irrigationMeasurements || [];
-        }
-        throw new Error(`IrrigationMeasurement API failed: ${response.exception}`);
+      map(devices => {
+        const irrigationDevices = devices.filter((device: any) =>
+          device.deviceId?.toLowerCase().includes('flujo') ||
+          device.deviceId?.toLowerCase().includes('suelo') ||
+          device.deviceId?.toLowerCase().includes('riego') ||
+          device.deviceId?.toLowerCase().includes('presion') ||
+          device.deviceId?.toLowerCase().includes('humedad') ||
+          device.deviceId?.toLowerCase().includes('temperatura')
+        ) || [];
+
+        const status: IrrigationSystemStatus = {
+          farmId: farmId || 0,
+          systemStatus: irrigationDevices.length > 0 ? 'operational' : 'offline',
+          activeDevices: irrigationDevices.length,
+          totalDevices: devices?.length || 0,
+          devices: devices,
+          lastUpdate: new Date().toISOString(),
+          zones: irrigationDevices.map((device: any) => ({
+            deviceId: device.id,
+            deviceIdentifier: device.deviceId,
+            status: device.active ? 'active' : 'inactive',
+            sensors: device.sensors || []
+          })),
+          alerts: []
+        };
+
+        return status;
       }),
       catchError(this.handleError)
     );
   }
 
+  // ============================================================================
+  // CALCULATION METHODS (CLIENT-SIDE CALCULATIONS)
+  // ============================================================================
+
   /**
-   * HYDRAULIC CALCULATIONS - using Calculator API
+   * Client-side hydraulic calculations (since Calculator endpoint may not exist)
    */
   calculateHydraulics(
     flowRate: number,
@@ -595,75 +668,41 @@ export class IrrigationSectorService {
     elevation: number,
     fittings: { type: string; quantity: number }[]
   ): Observable<HydraulicCalculation> {
-    const payload = {
+    // Client-side calculation implementation
+    const velocity = (flowRate * 4) / (Math.PI * Math.pow(pipeSize / 1000, 2)); // m/s
+    const reynoldsNumber = (velocity * (pipeSize / 1000) * 1000) / 0.001; // Re
+    const frictionFactor = 0.316 / Math.pow(reynoldsNumber, 0.25); // Blasius equation
+
+    const frictionLoss = frictionFactor * (pipeLength / (pipeSize / 1000)) * (Math.pow(velocity, 2) / (2 * 9.81)) * 10; // bar
+    const staticHead = elevation; // m
+    const dynamicHead = staticHead + (frictionLoss * 10.2); // m
+    const totalHead = dynamicHead; // m
+    const efficiency = 0.75; // 75% default efficiency
+    const powerRequired = (flowRate / 3600 * 1000 * 9.81 * totalHead) / (1000 * efficiency); // kW
+
+    const result: HydraulicCalculation = {
       flowRate,
+      pressure: frictionLoss + (staticHead / 10.2),
       pipeSize,
-      pipeLength,
-      elevation,
-      fittings
+      frictionLoss,
+      staticHead,
+      dynamicHead,
+      totalHead,
+      efficiency: efficiency * 100,
+      powerRequired,
+      velocity,
+      reynoldsNumber,
+      frictionFactor
     };
 
-    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/Calculator/hydraulics`, payload, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`Hydraulic calculation failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
+    return new Observable(observer => {
+      observer.next(result);
+      observer.complete();
+    });
   }
 
   /**
-   * EVAPOTRANSPIRATION CALCULATIONS
-   */
-  calculateEvapotranspiration(
-    cropProductionId: number,
-    startDate: string,
-    endDate: string
-  ): Observable<EvapotranspirationData[]> {
-    const params = new HttpParams()
-      .set('cropProductionId', cropProductionId.toString())
-      .set('startDate', startDate)
-      .set('endDate', endDate);
-
-    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Calculator/evapotranspiration`, {
-      params,
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result?.evapotranspirationData || [];
-        }
-        throw new Error(`Evapotranspiration calculation failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
-  /**
-   * IRRIGATION SCHEDULE OPTIMIZATION
-   */
-  optimizeIrrigationSchedule(cropProductionId: number): Observable<IrrigationScheduleOptimization> {
-    const payload = { cropProductionId };
-
-    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/Calculator/irrigation-optimization`, payload, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`Irrigation optimization failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
-  /**
-   * FLOW RATE AND PRESSURE CALCULATIONS
+   * Client-side flow rate calculation
    */
   calculateFlowRate(
     containerId: number,
@@ -671,283 +710,99 @@ export class IrrigationSectorService {
     numberOfDroppers: number,
     irrigationArea: number
   ): Observable<FlowRateCalculation> {
-    const payload = {
+    // Mock calculation - replace with actual business logic
+    const totalFlowRate = numberOfDroppers * 2; // 2 L/h per dropper assumption
+    const precipitationRate = totalFlowRate / irrigationArea; // mm/h
+    const applicationEfficiency = 85; // 85% efficiency assumption
+
+    const result: FlowRateCalculation = {
       containerId,
       dropperId,
       numberOfDroppers,
-      irrigationArea
+      totalFlowRate,
+      pressureRequired: 1.5, // bar assumption
+      irrigationArea,
+      precipitationRate,
+      applicationEfficiency,
+      uniformity: 90, // 90% uniformity assumption
+      flowRatePerArea: totalFlowRate / irrigationArea
     };
 
-    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/Calculator/flow-rate`, payload, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`Flow rate calculation failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
+    return new Observable(observer => {
+      observer.next(result);
+      observer.complete();
+    });
+  }
+
+  // ============================================================================
+  // UTILITY AND TRANSFORMATION METHODS
+  // ============================================================================
+
+  /**
+   * Convert CropProductionIrrigationSector to IrrigationSector for compatibility
+   */
+  mapToIrrigationSector(sector: CropProductionIrrigationSector): IrrigationSector {
+    return {
+      id: sector.id,
+      name: sector.name,
+      cropProductionId: sector.cropProductionId,
+      isActive: sector.active,
+      irrigationStatus: 'stopped', // Default status
+      hasError: false,
+      isIrrigating: false,
+      currentTemperature: null,
+      currentHumidity: null,
+      currentWaterFlow: null,
+      createdAt: new Date(sector.dateCreated),
+      updatedAt: new Date(sector.dateUpdated)
+    } as unknown as IrrigationSector;
+  }
+
+  /**
+   * Get all irrigation sectors (backward compatibility)
+   */
+  getAll(filters?: IrrigationSectorFilters): Observable<IrrigationSector[]> {
+    return this.getAllIrrigationSectors(filters).pipe(
+      map(sectors => sectors.map(sector => this.mapToIrrigationSector(sector)))
     );
   }
 
+  /**
+   * Get irrigation sector by ID
+   */
+  getById(id: number): Observable<IrrigationSector> {
+    return this.getAllIrrigationSectors().pipe(
+      map(sectors => {
+        const sector = sectors.find(s => s.id === id);
+        if (!sector) {
+          throw new Error(`Irrigation sector with ID ${id} not found`);
+        }
+        return this.mapToIrrigationSector(sector);
+      })
+    );
+  }
 
   /**
-   * ON-DEMAND IRRIGATION TRIGGER
+   * Trigger on-demand irrigation
    */
   triggerOnDemandIrrigation(
     cropProductionId: number,
     duration?: number,
     reason: string = 'manual'
   ): Observable<any> {
-    const payload = {
+    const irrigationRequest: Partial<IrrigationRequest> = {
       cropProductionId,
-      duration,
-      reason,
-      triggeredBy: 'manual'
+      irrigate: true,
+      irrigationTime: duration || 30,
+      dateStarted: new Date().toISOString(),
+      createdBy: 1 // Should be current user ID
     };
 
-    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/OnDemandIrrigation/trigger`, payload, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`On-demand irrigation failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
-
-  // ============================================================================
-  // EXISTING IRRIGATION SECTOR METHODS (Enhanced)
-  // ============================================================================
-
-  /**
-   * Get all irrigation sectors with optional filters
-   */
-  getAll(filters?: IrrigationSectorFilters): Observable<IrrigationSector[]> {
-    let params = new HttpParams();
-
-    if (filters) {
-      Object.keys(filters).forEach(key => {
-        const value = (filters as any)[key];
-        if (value !== undefined && value !== null && value !== '') {
-          params = params.set(key, value.toString());
-        }
-      });
-    }
-
-    const id = filters?.cropProductionId ? `/${filters.cropProductionId}` : '';
-
-    return this.apiService.get<IrrigationSector[]>(`${this.baseUrl}${id}`, params);
-  }
-
-
-  /**
-   * Delete irrigation schedule
-   */
-  deleteSchedule(id: number, scheduleId: number): Observable<void> {
-    return this.apiService.delete<void>(`${this.baseUrl}/${id}/schedule/${scheduleId}`);
+    return this.createIrrigationRequest(irrigationRequest);
   }
 
   /**
-   * Get irrigation history
-   */
-  getHistory(id: number, dateFrom?: string, dateTo?: string): Observable<IrrigationHistory[]> {
-    let params = new HttpParams();
-
-    if (dateFrom) {
-      params = params.set('dateFrom', dateFrom);
-    }
-    if (dateTo) {
-      params = params.set('dateTo', dateTo);
-    }
-
-    return this.apiService.get<IrrigationHistory[]>(`${this.baseUrl}/${id}/history`, params);
-  }
-
-  /**
-   * Get current sensor readings
-   */
-  getSensorReadings(id: number): Observable<SensorReading[]> {
-    return this.apiService.get<SensorReading[]>(`${this.baseUrl}/${id}/sensors`);
-  }
-
-  /**
-   * Get historical sensor data
-   */
-  getSensorHistory(id: number, sensorType?: string, hoursBack?: number): Observable<SensorReading[]> {
-    let params = new HttpParams();
-
-    if (sensorType) {
-      params = params.set('sensorType', sensorType);
-    }
-    if (hoursBack) {
-      params = params.set('hoursBack', hoursBack.toString());
-    }
-
-    return this.apiService.get<SensorReading[]>(`${this.baseUrl}/${id}/sensors/history`, params);
-  }
-
-  /**
-   * Get irrigation statistics
-   */
-  getStatistics(farmId?: number, dateFrom?: string, dateTo?: string): Observable<IrrigationStatistics> {
-    let params = new HttpParams();
-
-    if (farmId) {
-      params = params.set('farmId', farmId.toString());
-    }
-    if (dateFrom) {
-      params = params.set('dateFrom', dateFrom);
-    }
-    if (dateTo) {
-      params = params.set('dateTo', dateTo);
-    }
-
-    return this.apiService.get<IrrigationStatistics>(`${this.baseUrl}/statistics`, params);
-  }
-
-  /**
-   * Get alerts for irrigation sectors
-   */
-  getAlerts(id?: number): Observable<IrrigationAlert[]> {
-    const url = id ? `${this.baseUrl}/${id}/alerts` : `${this.baseUrl}/alerts`;
-    return this.apiService.get<IrrigationAlert[]>(url);
-  }
-
-  /**
-   * Acknowledge alert
-   */
-  acknowledgeAlert(alertId: number): Observable<IrrigationAlert> {
-    return this.apiService.put<IrrigationAlert>(`${this.baseUrl}/alerts/${alertId}/acknowledge`, {});
-  }
-
-  /**
-   * Resolve alert
-   */
-  resolveAlert(alertId: number, notes?: string): Observable<IrrigationAlert> {
-    const payload = { notes: notes || '' };
-    return this.apiService.put<IrrigationAlert>(`${this.baseUrl}/alerts/${alertId}/resolve`, payload);
-  }
-
-  /**
-   * Get weather conditions for irrigation planning
-   */
-  getWeatherConditions(latitude: number, longitude: number): Observable<WeatherConditions> {
-    const params = new HttpParams()
-      .set('latitude', latitude.toString())
-      .set('longitude', longitude.toString());
-
-    return this.apiService.get<WeatherConditions>(`${this.baseUrl}/weather`, params);
-  }
-
-  /**
-   * Get irrigation recommendations based on weather and crop conditions
-   */
-  getIrrigationRecommendations(id: number): Observable<any> {
-    return this.apiService.get<any>(`${this.baseUrl}/${id}/recommendations`);
-  }
-
-  /**
-   * Calibrate sensors
-   */
-  calibrateSensors(id: number, sensorType: string, calibrationData: any): Observable<any> {
-    const payload = {
-      sensorType,
-      ...calibrationData
-    };
-
-    return this.apiService.post<any>(`${this.baseUrl}/${id}/sensors/calibrate`, payload);
-  }
-
-  /**
-   * Test irrigation system
-   */
-  testSystem(id: number, testDuration: number = 30): Observable<any> {
-    const payload = {
-      testDuration, // seconds
-      testType: 'system_check'
-    };
-
-    return this.apiService.post<any>(`${this.baseUrl}/${id}/test`, payload);
-  }
-
-  /**
-   * Get real-time data stream
-   */
-  getRealTimeData(id: number): Observable<IrrigationSector> {
-    return interval(5000).pipe(
-      startWith(0),
-      switchMap(() => this.getById(id))
-    );
-  }
-
-  getById(id: number): Observable<IrrigationSector> {
-    return this.apiService.get<IrrigationSector>(`${this.baseUrl}/${id}`);
-  }
-
-  /**
-   * Bulk operations
-   */
-  bulkStart(sectorIds: number[], duration?: number): Observable<any> {
-    const payload = {
-      sectorIds,
-      action: 'start',
-      duration
-    };
-
-    return this.apiService.post<any>(`${this.baseUrl}/bulk/control`, payload);
-  }
-
-  bulkStop(sectorIds: number[], reason?: string): Observable<any> {
-    const payload = {
-      sectorIds,
-      action: 'stop',
-      reason
-    };
-
-    return this.apiService.post<any>(`${this.baseUrl}/bulk/control`, payload);
-  }
-
-  bulkUpdateSchedule(sectorIds: number[], scheduleData: IrrigationScheduleRequest): Observable<any> {
-    const payload = {
-      sectorIds,
-      ...scheduleData,
-      startDate: typeof scheduleData.startDate === 'string'
-        ? scheduleData.startDate
-        : scheduleData.startDate.toISOString()
-    };
-
-    return this.apiService.post<any>(`${this.baseUrl}/bulk/schedule`, payload);
-  }
-
-  /**
-   * Export irrigation data
-   */
-  exportData(filters?: any, format: 'csv' | 'excel' | 'pdf' = 'csv'): Observable<Blob> {
-    let params = new HttpParams().set('format', format);
-
-    if (filters) {
-      Object.keys(filters).forEach(key => {
-        if (filters[key] !== undefined && filters[key] !== null) {
-          params = params.set(key, filters[key].toString());
-        }
-      });
-    }
-
-    return this.http.get(`${this.apiConfig.agronomicApiUrl}${this.baseUrl}/export`, {
-      params,
-      headers: this.getAuthHeaders(),
-      responseType: 'blob'
-    });
-  }
-
-  /**
-   * Utility methods for components
+   * Formatting utility methods
    */
   formatStatus(status: string): string {
     const statusMap: { [key: string]: string } = {
@@ -989,54 +844,10 @@ export class IrrigationSectorService {
     return priorityMap[status] || 0;
   }
 
-  /**
-   * Data transformation methods
-   */
-  groupByCrop(sectors: IrrigationSector[]): { [cropName: string]: IrrigationSector[] } {
-    return sectors.reduce((groups, sector) => {
-      const cropName = sector.cropProduction?.crop?.name || 'Sin cultivo';
-      if (!groups[cropName]) {
-        groups[cropName] = [];
-      }
-      groups[cropName].push(sector);
-      return groups;
-    }, {} as { [cropName: string]: IrrigationSector[] });
-  }
+  // ============================================================================
+  // PRIVATE HELPER METHODS
+  // ============================================================================
 
-  groupByStatus(sectors: IrrigationSector[]): { [status: string]: IrrigationSector[] } {
-    return sectors.reduce((groups, sector) => {
-      const status = sector.irrigationStatus || 'unknown';
-      if (!groups[status]) {
-        groups[status] = [];
-      }
-      groups[status].push(sector);
-      return groups;
-    }, {} as { [status: string]: IrrigationSector[] });
-  }
-
-  sortBySeverity(sectors: IrrigationSector[]): IrrigationSector[] {
-    return [...sectors].sort((a, b) => {
-      const priorityA = this.getStatusPriority(a.irrigationStatus || '');
-      const priorityB = this.getStatusPriority(b.irrigationStatus || '');
-      return priorityB - priorityA; // Descending order (highest priority first)
-    });
-  }
-
-  filterActive(sectors: IrrigationSector[]): IrrigationSector[] {
-    return sectors.filter(sector => sector.isActive);
-  }
-
-  filterIrrigating(sectors: IrrigationSector[]): IrrigationSector[] {
-    return sectors.filter(sector => sector.isIrrigating);
-  }
-
-  filterWithErrors(sectors: IrrigationSector[]): IrrigationSector[] {
-    return sectors.filter(sector => sector.hasError);
-  }
-
-  /**
-   * Private helper methods
-   */
   private getAuthHeaders(): { [header: string]: string } {
     const token = localStorage.getItem('access_token');
     return {
@@ -1050,89 +861,250 @@ export class IrrigationSectorService {
     throw error;
   }
 
-  /**
- * IoT REAL-TIME SENSOR DATA
- * Workaround: Get all devices and sensors, then filter/map for specific crop production
- */
-  getRealTimeSensorData(cropProductionId: number): Observable<any> {
-    // Since there's no direct endpoint for latest sensor data by cropProductionId,
-    // we'll get all devices and sensors, then create a mapped response
-    return forkJoin({
-      devices: this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceSensor/devices`, {
-        headers: this.getAuthHeaders()
-      }),
-      sensors: this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceSensor/sensors`, {
-        headers: this.getAuthHeaders()
-      })
-    }).pipe(
-      map(({ devices, sensors }) => {
-        // Create a mapped response structure for real-time data
-        // You'll need to filter by cropProductionId based on your business logic
-        const mappedData = {
-          cropProductionId: cropProductionId,
-          devices: devices || [],
-          sensors: sensors || [],
-          lastUpdated: new Date().toISOString(),
-          // Add mock real-time data structure until actual endpoint is available
-          sensorReadings: sensors?.map((sensor: any) => ({
-            sensorId: sensor.id,
-            sensorLabel: sensor.sensorLabel,
-            measurementVariableId: sensor.measurementVariableId,
-            value: null, // Would come from actual sensor data endpoint
-            timestamp: new Date().toISOString(),
-            status: 'online' // Mock status
-          })) || []
-        };
-
-        return mappedData;
-      }),
-      catchError(this.handleError)
-    );
-  }
+  // ============================================================================
+  // DATA TRANSFORMATION METHODS
+  // ============================================================================
 
   /**
-   * SYSTEM STATUS MONITORING
-   * Workaround: Get devices and create irrigation system status from available data
+   * Group irrigation sectors by crop
    */
-  getIrrigationSystemStatus(farmId?: number): Observable<IrrigationSystemStatus> {
-    return this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceSensor/devices`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(devices => {
-        // Create irrigation system status from available device data
-        const irrigationDevices = devices.filter((device: any) =>
-          device.deviceId?.toLowerCase().includes('flujo') ||
-          device.deviceId?.toLowerCase().includes('suelo') ||
-          device.deviceId?.toLowerCase().includes('riego') ||
-          device.deviceId?.toLowerCase().includes('presion') ||
-          device.deviceId?.toLowerCase().includes('humedad') ||
-          device.deviceId?.toLowerCase().includes('temperatura')
-        ) || [];
-
-        const status: IrrigationSystemStatus = {
-          farmId: farmId || 0,
-          systemStatus: irrigationDevices.length > 0 ? 'operational' : 'offline',
-          activeDevices: irrigationDevices.length,
-          totalDevices: devices?.length || 0,
-          devices: devices,
-          lastUpdate: new Date().toISOString(),
-          zones: irrigationDevices.map((device: any) => ({
-            deviceId: device.id,
-            deviceIdentifier: device.deviceId,
-            status: device.active ? 'active' : 'inactive',
-            sensors: device.sensors
-          })),
-          alerts: [] // Would be populated from actual monitoring data
-        };
-
-        return status;
-      }),
-      catchError(this.handleError)
-    );
+  groupByCrop(sectors: IrrigationSector[]): { [cropName: string]: IrrigationSector[] } {
+    return sectors.reduce((groups, sector) => {
+      const cropName = sector.cropProduction?.crop?.name || 'Sin cultivo';
+      if (!groups[cropName]) {
+        groups[cropName] = [];
+      }
+      groups[cropName].push(sector);
+      return groups;
+    }, {} as { [cropName: string]: IrrigationSector[] });
   }
 
   /**
-   * HELPER METHOD: Get Device Authentication (if needed for sensor access)
+   * Group irrigation sectors by status
+   */
+  groupByStatus(sectors: IrrigationSector[]): { [status: string]: IrrigationSector[] } {
+    return sectors.reduce((groups, sector) => {
+      const status = sector.irrigationStatus || 'unknown';
+      if (!groups[status]) {
+        groups[status] = [];
+      }
+      groups[status].push(sector);
+      return groups;
+    }, {} as { [status: string]: IrrigationSector[] });
+  }
+
+  /**
+   * Sort sectors by severity
+   */
+  sortBySeverity(sectors: IrrigationSector[]): IrrigationSector[] {
+    return [...sectors].sort((a, b) => {
+      const priorityA = this.getStatusPriority(a.irrigationStatus || '');
+      const priorityB = this.getStatusPriority(b.irrigationStatus || '');
+      return priorityB - priorityA; // Descending order (highest priority first)
+    });
+  }
+
+  /**
+   * Filter active sectors
+   */
+  filterActive(sectors: IrrigationSector[]): IrrigationSector[] {
+    return sectors.filter(sector => sector.isActive);
+  }
+
+  /**
+   * Filter currently irrigating sectors
+   */
+  filterIrrigating(sectors: IrrigationSector[]): IrrigationSector[] {
+    return sectors.filter(sector => sector.isIrrigating);
+  }
+
+  /**
+   * Filter sectors with errors
+   */
+  filterWithErrors(sectors: IrrigationSector[]): IrrigationSector[] {
+    return sectors.filter(sector => sector.hasError);
+  }
+
+  // ============================================================================
+  // STATISTICS AND ANALYTICS
+  // ============================================================================
+
+  /**
+   * Get irrigation statistics
+   */
+  getStatistics(farmId?: number, dateFrom?: string, dateTo?: string): Observable<IrrigationStatistics> {
+    // Since there's no direct statistics endpoint, we'll build it from available data
+    return this.getAll({ farmId }).pipe(
+      map(sectors => {
+        const activeSectors = sectors.filter(s => s.isActive);
+        const currentlyIrrigating = sectors.filter(s => s.isIrrigating);
+        const sectorsWithErrors = sectors.filter(s => s.hasError);
+
+        const statistics: IrrigationStatistics = {
+          totalSectors: sectors.length,
+          activeSectors: activeSectors.length,
+          currentlyIrrigating: currentlyIrrigating.length,
+          scheduledToday: 0, // Would need schedule data
+          sectorsWithErrors: sectorsWithErrors.length,
+          totalWaterUsageToday: 0, // Would need measurement data
+          totalWaterUsageWeek: 0,
+          totalWaterUsageMonth: 0,
+          averageTemperature: 0,
+          averageHumidity: 0,
+          energyConsumption: 0,
+          byStatus: this.getStatusCounts(sectors),
+          byCrop: this.getCropUsage(sectors),
+          dailyUsage: [] // Would need historical data
+        };
+
+        return statistics;
+      })
+    );
+  }
+
+  private getStatusCounts(sectors: IrrigationSector[]): { [status: string]: number } {
+    return sectors.reduce((counts, sector) => {
+      const status = sector.irrigationStatus || 'unknown';
+      counts[status] = (counts[status] || 0) + 1;
+      return counts;
+    }, {} as { [status: string]: number });
+  }
+
+  private getCropUsage(sectors: IrrigationSector[]): { cropName: string; sectors: number; waterUsage: number; }[] {
+    const cropGroups = this.groupByCrop(sectors);
+    return Object.keys(cropGroups).map(cropName => ({
+      cropName,
+      sectors: cropGroups[cropName].length,
+      waterUsage: 0 // Would need actual usage data
+    }));
+  }
+
+  // ============================================================================
+  // REAL-TIME DATA STREAMING
+  // ============================================================================
+
+  /**
+   * Get real-time data stream for a specific irrigation sector
+   */
+  getRealTimeData(id: number): Observable<IrrigationSector> {
+    return interval(5000).pipe(
+      startWith(0),
+      switchMap(() => this.getById(id))
+    );
+  }
+
+  // ============================================================================
+  // ALERT MANAGEMENT
+  // ============================================================================
+
+  /**
+   * Get alerts (mock implementation)
+   */
+  getAlerts(id?: number): Observable<IrrigationAlert[]> {
+    // Mock alerts since there's no dedicated endpoint
+    const mockAlerts: IrrigationAlert[] = [];
+    return new Observable(observer => {
+      observer.next(mockAlerts);
+      observer.complete();
+    });
+  }
+
+  /**
+   * Acknowledge alert
+   */
+  acknowledgeAlert(alertId: number): Observable<IrrigationAlert> {
+    return new Observable(observer => {
+      observer.next({} as IrrigationAlert);
+      observer.complete();
+    });
+  }
+
+  /**
+   * Resolve alert
+   */
+  resolveAlert(alertId: number, notes?: string): Observable<IrrigationAlert> {
+    return new Observable(observer => {
+      observer.next({} as IrrigationAlert);
+      observer.complete();
+    });
+  }
+
+  // ============================================================================
+  // IRRIGATION CONTROL OPERATIONS
+  // ============================================================================
+
+  /**
+   * Start irrigation
+   */
+  startIrrigation(cropProductionId: number, duration?: number): Observable<any> {
+    return this.triggerOnDemandIrrigation(cropProductionId, duration, 'manual_start');
+  }
+
+  /**
+   * Stop irrigation
+   */
+  stopIrrigation(cropProductionId: number, reason?: string): Observable<any> {
+    const irrigationRequest: Partial<IrrigationRequest> = {
+      cropProductionId,
+      irrigate: false,
+      dateEnded: new Date().toISOString(),
+      createdBy: 1 // Should be current user ID
+    };
+
+    return this.createIrrigationRequest(irrigationRequest);
+  }
+
+  /**
+   * Bulk operations
+   */
+  bulkStart(sectorIds: number[], duration?: number): Observable<any> {
+    const requests = sectorIds.map(id => this.startIrrigation(id, duration));
+    return forkJoin(requests);
+  }
+
+  bulkStop(sectorIds: number[], reason?: string): Observable<any> {
+    const requests = sectorIds.map(id => this.stopIrrigation(id, reason));
+    return forkJoin(requests);
+  }
+
+  // ============================================================================
+  // EXPORT FUNCTIONALITY
+  // ============================================================================
+
+  /**
+   * Export irrigation data
+   */
+  exportData(filters?: any, format: 'csv' | 'excel' | 'pdf' = 'csv'): Observable<Blob> {
+    // Since there's no export endpoint, we'll create client-side export
+    return this.getAll(filters).pipe(
+      map(sectors => {
+        const csvData = this.convertToCSV(sectors);
+        return new Blob([csvData], { type: 'text/csv' });
+      })
+    );
+  }
+
+  private convertToCSV(data: any[]): string {
+    if (!data.length) return '';
+
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => headers.map(header => {
+        const value = row[header];
+        return typeof value === 'string' ? `"${value}"` : value;
+      }).join(','))
+    ].join('\n');
+
+    return csvContent;
+  }
+
+  // ============================================================================
+  // DEVICE AND SENSOR MANAGEMENT
+  // ============================================================================
+
+  /**
+   * Authenticate device for IoT operations
    */
   authenticateDevice(deviceId: string, password: string): Observable<any> {
     return this.http.post<any>(`${this.apiConfig.iotApiUrl}/Security/AuthenticateDevice`, {
@@ -1152,7 +1124,7 @@ export class IrrigationSectorService {
   }
 
   /**
-   * HELPER METHOD: Submit new sensor data (if needed for testing)
+   * Submit device raw data
    */
   submitDeviceRawData(deviceData: any): Observable<any> {
     return this.http.post<any>(`${this.apiConfig.iotApiUrl}/DeviceRawData`, deviceData, {
@@ -1169,7 +1141,7 @@ export class IrrigationSectorService {
   }
 
   /**
-   * HELPER METHOD: Submit MQTT sensor data
+   * Submit MQTT device data
    */
   submitMqttDeviceData(mqttData: {
     recordDate: string;
@@ -1190,5 +1162,202 @@ export class IrrigationSectorService {
       }),
       catchError(this.handleError)
     );
+  }
+
+  // ============================================================================
+  // WEATHER AND ENVIRONMENTAL DATA
+  // ============================================================================
+
+  /**
+   * Get weather conditions (mock implementation)
+   */
+  getWeatherConditions(latitude: number, longitude: number): Observable<WeatherConditions> {
+    // Mock weather data since no weather endpoint is available
+    const mockWeather: WeatherConditions = {
+      temperature: 22,
+      humidity: 65,
+      windSpeed: 2.5,
+      precipitation: 0,
+      forecast: [
+        { date: new Date().toISOString().split('T')[0], temperature: 23, humidity: 60, precipitation: 0 },
+        { date: new Date(Date.now() + 86400000).toISOString().split('T')[0], temperature: 24, humidity: 55, precipitation: 0 }
+      ]
+    };
+
+    return new Observable(observer => {
+      observer.next(mockWeather);
+      observer.complete();
+    });
+  }
+
+  // ============================================================================
+  // OPTIMIZATION AND RECOMMENDATIONS
+  // ============================================================================
+
+  /**
+   * Get irrigation recommendations
+   */
+  getIrrigationRecommendations(id: number): Observable<any> {
+    // Mock recommendations since no recommendation endpoint is available
+    const mockRecommendations = {
+      shouldIrrigate: true,
+      recommendedDuration: 30,
+      waterAmount: 100,
+      reason: 'Soil moisture below optimal level',
+      priority: 'medium' as const,
+      nextOptimalTime: new Date(Date.now() + 3600000).toISOString()
+    };
+
+    return new Observable(observer => {
+      observer.next(mockRecommendations);
+      observer.complete();
+    });
+  }
+
+  /**
+   * Optimize irrigation schedule
+   */
+  optimizeIrrigationSchedule(cropProductionId: number): Observable<IrrigationScheduleOptimization> {
+    // Mock optimization since no optimization endpoint is available
+    const mockOptimization: IrrigationScheduleOptimization = {
+      cropProductionId,
+      optimalStartTime: '06:00',
+      recommendedDuration: 45,
+      waterAmount: 150,
+      frequency: 2,
+      priority: 'medium',
+      conditions: {
+        soilMoisture: 35,
+        temperature: 22,
+        humidity: 65,
+        weather: 'clear'
+      },
+      efficiency: 85,
+      costPerIrrigation: 2.5,
+      waterSavings: 15,
+      nextOptimalTime: new Date(Date.now() + 21600000).toISOString(),
+      optimalConditions: {
+        temperature: { min: 18, max: 28 },
+        humidity: { min: 40, max: 80 }
+      }
+    };
+
+    return new Observable(observer => {
+      observer.next(mockOptimization);
+      observer.complete();
+    });
+  }
+
+
+  private readonly baseUrl = '/api/irrigation-sectors';
+
+  getContainerById(id: number): Observable<Container> {
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Container/${id}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Container API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+
+  getDropperById(id: number): Observable<Dropper> {
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Dropper/${id}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`Dropper API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+
+  getGrowingMediumById(id: number): Observable<GrowingMedium> {
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/GrowingMedium/${id}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result;
+        }
+        throw new Error(`GrowingMedium API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+  * IRRIGATION EVENTS API - Based on backend configuration
+  */
+  getIrrigationEvents(startDate: string, endDate: string, cropProductionId?: number): Observable<IrrigationEvent[]> {
+    let params = new HttpParams()
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+
+    if (cropProductionId) {
+      params = params.set('cropProductionId', cropProductionId.toString());
+    }
+
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/IrrigationEvent`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.irrigationEvents || [];
+        }
+        throw new Error(`IrrigationEvent API failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+
+  /**
+   * EVAPOTRANSPIRATION CALCULATIONS
+   */
+  calculateEvapotranspiration(
+    cropProductionId: number,
+    startDate: string,
+    endDate: string
+  ): Observable<EvapotranspirationData[]> {
+    const params = new HttpParams()
+      .set('cropProductionId', cropProductionId.toString())
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Calculator/evapotranspiration`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response.success) {
+          return response.result?.evapotranspirationData || [];
+        }
+        throw new Error(`Evapotranspiration calculation failed: ${response.exception}`);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+ * Test irrigation system
+ */
+  testSystem(id: number, testDuration: number = 30): Observable<any> {
+    const payload = {
+      testDuration, // seconds
+      testType: 'system_check'
+    };
+
+    return this.apiService.post<any>(`${this.baseUrl}/${id}/test`, payload);
   }
 }

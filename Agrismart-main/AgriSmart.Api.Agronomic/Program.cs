@@ -19,6 +19,15 @@ using AgriSmart.Core.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Register Calculator Services
+builder.Services.AddScoped<IIrrigationDesignCalculator, IrrigationDesignCalculator>();
+
+// Register AutoMapper Profile
+builder.Services.AddAutoMapper(typeof(IrrigationDesignMappingProfile));
+
+// If you haven't added MediatR yet, add it:
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateIrrigationDesignCommand).Assembly));
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -222,6 +231,12 @@ builder.Services.AddTransient<IIrrigationRequestsQueryRepository, IrrigationRequ
 builder.Services.AddTransient<IMeasurementBaseQueryRepository, MeasurementBaseQueryRepository>();
 builder.Services.AddTransient<ICropProductionRawDataCommandRepository, CropProductionRawDataCommandRepository>();
 builder.Services.AddTransient<IIrrigationEventCommandRepository, IrrigationEventCommandRepository>();
+builder.Services.AddScoped<IrrigationDesignCalculator>();
+builder.Services.AddScoped<HydraulicCalculationEngine>();
+builder.Services.AddScoped<ValidationEngine>();
+builder.Services.AddScoped<OptimizationEngine>();
+builder.Services.AddScoped<EconomicAnalysisEngine>();
+builder.Services.AddAutoMapper(typeof(IrrigationDesignMappingProfile));
 
 builder.Services.AddAuthentication(options =>
 {

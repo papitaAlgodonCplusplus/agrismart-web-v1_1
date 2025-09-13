@@ -404,7 +404,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         const endDate = new Date().toISOString();
         const startDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // Last 24 hours
 
-        this.irrigationService.getIrrigationMeasurements(startDate, endDate, this.selectedCropProduction.id)
+        this.irrigationService.getIrrigationMeasurements(this.selectedCropProduction.id, startDate, endDate)
             .pipe(takeUntil(this.destroy$))
             .subscribe(measurements => {
                 this.recentMeasurements = measurements.slice(0, 10); // Last 10 measurements
@@ -745,7 +745,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     }
 
     get currentWaterUsage(): number {
-        return this.recentMeasurements.reduce((sum, measurement) => sum + measurement.irrigationVolume, 0);
+        return this.recentMeasurements.reduce((sum, measurement) => sum + measurement.recordValue, 0);
     }
 
     get averageET(): number {

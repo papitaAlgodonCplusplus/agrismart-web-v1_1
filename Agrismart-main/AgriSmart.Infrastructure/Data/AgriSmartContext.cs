@@ -53,5 +53,8 @@ namespace AgriSmart.Infrastructure.Data
         public DbSet<TimeZone> TimeZone { get; set; }
         public DbSet<IrrigationRequest> CropProductionIrrigationRequest { get; set; }
         public DbSet<MeasurementBase> MeasurementBase { get; set; }
+        public DbSet<IrrigationDesign> IrrigationDesigns { get; set; }
+        public DbSet<IrrigationTemplate> IrrigationTemplates { get; set; }
+
     }
 }
