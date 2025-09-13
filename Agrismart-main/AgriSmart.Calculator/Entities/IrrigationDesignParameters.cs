@@ -1,5 +1,7 @@
 
 // Agrismart-main/AgriSmart.Calculator/Entities/
+using AgriSmart.Core.Entities;
+
 namespace AgriSmart.Calculator.Entities
 {
     public class IrrigationDesignParameters

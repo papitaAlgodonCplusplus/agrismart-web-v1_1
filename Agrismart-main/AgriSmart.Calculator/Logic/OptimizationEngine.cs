@@ -37,7 +37,7 @@ namespace AgriSmart.Calculator.Logic
                     }
                     
                     // Check convergence
-                    if (i > 500 && Math.Random.Shared.NextDouble() < 0.1)
+                    if (i > 500 && Random.Shared.NextDouble() < 0.1)
                     {
                         result.Iterations = i;
                         result.ConvergenceReached = true;

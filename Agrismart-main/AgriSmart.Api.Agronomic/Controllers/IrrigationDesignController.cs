@@ -9,7 +9,8 @@ using AgriSmart.Application.Agronomic.Queries;
 using AutoMapper;
 using MediatR;
 using System.ComponentModel.DataAnnotations;
-using AgriSmart.Core.Interfaces;
+using AgriSmart.Calculator.Interfaces;
+using AgriSmart.Calculator.Entities;
 
 namespace AgriSmart.Api.Agronomic.Controllers
 {
@@ -60,7 +61,7 @@ namespace AgriSmart.Api.Agronomic.Controllers
         {
             try
             {
-                var query = new GetIrrigationDesignQuery { Id = id };
+                var query = new GetIrrigationDesignQuery(id);
                 var result = await _mediator.Send(query);
                 
                 if (result == null)
@@ -114,7 +115,7 @@ namespace AgriSmart.Api.Agronomic.Controllers
         {
             try
             {
-                var command = new DeleteIrrigationDesignCommand { Id = id };
+                var command = new DeleteIrrigationDesignCommand(id);
                 await _mediator.Send(command);
                 return Ok(Response<bool>.CreateSuccess(true));
             }
@@ -279,7 +280,7 @@ namespace AgriSmart.Api.Agronomic.Controllers
         {
             try
             {
-                var query = new GetCropProductionIntegrationQuery { CropProductionId = cropProductionId };
+                var query = new GetCropProductionIntegrationQuery(cropProductionId);
                 var result = await _mediator.Send(query);
                 return Ok(Response<CropProductionIntegrationDto>.CreateSuccess(result));
             }
@@ -295,7 +296,7 @@ namespace AgriSmart.Api.Agronomic.Controllers
         {
             try
             {
-                var command = new SyncIrrigationDesignWithIoTCommand { DesignId = designId };
+                var command = new SyncIrrigationDesignWithIoTCommand(designId);
                 var result = await _mediator.Send(command);
                 return Ok(Response<IoTSyncResultDto>.CreateSuccess(result));
             }

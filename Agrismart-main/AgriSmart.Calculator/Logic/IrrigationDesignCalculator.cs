@@ -1,16 +1,13 @@
 
 // Simple Calculator Implementation
 // Agrismart-main/AgriSmart.Infrastructure/Services/IrrigationDesignCalculator.cs
-using AgriSmart.Core.Entities;
-using AgriSmart.Core.Interfaces;
+using AgriSmart.Calculator.Entities;
+using AgriSmart.Calculator.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
-using AgriSmart.Core.Interfaces;
-using AgriSmart.Core.Entities;
-using AgriSmart.Calculator.Entities;
 
-namespace AgriSmart.Infrastructure.Services
+namespace AgriSmart.Calculator.Logic
 {
     public class IrrigationDesignCalculator : IIrrigationDesignCalculator
     {

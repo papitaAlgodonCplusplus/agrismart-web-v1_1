@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AgriSmart.Application.Agronomic\AgriSmart.Application.Agronomic.csproj" />
-    <ProjectReference Include="..\AgriSmart.Core\AgriSmart.Core.csproj" />
+    <ProjectReference Include="..\AgriSmart.Calculator\AgriSmart.Calculator.csproj" />
   </ItemGroup>
 
 </Project>

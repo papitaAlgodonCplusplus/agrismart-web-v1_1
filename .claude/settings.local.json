@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(run-all.bat)",
+      "Bash(dir)",
+      "Bash(cmd /c:*)",
+      "Bash(.run-all.bat)",
+      "Bash(powershell.exe:*)",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Calculator\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Calculator\\Entities\")",
+      "Bash(del \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Core\\Entities\\CalculationEntities.cs\")",
+      "Bash(move:*)",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Commands\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Core\\DTOs\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

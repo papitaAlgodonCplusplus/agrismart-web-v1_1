@@ -1,9 +1,7 @@
-
-using AgriSmart.Core.Entities;
-using System.Threading.Tasks;
 using AgriSmart.Calculator.Entities;
+using System.Threading.Tasks;
 
-namespace AgriSmart.Core.Interfaces
+namespace AgriSmart.Calculator.Interfaces
 {
     public interface IIrrigationDesignCalculator
     {
