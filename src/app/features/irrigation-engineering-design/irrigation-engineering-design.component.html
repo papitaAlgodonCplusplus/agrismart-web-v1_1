@@ -134,13 +134,13 @@
               <div class="col-md-6">
                 <div class="form-group">
                   <label class="form-label">Crop Production *</label>
-                  <ng-select [items]="cropProductions" 
-                           bindLabel="name" 
-                           bindValue="id"
-                           formControlName="cropProductionId"
-                           (change)="onCropProductionChange()"
-                           placeholder="Select crop production">
-                  </ng-select>
+                  <select class="form-select" formControlName="cropProductionId" 
+                          (change)="onCropProductionChange()">
+                    <option value="">Select crop production</option>
+                    <option *ngFor="let crop of cropProductions" [value]="crop.id">
+                      {{ crop.name }}
+                    </option>
+                  </select>
                 </div>
               </div>
               <div class="col-md-6">
@@ -156,34 +156,34 @@
               <div class="col-md-4">
                 <div class="form-group">
                   <label class="form-label">Container Type *</label>
-                  <ng-select [items]="containers" 
-                           bindLabel="name" 
-                           bindValue="id"
-                           formControlName="containerId"
-                           placeholder="Select container">
-                  </ng-select>
+                  <select class="form-select" formControlName="containerId">
+                    <option value="">Select container</option>
+                    <option *ngFor="let container of containers" [value]="container.id">
+                      {{ container.name }}
+                    </option>
+                  </select>
                 </div>
               </div>
               <div class="col-md-4">
                 <div class="form-group">
                   <label class="form-label">Dropper Type *</label>
-                  <ng-select [items]="droppers" 
-                           bindLabel="name" 
-                           bindValue="id"
-                           formControlName="dropperId"
-                           placeholder="Select dropper">
-                  </ng-select>
+                  <select class="form-select" formControlName="dropperId">
+                    <option value="">Select dropper</option>
+                    <option *ngFor="let dropper of droppers" [value]="dropper.id">
+                      {{ dropper.name }}
+                    </option>
+                  </select>
                 </div>
               </div>
               <div class="col-md-4">
                 <div class="form-group">
                   <label class="form-label">Growing Medium *</label>
-                  <ng-select [items]="growingMediums" 
-                           bindLabel="name" 
-                           bindValue="id"
-                           formControlName="growingMediumId"
-                           placeholder="Select growing medium">
-                  </ng-select>
+                  <select class="form-select" formControlName="growingMediumId">
+                    <option value="">Select growing medium</option>
+                    <option *ngFor="let medium of growingMediums" [value]="medium.id">
+                      {{ medium.name }}
+                    </option>
+                  </select>
                 </div>
               </div>
             </div>

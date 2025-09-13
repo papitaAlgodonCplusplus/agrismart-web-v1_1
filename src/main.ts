@@ -1,4 +1,7 @@
 // src/main.ts
+// Add this before your app bootstrap
+import { DOCUMENT } from '@angular/common';
+(window as any).DOCUMENT = DOCUMENT;
 import { bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from './app/app.component';
 import { provideRouter } from '@angular/router';
@@ -12,6 +15,7 @@ import { routes } from './app/app.routes';
 
 // Import auth interceptor function
 import { authInterceptor } from './app/core/interceptors/auth.interceptor';
+
 
 // Custom Error Handler to suppress specific Angular errors
 @Injectable()

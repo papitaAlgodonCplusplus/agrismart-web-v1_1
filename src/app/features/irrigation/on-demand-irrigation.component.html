@@ -57,14 +57,14 @@
       <div class="status-grid" *ngIf="systemStatus">
         <div class="status-item">
           <div class="status-label">Presión del Sistema</div>
-          <div class="status-value"
-            [ngClass]="getStatusColor((systemStatus.systemPressure ?? 0) > 2 ? 'running' : 'error')">
-            {{ formatPressure(systemStatus.systemPressure ?? 0) }}
-          </div>
+          <!-- <div class="status-value"
+            [ngClass]="getStatusColor((systemStatus.systemStatus) > 2 ? 'running' : 'error')">
+            {{ formatPressure(systemStatus.systemStatus ?? 0) }}
+          </div> -->
         </div>
         <div class="status-item">
           <div class="status-label">Flujo Total</div>
-          <div class="status-value">{{ formatFlowRate(systemStatus.totalFlowRate ?? 0) }}</div>
+          <!-- <div class="status-value">{{ formatFlowRate(systemStatus.totalFlowRate ?? 0) }}</div> -->
         </div>
         <div class="status-item">
           <div class="status-label">Sectores Activos</div>
@@ -822,7 +822,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let measurement of recentMeasurements">
+              <!-- <tr *ngFor="let measurement of recentMeasurements">
                 <td>{{ formatDate(measurement.timestamp) }}</td>
                 <td [ngClass]="measurement.temperature > 30 ? 'text-red-600' : 'text-green-600'">
                   {{ formatTemperature(measurement.temperature) }}
@@ -834,7 +834,7 @@
                   {{ formatPressure(measurement.pressure) }}
                 </td>
                 <td>{{ formatWaterAmount(measurement.irrigationVolume) }}</td>
-              </tr>
+              </tr> -->
               <tr *ngIf="recentMeasurements.length === 0">
                 <td colspan="5" class="text-center">No hay mediciones registradas</td>
               </tr>

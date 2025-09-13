@@ -37,6 +37,7 @@ import { ShinyDashboardComponent } from './features/dashboard/shiny/shiny-dashbo
 import { FertilizerListComponent } from './features/fertilizers/fertilizer-list/fertilizer-list.component';
 import { FertilizerInputListComponent } from './features/fertilizer-inputs/fertilizer-input-list/fertilizer-input-list.component';
 import { WaterChemistryComponent } from './features/water/water-chemistry.component'
+import { IrrigationEngineeringDesignComponent } from './features/irrigation-engineering-design/irrigation-engineering-design.component';
 
 // Users & Administration
 import { ProfileComponent } from './features/profile/profile.component';
@@ -181,6 +182,11 @@ export const routes: Routes = [
         path: 'water-chemistry',
         component: WaterChemistryComponent
       },
+      {
+        path: 'irrigation-engineering-design',
+        component: IrrigationEngineeringDesignComponent
+      },
+
       // Fertilizers Management
       {
         path: 'fertilizers',

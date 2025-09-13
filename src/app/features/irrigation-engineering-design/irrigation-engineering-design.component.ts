@@ -4,7 +4,6 @@ import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } fr
 import { Observable, Subject, combineLatest, BehaviorSubject } from 'rxjs';
 import { takeUntil, map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
-import { NgSelectModule } from '@ng-select/ng-select';
 
 // Services
 import { IrrigationEngineeringService } from '../services/irrigation-engineering.service';
@@ -33,8 +32,7 @@ import { CropProduction } from '../../core/models/models';
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
-    NgSelectModule
+    ReactiveFormsModule
   ]
 })
 export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
@@ -52,15 +50,15 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   growingMediums: GrowingMedium[] = [];
 
   // Current Design
-  currentDesign: IrrigationDesign | null = null;
-  savedDesigns: IrrigationDesign[] = [];
+  currentDesign: any | null = null;
+  savedDesigns: any[] = [];
 
   // Calculations and Results
-  hydraulicResults: HydraulicParameters | null = null;
-  validationResults: SystemValidation | null = null;
-  optimizationResults: DesignOptimization | null = null;
-  pipelineDesign: PipelineDesign | null = null;
-  economicAnalysis: EconomicAnalysis | null = null;
+  hydraulicResults: any | null = null;
+  validationResults: any | null = null;
+  optimizationResults: any | null = null;
+  pipelineDesign: any | null = null;
+  economicAnalysis: any | null = null;
 
   // UI State
   activeTab = 'design';
@@ -431,7 +429,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     });
   }
 
-  private applyOptimizedParameters(optimized: any): void {
+  public applyOptimizedParameters(optimized: any): void {
     if (optimized.hydraulic) {
       this.hydraulicForm.patchValue(optimized.hydraulic);
     }

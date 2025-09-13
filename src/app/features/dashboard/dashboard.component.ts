@@ -262,9 +262,9 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * Navigate to crop requirements
+   * Navigate to irrigation design requirements
    */
-  navigateToCropRequirements(): void {
-    this.router.navigate(['/crops']);
+  navigateToIrrigationDesignRequirements(): void {
+    this.router.navigate(['/irrigation-engineering-design']);
   }
 }

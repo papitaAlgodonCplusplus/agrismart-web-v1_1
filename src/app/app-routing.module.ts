@@ -27,6 +27,7 @@ import { ProductionUnitListComponent } from './features/production-units/product
 import { CropProductionListComponent } from './features/crop-production/crop-production-list/crop-production-list.component';
 import { OnDemandIrrigationComponent } from './features/irrigation/on-demand-irrigation.component';
 import { WaterChemistryComponent } from './features/water/water-chemistry.component';
+import { IrrigationEngineeringDesignComponent } from './features/irrigation-engineering-design/irrigation-engineering-design.component';
 
 
 // Fertilizers & Inputs
@@ -112,6 +113,12 @@ const routes: Routes = [
       {
         path: 'crop-production',
         component: CropProductionListComponent
+      },
+
+      // Irrigation Engineering Design
+      {
+        path: 'irrigation-engineering-design',
+        component: IrrigationEngineeringDesignComponent
       },
 
       // Devices & IoT
