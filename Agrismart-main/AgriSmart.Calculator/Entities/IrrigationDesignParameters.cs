@@ -576,23 +576,4 @@ namespace AgriSmart.Calculator.Entities
         public double TotalCost { get; set; }
         public string Supplier { get; set; } = string.Empty;
     }
-
-    // Volume class (existing in your system)
-    public class Volume
-    {
-        public enum volumeMeasure
-        {
-            toLitre,
-            none
-        }
-
-        public double Value { get; set; }
-        public volumeMeasure Measure { get; set; }
-
-        public Volume(double value, volumeMeasure measure)
-        {
-            Value = value;
-            Measure = measure;
-        }
-    }
 }

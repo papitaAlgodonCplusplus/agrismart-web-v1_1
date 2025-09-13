@@ -6,6 +6,9 @@ using AgriSmart.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
+using AgriSmart.Core.Interfaces;
+using AgriSmart.Core.Entities;
+using AgriSmart.Calculator.Entities;
 
 namespace AgriSmart.Infrastructure.Services
 {

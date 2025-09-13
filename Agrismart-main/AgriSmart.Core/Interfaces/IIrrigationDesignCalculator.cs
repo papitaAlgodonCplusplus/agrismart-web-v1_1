@@ -1,6 +1,7 @@
 
 using AgriSmart.Core.Entities;
 using System.Threading.Tasks;
+using AgriSmart.Calculator.Entities;
 
 namespace AgriSmart.Core.Interfaces
 {

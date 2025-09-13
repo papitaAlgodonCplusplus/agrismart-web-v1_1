@@ -16,6 +16,7 @@
     <Compile Remove="Entities\FarmEntity.cs" />
     <Compile Remove="Entities\ProductionUnitEntity.cs" />
     <Compile Remove="Logic\Calculate.cs" />
+    <ProjectReference Include="..\AgriSmart.Core\AgriSmart.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

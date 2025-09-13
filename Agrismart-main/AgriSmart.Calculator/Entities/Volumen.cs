@@ -14,11 +14,6 @@ namespace AgriSmart.Calculator.Entities
 
         public volumeMeasure VolumeMeasureType { get; set; }
 
-        public Volume()
-        {
-
-        }
-
         public Volume(double value, volumeMeasure measure)
         {
             this.value = value;
