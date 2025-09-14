@@ -1,7 +1,7 @@
 // src/app/features/water-chemistry/services/water-chemistry.service.ts
 import { Injectable } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { catchError, Observable, switchMap, throwError } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 
 export interface WaterChemistry {
@@ -12,6 +12,12 @@ export interface WaterChemistry {
   analysisDate?: any;
   waterId?: any;
   pH?: any;
+  nh4?: number;
+  nH4?: number;
+  hco3?: number;
+  hcO3?: number;
+  bo4?: number;
+  bO4?: number;
   active?: any;
   po4?: number;
   k?: number;
@@ -38,6 +44,7 @@ export interface WaterChemistry {
   nitrateLevel?: number;
   phosphateLevel?: number;
   isActive?: boolean;
+  catalogId?: number; // Added catalog ID
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -57,14 +64,14 @@ export interface WaterChemistryFilters {
 export class WaterChemistryService {
   private readonly baseUrl = '/WaterChemistry'; // Just the endpoint path
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService) { }
 
   /**
    * Get all water chemistry records with optional filters
    */
   getAll(filters?: WaterChemistryFilters): Observable<any> {
     let params = new HttpParams();
-    
+
     // if (filters) {
     //   if (filters.onlyActive !== undefined) {
     //     params = params.set('onlyActive', filters.onlyActive.toString());
@@ -100,7 +107,57 @@ export class WaterChemistryService {
    * Create water chemistry record
    */
   create(data: Partial<WaterChemistry>): Observable<WaterChemistry> {
-    return this.apiService.post<WaterChemistry>(this.baseUrl, data);
+    // Validate that catalogId is provided
+    if (!data.catalogId) {
+      return throwError(() => new Error('Catalog ID is required'));
+    }
+
+    const curatedData = {
+      waterId: data.waterId,
+      ca: data.ca ? data.ca : 0, // Default to 0 if not provided
+      k: data.k ? data.k : 0, // Default to 0 if not provided
+      mg: data.mg ? data.mg : 0, // Default to 0 if not provided
+      na: data.na ? data.na : 0, // Default to 0 if not provided
+      nH4: data.nh4 ? data.nh4 : 0, // Default to 0 if not provided
+      fe: data.fe ? data.fe : 0, // Default to 0 if not provided
+      cu: data.cu ? data.cu : 0, // Default to 0 if not provided
+      mn: data.mn ? data.mn : 0, // Default to 0 if not provided
+      zn: data.zn ? data.zn : 0, // Default to 0 if not provided
+      nO3: data.no3 ? data.no3 : 0, // Default to 0 if not provided
+      sO4: data.sul ? data.sul : 0, // Default to 0 if not provided
+      cl: data.cl ? data.cl : 0, // Default to 0 if not provided
+      b: data.b ? data.b : 0, // Default to 0 if not provide
+      h2PO4: data.h2po4 ? data.h2po4 : 0, // Default to 0 if not provided
+      hcO3: data.hco3 ? data.hco3 : 0, // Default to 0 if not provided
+      bO4: data.bo4 ? data.bo4 : 0, // Default to 0 if not provided
+      moO4: data.mo ? data.mo : 0, // Default to 0 if not provided
+      ec: data.ec ? data.ec : 0, // Default to 0 if not provided
+      pH: data.ph ? data.ph : 0, // Default to 0 if not provided
+      analysisDate: data.analysisDate ? data.analysisDate : new Date(), // Default to now if not provided
+    };
+
+    const curatedWaterData = {
+      catalogId: data.catalogId, // Use the selected catalog ID instead of hardcoded 1
+      name: data.name || "Agua de Riego #" + (data.waterId ?? 'Desconocido'), // Use provided name or generate one
+    };
+
+    console.log('Creating water with catalog ID:', data.catalogId);
+    console.log('Water data:', curatedWaterData);
+    console.log('Chemistry data:', curatedData);
+
+    // First create the water, then create the chemistry record
+    return this.apiService.post<WaterChemistry>('/Water', curatedWaterData).pipe(
+      // Use switchMap to chain the second request after the first succeeds
+      switchMap((response) => {
+        console.log('Water created successfully:', response);
+        curatedData.waterId = response.id; // Set the returned water ID
+        return this.apiService.post<WaterChemistry>(this.baseUrl, curatedData);
+      }),
+      catchError((error) => {
+        console.error('Error creating water:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   /**

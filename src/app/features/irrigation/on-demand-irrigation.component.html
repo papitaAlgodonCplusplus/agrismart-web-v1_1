@@ -1,4 +1,4 @@
-<!-- src/app/features/irrigation/on-demand-irrigation.component.html -->
+<!-- src/app/features/irrigation/on-demand-irrigation.component.html - FIXED VERSION -->
 <div class="on-demand-irrigation-container">
 
   <!-- Page Header -->
@@ -45,7 +45,7 @@
   <!-- Main Content -->
   <div *ngIf="!isLoading">
 
-    <!-- System Status Card -->
+    <!-- System Status Card with Real Data -->
     <div class="system-status-card">
       <div class="card-header">
         <h3><i class="bi bi-gear"></i> Estado del Sistema</h3>
@@ -57,22 +57,88 @@
       <div class="status-grid" *ngIf="systemStatus">
         <div class="status-item">
           <div class="status-label">Presión del Sistema</div>
-          <!-- <div class="status-value"
-            [ngClass]="getStatusColor((systemStatus.systemStatus) > 2 ? 'running' : 'error')">
-            {{ formatPressure(systemStatus.systemStatus ?? 0) }}
-          </div> -->
+          <div class="status-value"
+            [ngClass]="(systemStatus.systemPressure || 0) > 2 ? 'text-green-600' : 'text-red-600'">
+            {{ formatPressure(systemStatus.systemPressure || 0) }}
+          </div>
         </div>
         <div class="status-item">
           <div class="status-label">Flujo Total</div>
-          <!-- <div class="status-value">{{ formatFlowRate(systemStatus.totalFlowRate ?? 0) }}</div> -->
+          <div class="status-value">{{ formatFlowRate(systemStatus.totalFlowRate || 0) }}</div>
         </div>
         <div class="status-item">
-          <div class="status-label">Sectores Activos</div>
-          <div class="status-value">{{ systemStatus.activeDevices }}</div>
+          <div class="status-label">Dispositivos Activos</div>
+          <div class="status-value">{{ systemStatus.activeDevices }} / {{ systemStatus.totalDevices }}</div>
         </div>
         <div class="status-item">
           <div class="status-label">Última Actualización</div>
           <div class="status-value">{{ formatDate(systemStatus.lastUpdate) }}</div>
+        </div>
+      </div>
+
+      <!-- System Measurements Overview -->
+      <div class="measurements-overview" *ngIf="systemStatus?.measurements">
+        <h4>Mediciones del Sistema</h4>
+        <div class="measurement-grid">
+          <div class="measurement-item"
+            *ngIf="systemStatus.measurements.temperature && systemStatus.measurements.temperature.length > 0">
+            <div class="measurement-icon">
+              <i class="bi bi-thermometer-half"></i>
+            </div>
+            <div class="measurement-info">
+              <div class="measurement-value">
+                {{ formatTemperature(systemStatus.measurements.temperature[systemStatus.measurements.temperature.length
+                - 1]?.value || 0) }}
+              </div>
+              <div class="measurement-label">Temperatura</div>
+              <div class="measurement-count">{{ systemStatus.measurements.temperature.length }} lecturas</div>
+            </div>
+          </div>
+
+          <div class="measurement-item"
+            *ngIf="systemStatus.measurements.soilMoisture && systemStatus.measurements.soilMoisture.length > 0">
+            <div class="measurement-icon">
+              <i class="bi bi-moisture"></i>
+            </div>
+            <div class="measurement-info">
+              <div class="measurement-value">
+                {{ formatPercentage(systemStatus.measurements.soilMoisture[systemStatus.measurements.soilMoisture.length
+                - 1]?.value || 0) }}
+              </div>
+              <div class="measurement-label">Humedad del Suelo</div>
+              <div class="measurement-count">{{ systemStatus.measurements.soilMoisture.length }} lecturas</div>
+            </div>
+          </div>
+
+          <div class="measurement-item"
+            *ngIf="systemStatus.measurements.pressure && systemStatus.measurements.pressure.length > 0">
+            <div class="measurement-icon">
+              <i class="bi bi-speedometer2"></i>
+            </div>
+            <div class="measurement-info">
+              <div class="measurement-value">
+                {{ formatPressure(systemStatus.measurements.pressure[systemStatus.measurements.pressure.length -
+                1]?.value || 0) }}
+              </div>
+              <div class="measurement-label">Presión</div>
+              <div class="measurement-count">{{ systemStatus.measurements.pressure.length }} lecturas</div>
+            </div>
+          </div>
+
+          <div class="measurement-item"
+            *ngIf="systemStatus.measurements.flow && systemStatus.measurements.flow.length > 0">
+            <div class="measurement-icon">
+              <i class="bi bi-water"></i>
+            </div>
+            <div class="measurement-info">
+              <div class="measurement-value">
+                {{ formatFlowRate(systemStatus.measurements.flow[systemStatus.measurements.flow.length - 1]?.value || 0)
+                }}
+              </div>
+              <div class="measurement-label">Flujo</div>
+              <div class="measurement-count">{{ systemStatus.measurements.flow.length }} lecturas</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -86,7 +152,7 @@
       </div>
     </div>
 
-    <!-- Device List Table - Add this after the system-status-card -->
+    <!-- Device List Table with Real Data -->
     <div class="devices-table-card" *ngIf="systemStatus?.devices?.length">
       <div class="card-header">
         <h3><i class="bi bi-cpu"></i> Dispositivos del Sistema</h3>
@@ -102,8 +168,8 @@
               <th>Dispositivo</th>
               <th>Estado</th>
               <th>Tipo</th>
-              <!-- <th>Compañía</th> -->
               <th>Fecha Creación</th>
+              <th>Última Actualización</th>
             </tr>
           </thead>
           <tbody>
@@ -128,10 +194,10 @@
                   {{ getDeviceType(device.deviceId) }}
                 </span>
               </td>
-              <!-- <td>{{ device.companyId }}</td> -->
               <td>{{ formatDate(device.dateCreated) }}</td>
+              <td>{{ device.dateUpdated ? formatDate(device.dateUpdated) : 'N/A' }}</td>
             </tr>
-            <tr *ngIf="systemStatus?.devices.length === 0">
+            <tr *ngIf="systemStatus?.devices?.length === 0">
               <td colspan="5" class="text-center">No hay dispositivos registrados</td>
             </tr>
           </tbody>
@@ -333,24 +399,23 @@
           </div>
           <div class="detail-item">
             <span class="label">Estado:</span>
-            <span class="value">{{ selectedCropProduction.active ? 'Activo' : 'Inactivo' }}</span>
+            <span class="value">{{ getCropProductionStatus() }}</span>
           </div>
           <div class="detail-item">
             <span class="label">Área:</span>
-            <span class="value">{{ (selectedCropProduction.length * selectedCropProduction.width).toFixed(1) }}
-              m²</span>
+            <span class="value">{{ getCropProductionArea().toFixed(1) }} m²</span>
           </div>
           <div class="detail-item">
             <span class="label">Dimensiones:</span>
-            <span class="value">{{ selectedCropProduction.length }}m × {{ selectedCropProduction.width }}m</span>
+            <span class="value">{{ getCropProductionDimensions() }}</span>
           </div>
           <div class="detail-item">
             <span class="label">Fecha Inicio:</span>
-            <span class="value">{{ formatDate(selectedCropProduction.startDate) }}</span>
+            <span class="value">{{ getPlantingDate() }}</span>
           </div>
           <div class="detail-item">
             <span class="label">Fecha Fin:</span>
-            <span class="value">{{ formatDate(selectedCropProduction.endDate) }}</span>
+            <span class="value">{{ getHarvestDate() }}</span>
           </div>
         </div>
 
@@ -366,8 +431,7 @@
           </div>
           <div class="detail-item">
             <span class="label">Dimensiones:</span>
-            <span class="value">{{ selectedContainer.length }}cm × {{ selectedContainer.width }}cm × {{
-              selectedContainer.height }}cm</span>
+            <span class="value">{{ getContainerDimensions() }}</span>
           </div>
           <div class="detail-item">
             <span class="label">Diámetro Superior:</span>
@@ -399,8 +463,7 @@
           </div>
           <div class="detail-item">
             <span class="label">Flujo Total:</span>
-            <span class="value">{{ formatFlowRate(selectedDropper.flowRate *
-              selectedCropProduction.numberOfDroppersPerContainer) }}</span>
+            <span class="value">{{ formatFlowRate(getTotalFlowRate()) }}</span>
           </div>
           <div class="detail-item">
             <span class="label">Catálogo ID:</span>
@@ -416,53 +479,25 @@
           </div>
           <div class="detail-item">
             <span class="label">Capacidad del Contenedor:</span>
-            <span class="value">{{ formatPercentage(selectedGrowingMedium.containerCapacityPercentage) }}</span>
+            <span class="value">{{ formatPercentage(getGrowingMediumWaterRetention()) }}</span>
           </div>
           <div class="detail-item">
             <span class="label">Punto de Marchitez:</span>
-            <span class="value">{{ formatPercentage(selectedGrowingMedium.permanentWiltingPoint) }}</span>
+            <span class="value">{{ formatPercentage(selectedGrowingMedium.permanentWiltingPoint || 0) }}</span>
           </div>
           <div class="detail-item">
-            <span class="label">Humedad 5 kPa:</span>
-            <span class="value">{{ formatPercentage(selectedGrowingMedium.fiveKpaHumidity) }}</span>
+            <span class="label">Agua Fácilmente Disponible:</span>
+            <span class="value">{{ formatPercentage(selectedGrowingMedium.easelyAvailableWaterPercentage || 0) }}</span>
           </div>
           <div class="detail-item">
             <span class="label">Catálogo ID:</span>
             <span class="value">{{ selectedGrowingMedium.catalogId }}</span>
           </div>
         </div>
-
-        <div class="detail-section">
-          <h4>Configuración del Sector</h4>
-          <div class="detail-item">
-            <span class="label">Distancia entre Contenedores:</span>
-            <span class="value">{{ selectedCropProduction.betweenContainerDistance }}m</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Distancia entre Plantas:</span>
-            <span class="value">{{ selectedCropProduction.betweenPlantDistance }}m</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Distancia entre Filas:</span>
-            <span class="value">{{ selectedCropProduction.betweenRowDistance }}m</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Plantas por Contenedor:</span>
-            <span class="value">{{ selectedCropProduction.plantsPerContainer }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">% Agotamiento:</span>
-            <span class="value">{{ formatPercentage(selectedCropProduction.depletionPercentage ?? 0) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Umbral de Drenaje:</span>
-            <span class="value">{{ selectedCropProduction.drainThreshold }}</span>
-          </div>
-        </div>
       </div>
     </div>
 
-    <!-- Real-time Sensor Data -->
+    <!-- Real-time Sensor Data with Actual Measurements -->
     <div class="sensor-data-card" *ngIf="realTimeData$ | async as sensorData">
       <div class="card-header">
         <h3><i class="bi bi-graph-up"></i> Datos de Sensores en Tiempo Real</h3>
@@ -481,6 +516,9 @@
               {{ formatTemperature(sensorData.temperature) }}
             </div>
             <div class="sensor-label">Temperatura</div>
+            <div class="sensor-readings" *ngIf="sensorData.rawData?.temperatureReadings?.length">
+              {{ sensorData.rawData.temperatureReadings.length }} lecturas recientes
+            </div>
           </div>
         </div>
 
@@ -493,6 +531,9 @@
               {{ formatPercentage(sensorData.soilMoisture) }}
             </div>
             <div class="sensor-label">Humedad del Suelo</div>
+            <div class="sensor-readings" *ngIf="sensorData.rawData?.soilMoistureReadings?.length">
+              {{ sensorData.rawData.soilMoistureReadings.length }} lecturas recientes
+            </div>
           </div>
         </div>
 
@@ -505,6 +546,9 @@
               {{ formatPercentage(sensorData.humidity) }}
             </div>
             <div class="sensor-label">Humedad del Aire</div>
+            <div class="sensor-readings" *ngIf="sensorData.rawData?.humidityReadings?.length">
+              {{ sensorData.rawData.humidityReadings.length }} lecturas recientes
+            </div>
           </div>
         </div>
 
@@ -517,12 +561,27 @@
               {{ formatPressure(sensorData.pressure) }}
             </div>
             <div class="sensor-label">Presión</div>
+            <div class="sensor-readings" *ngIf="sensorData.rawData?.pressureReadings?.length">
+              {{ sensorData.rawData.pressureReadings.length }} lecturas recientes
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Raw Data Details -->
+      <div class="raw-data-section" *ngIf="sensorData.rawData && showAdvancedOptions">
+        <h5>Datos de Mediciones Detallados</h5>
+        <div class="raw-data-grid">
+          <div class="raw-data-item" *ngFor="let reading of sensorData.rawData.temperatureReadings.slice(-3)">
+            <span class="reading-time">{{ formatDate(reading.recordDate) }}</span>
+            <span class="reading-value">{{ formatTemperature(reading.recordValue) }}</span>
+            <span class="reading-sensor">Sensor {{ reading.sensorId }}</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Calculation Results -->
+    <!-- Calculation Results with Real Data -->
     <div class="calculation-results-card" *ngIf="calculationResult">
       <div class="card-header">
         <h3><i class="bi bi-calculator"></i> Resultados del Cálculo</h3>
@@ -643,6 +702,14 @@
             <span class="label">Factor de Fricción:</span>
             <span class="value">{{ hydraulicCalculation.frictionFactor.toFixed(4) }}</span>
           </div>
+          <div class="calc-item">
+            <span class="label">Cabeza Total:</span>
+            <span class="value">{{ hydraulicCalculation.totalHead.toFixed(1) }} m</span>
+          </div>
+          <div class="calc-item">
+            <span class="label">Potencia Requerida:</span>
+            <span class="value">{{ hydraulicCalculation.powerRequired.toFixed(2) }} kW</span>
+          </div>
         </div>
       </div>
 
@@ -669,6 +736,14 @@
             <span class="label">Uniformidad:</span>
             <span class="value">{{ formatPercentage(flowRateCalculation.uniformity) }}</span>
           </div>
+          <div class="calc-item">
+            <span class="label">Tasa de Precipitación:</span>
+            <span class="value">{{ flowRateCalculation.precipitationRate.toFixed(1) }} mm/h</span>
+          </div>
+          <div class="calc-item">
+            <span class="label">Presión Requerida:</span>
+            <span class="value">{{ formatPressure(flowRateCalculation.pressureRequired) }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -694,13 +769,17 @@
             <span class="value">{{ formatWaterAmount(scheduleOptimization.waterAmount) }}</span>
           </div>
           <div class="recommendation-item">
+            <span class="label">Frecuencia:</span>
+            <span class="value">{{ scheduleOptimization.frequency }} vez(es) por día</span>
+          </div>
+          <div class="recommendation-item">
             <span class="label">Ahorro Estimado:</span>
             <span class="value">{{ formatPercentage(scheduleOptimization.waterSavings) }}</span>
           </div>
         </div>
 
         <div class="optimization-conditions">
-          <h5>Condiciones para Optimización</h5>
+          <h5>Condiciones Óptimas</h5>
           <div class="conditions-list">
             <div class="condition">
               <span class="label">Temperatura Óptima:</span>
@@ -719,12 +798,12 @@
       </div>
     </div>
 
-    <!-- Evapotranspiration Data -->
+    <!-- Evapotranspiration Data with Real Calculations -->
     <div class="et-data-card" *ngIf="evapotranspirationData.length > 0">
       <div class="card-header">
         <h3><i class="bi bi-graph-up"></i> Datos de Evapotranspiración</h3>
         <div class="et-summary">
-          Promedio ET: {{ averageET.toFixed(1) }} mm/día
+          Promedio ET: {{ averageET.toFixed(1) }} mm/día | Datos de {{ evapotranspirationData.length }} días
         </div>
       </div>
 
@@ -756,36 +835,54 @@
           <span>ETc Cultivo</span>
         </div>
       </div>
+
+      <!-- Detailed ET Data -->
+      <div class="et-details" *ngIf="showAdvancedOptions">
+        <h5>Detalles de Evapotranspiración</h5>
+        <div class="et-details-grid">
+          <div class="et-detail-item" *ngFor="let data of evapotranspirationData.slice(-3)">
+            <div class="et-detail-date">{{ formatDate(data.date).split(' ')[0] }}</div>
+            <div class="et-detail-values">
+              <div>Coef. Cultivo: {{ data.cropCoefficient.toFixed(2) }}</div>
+              <div>Temp: {{ formatTemperature(data.temperature) }}</div>
+              <div>Humedad: {{ formatPercentage(data.humidity) }}</div>
+              <div>Viento: {{ data.windSpeed.toFixed(1) }} m/s</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- History Section -->
+    <!-- History Section with Real API Data -->
     <div class="history-section">
 
-      <!-- Recent Events -->
+      <!-- Recent Events with Real Data -->
       <div class="events-card">
         <div class="card-header">
-          <h3><i class="bi bi-clock-history"></i> Eventos Recientes</h3>
+          <h3><i class="bi bi-clock-history"></i> Eventos de Irrigación Recientes</h3>
           <small>Últimos {{ recentEvents.length }} eventos</small>
         </div>
 
         <div class="events-list">
           <div class="event-item" *ngFor="let event of recentEvents"
-            [style.border-left-color]="getStatusColor(event.status)">
+            [style.border-left-color]="getStatusColor('completed')">
             <div class="event-icon">
-              <i class="bi" [ngClass]="event.status === 'completed' ? 'bi-check-circle' : 
-                                     event.status === 'running' ? 'bi-play-circle' :
-                                     event.status === 'failed' ? 'bi-x-circle' : 'bi-pause-circle'"></i>
+              <i class="bi bi-droplet-fill"></i>
             </div>
             <div class="event-details">
               <div class="event-header">
-                <span class="event-status" [ngClass]="getStatusColor(event.status)">{{ event.status }}</span>
+                <span class="event-status" [ngClass]="getStatusColor('completed')">Completado</span>
                 <span class="event-date">{{ formatDate(event.dateTimeStart) }}</span>
               </div>
               <div class="event-info">
-                Duración: {{ formatDuration(event.duration) }} |
-                Agua: {{ formatWaterAmount(event.waterAmount ?? 0) }}
+                Inicio: {{ formatDate(event.dateTimeStart) }} |
+                Fin: {{ event.dateTimeEnd ? formatDate(event.dateTimeEnd) : 'En curso' }}
+                <div *ngIf="event.irrigationMeasurements && event.irrigationMeasurements.length"
+                  class="event-measurements">
+                  {{ event.irrigationMeasurements.length }} mediciones registradas
+                </div>
               </div>
-              <div class="event-notes" *ngIf="event.notes">{{ event.notes }}</div>
+              <div class="event-id">ID del Evento: {{ event.id }}</div>
             </div>
           </div>
 
@@ -797,54 +894,98 @@
               <div class="event-header">
                 <span class="event-status">Sin eventos</span>
               </div>
-              <div class="event-info">No hay eventos de irrigación registrados</div>
+              <div class="event-info">No hay eventos de irrigación registrados en los últimos 7 días</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Recent Measurements -->
+      <!-- Measurements Data -->
       <div class="measurements-card">
         <div class="card-header">
-          <h3><i class="bi bi-graph-down"></i> Mediciones Recientes</h3>
-          <small>Últimas {{ recentMeasurements.length }} mediciones</small>
+          <h3><i class="bi bi-graph-down"></i> Mediciones del Sistema</h3>
+          <div class="measurements-summary">
+            <div>Mediciones de Irrigación: {{ recentMeasurements.length }}</div>
+            <div>Mediciones Agregadas: {{ aggregatedMeasurements.length }}</div>
+            <div>Mediciones Base: {{ rawMeasurements.length }}</div>
+            <div>KPIs: {{ kpiMeasurements.length }}</div>
+          </div>
         </div>
 
-        <div class="measurements-table">
+        <!-- Aggregated Measurements Table -->
+        <div class="measurements-table" *ngIf="aggregatedMeasurements.length > 0">
+          <h5>Mediciones Agregadas (Última Semana)</h5>
           <table>
             <thead>
               <tr>
-                <th>Fecha/Hora</th>
-                <th>Temp. (°C)</th>
-                <th>Humedad (%)</th>
-                <th>Presión (bar)</th>
-                <th>Volumen (L)</th>
+                <th>Fecha</th>
+                <th>Variable</th>
+                <th>Mínimo</th>
+                <th>Máximo</th>
+                <th>Promedio</th>
+                <th>Suma</th>
               </tr>
             </thead>
             <tbody>
-              <!-- <tr *ngFor="let measurement of recentMeasurements">
-                <td>{{ formatDate(measurement.timestamp) }}</td>
-                <td [ngClass]="measurement.temperature > 30 ? 'text-red-600' : 'text-green-600'">
-                  {{ formatTemperature(measurement.temperature) }}
+              <tr *ngFor="let measurement of aggregatedMeasurements.slice(0, 10)">
+                <td>{{ formatDate(measurement.recordDate) }}</td>
+                <td>Variable {{ measurement.measurementVariableId }}</td>
+                <td>{{ measurement.minValue.toFixed(2) }}</td>
+                <td>{{ measurement.maxValue.toFixed(2) }}</td>
+                <td
+                  [ngClass]="measurement.measurementVariableId === 1 && measurement.avgValue > 30 ? 'text-red-600' : 'text-green-600'">
+                  {{ measurement.avgValue.toFixed(2) }}
                 </td>
-                <td [ngClass]="measurement.humidity < 30 ? 'text-red-600' : 'text-green-600'">
-                  {{ formatPercentage(measurement.humidity) }}
-                </td>
-                <td [ngClass]="measurement.pressure < 2 ? 'text-red-600' : 'text-green-600'">
-                  {{ formatPressure(measurement.pressure) }}
-                </td>
-                <td>{{ formatWaterAmount(measurement.irrigationVolume) }}</td>
-              </tr> -->
-              <tr *ngIf="recentMeasurements.length === 0">
-                <td colspan="5" class="text-center">No hay mediciones registradas</td>
+                <td>{{ measurement.sumValue.toFixed(2) }}</td>
+              </tr>
+              <tr *ngIf="aggregatedMeasurements.length === 0">
+                <td colspan="6" class="text-center">No hay mediciones agregadas registradas</td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        <!-- Raw Measurements Summary -->
+        <div class="raw-measurements-summary" *ngIf="rawMeasurements.length > 0">
+          <h5>Mediciones Base Recientes (Últimas 24 horas)</h5>
+          <div class="raw-measurements-grid">
+            <div class="raw-measurement-card" *ngFor="let measurement of rawMeasurements.slice(-6)">
+              <div class="measurement-header">
+                <span class="measurement-variable">Variable {{ measurement.measurementVariableId }}</span>
+                <span class="measurement-sensor">Sensor {{ measurement.sensorId }}</span>
+              </div>
+              <div class="measurement-value-large">{{ measurement.recordValue.toFixed(2) }}</div>
+              <div class="measurement-timestamp">{{ formatDate(measurement.recordDate) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Measurements -->
+        <div class="kpi-measurements" *ngIf="kpiMeasurements.length > 0">
+          <h5>Indicadores KPI</h5>
+          <div class="kpi-grid">
+            <div class="kpi-item" *ngFor="let kpi of kpiMeasurements.slice(-4)">
+              <div class="kpi-header">
+                <span class="kpi-name">KPI {{ kpi.kpiId }}</span>
+                <span class="kpi-date">{{ formatDate(kpi.recordDate) }}</span>
+              </div>
+              <div class="kpi-values">
+                <div class="kpi-value">
+                  <span class="kpi-label">Promedio:</span>
+                  <span class="kpi-number">{{ kpi.avgValue.toFixed(2) }}</span>
+                </div>
+                <div class="kpi-value">
+                  <span class="kpi-label">Máximo:</span>
+                  <span class="kpi-number">{{ kpi.maxValue.toFixed(2) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Summary Statistics -->
+    <!-- Statistics Section with Real Data -->
     <div class="statistics-section" *ngIf="selectedCropProduction">
       <div class="system-status-card">
         <div class="card-header">
@@ -871,6 +1012,111 @@
             <div class="status-value">{{ averageET.toFixed(1) }} mm/día</div>
           </div>
         </div>
+
+        <!-- Data Quality Indicators -->
+        <div class="data-quality-section">
+          <h5>Calidad de Datos</h5>
+          <div class="quality-grid">
+            <div class="quality-item">
+              <span class="quality-label">Eventos Registrados:</span>
+              <span class="quality-value">{{ recentEvents.length }}</span>
+            </div>
+            <div class="quality-item">
+              <span class="quality-label">Mediciones Totales:</span>
+              <span class="quality-value">{{ rawMeasurements.length + aggregatedMeasurements.length }}</span>
+            </div>
+            <div class="quality-item">
+              <span class="quality-label">Variables Monitoreadas:</span>
+              <span class="quality-value">{{ getUniqueVariablesCount() }}</span>
+            </div>
+            <div class="quality-item">
+              <span class="quality-label">Sensores Activos:</span>
+              <span class="quality-value">{{ getUniqueSensorsCount() }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Water Usage Analytics -->
+    <div class="analytics-card" *ngIf="waterUsageAnalytics">
+      <div class="card-header">
+        <h3><i class="bi bi-graph-up-arrow"></i> Análisis de Uso de Agua</h3>
+        <div class="analytics-period">
+          Período: {{ formatDate(waterUsageAnalytics.startDate) }} - {{ formatDate(waterUsageAnalytics.endDate) }}
+        </div>
+      </div>
+
+      <div class="analytics-content">
+        <div class="analytics-summary">
+          <div class="summary-item">
+            <div class="summary-label">Uso Total</div>
+            <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.totalUsage) }}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Promedio Diario</div>
+            <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.dailyAverage) }}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Pico de Uso</div>
+            <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.peakUsage) }}</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Eficiencia</div>
+            <div class="summary-value">{{ formatPercentage(waterUsageAnalytics.efficiency) }}</div>
+          </div>
+        </div>
+
+        <div class="usage-trends" *ngIf="waterUsageAnalytics.trends">
+          <h5>Tendencias de Uso</h5>
+          <div class="trend-items">
+            <div class="trend-item" *ngFor="let trend of waterUsageAnalytics.trends">
+              <div class="trend-date">{{ formatDate(trend.date) }}</div>
+              <div class="trend-bar" [style.width.%]="(trend.usage / waterUsageAnalytics.peakUsage) * 100">
+                <div class="trend-value">{{ formatWaterAmount(trend.usage) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Environmental Impact -->
+    <div class="impact-card" *ngIf="environmentalImpact">
+      <div class="card-header">
+        <h3><i class="bi bi-tree"></i> Impacto Ambiental</h3>
+      </div>
+
+      <div class="impact-content">
+        <div class="impact-metrics">
+          <div class="impact-item">
+            <div class="impact-icon">
+              <i class="bi bi-droplet-half"></i>
+            </div>
+            <div class="impact-details">
+              <div class="impact-value">{{ formatPercentage(environmentalImpact.waterSavings) }}</div>
+              <div class="impact-label">Ahorro de Agua</div>
+            </div>
+          </div>
+          <div class="impact-item">
+            <div class="impact-icon">
+              <i class="bi bi-lightning"></i>
+            </div>
+            <div class="impact-details">
+              <div class="impact-value">{{ environmentalImpact.energySavings.toFixed(1) }} kWh</div>
+              <div class="impact-label">Ahorro de Energía</div>
+            </div>
+          </div>
+          <div class="impact-item">
+            <div class="impact-icon">
+              <i class="bi bi-cloud"></i>
+            </div>
+            <div class="impact-details">
+              <div class="impact-value">{{ environmentalImpact.carbonReduction.toFixed(2) }} kg CO₂</div>
+              <div class="impact-label">Reducción de Carbono</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -887,7 +1133,14 @@
         <i class="bi" [ngClass]="isSystemHealthy ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
         <span>{{ isSystemHealthy ? 'Sistema operativo' : 'Atención requerida' }}</span>
       </div>
+      <div class="info-item">
+        <i class="bi bi-clock"></i>
+        <span>Última sincronización: {{ systemStatus ? formatDate(systemStatus.lastUpdate) : 'Nunca' }}</span>
+      </div>
+      <div class="info-item">
+        <i class="bi bi-database"></i>
+        <span>Datos en tiempo real: {{ (realTimeData$ | async) ? 'Conectado' : 'Desconectado' }}</span>
+      </div>
     </div>
   </div>
-
 </div>

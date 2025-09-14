@@ -396,7 +396,7 @@ export class NutrientFormulationComponent implements OnInit {
     // Add this new method to create the calculation form
     private createCalculationForm(): FormGroup {
         return this.fb.group({
-            user_id: [1, [Validators.required, Validators.min(1)]],
+            user_id: [1],
             catalog_id: [null, Validators.required],
             phase_id: [null, Validators.required],
             water_id: [null, Validators.required],
@@ -1994,6 +1994,7 @@ export class NutrientFormulationComponent implements OnInit {
         this.showResults = false;
 
         const formData = this.calculationForm.value;
+        formData.user_id = this.authService.getCurrentUser()['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid'] || 1;
 
         // Build the API URL with query parameters
         const apiUrl = 'https://fertilizer-calculator-api.onrender.com/swagger-integrated-calculation';
@@ -2180,5 +2181,288 @@ export class NutrientFormulationComponent implements OnInit {
 
     printResults(): void {
         window.print();
+    }
+
+    // Add these properties to your component
+    recipeSearchTerm: string = '';
+    recipeSortBy: string = 'name';
+    recipeFilter: string = 'all';
+    filteredAllRecipes: FormulationRecipe[] = [];
+    totalRecipesCount: number = 0;
+    selectedRecipesForExport: FormulationRecipe[] = [];
+
+
+
+    private initializeModalData(): void {
+        this.totalRecipesCount = this.savedRecipes.length;
+        this.filteredAllRecipes = [...this.savedRecipes];
+        this.recipeSearchTerm = '';
+        this.recipeSortBy = 'name';
+        this.recipeFilter = 'all';
+        this.selectedRecipesForExport = [];
+    }
+
+    filterAllRecipes(): void {
+        let filtered = [...this.savedRecipes];
+
+        // Apply search filter
+        if (this.recipeSearchTerm.trim()) {
+            const searchTerm = this.recipeSearchTerm.toLowerCase();
+            filtered = filtered.filter(recipe =>
+                recipe.name.toLowerCase().includes(searchTerm) ||
+                this.getCropName(recipe.cropId).toLowerCase().includes(searchTerm) ||
+                (recipe.cropPhaseId && this.getCropPhaseName(recipe.cropPhaseId).toLowerCase().includes(searchTerm))
+            );
+        }
+
+        // Apply category filter
+        if (this.recipeFilter !== 'all') {
+            filtered = this.applyCategoryFilter(filtered, this.recipeFilter);
+        }
+
+        this.filteredAllRecipes = filtered;
+        this.sortAllRecipes();
+    }
+
+    private applyCategoryFilter(recipes: FormulationRecipe[], filter: string): FormulationRecipe[] {
+        const now = new Date();
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        switch (filter) {
+            case 'recent':
+                return recipes.filter(recipe =>
+                    recipe.createdAt && new Date(recipe.createdAt) > oneWeekAgo
+                );
+            case 'lowcost':
+                return recipes.filter(recipe =>
+                    (recipe.totalCost / recipe.volumeLiters) < 100
+                );
+            case 'highcost':
+                return recipes.filter(recipe =>
+                    (recipe.totalCost / recipe.volumeLiters) >= 150
+                );
+            default:
+                // Check if filter matches a crop name
+                const cropName = filter.toLowerCase();
+                return recipes.filter(recipe => {
+                    const recipeCropName = this.getCropName(recipe.cropId).toLowerCase();
+                    return recipeCropName.includes(cropName);
+                });
+        }
+    }
+
+    setRecipeFilter(filter: string): void {
+        this.recipeFilter = filter;
+        this.filterAllRecipes();
+    }
+
+    sortAllRecipes(): void {
+        this.filteredAllRecipes.sort((a, b) => {
+            switch (this.recipeSortBy) {
+                case 'name':
+                    return a.name.localeCompare(b.name);
+                case 'date':
+                    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    return dateB - dateA; // Most recent first
+                case 'cost':
+                    const costA = a.totalCost / a.volumeLiters;
+                    const costB = b.totalCost / b.volumeLiters;
+                    return costA - costB; // Lowest cost first
+                case 'crop':
+                    const cropA = this.getCropName(a.cropId);
+                    const cropB = this.getCropName(b.cropId);
+                    return cropA.localeCompare(cropB);
+                default:
+                    return 0;
+            }
+        });
+    }
+
+    getUniqueCrops(): string[] {
+        const cropNames = new Set<string>();
+        this.savedRecipes.forEach(recipe => {
+            const cropName = this.getCropName(recipe.cropId);
+            if (cropName && cropName !== 'Cultivo desconocido') {
+                cropNames.add(cropName);
+            }
+        });
+        return Array.from(cropNames).slice(0, 5); // Limit to 5 most common crops
+    }
+
+    getRecipeStatus(recipe: FormulationRecipe): string {
+        const costPerLiter = recipe.totalCost / recipe.volumeLiters;
+        if (costPerLiter < 80) return 'Económico';
+        if (costPerLiter > 180) return 'Premium';
+        if (recipe.fertilizers && recipe.fertilizers.length <= 3) return 'Óptimo';
+        return 'Estándar';
+    }
+
+    getRecipeStatusBadge(recipe: FormulationRecipe): string {
+        const status = this.getRecipeStatus(recipe);
+        switch (status) {
+            case 'Económico': return 'bg-success';
+            case 'Premium': return 'bg-warning';
+            case 'Óptimo': return 'bg-success';
+            default: return 'bg-secondary';
+        }
+    }
+
+    getFertilizerNames(fertilizers: RecipeFertilizer[]): string[] {
+        return fertilizers
+            .map(rf => rf.fertilizer?.name || 'Fertilizante desconocido')
+            .slice(0, 3); // Show only first 3 fertilizers
+    }
+
+    selectRecipeFromModal(recipe: FormulationRecipe): void {
+        // This method is called when clicking on the card (not buttons)
+        this.loadRecipe(recipe);
+        this.closeModal('allRecipesModal');
+    }
+
+    loadRecipeFromModal(recipe: FormulationRecipe, event: Event): void {
+        event.stopPropagation();
+        this.loadRecipe(recipe);
+        this.closeModal('allRecipesModal');
+    }
+
+    copyRecipe(recipe: FormulationRecipe, event: Event): void {
+        event.stopPropagation();
+
+        const copiedRecipe: FormulationRecipe = {
+            ...recipe,
+            id: undefined, // Remove ID so it gets a new one when saved
+            name: `${recipe.name} (Copia)`,
+            createdAt: new Date(),
+            fertilizers: [...recipe.fertilizers] // Deep copy fertilizers array
+        };
+
+        this.currentRecipe = copiedRecipe;
+        this.formulationResults = this.generateFormulationResults(copiedRecipe);
+
+        this.successMessage = `Receta "${recipe.name}" duplicada exitosamente`;
+        setTimeout(() => this.successMessage = '', 3000);
+    }
+
+    exportSingleRecipe(recipe: FormulationRecipe, event: Event): void {
+        event.stopPropagation();
+
+        const data = JSON.stringify(recipe, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `receta-${recipe.name.replace(/\s+/g, '-').toLowerCase()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        this.successMessage = `Receta "${recipe.name}" exportada exitosamente`;
+        setTimeout(() => this.successMessage = '', 3000);
+    }
+
+    deleteRecipeFromModal(recipe: FormulationRecipe, event: Event): void {
+        event.stopPropagation();
+
+        if (confirm(`¿Está seguro de que desea eliminar la receta "${recipe.name}"?`)) {
+            this.deleteRecipe(recipe);
+            this.filterAllRecipes(); // Refresh the filtered list
+
+            this.successMessage = `Receta "${recipe.name}" eliminada exitosamente`;
+            setTimeout(() => this.successMessage = '', 3000);
+        }
+    }
+
+    exportSelectedRecipes(): void {
+        if (this.selectedRecipesForExport.length === 0) {
+            this.errorMessage = 'No hay recetas seleccionadas para exportar';
+            return;
+        }
+
+        const data = JSON.stringify(this.selectedRecipesForExport, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `recetas-seleccionadas-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        this.successMessage = `${this.selectedRecipesForExport.length} recetas exportadas exitosamente`;
+        setTimeout(() => this.successMessage = '', 3000);
+    }
+
+    // Method 1: Configure Bootstrap Modal without backdrop
+    openAllRecipesModal(): void {
+        this.initializeModalData();
+        this.filterAllRecipes();
+
+        setTimeout(() => {
+            const modalElement = document.getElementById('allRecipesModal');
+            if (modalElement) {
+                // Remove any existing modal instances
+                const existingModal = (window as any).bootstrap?.Modal?.getInstance(modalElement);
+                if (existingModal) {
+                    existingModal.dispose();
+                }
+
+                // Create modal with no backdrop
+                const modal = new (window as any).bootstrap.Modal(modalElement, {
+                    backdrop: false,  // This removes the backdrop entirely
+                    keyboard: true,   // Still allow ESC key to close
+                    focus: true
+                });
+
+                modal.show();
+            }
+        }, 50);
+    }
+
+    // Improved closeModal method
+    private closeModal(modalId: string): void {
+        const modalElement = document.getElementById(modalId);
+        if (modalElement) {
+            const modal = (window as any).bootstrap?.Modal?.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            } else {
+                // Fallback: manually hide the modal
+                modalElement.classList.remove('show');
+                modalElement.style.display = 'none';
+                modalElement.setAttribute('aria-hidden', 'true');
+                modalElement.removeAttribute('aria-modal');
+
+                // Remove backdrop
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.remove();
+                }
+
+                // Restore body scroll
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            }
+        }
+    }
+
+    // Add this method to handle modal cleanup on component destroy
+    ngOnDestroy(): void {
+        // Clean up any open modals
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            const modalInstance = (window as any).bootstrap?.Modal?.getInstance(modal);
+            if (modalInstance) {
+                modalInstance.dispose();
+            }
+        });
+
+        // Remove any remaining backdrops
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+
+        // Restore body
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
     }
 }

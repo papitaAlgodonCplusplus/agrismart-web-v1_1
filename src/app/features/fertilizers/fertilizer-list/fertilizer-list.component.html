@@ -1,0 +1,406 @@
+<!-- fertilizer-list.component.html - Corrected version -->
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2>Lista de Fertilizantes</h2>
+      <p class="text-muted">Gestión de fertilizantes y nutrientes para cultivos</p>
+      <hr>
+    </div>
+  </div>
+
+  <!-- API Information Alert -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Información del API:</strong> Los campos mostrados corresponden a la estructura actual del API. 
+        Algunos campos como composición NPK, concentración, método de aplicación y datos de inventario se agregarán en futuras versiones.
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Actions -->
+  <div class="row mb-4">
+    <div class="col-lg-8">
+      <div class="row align-items-end">
+        <div class="col-md-2">
+          <label class="form-label">Solo Activos</label>
+          <div class="form-check">
+            <input 
+              type="checkbox" 
+              id="onlyActives"
+              class="form-check-input" 
+              [(ngModel)]="onlyActive"
+              (change)="loadFertilizers()">
+            <label class="form-check-label" for="onlyActives">
+              Mostrar solo activos
+            </label>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tipo</label>
+          <select 
+            class="form-select"
+            [(ngModel)]="selectedType"
+            (change)="loadFertilizers()">
+            <option value="">Todos los tipos</option>
+            <option value="true">Líquido</option>
+            <option value="false">Sólido</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary" (click)="loadFertilizers()">
+            <i class="bi bi-search me-1"></i>Consultar
+          </button>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-success" (click)="createNew()">
+            <i class="bi bi-plus me-1"></i>Nuevo
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="input-group">
+        <input 
+          type="text" 
+          class="form-control" 
+          placeholder="Buscar fertilizantes..."
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="loadFertilizers()">
+        <button class="btn btn-outline-secondary" (click)="loadFertilizers()">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="row" *ngIf="isLoading">
+    <div class="col-12 text-center">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2">Cargando fertilizantes...</p>
+    </div>
+  </div>
+
+  <!-- Fertilizers Table -->
+  <div class="row" *ngIf="!isLoading && (fertilizers$ | async) as fertilizers">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="bi bi-droplet me-2"></i>
+            Fertilizantes ({{ fertilizers.length }})
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+              <thead class="table-dark">
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Fabricante</th>
+                  <th>Tipo</th>
+                  <th>Química</th>
+                  <th>Estado</th>
+                  <th>Fechas</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let fertilizer of fertilizers; trackBy: trackByFn">
+                  <td>
+                    <span class="badge bg-secondary">{{ fertilizer?.id }}</span>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <i class="bi bi-flask me-2" 
+                         [class.text-info]="fertilizer?.isLiquid"
+                         [class.text-secondary]="!fertilizer?.isLiquid"></i>
+                      <div>
+                        <strong>{{ fertilizer?.name }}</strong>
+                        <div class="text-muted small">ID Catálogo: {{ fertilizer?.catalogId }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="text-muted">{{ fertilizer?.manufacturer || 'No especificado' }}</span>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="fertilizer?.isLiquid ? 'bg-info' : 'bg-secondary'">
+                      <i class="bi" [ngClass]="fertilizer?.isLiquid ? 'bi-droplet' : 'bi-box'"></i>
+                      {{ fertilizer?.isLiquid ? 'Líquido' : 'Sólido' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div *ngIf="fertilizer?.chemistries && fertilizer?.chemistries?.length > 0; else noChemistry">
+                      <div *ngFor="let chemistry of fertilizer.chemistries" class="small">
+                        <div><strong>{{ chemistry.formula }}</strong></div>
+                        <div class="text-muted">Pureza: {{ chemistry.purity }}%</div>
+                        <div class="text-muted" *ngIf="chemistry.density > 0">Densidad: {{ chemistry.density }}</div>
+                        <div class="text-muted" *ngIf="chemistry.solubility20 > 0">Sol. 20°C: {{ chemistry.solubility20 }} g/L</div>
+                        <span class="badge bg-warning" *ngIf="chemistry.isPhAdjuster">pH Ajustador</span>
+                      </div>
+                    </div>
+                    <ng-template #noChemistry>
+                      <span class="text-muted">Sin datos químicos</span>
+                    </ng-template>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="fertilizer?.active ? 'bg-success' : 'bg-danger'">
+                      <i class="bi" [ngClass]="fertilizer?.active ? 'bi-check-circle' : 'bi-x-circle'"></i>
+                      {{ fertilizer?.active ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="small">
+                      <div><strong>Creado:</strong></div>
+                      <div class="text-muted">{{ fertilizer?.dateCreated | date:'short' }}</div>
+                      <div class="text-muted">Por usuario: {{ fertilizer?.createdBy }}</div>
+                      <div *ngIf="fertilizer?.dateUpdated">
+                        <strong>Actualizado:</strong>
+                        <div class="text-muted">{{ fertilizer?.dateUpdated | date:'short' }}</div>
+                        <div class="text-muted">Por usuario: {{ fertilizer?.updatedBy }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="btn-group" role="group">
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-outline-primary"
+                        (click)="edit(fertilizer)"
+                        title="Editar">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-outline-danger"
+                        (click)="delete(fertilizer)"
+                        title="Eliminar">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Empty State -->
+            <div class="text-center p-4" *ngIf="fertilizers.length === 0">
+              <i class="bi bi-flask display-4 text-muted"></i>
+              <h5 class="mt-3">No se encontraron fertilizantes</h5>
+              <p class="text-muted">
+                {{ getEmptyStateMessage() }}
+              </p>
+              <button class="btn btn-primary" (click)="createNew()">
+                <i class="bi bi-plus me-1"></i>
+                Registrar primer fertilizante
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div class="row" *ngIf="successMessage">
+    <div class="col-12">
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        {{ successMessage }}
+        <button type="button" class="btn-close" (click)="clearMessages()"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="errorMessage">
+    <div class="col-12">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ errorMessage }}
+        <button type="button" class="btn-close" (click)="clearMessages()"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mt-4" *ngIf="(fertilizers$ | async) as fertilizers">
+    <div class="col-md-3">
+      <div class="card text-white bg-primary">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4>{{ fertilizers.length }}</h4>
+              <p class="mb-0">Total Fertilizantes</p>
+            </div>
+            <i class="bi bi-flask display-6"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-info">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4>{{ getLiquidCount(fertilizers) }}</h4>
+              <p class="mb-0">Líquidos</p>
+            </div>
+            <i class="bi bi-droplet display-6"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-secondary">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4>{{ fertilizers.length - getLiquidCount(fertilizers) }}</h4>
+              <p class="mb-0">Sólidos</p>
+            </div>
+            <i class="bi bi-box display-6"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-success">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4>{{ getActiveCount(fertilizers) }}</h4>
+              <p class="mb-0">Activos</p>
+            </div>
+            <i class="bi bi-check-circle display-6"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Fertilizer Modal -->
+<div class="modal fade" [class.show]="showCreateModal" [style.display]="showCreateModal ? 'block' : 'none'" 
+     tabindex="-1" role="dialog" aria-labelledby="createModalLabel" 
+     [attr.aria-hidden]="!showCreateModal" *ngIf="showCreateModal">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="createModalLabel">
+          <i class="bi bi-plus-circle me-2"></i>
+          Crear Nuevo Fertilizante
+        </h5>
+        <button type="button" class="btn-close btn-close-white" 
+                (click)="closeCreateModal()" 
+                aria-label="Close"></button>
+      </div>
+      
+      <form [formGroup]="createForm" (ngSubmit)="onSubmitCreate()">
+        <div class="modal-body">
+          <div class="row">
+            <!-- Name Field -->
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="name" class="form-label">
+                  Nombre <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('name')"
+                  formControlName="name"
+                  placeholder="Ej: Urea 46%"
+                  autocomplete="off">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
+                  {{ getFieldError('name') }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Manufacturer Field -->
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="manufacturer" class="form-label">
+                  Fabricante <span class="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="manufacturer"
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('manufacturer')"
+                  formControlName="manufacturer"
+                  placeholder="Ej: Yara International"
+                  autocomplete="off">
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('manufacturer')">
+                  {{ getFieldError('manufacturer') }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Is Liquid Field -->
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Tipo de Fertilizante</label>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="isLiquid"
+                    formControlName="isLiquid">
+                  <label class="form-check-label" for="isLiquid">
+                    <i class="bi bi-droplet me-1"></i>
+                    Es fertilizante líquido
+                  </label>
+                </div>
+                <small class="form-text text-muted">
+                  Marque si el fertilizante es en forma líquida
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Help Text -->
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>Nota:</strong> Después de crear el fertilizante, podrá agregar información detallada 
+            como composición NPK, concentraciones, instrucciones de aplicación y datos de inventario.
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" 
+                  class="btn btn-secondary" 
+                  (click)="closeCreateModal()"
+                  [disabled]="isCreating">
+            <i class="bi bi-x-circle me-1"></i>
+            Cancelar
+          </button>
+          <button type="submit" 
+                  class="btn btn-success"
+                  [disabled]="createForm.invalid || isCreating">
+            <span *ngIf="isCreating">
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+              Creando...
+            </span>
+            <span *ngIf="!isCreating">
+              <i class="bi bi-check-circle me-1"></i>
+              Crear Fertilizante
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showCreateModal" *ngIf="showCreateModal"></div>

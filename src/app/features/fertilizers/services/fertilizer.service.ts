@@ -205,6 +205,10 @@ export class FertilizerService {
     // No need to store baseUrl - ApiService handles URL construction
   }
 
+  setUser(user: any): void {
+    this.user = user;
+  }
+
   /**
    * Get all fertilizers with catalogId (now required)
    * If no catalogId provided, it will try to get the current user's catalog
@@ -274,25 +278,32 @@ export class FertilizerService {
 
     return this.apiService.get<any>('/Fertilizer', params).pipe(
       map(response => {
-
-        // Handle different response formats from the API
+        let fertilizers;
         if (Array.isArray(response)) {
-          return response;
+          fertilizers = response;
         } else if (response && typeof response === 'object') {
           // Try different possible response structures
           if (Array.isArray(response.data)) {
-            return response.data;
+            fertilizers = response.data;
           } else if (Array.isArray(response.result)) {
-            return response.result;
+            fertilizers = response.result;
           } else if (Array.isArray(response.fertilizers)) {
-            return response.fertilizers;
+            fertilizers = response.fertilizers;
           } else if (Array.isArray(response.items)) {
-            return response.items;
+            fertilizers = response.items;
           }
         }
 
-        console.warn('Unexpected API response format:', response);
-        return []; // Return empty array as fallback
+        for (const fertilizer of fertilizers) {
+          this.apiService.get<any>('/FertilizerChemistry', new HttpParams().set('FertilizerId', fertilizer.id.toString())).subscribe(chemistries => {
+            if (chemistries.fertilizerChemistries && chemistries.fertilizerChemistries.length > 0) {
+              fertilizer.chemistries = chemistries.fertilizerChemistries;
+            }
+          });
+        }
+
+        console.log("from service fertilizers ", fertilizers)
+        return fertilizers || []; // Return empty array as fallback
       }),
       catchError(error => {
         console.error('Error fetching fertilizers:', error);
@@ -312,7 +323,9 @@ export class FertilizerService {
    * Create new fertilizer (catalogId now required)
    */
   create(data: FertilizerCreateRequest): Observable<Fertilizer> {
+    console.log("Creating fertilizer with data: ", data)
     if (!data.catalogId) {
+      console.error('catalogId is required for creating fertilizer');
       throw new Error('catalogId is required for creating fertilizer');
     }
 
@@ -326,6 +339,8 @@ export class FertilizerService {
       isActive: data.isActive !== undefined ? data.isActive : true
     };
 
+    console.log("Creating fertilizer with payload: ", payload)
+
     return this.apiService.post<Fertilizer>('/Fertilizer', payload);
   }
 
@@ -333,14 +348,17 @@ export class FertilizerService {
    * Create fertilizer with auto-detected catalogId
    */
   createWithCurrentCatalog(data: Omit<FertilizerCreateRequest, 'catalogId'>): Observable<Fertilizer> {
+    console.log("Creating fertilizer with current catalog for user: ", this.user)
     return this.catalogService.getCurrentUserCatalog(this.user).pipe(
       switchMap(catalogs => {
         console.log("retrieved catalogs ", catalogs)
-        if (catalogs && catalogs.length > 0) {
-          const catalogId = catalogs[0].id;
+        if (catalogs.catalogs && catalogs.catalogs.length > 0) {
+          const catalogId = catalogs.catalogs[0].id;
           return this.create({ ...data, catalogId });
+        } else {
+          console.error('No catalog found for current user');
+          throw new Error('No catalog found for current user');
         }
-        throw new Error('No catalog found for current user');
       })
     );
   }

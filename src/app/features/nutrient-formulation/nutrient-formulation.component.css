@@ -936,3 +936,251 @@ body {
     animation: none;
   }
 }
+
+/* Add these styles to your existing CSS */
+
+.modal-xl {
+  max-width: 90vw;
+}
+
+.recipe-grid {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.recipe-card {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.recipe-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #007bff;
+}
+
+.recipe-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.recipe-meta {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 1rem;
+}
+
+.search-box {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.filter-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.filter-chip {
+  background: #e9ecef;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-chip:hover, .filter-chip.active {
+  background: #007bff;
+  color: white;
+}
+
+.nutrient-info {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  font-size: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.nutrient-badge {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.recipe-fertilizers {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin: 0.5rem 0;
+  line-height: 1.4;
+}
+
+.recipe-stats {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  background: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 6px;
+  text-align: center;
+  flex: 1;
+  min-width: 60px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #007bff;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: #6c757d;
+  margin-top: 0.2rem;
+}
+
+.no-recipes {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6c757d;
+}
+
+.btn-link.small {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Responsive adjustments for modal */
+@media (max-width: 768px) {
+  .modal-xl {
+    max-width: 95vw;
+  }
+  
+  .recipe-grid {
+    max-height: 50vh;
+  }
+  
+  .filter-chips {
+    gap: 0.25rem;
+  }
+  
+  .filter-chip {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  
+  .recipe-stats {
+    gap: 0.25rem;
+  }
+  
+  .stat-item {
+    min-width: 50px;
+    padding: 0.4rem;
+  }
+  
+  .stat-value {
+    font-size: 0.9rem;
+  }
+  
+  .nutrient-info {
+    gap: 0.25rem;
+  }
+  
+  .nutrient-badge {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* Add these CSS rules to fix the modal z-index issue */
+
+/* Override Bootstrap modal z-index values */
+.modal-backdrop {
+  z-index: 1040 !important;
+}
+
+.modal {
+  z-index: 1050 !important;
+}
+
+.modal-dialog {
+  z-index: 1060 !important;
+}
+
+/* Alternative approach: Ensure modal container has proper stacking */
+.modal.fade .modal-dialog {
+  transform: translate(0, -50px);
+  transition: transform 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+  transform: none;
+}
+
+/* Fix for Bootstrap 5 specific modal backdrop issues */
+.modal-backdrop.show {
+  opacity: 0.5;
+  z-index: 1040 !important;
+}
+
+.modal.show {
+  z-index: 1050 !important;
+}
+
+/* Ensure modal content is above backdrop */
+.modal-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Additional fix for complex layouts */
+body.modal-open {
+  overflow: hidden;
+  padding-right: 0 !important;
+}
+
+/* Ensure the modal is properly positioned */
+.modal-dialog {
+  margin: 1.75rem auto;
+  pointer-events: none;
+  width: auto;
+}
+
+.modal-dialog .modal-content {
+  pointer-events: auto;
+}
+
+/* Fix for xl modal specific issues */
+.modal-xl .modal-content {
+  position: relative;
+  z-index: 1055;
+}
+
+/* Debug styles (remove after fixing) */
+/* 
+.modal-backdrop {
+  background-color: rgba(255, 0, 0, 0.3) !important;
+}
+.modal {
+  background-color: rgba(0, 255, 0, 0.1) !important;
+}
+*/
