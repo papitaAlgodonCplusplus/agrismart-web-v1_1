@@ -434,6 +434,7 @@ export class IrrigationSectorService {
       headers: this.getAuthHeaders()
     }).pipe(
       map(response => {
+        console.log('MeasurementBase response:', response);
         if (response.success) {
           return response.result?.measurements || [];
         }
@@ -556,7 +557,7 @@ export class IrrigationSectorService {
         
         const latestPressure = pressureReadings.length > 0 
           ? pressureReadings[pressureReadings.length - 1].recordValue 
-          : 2.5;
+          : 1.5;
 
         return {
           cropProductionId,
@@ -574,28 +575,12 @@ export class IrrigationSectorService {
           },
           measurements
         };
-      }),
-      catchError(error => {
-        console.error('Error fetching real-time sensor data:', error);
-        // Return mock data if API fails
-        return of({
-          cropProductionId,
-          temperature: 22,
-          humidity: 65,
-          soilMoisture: 45,
-          pressure: 2.5,
-          timestamp: new Date().toISOString(),
-          rawData: {
-            temperatureReadings: [],
-            humidityReadings: [],
-            soilMoistureReadings: [],
-            pressureReadings: [],
-            flowReadings: []
-          },
-          measurements: []
-        });
       })
     );
+  }
+
+  getSystemStatus(farmId?: number): Observable<IrrigationSystemStatus> {
+    return this.getIrrigationSystemStatus(farmId);
   }
 
   /**
@@ -638,7 +623,7 @@ export class IrrigationSectorService {
           activeDevices: irrigationDevices.filter((d: any) => d.active).length,
           totalDevices: devices?.length || 0,
           devices: devices,
-          systemPressure: pressureMeasurements.length > 0 ? pressureMeasurements[pressureMeasurements.length - 1].recordValue : 2.5,
+          systemPressure: pressureMeasurements.length > 0 ? pressureMeasurements[pressureMeasurements.length - 1].recordValue : 1.5,
           totalFlowRate: flowMeasurements.reduce((sum: number, m: MeasurementBase) => sum + m.recordValue, 0),
           lastUpdate: new Date().toISOString(),
           alerts: [], // Would need to implement alerts logic
@@ -761,7 +746,7 @@ export class IrrigationSectorService {
         const etData: EvapotranspirationData[] = [];
         
         // Group measurements by date
-        const dateGroups: { [date: string]: { temp?: Measurement, humidity?: Measurement } } = {};
+        const dateGroups: { [date: string]: { temp?: Measurement, humidity?: Measurement, windSpeed?: Measurement, solarRadiation?: Measurement, precipitation?: Measurement } } = {};
         
         temperatureData.forEach(temp => {
           const date = temp.recordDate.split('T')[0];
@@ -779,6 +764,10 @@ export class IrrigationSectorService {
         Object.keys(dateGroups).forEach(dateStr => {
           const group = dateGroups[dateStr];
           const avgTemp = group.temp?.avgValue || 22;
+          const avgWindSpeed = group.windSpeed?.avgValue || 2.0;
+          const avgSolarRadiation = group.solarRadiation?.avgValue || 20;
+          const avgPrecipitation = group.precipitation?.avgValue || 0;
+
           const avgHumidity = group.humidity?.avgValue || 65;
           
           // Simple ET calculation - replace with proper Penman-Monteith equation
@@ -794,9 +783,9 @@ export class IrrigationSectorService {
             cropCoefficient,
             temperature: avgTemp,
             humidity: avgHumidity,
-            windSpeed: 2.0, // Default value
-            solarRadiation: 20, // Default value
-            precipitation: 0 // Default value
+            windSpeed: avgWindSpeed,
+            solarRadiation: avgSolarRadiation,
+            precipitation: avgPrecipitation
           });
         });
 
@@ -978,21 +967,6 @@ export class IrrigationSectorService {
           uniformity,
           flowRatePerArea: totalFlowRate / irrigationArea
         };
-      }),
-      catchError(() => {
-        // Fallback calculation if dropper data unavailable
-        return of({
-          containerId,
-          dropperId,
-          numberOfDroppers,
-          totalFlowRate: numberOfDroppers * 2,
-          pressureRequired: 1.5,
-          irrigationArea,
-          precipitationRate: (numberOfDroppers * 2) / irrigationArea,
-          applicationEfficiency: 85,
-          uniformity: 90,
-          flowRatePerArea: (numberOfDroppers * 2) / irrigationArea
-        });
       })
     );
   }
@@ -1072,21 +1046,7 @@ export class IrrigationSectorService {
       }),
       catchError(error => {
         console.error('Error optimizing irrigation schedule:', error);
-        // Return default optimization
-        return of({
-          cropProductionId,
-          nextOptimalTime: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
-          recommendedDuration: 30,
-          waterAmount: 100,
-          frequency: 1,
-          priority: 'medium' as const,
-          waterSavings: 15,
-          optimalConditions: {
-            temperature: 22,
-            humidity: 65,
-            windSpeed: 2.0
-          }
-        });
+        return throwError(error);
       })
     );
   }

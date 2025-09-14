@@ -1093,15 +1093,6 @@ export class NutrientFormulationComponent implements OnInit {
         this.isLoading = false;
         this.loadSavedRecipes();
     }
-    private parseCompactRecipeData(description: string, baseRecipe: any): any {
-        return {
-            ...baseRecipe,
-            targetPh: 6.5,
-            targetEc: 1.5,
-            volumeLiters: 1000,
-            totalCost: 0
-        };
-    }
     private parseFertilizerRecord(description: string): any | null {
         try {
             const parts = description.split('|');
@@ -1872,9 +1863,7 @@ export class NutrientFormulationComponent implements OnInit {
                         const parsed = JSON.parse(basicData.description);
                         Object.assign(recipe, parsed);
                     } catch (e) {
-                        console.warn('Could not parse basic data for recipe', recipeId);
-                        // Use fallback values
-                        recipe = this.parseCompactRecipeData(basicData.description, recipe);
+                        console.error('Could not parse basic data for recipe', recipeId);
                     }
                 }
 
@@ -1884,11 +1873,7 @@ export class NutrientFormulationComponent implements OnInit {
                         const parsed = JSON.parse(nutrientData.description);
                         Object.assign(recipe, parsed);
                     } catch (e) {
-                        console.warn('Could not parse nutrient data for recipe', recipeId);
-                        // Use default values
-                        recipe.targetNitrogen = 200;
-                        recipe.targetPhosphorus = 50;
-                        recipe.targetPotassium = 300;
+                        console.error('Could not parse nutrient data for recipe', recipeId);
                     }
                 }
 

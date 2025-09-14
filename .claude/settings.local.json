@@ -12,7 +12,8 @@
       "Bash(move:*)",
       "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\")",
       "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Commands\")",
-      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Core\\DTOs\")"
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Core\\DTOs\")",
+      "Bash(./run-all.bat)"
     ],
     "deny": [],
     "ask": []

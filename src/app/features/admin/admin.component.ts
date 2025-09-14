@@ -419,7 +419,6 @@ export class AdminComponent implements OnInit {
       return Array.isArray(response.fertilizers) ? response.fertilizers : [];
     }
 
-    // Fallback
     return [];
   }
 

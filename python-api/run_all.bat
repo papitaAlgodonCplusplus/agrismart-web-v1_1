@@ -3,7 +3,6 @@ setlocal EnableDelayedExpansion
 
 :: =================================================================
 :: COMPLETE FERTILIZER CALCULATOR - AUTOMATED RUNNER (FIXED)
-:: Uses REAL Swagger API data instead of mocked JSON
 :: =================================================================
 
 echo.

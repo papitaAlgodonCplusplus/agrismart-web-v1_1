@@ -41,6 +41,7 @@ builder.Services.AddMediatR(cfg =>
 });
 
 builder.Services.AddScoped<DeviceSensorCacheService>();
+builder.Services.AddScoped<IDeviceRawDataQueryRepository, DeviceRawDataQueryRepository>();
 builder.Services.AddSingleton<IHostedService, DeviceSensorCacheRefreshHandler>();
 
 //Repositories
