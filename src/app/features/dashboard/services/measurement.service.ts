@@ -49,8 +49,8 @@ export class MeasurementService {
    * Get measurement variables by catalog ID
    * Endpoint: /MeasurementVariable?CatalogId={catalogId}
    */
-  getMeasurementVariables(catalogId: number): Observable<MeasurementVariable[]> {
-    const params = new HttpParams() //.set('CatalogId', catalogId.toString());
+  getMeasurementVariables(): Observable<MeasurementVariable[]> {
+    const params = new HttpParams();
     return this.apiService.get<MeasurementVariable[]>(`/MeasurementVariable`, params);
   }
 

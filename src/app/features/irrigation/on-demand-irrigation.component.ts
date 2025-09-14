@@ -158,7 +158,10 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             soilMoisture: [],
             pressure: [],
             flow: [],
-        }
+        },
+        climateReadings: [],
+        soilReadings: [],
+        flowReadings: []
     };
     recentEvents: IrrigationEvent[] = [];
     recentMeasurements: IrrigationMeasurement[] = [];
@@ -268,7 +271,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     }
 
     private loadSystemStatus(): Observable<any> {
-        return this.irrigationService.getIrrigationSystemStatus()
+        return this.irrigationService.getIrrigationSystemStatus(this.systemStatus.farmId, this.selectedCropProduction?.id)
             .pipe(
                 map(status => {
                     this.systemStatus = status;
@@ -341,7 +344,6 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         // Load multiple types of measurements
         forkJoin({
             irrigationMeasurements: this.irrigationService.getIrrigationMeasurements(
-                this.selectedCropProduction.id, startDate, endDate
             ).pipe(catchError(() => of([]))),
 
             aggregatedMeasurements: this.irrigationService.getMeasurements(

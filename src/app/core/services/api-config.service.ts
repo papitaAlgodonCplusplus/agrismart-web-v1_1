@@ -1,4 +1,4 @@
-// src/app/core/services/api-config.service.ts - UPDATED
+// src/app/core/services/api-config.service.ts - UPDATED WITH NEW IoT ENDPOINTS
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 
@@ -26,18 +26,18 @@ export class ApiConfigService {
     device: '/Device',
     farm: '/Farm',
     license: '/License',
-    productionUnit: '/ProductionUnit', // This should work now
+    productionUnit: '/ProductionUnit',
     relayModuleCropProductionIrrigationSector: '/RelayModuleCropProductionIrrigationSector',
     user: '/User',
     userFarm: '/UserFarm',
     waterChemistry: '/WaterChemistry',
     
-    // Extended endpoints (based on frontend services) - Ensure these exist on backend
+    // Extended endpoints (based on frontend services)
     client: '/Client',
     productionUnitType: '/ProductionUnitType',
     cropPhase: '/CropPhase',
     growingMedium: '/GrowingMedium',
-    sensor: '/Sensor', // May not exist - needs backend verification
+    sensor: '/Sensor',
     measurementVariable: '/MeasurementVariable',
     measurementVariableStandard: '/MeasurementVariableStandard',
     measurementUnit: '/MeasurementUnit',
@@ -46,7 +46,7 @@ export class ApiConfigService {
     catalog: '/Catalog',
     container: '/Container',
     containerType: '/ContainerType',
-    fertilizer: '/Fertilizer', // May not exist - needs backend verification
+    fertilizer: '/Fertilizer',
     fertilizerChemistry: '/FertilizerChemistry',
     fertilizerInput: '/FertilizerInput',
     water: '/Water',
@@ -57,11 +57,25 @@ export class ApiConfigService {
     profile: '/Profile',
     userStatus: '/UserStatus',
     
-    // IoT API endpoints
+    // Measurement and irrigation endpoints
+    irrigationEvent: '/IrrigationEvent',
+    irrigationMeasurement: '/IrrigationMeasurement',
+    measurement: '/Measurement',
+    measurementBase: '/MeasurementBase',
+    measurementKPI: '/MeasurementKPI',
+    
+    // IoT API endpoints - UPDATED WITH NEW ENDPOINTS
     iot: {
+      // Device Raw Data endpoints
       deviceRawData: '/DeviceRawData',
       deviceRawDataMqtt: '/DeviceRawData/Mqtt',
       processRawData: '/DeviceRawData/ProcessRawData',
+      
+      // Device Sensor endpoints - NEW
+      deviceSensorDevices: '/DeviceSensor/devices',
+      deviceSensorSensors: '/DeviceSensor/sensors',
+      
+      // Security endpoints
       authenticateDevice: '/Security/AuthenticateDevice',
       authenticateMqttConnection: '/Security/AuthenticateMqttConnection'
     }
@@ -189,5 +203,198 @@ export class ApiConfigService {
       console.warn(`Cannot construct agronomic URL for '${endpoint}':`, error);
       return null;
     }
+  }
+
+  /**
+   * Safe IoT URL getter - returns null if URL cannot be constructed
+   */
+  safeGetIotUrl(endpoint: string): string | null {
+    try {
+      return this.getIotUrl(endpoint);
+    } catch (error) {
+      console.warn(`Cannot construct IoT URL for '${endpoint}':`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Build query parameters for device raw data API
+   */
+  buildDeviceRawDataParams(params: {
+    deviceId?: string;
+    startDate?: string;
+    endDate?: string;
+    sensor?: string;
+    pageNumber?: number;
+    pageSize?: number;
+  }): URLSearchParams {
+    const searchParams = new URLSearchParams();
+    
+    if (params.deviceId) searchParams.append('DeviceId', params.deviceId);
+    if (params.startDate) searchParams.append('StartDate', params.startDate);
+    if (params.endDate) searchParams.append('EndDate', params.endDate);
+    if (params.sensor) searchParams.append('Sensor', params.sensor);
+    if (params.pageNumber) searchParams.append('PageNumber', params.pageNumber.toString());
+    if (params.pageSize) searchParams.append('PageSize', params.pageSize.toString());
+    
+    return searchParams;
+  }
+
+  /**
+   * Build query parameters for agronomic device API
+   */
+  buildDeviceParams(params: {
+    clientId?: number;
+    companyId?: number;
+    cropProductionId?: number;
+    includeInactives?: boolean;
+  }): URLSearchParams {
+    const searchParams = new URLSearchParams();
+    
+    if (params.clientId) searchParams.append('ClientId', params.clientId.toString());
+    if (params.companyId) searchParams.append('CompanyId', params.companyId.toString());
+    if (params.cropProductionId) searchParams.append('CropProductionId', params.cropProductionId.toString());
+    if (params.includeInactives !== undefined) searchParams.append('IncludeInactives', params.includeInactives.toString());
+    
+    return searchParams;
+  }
+
+  /**
+   * Build query parameters for crop production device API
+   */
+  buildCropProductionDeviceParams(params: {
+    cropProductionId?: number;
+  }): URLSearchParams {
+    const searchParams = new URLSearchParams();
+    
+    if (params.cropProductionId) searchParams.append('CropProductionId', params.cropProductionId.toString());
+    
+    return searchParams;
+  }
+
+  /**
+   * Get complete IoT device data URL with parameters
+   */
+  getDeviceRawDataUrl(params?: {
+    deviceId?: string;
+    startDate?: string;
+    endDate?: string;
+    sensor?: string;
+    pageNumber?: number;
+    pageSize?: number;
+  }): string {
+    const baseUrl = this.getIotUrl(this.endpoints.iot.deviceRawData);
+    
+    if (!params || Object.keys(params).length === 0) {
+      return baseUrl;
+    }
+    
+    const searchParams = this.buildDeviceRawDataParams(params);
+    return `${baseUrl}?${searchParams.toString()}`;
+  }
+
+  /**
+   * Get complete agronomic device URL with parameters
+   */
+  getAgronomicDeviceUrl(params?: {
+    clientId?: number;
+    companyId?: number;
+    cropProductionId?: number;
+    includeInactives?: boolean;
+  }): string {
+    const baseUrl = this.getAgronomicUrl(this.endpoints.device);
+    
+    if (!params || Object.keys(params).length === 0) {
+      return baseUrl;
+    }
+    
+    const searchParams = this.buildDeviceParams(params);
+    return `${baseUrl}?${searchParams.toString()}`;
+  }
+
+  /**
+   * Get complete crop production device URL with parameters
+   */
+  getCropProductionDeviceUrl(params?: {
+    cropProductionId?: number;
+  }): string {
+    const baseUrl = this.getAgronomicUrl(this.endpoints.cropProductionDevice);
+    
+    if (!params || Object.keys(params).length === 0) {
+      return baseUrl;
+    }
+    
+    const searchParams = this.buildCropProductionDeviceParams(params);
+    return `${baseUrl}?${searchParams.toString()}`;
+  }
+
+  /**
+   * Validate API configuration
+   */
+  validateConfiguration(): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    // Check base URLs
+    if (!this.agronomicApiUrl) {
+      errors.push('Agronomic API URL not configured');
+    }
+    
+    if (!this.iotApiUrl) {
+      errors.push('IoT API URL not configured');
+    }
+    
+    // Check if URLs are valid
+    try {
+      new URL(this.agronomicApiUrl);
+    } catch (error) {
+      errors.push('Invalid Agronomic API URL format');
+    }
+    
+    try {
+      new URL(this.iotApiUrl);
+    } catch (error) {
+      errors.push('Invalid IoT API URL format');
+    }
+    
+    // Check critical endpoints
+    const criticalEndpoints = ['device', 'cropProductionDevice'];
+    criticalEndpoints.forEach(endpoint => {
+      if (!this.hasEndpoint(endpoint)) {
+        errors.push(`Critical endpoint '${endpoint}' not configured`);
+      }
+    });
+    
+    const criticalIotEndpoints = ['deviceRawData', 'deviceSensorDevices'];
+    criticalIotEndpoints.forEach(endpoint => {
+      if (!this.hasIotEndpoint(endpoint)) {
+        errors.push(`Critical IoT endpoint '${endpoint}' not configured`);
+      }
+    });
+    
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * Get configuration summary for debugging
+   */
+  getConfigurationSummary(): {
+    agronomicApiUrl: string;
+    iotApiUrl: string;
+    endpointCount: number;
+    iotEndpointCount: number;
+    availableEndpoints: string[];
+    availableIotEndpoints: string[];
+  } {
+    return {
+      agronomicApiUrl: this.agronomicApiUrl,
+      iotApiUrl: this.iotApiUrl,
+      endpointCount: this.getAvailableEndpoints().length,
+      iotEndpointCount: this.getAvailableIotEndpoints().length,
+      availableEndpoints: this.getAvailableEndpoints(),
+      availableIotEndpoints: this.getAvailableIotEndpoints()
+    };
   }
 }

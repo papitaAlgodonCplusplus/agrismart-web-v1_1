@@ -77,12 +77,12 @@ echo.
 echo ========================================
 
 :: Optional: Start Angular frontend if it exists
-if exist "package.json" (
-    echo.
-    echo Starting Angular Frontend...
-    start "AgriSmart-Frontend" cmd /c "npm run build-dev && npm dev"
-    echo - Frontend: http://localhost:4200
-)
+@REM if exist "package.json" (
+@REM     echo.
+@REM     echo Starting Angular Frontend...
+@REM     start "AgriSmart-Frontend" cmd /c "npm run build-dev && npm dev"
+@REM     echo - Frontend: http://localhost:4200
+@REM )
 
 echo.
 echo Press any key to exit this launcher...

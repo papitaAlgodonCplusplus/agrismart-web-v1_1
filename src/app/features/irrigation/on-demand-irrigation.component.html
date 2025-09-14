@@ -181,7 +181,7 @@
                 </div>
                 <div class="device-details">
                   <div class="device-name">{{ device.deviceId }}</div>
-                  <div class="device-id">ID: {{ device.id }}</div>
+                  <div class="device-id">ID: {{ device.deviceId }}</div>
                 </div>
               </td>
               <td>
@@ -194,8 +194,8 @@
                   {{ getDeviceType(device.deviceId) }}
                 </span>
               </td>
-              <td>{{ formatDate(device.dateCreated) }}</td>
-              <td>{{ device.dateUpdated ? formatDate(device.dateUpdated) : 'N/A' }}</td>
+              <td>{{ formatDate(device.lastReading) }}</td>
+              <td>{{ 'N/A' }}</td>
             </tr>
             <tr *ngIf="systemStatus?.devices?.length === 0">
               <td colspan="5" class="text-center">No hay dispositivos registrados</td>

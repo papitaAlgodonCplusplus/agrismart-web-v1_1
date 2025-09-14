@@ -1,8 +1,8 @@
 // src/app/features/services/irrigation-sector.service.ts - UPDATED WITH PROPER API INTEGRATION
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, forkJoin, interval, of, throwError } from 'rxjs';
-import { map, catchError, startWith, switchMap } from 'rxjs/operators';
+import { Observable, combineLatest, forkJoin, interval, of, throwError } from 'rxjs';
+import { map, catchError, startWith, switchMap, tap } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { ApiConfigService } from '../../core/services/api-config.service';
 
@@ -169,7 +169,7 @@ export interface GrowingMedium {
 export interface IrrigationSystemStatus {
   farmId: number;
   systemStatus: string;
-  devices: DeviceInfo[];
+  devices: ProcessedDeviceData[];
   activeDevices: number;
   totalDevices: number;
   systemPressure?: number;
@@ -267,6 +267,262 @@ export interface IrrigationScheduleOptimization {
   };
 }
 
+
+// ============================================================================
+// INTERFACES FOR NEW IoT API INTEGRATION
+// ============================================================================
+
+export interface DeviceRawDataResponse {
+  success: boolean;
+  exception: string | null;
+  deviceRawData: DeviceRawDataItem[];
+  result: {
+    deviceRawData: DeviceRawDataItem[];
+  };
+}
+
+export interface DeviceRawDataItem {
+  id: number;
+  recordDate: string;
+  clientId: string;
+  userId: string;
+  deviceId: string;
+  sensor: string;
+  payload: string;
+}
+
+export interface IoTDeviceResponse {
+  id: number;
+  companyId: number;
+  deviceId: string;
+  active: boolean;
+  sensors: any[];
+  dateCreated: string;
+  dateUpdated?: string;
+  createdBy: number;
+  updatedBy?: number;
+}
+
+export interface AgronomicDeviceResponse {
+  success: boolean;
+  devices: IoTDeviceResponse[];
+  exception: string | null;
+  result: {
+    devices: IoTDeviceResponse[];
+  };
+}
+
+export interface CropProductionDeviceResponse {
+  success: boolean;
+  exception: string | null;
+  cropProductionDevices: CropProductionDevice[];
+  result: {
+    cropProductionDevices: CropProductionDevice[];
+  };
+}
+
+export interface CropProductionDevice {
+  cropProductionId: number;
+  deviceId: number;
+  startDate: string;
+  active: boolean;
+  dateCreated: string;
+  dateUpdated?: string;
+  createdBy: number;
+  updatedBy?: number;
+}
+
+// ============================================================================
+// ENHANCED INTERFACES FOR REAL-TIME DATA PROCESSING
+// ============================================================================
+
+export interface ProcessedDeviceData {
+  deviceId: string;
+  companyId: number;
+  active: boolean;
+  lastReading: Date;
+  sensorReadings: {
+    [sensorName: string]: {
+      value: number | string;
+      timestamp: Date;
+      quality: 'good' | 'fair' | 'poor';
+    };
+  };
+  cropProductionIds: number[];
+}
+
+export interface ClimateReading {
+  deviceId: string;
+  temperature?: number;
+  humidity?: number;
+  pressure?: number;
+  windSpeed?: number;
+  windDirection?: number;
+  solarRadiation?: number;
+  precipitation?: number;
+  timestamp: Date;
+}
+
+export interface SoilReading {
+  deviceId: string;
+  ph?: number;
+  moisture?: number;
+  temperature?: number;
+  conductivity?: number;
+  timestamp: Date;
+}
+
+export interface FlowReading {
+  deviceId: string;
+  totalPulse?: number;
+  waterFlowValue?: number;
+  waterAmount?: number;
+  timestamp: Date;
+}
+
+// ============================================================================
+// EXISTING INTERFACES (MAINTAINED FOR COMPATIBILITY)
+// ============================================================================
+
+export interface IrrigationEventResponse {
+  success: boolean;
+  irrigationEvents: IrrigationEvent[];
+  exception: string;
+  result: {
+    irrigationEvents: IrrigationEvent[];
+  };
+}
+
+export interface IrrigationEvent {
+  id: number;
+  recordDateTime: string;
+  cropProductionId: number;
+  dateTimeStart: string;
+  dateTimeEnd: string;
+  duration?: number;
+  waterAmount?: number;
+  status?: string;
+  notes?: string;
+  irrigationMeasurements: IrrigationMeasurement[];
+}
+
+export interface IrrigationMeasurementResponse {
+  success: boolean;
+  irrigationMeasurements: IrrigationMeasurement[];
+  exception: string;
+  result: {
+    irrigationMeasurements: IrrigationMeasurement[];
+  };
+}
+
+export interface IrrigationMeasurement {
+  id: number;
+  eventId: number;
+  measurementVariableId: number;
+  recordValue: number;
+}
+
+export interface MeasurementResponse {
+  success: boolean;
+  measurements: Measurement[];
+  exception: string;
+  result: {
+    measurements: Measurement[];
+  };
+}
+
+export interface Measurement {
+  id: number;
+  recordDate: string;
+  cropProductionId: number;
+  measurementVariableId: number;
+  minValue: number;
+  maxValue: number;
+  avgValue: number;
+  sumValue: number;
+}
+
+export interface MeasurementBaseResponse {
+  success: boolean;
+  measurements: MeasurementBase[];
+  exception: string;
+  result: {
+    measurements: MeasurementBase[];
+  };
+}
+
+export interface MeasurementBase {
+  id: number;
+  recordDate: string;
+  cropProductionId: number;
+  measurementVariableId: number;
+  sensorId: number;
+  recordValue: number;
+}
+
+export interface Container {
+  id: number;
+  catalogId: number;
+  name: string;
+  containerTypeId: number;
+  height: number;
+  width: number;
+  length: number;
+  lowerDiameter: number;
+  upperDiameter: number;
+  volume?: number;
+  active: boolean;
+  dateCreated: Date;
+  createdBy: number;
+}
+
+export interface Dropper {
+  id: number;
+  catalogId: number;
+  name: string;
+  flowRate: number;
+  active: boolean;
+  dateCreated: Date;
+  createdBy: number;
+}
+
+export interface GrowingMedium {
+  id: number;
+  catalogId: number;
+  name: string;
+  containerCapacityPercentage?: number;
+  permanentWiltingPoint?: number;
+  easelyAvailableWaterPercentage?: number;
+  reserveWaterPercentage?: number;
+  totalAvailableWaterPercentage?: number;
+  active: boolean;
+  dateCreated: Date;
+  createdBy: number;
+}
+
+export interface IrrigationSystemStatus {
+  farmId: number;
+  systemStatus: string;
+  devices: ProcessedDeviceData[];
+  activeDevices: number;
+  totalDevices: number;
+  systemPressure?: number;
+  totalFlowRate?: number;
+  lastUpdate: string;
+  alerts: IrrigationAlert[];
+  climateReadings: ClimateReading[];
+  soilReadings: SoilReading[];
+  flowReadings: FlowReading[];
+}
+
+export interface IrrigationAlert {
+  id: number;
+  message: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: string;
+  alertType: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -283,39 +539,12 @@ export class IrrigationSectorService {
     private apiService: ApiService,
     private apiConfig: ApiConfigService,
     private http: HttpClient
-  ) {}
+  ) { }
 
   // ============================================================================
   // IRRIGATION EVENT METHODS
   // ============================================================================
 
-  /**
-   * GET /IrrigationEvent - Get irrigation events
-   */
-  getIrrigationEvents(
-    startingDateTime?: string,
-    endingDateTime?: string,
-    cropProductionId?: number
-  ): Observable<IrrigationEvent[]> {
-    let params = new HttpParams();
-    
-    if (cropProductionId) params = params.set('CropProductionId', cropProductionId.toString());
-    if (startingDateTime) params = params.set('StartingDateTime', startingDateTime);
-    if (endingDateTime) params = params.set('EndingDateTime', endingDateTime);
-
-    return this.http.get<IrrigationEventResponse>(`${this.apiConfig.agronomicApiUrl}${this.irrigationEventUrl}`, {
-      params,
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result?.irrigationEvents || [];
-        }
-        throw new Error(`IrrigationEvent API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
 
   /**
    * POST /IrrigationEvent - Create irrigation event
@@ -354,95 +583,6 @@ export class IrrigationSectorService {
   // ============================================================================
   // MEASUREMENT METHODS
   // ============================================================================
-
-  /**
-   * GET /IrrigationMeasurement - Get irrigation measurements
-   */
-  getIrrigationMeasurements(
-    cropProductionId?: number,
-    startingDateTime?: string,
-    endingDateTime?: string
-  ): Observable<IrrigationMeasurement[]> {
-    let params = new HttpParams();
-
-    if (cropProductionId) params = params.set('CropProductionId', cropProductionId.toString());
-    if (startingDateTime) params = params.set('StartingDateTime', startingDateTime);
-    if (endingDateTime) params = params.set('EndingDateTime', endingDateTime);
-
-    return this.http.get<IrrigationMeasurementResponse>(`${this.apiConfig.agronomicApiUrl}${this.irrigationMeasurementUrl}`, {
-      params,
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result?.irrigationMeasurements || [];
-        }
-        throw new Error(`IrrigationMeasurement API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
-  /**
-   * GET /Measurement - Get aggregated measurements
-   */
-  getMeasurements(
-    cropProductionId?: number,
-    measurementVariableId?: number,
-    periodStartingDate?: string,
-    periodEndingDate?: string
-  ): Observable<Measurement[]> {
-    let params = new HttpParams();
-
-    if (cropProductionId) params = params.set('CropProductionId', cropProductionId.toString());
-    if (measurementVariableId) params = params.set('MeasurementVariableId', measurementVariableId.toString());
-    if (periodStartingDate) params = params.set('PeriodStartingDate', periodStartingDate);
-    if (periodEndingDate) params = params.set('PeriodEndingDate', periodEndingDate);
-
-    return this.http.get<MeasurementResponse>(`${this.apiConfig.agronomicApiUrl}${this.measurementUrl}`, {
-      params,
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        if (response.success) {
-          return response.result?.measurements || [];
-        }
-        throw new Error(`Measurement API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
-
-  /**
-   * GET /MeasurementBase - Get raw sensor measurements
-   */
-  getMeasurementBase(
-    cropProductionId?: number,
-    measurementVariableId?: number,
-    periodStartingDate?: string,
-    periodEndingDate?: string
-  ): Observable<MeasurementBase[]> {
-    let params = new HttpParams();
-
-    if (cropProductionId) params = params.set('CropProductionId', cropProductionId.toString());
-    if (measurementVariableId) params = params.set('MeasurementVariableId', measurementVariableId.toString());
-    if (periodStartingDate) params = params.set('PeriodStartingDate', periodStartingDate);
-    if (periodEndingDate) params = params.set('PeriodEndingDate', periodEndingDate);
-
-    return this.http.get<MeasurementBaseResponse>(`${this.apiConfig.agronomicApiUrl}${this.measurementBaseUrl}`, {
-      params,
-      headers: this.getAuthHeaders()
-    }).pipe(
-      map(response => {
-        console.log('MeasurementBase response:', response);
-        if (response.success) {
-          return response.result?.measurements || [];
-        }
-        throw new Error(`MeasurementBase API failed: ${response.exception}`);
-      }),
-      catchError(this.handleError)
-    );
-  }
 
   /**
    * GET /MeasurementKPI - Get KPI measurements
@@ -537,26 +677,26 @@ export class IrrigationSectorService {
       soilMoistureReadings: this.getMeasurementBase(cropProductionId, 3, startDate, endDate).pipe(catchError(() => of([]))),
       pressureReadings: this.getMeasurementBase(cropProductionId, 4, startDate, endDate).pipe(catchError(() => of([]))),
       flowReadings: this.getMeasurementBase(cropProductionId, 5, startDate, endDate).pipe(catchError(() => of([]))),
-      
+
       // Get aggregated data
-      measurements: this.getMeasurements(cropProductionId, undefined, startDate, endDate).pipe(catchError(() => of([])))
+      measurements: this.getMeasurements(cropProductionId.toString(), undefined, startDate, endDate).pipe(catchError(() => of([])))
     }).pipe(
       map(({ temperatureReadings, humidityReadings, soilMoistureReadings, pressureReadings, flowReadings, measurements }) => {
         // Get latest values
-        const latestTemperature = temperatureReadings.length > 0 
-          ? temperatureReadings[temperatureReadings.length - 1].recordValue 
+        const latestTemperature = temperatureReadings.length > 0
+          ? temperatureReadings[temperatureReadings.length - 1].recordValue
           : 22;
-        
-        const latestHumidity = humidityReadings.length > 0 
-          ? humidityReadings[humidityReadings.length - 1].recordValue 
+
+        const latestHumidity = humidityReadings.length > 0
+          ? humidityReadings[humidityReadings.length - 1].recordValue
           : 65;
-        
-        const latestSoilMoisture = soilMoistureReadings.length > 0 
-          ? soilMoistureReadings[soilMoistureReadings.length - 1].recordValue 
+
+        const latestSoilMoisture = soilMoistureReadings.length > 0
+          ? soilMoistureReadings[soilMoistureReadings.length - 1].recordValue
           : 45;
-        
-        const latestPressure = pressureReadings.length > 0 
-          ? pressureReadings[pressureReadings.length - 1].recordValue 
+
+        const latestPressure = pressureReadings.length > 0
+          ? pressureReadings[pressureReadings.length - 1].recordValue
           : 1.5;
 
         return {
@@ -583,118 +723,6 @@ export class IrrigationSectorService {
     return this.getIrrigationSystemStatus(farmId);
   }
 
-  /**
-   * Enhanced system status with real measurements
-   */
-  getIrrigationSystemStatus(farmId?: number): Observable<IrrigationSystemStatus> {
-    return forkJoin({
-      devices: this.http.get<any>(`${this.apiConfig.iotApiUrl}/DeviceSensor/devices`, {
-        headers: this.getAuthHeaders()
-      }).pipe(catchError(() => of([]))),
-      
-      // Get recent measurements for system overview
-      recentMeasurements: this.getMeasurementBase(
-        undefined, 
-        undefined, 
-        new Date(Date.now() - 60 * 60 * 1000).toISOString(), // Last hour
-        new Date().toISOString()
-      ).pipe(catchError(() => of([])))
-    }).pipe(
-      map(({ devices, recentMeasurements }) => {
-        const irrigationDevices = devices.filter((device: any) =>
-          device.deviceId?.toLowerCase().includes('flujo') ||
-          device.deviceId?.toLowerCase().includes('suelo') ||
-          device.deviceId?.toLowerCase().includes('riego') ||
-          device.deviceId?.toLowerCase().includes('presion') ||
-          device.deviceId?.toLowerCase().includes('humedad') ||
-          device.deviceId?.toLowerCase().includes('temperatura')
-        ) || [];
-
-        // Process measurements by type
-        const temperatureMeasurements = recentMeasurements.filter(m => m.measurementVariableId === 1);
-        const humidityMeasurements = recentMeasurements.filter(m => m.measurementVariableId === 2);
-        const soilMoistureMeasurements = recentMeasurements.filter(m => m.measurementVariableId === 3);
-        const pressureMeasurements = recentMeasurements.filter(m => m.measurementVariableId === 4);
-        const flowMeasurements = recentMeasurements.filter(m => m.measurementVariableId === 5);
-
-        const status: IrrigationSystemStatus = {
-          farmId: farmId || 0,
-          systemStatus: irrigationDevices.length > 0 ? 'operational' : 'offline',
-          activeDevices: irrigationDevices.filter((d: any) => d.active).length,
-          totalDevices: devices?.length || 0,
-          devices: devices,
-          systemPressure: pressureMeasurements.length > 0 ? pressureMeasurements[pressureMeasurements.length - 1].recordValue : 1.5,
-          totalFlowRate: flowMeasurements.reduce((sum: number, m: MeasurementBase) => sum + m.recordValue, 0),
-          lastUpdate: new Date().toISOString(),
-          alerts: [], // Would need to implement alerts logic
-          measurements: {
-            temperature: temperatureMeasurements.map(m => ({
-              value: m.recordValue,
-              timestamp: m.recordDate,
-              quality: 'good' as const,
-              measurementVariableId: m.measurementVariableId,
-              sensorId: m.sensorId
-            })),
-            humidity: humidityMeasurements.map(m => ({
-              value: m.recordValue,
-              timestamp: m.recordDate,
-              quality: 'good' as const,
-              measurementVariableId: m.measurementVariableId,
-              sensorId: m.sensorId
-            })),
-            soilMoisture: soilMoistureMeasurements.map(m => ({
-              value: m.recordValue,
-              timestamp: m.recordDate,
-              quality: 'good' as const,
-              measurementVariableId: m.measurementVariableId,
-              sensorId: m.sensorId
-            })),
-            pressure: pressureMeasurements.map(m => ({
-              value: m.recordValue,
-              timestamp: m.recordDate,
-              quality: 'good' as const,
-              measurementVariableId: m.measurementVariableId,
-              sensorId: m.sensorId
-            })),
-            flow: flowMeasurements.map(m => ({
-              value: m.recordValue,
-              timestamp: m.recordDate,
-              quality: 'good' as const,
-              measurementVariableId: m.measurementVariableId,
-              sensorId: m.sensorId
-            }))
-          }
-        };
-
-        return status;
-      }),
-      catchError(error => {
-        console.error('Error loading system status:', error);
-        return of({
-          farmId: farmId || 0,
-          systemStatus: 'error',
-          activeDevices: 0,
-          totalDevices: 0,
-          devices: [],
-          lastUpdate: new Date().toISOString(),
-          alerts: [{
-            id: 1,
-            message: 'Error loading system status',
-            severity: 'high' as const,
-            timestamp: new Date().toISOString(),
-            alertType: 'system_error'
-          }],
-          measurements: {
-            temperature: [],
-            humidity: [],
-            soilMoisture: [],
-            pressure: [],
-            flow: []
-          }
-        } as IrrigationSystemStatus);
-      })
-    );
-  }
 
   // ============================================================================
   // IRRIGATION CONTROL WITH PROPER API INTEGRATION
@@ -744,16 +772,16 @@ export class IrrigationSectorService {
       map(({ temperatureData, humidityData }) => {
         // Calculate ET using actual measurement data
         const etData: EvapotranspirationData[] = [];
-        
+
         // Group measurements by date
         const dateGroups: { [date: string]: { temp?: Measurement, humidity?: Measurement, windSpeed?: Measurement, solarRadiation?: Measurement, precipitation?: Measurement } } = {};
-        
+
         temperatureData.forEach(temp => {
           const date = temp.recordDate.split('T')[0];
           if (!dateGroups[date]) dateGroups[date] = {};
           dateGroups[date].temp = temp;
         });
-        
+
         humidityData.forEach(humidity => {
           const date = humidity.recordDate.split('T')[0];
           if (!dateGroups[date]) dateGroups[date] = {};
@@ -769,7 +797,7 @@ export class IrrigationSectorService {
           const avgPrecipitation = group.precipitation?.avgValue || 0;
 
           const avgHumidity = group.humidity?.avgValue || 65;
-          
+
           // Simple ET calculation - replace with proper Penman-Monteith equation
           const referenceET = Math.max(0, (avgTemp - 5) * 0.0175 * (100 - avgHumidity) / 100 * 1.2);
           const cropCoefficient = 1.15; // Assume standard crop coefficient
@@ -913,9 +941,9 @@ export class IrrigationSectorService {
       return total + (kValues[fitting.type] || 0.5) * fitting.quantity;
     }, 0);
 
-    const frictionLoss = (frictionFactor * (pipeLength / (pipeSize / 1000)) + fittingLosses) * 
-                        (Math.pow(velocity, 2) / (2 * 9.81)) / 10.2; // bar
-    
+    const frictionLoss = (frictionFactor * (pipeLength / (pipeSize / 1000)) + fittingLosses) *
+      (Math.pow(velocity, 2) / (2 * 9.81)) / 10.2; // bar
+
     const staticHead = elevation; // m
     const dynamicHead = staticHead + (frictionLoss * 10.2); // m
     const totalHead = dynamicHead; // m
@@ -997,7 +1025,7 @@ export class IrrigationSectorService {
 
         // Calculate optimal timing based on ET and weather patterns
         const avgET = etData.length > 0 ? etData.reduce((sum, et) => sum + et.cropET, 0) / etData.length : 5;
-        
+
         // Early morning is optimal (6-8 AM)
         const nextOptimalTime = new Date();
         nextOptimalTime.setDate(nextOptimalTime.getDate() + 1);
@@ -1020,12 +1048,12 @@ export class IrrigationSectorService {
 
         // Calculate potential water savings compared to fixed schedule
         const currentUsage = recentEvents.reduce((sum, event) => {
-          const duration = event.dateTimeEnd 
+          const duration = event.dateTimeEnd
             ? (new Date(event.dateTimeEnd).getTime() - new Date(event.dateTimeStart).getTime()) / (1000 * 60)
             : 30;
           return sum + duration * 3; // Assume 3L/min
         }, 0);
-        
+
         const optimizedUsage = waterAmount * (7 / Math.max(1, recentEvents.length)); // Weekly projection
         const waterSavings = Math.max(0, ((currentUsage - optimizedUsage) / Math.max(1, currentUsage)) * 100);
 
@@ -1099,5 +1127,972 @@ export class IrrigationSectorService {
 
   formatTemperature(temperature: number): string {
     return `${temperature.toFixed(1)}°C`;
+  }
+
+
+  // ============================================================================
+  // NEW IoT API METHODS FOR REAL-TIME DEVICE DATA
+  // ============================================================================
+
+  /**
+   * Get raw device data from IoT API
+   * This is the PRIMARY method for fetching real sensor data
+   */
+  getDeviceRawData(
+    deviceId?: string,
+    startDate?: string,
+    endDate?: string,
+    sensor?: string,
+    pageNumber?: number,
+    pageSize?: number
+  ): Observable<DeviceRawDataItem[]> {
+    let params = new HttpParams();
+
+    if (deviceId) params = params.set('DeviceId', deviceId);
+    // if (startDate) params = params.set('StartDate', startDate);
+    // if (endDate) params = params.set('EndDate', endDate);
+    if (sensor) params = params.set('Sensor', sensor);
+    // if (pageNumber) params = params.set('PageNumber', pageNumber.toString());
+    // if (pageSize) params = params.set('PageSize', pageSize.toString());
+
+    return this.apiService.getIot<DeviceRawDataResponse>('/DeviceRawData', params).pipe(
+      map(response => response.deviceRawData || []),
+      catchError(error => {
+        console.error('Error fetching device raw data:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get devices from IoT DeviceSensor API 
+   */
+  getIoTDevices(): Observable<IoTDeviceResponse[]> {
+    return this.apiService.getIot<IoTDeviceResponse[]>('/DeviceSensor/devices').pipe(
+      catchError(error => {
+        console.error('Error fetching IoT devices:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get devices from Agronomic API (for device metadata and configuration)
+   */
+  getAgronomicDevices(
+    clientId?: number,
+    companyId?: number,
+    cropProductionId?: number,
+    includeInactives?: boolean
+  ): Observable<IoTDeviceResponse[]> {
+    let params = new HttpParams();
+
+    if (clientId) params = params.set('ClientId', clientId.toString());
+    if (companyId) params = params.set('CompanyId', companyId.toString());
+    if (cropProductionId) params = params.set('CropProductionId', cropProductionId.toString());
+    if (includeInactives !== undefined) params = params.set('IncludeInactives', includeInactives.toString());
+
+    return this.apiService.get<AgronomicDeviceResponse>('/Device', params).pipe(
+      map(response => response.devices || []),
+      catchError(error => {
+        console.error('Error fetching agronomic devices:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get crop production device mappings
+   */
+  getCropProductionDevices(cropProductionId?: number): Observable<CropProductionDevice[]> {
+    let params = new HttpParams();
+    if (cropProductionId) params = params.set('CropProductionId', cropProductionId.toString());
+
+    return this.apiService.get<CropProductionDeviceResponse>('/CropProductionDevice', params).pipe(
+      map(response => response.cropProductionDevices || []),
+      catchError(error => {
+        console.error('Error fetching crop production devices:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // ============================================================================
+  // ENHANCED SYSTEM STATUS WITH REAL IoT DATA
+  // ============================================================================
+
+  /**
+   * Get comprehensive irrigation system status with real IoT data
+   */
+  getIrrigationSystemStatus(
+    farmId: number | undefined,
+    cropProductionId?: number
+  ): Observable<any> {
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    return combineLatest([
+      this.getAgronomicDevices(undefined, undefined, cropProductionId),
+      this.getCropProductionDevices(cropProductionId),
+      this.getDeviceRawData(
+        undefined,
+        oneDayAgo.toISOString(),
+        now.toISOString(),
+        undefined,
+        1,
+        1000
+      )
+    ]).pipe(
+      map(([devices, cropDevices, rawData]) => {
+        const processedDevices = this.processDeviceData(devices, cropDevices, rawData);
+        const readings = this.categorizeReadings(rawData);
+
+        return {
+          farmId,
+          systemStatus: this.calculateSystemStatus(processedDevices),
+          devices: processedDevices,
+          activeDevices: processedDevices.filter(d => d.active).length,
+          totalDevices: processedDevices.length,
+          systemPressure: this.calculateAveragePressure(readings.soilReadings),
+          totalFlowRate: this.calculateTotalFlow(readings.flowReadings),
+          lastUpdate: now.toISOString(),
+          alerts: this.generateAlerts(processedDevices, readings),
+          climateReadings: readings.climateReadings,
+          soilReadings: readings.soilReadings,
+          flowReadings: readings.flowReadings,
+          measurements: {
+            temperature: [],
+            humidity: [],
+            soilMoisture: [],
+            pressure: [],
+            flow: []
+          }
+        };
+      }),
+      catchError(error => {
+        console.error('Error getting irrigation system status:', error);
+        const defaultStatus = this.getDefaultSystemStatus(farmId);
+        // Add empty measurements property to match IrrigationSystemStatus interface
+        return of({
+          ...defaultStatus,
+          measurements: {
+            temperature: [],
+            humidity: [],
+            soilMoisture: [],
+            pressure: [],
+            flow: []
+          }
+        });
+      })
+    );
+  }
+
+  /**
+   * Get latest climate data for a specific crop production
+   */
+  getLatestClimateData(cropProductionId: number): Observable<ClimateReading | null> {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    return combineLatest([
+      this.getCropProductionDevices(cropProductionId),
+      this.getAgronomicDevices(undefined, undefined, cropProductionId)
+    ]).pipe(
+      switchMap(([cropDevices, devices]) => {
+        const activeDeviceIds = cropDevices
+          .filter(cd => cd.active)
+          .map(cd => {
+            const device = devices.find(d => d.id === cd.deviceId);
+            return device?.deviceId;
+          })
+
+        if (activeDeviceIds.length === 0) {
+          console.error('No active climate devices found for crop production ID:', cropProductionId);
+          return of(null);
+        }
+
+        // Get latest data for climate devices
+        const promises = activeDeviceIds.map(deviceId =>
+          this.getDeviceRawData(
+            deviceId,
+            oneHourAgo.toISOString(),
+            now.toISOString(),
+            undefined,
+            1,
+            100
+          )
+        );
+
+        return combineLatest(promises).pipe(
+          map(deviceDataArrays => {
+            const allData = deviceDataArrays.flat();
+            return this.extractLatestClimateReading(allData);
+          })
+        );
+      }),
+      catchError(error => {
+        console.error('Error getting latest climate data:', error);
+        return of(null);
+      })
+    );
+  }
+
+  /**
+   * Get latest soil data for a specific crop production
+   */
+  getLatestSoilData(cropProductionId: number): Observable<SoilReading[]> {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
+    return combineLatest([
+      this.getCropProductionDevices(cropProductionId),
+      this.getAgronomicDevices(undefined, undefined, cropProductionId)
+    ]).pipe(
+      switchMap(([cropDevices, devices]) => {
+        const activeDeviceIds = cropDevices
+          .filter(cd => cd.active)
+          .map(cd => {
+            const device = devices.find(d => d.id === cd.deviceId);
+            return device?.deviceId;
+          })
+          .filter(id => id && (id.includes('ph-suelo') || id.includes('suelo'))); // Soil devices
+
+        if (activeDeviceIds.length === 0) {
+          return of([]);
+        }
+
+        // Filter out undefined device IDs to ensure type safety
+        const filteredDeviceIds = activeDeviceIds.filter((id): id is string => typeof id === 'string');
+
+        const promises = filteredDeviceIds.map(deviceId =>
+          this.getDeviceRawData(
+            deviceId,
+            oneHourAgo.toISOString(),
+            now.toISOString(),
+            undefined,
+            1,
+            100
+          )
+        );
+
+        return combineLatest(promises).pipe(
+          map(deviceDataArrays => {
+            return deviceDataArrays.map((data, index) =>
+              this.extractLatestSoilReading(data, filteredDeviceIds[index])
+            ).filter(reading => reading !== null) as SoilReading[];
+          })
+        );
+      }),
+      catchError(error => {
+        console.error('Error getting latest soil data:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Get latest flow data for a specific crop production
+   */
+  getLatestFlowData(cropProductionId: number): Observable<FlowReading[]> {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
+    return combineLatest([
+      this.getCropProductionDevices(cropProductionId),
+      this.getAgronomicDevices(undefined, undefined, cropProductionId)
+    ]).pipe(
+      switchMap(([cropDevices, devices]) => {
+        const activeDeviceIds = cropDevices
+          .filter(cd => cd.active)
+          .map(cd => {
+            const device = devices.find(d => d.id === cd.deviceId);
+            return device?.deviceId;
+          })
+          .filter(id => id && id.includes('flujo')); // Flow devices
+
+        if (activeDeviceIds.length === 0) {
+          return of([]);
+        }
+
+        // Filter out undefined device IDs to ensure type safety
+        const filteredDeviceIds = activeDeviceIds.filter((id): id is string => typeof id === 'string');
+
+        const promises = filteredDeviceIds.map(deviceId =>
+          this.getDeviceRawData(
+            deviceId,
+            oneHourAgo.toISOString(),
+            now.toISOString(),
+            undefined,
+            1,
+            100
+          )
+        );
+
+        return combineLatest(promises).pipe(
+          map(deviceDataArrays => {
+            return deviceDataArrays.map((data, index) =>
+              this.extractLatestFlowReading(data, filteredDeviceIds[index])
+            ).filter(reading => reading !== null) as FlowReading[];
+          })
+        );
+      }),
+      catchError(error => {
+        console.error('Error getting latest flow data:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // ============================================================================
+  // DATA PROCESSING METHODS
+  // ============================================================================
+
+  private processDeviceData(
+    devices: IoTDeviceResponse[],
+    cropDevices: CropProductionDevice[],
+    rawData: DeviceRawDataItem[]
+  ): any[] {
+    return devices.map(device => {
+      const deviceRawData = rawData.filter(rd => rd.deviceId === device.deviceId);
+      const latestReading = deviceRawData.length > 0
+        ? new Date(Math.max(...deviceRawData.map(rd => new Date(rd.recordDate).getTime())))
+        : new Date();
+
+      const sensorReadings: { [key: string]: any } = {};
+
+      // Group by sensor and get latest reading
+      const sensorGroups = deviceRawData.reduce((acc, curr) => {
+        if (!acc[curr.sensor]) {
+          acc[curr.sensor] = [];
+        }
+        acc[curr.sensor].push(curr);
+        return acc;
+      }, {} as { [key: string]: DeviceRawDataItem[] });
+
+      Object.keys(sensorGroups).forEach(sensorName => {
+        const readings = sensorGroups[sensorName];
+        const latest = readings.sort((a, b) =>
+          new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
+        )[0];
+
+        if (latest) {
+          const numericValue = parseFloat(latest.payload);
+          sensorReadings[sensorName] = {
+            value: isNaN(numericValue) ? latest.payload : numericValue,
+            timestamp: new Date(latest.recordDate),
+            quality: this.assessDataQuality(latest, latestReading)
+          };
+        }
+      });
+
+      const cropProductionIds = cropDevices
+        .filter(cd => cd.deviceId === device.id && cd.active)
+        .map(cd => cd.cropProductionId);
+
+      return {
+        deviceId: device.deviceId,
+        companyId: device.companyId,
+        active: device.active,
+        latestReading,
+        sensorReadings,
+        cropProductionIds
+      };
+    });
+  }
+
+  private categorizeReadings(rawData: DeviceRawDataItem[]): {
+    climateReadings: ClimateReading[];
+    soilReadings: SoilReading[];
+    flowReadings: FlowReading[];
+  } {
+    const climateReadings: ClimateReading[] = [];
+    const soilReadings: SoilReading[] = [];
+    const flowReadings: FlowReading[] = [];
+
+    // Group by device and timestamp
+    const deviceGroups = rawData.reduce((acc, curr) => {
+      const key = `${curr.deviceId}-${curr.recordDate}`;
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(curr);
+      return acc;
+    }, {} as { [key: string]: DeviceRawDataItem[] });
+
+    Object.values(deviceGroups).forEach(group => {
+      if (group.length === 0) return;
+
+      const deviceId = group[0].deviceId;
+      const timestamp = new Date(group[0].recordDate);
+
+      if (deviceId.includes('metereologica')) {
+        climateReadings.push(this.extractClimateReading(group, deviceId, timestamp));
+      } else if (deviceId.includes('ph-suelo') || deviceId.includes('suelo')) {
+        const soilReading = this.extractSoilReading(group, deviceId, timestamp);
+        if (soilReading) soilReadings.push(soilReading);
+      } else if (deviceId.includes('flujo')) {
+        const flowReading = this.extractFlowReading(group, deviceId, timestamp);
+        if (flowReading) flowReadings.push(flowReading);
+      }
+    });
+
+    return { climateReadings, soilReadings, flowReadings };
+  }
+
+  private extractClimateReading(
+    group: DeviceRawDataItem[],
+    deviceId: string,
+    timestamp: Date
+  ): ClimateReading {
+    const reading: ClimateReading = { deviceId, timestamp };
+
+    group.forEach(item => {
+      const value = parseFloat(item.payload);
+      if (isNaN(value)) return;
+
+      switch (item.sensor.toLowerCase()) {
+        case 'temp':
+        case 'temperature':
+          reading.temperature = value;
+          break;
+        case 'hum':
+        case 'humidity':
+          reading.humidity = value;
+          break;
+        case 'pressure':
+        case 'presion':
+          reading.pressure = value;
+          break;
+        case 'wind_speed':
+        case 'windspeed':
+          reading.windSpeed = value;
+          break;
+        case 'wind_direction':
+        case 'winddirection':
+          reading.windDirection = value;
+          break;
+        case 'par':
+        case 'solar_radiation':
+          reading.solarRadiation = value;
+          break;
+        case 'precipitation':
+        case 'lluvia':
+          reading.precipitation = value;
+          break;
+      }
+    });
+
+    return reading;
+  }
+
+  private extractSoilReading(
+    group: DeviceRawDataItem[],
+    deviceId: string,
+    timestamp: Date
+  ): SoilReading | null {
+    const reading: SoilReading = { deviceId, timestamp };
+    let hasValidData = false;
+
+    group.forEach(item => {
+      const value = parseFloat(item.payload);
+      if (isNaN(value)) return;
+
+      switch (item.sensor.toLowerCase()) {
+        case 'ph1_soil':
+        case 'ph_soil':
+        case 'ph':
+          reading.ph = value;
+          hasValidData = true;
+          break;
+        case 'temp_soil':
+        case 'soil_temperature':
+          reading.temperature = value;
+          hasValidData = true;
+          break;
+        case 'moisture':
+        case 'soil_moisture':
+          reading.moisture = value;
+          hasValidData = true;
+          break;
+        case 'conductivity':
+        case 'ec':
+          reading.conductivity = value;
+          hasValidData = true;
+          break;
+      }
+    });
+
+    return hasValidData ? reading : null;
+  }
+
+  private extractFlowReading(
+    group: DeviceRawDataItem[],
+    deviceId: string,
+    timestamp: Date
+  ): FlowReading | null {
+    const reading: FlowReading = { deviceId, timestamp };
+    let hasValidData = false;
+
+    group.forEach(item => {
+      const value = parseFloat(item.payload);
+      if (isNaN(value)) return;
+
+      switch (item.sensor.toLowerCase()) {
+        case 'total_pulse':
+          reading.totalPulse = value;
+          hasValidData = true;
+          break;
+        case 'water_flow_value':
+          reading.waterFlowValue = value;
+          hasValidData = true;
+          break;
+        case 'water_amount':
+          reading.waterAmount = value;
+          hasValidData = true;
+          break;
+      }
+    });
+
+    return hasValidData ? reading : null;
+  }
+
+  private extractLatestClimateReading(rawData: DeviceRawDataItem[]): ClimateReading | null {
+    if (rawData.length === 0) return null;
+
+    // Sort by timestamp and get the latest group
+    const sorted = rawData.sort((a, b) =>
+      new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
+    );
+
+    const latest = sorted[0];
+    const latestGroup = rawData.filter(item =>
+      item.recordDate === latest.recordDate && item.deviceId === latest.deviceId
+    );
+
+    return this.extractClimateReading(latestGroup, latest.deviceId, new Date(latest.recordDate));
+  }
+
+  private extractLatestSoilReading(rawData: DeviceRawDataItem[], deviceId: string): SoilReading | null {
+    if (rawData.length === 0) return null;
+
+    const sorted = rawData.sort((a, b) =>
+      new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
+    );
+
+    const latest = sorted[0];
+    const latestGroup = rawData.filter(item =>
+      item.recordDate === latest.recordDate
+    );
+
+    return this.extractSoilReading(latestGroup, deviceId, new Date(latest.recordDate));
+  }
+
+  private extractLatestFlowReading(rawData: DeviceRawDataItem[], deviceId: string): FlowReading | null {
+    if (rawData.length === 0) return null;
+
+    const sorted = rawData.sort((a, b) =>
+      new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
+    );
+
+    const latest = sorted[0];
+    const latestGroup = rawData.filter(item =>
+      item.recordDate === latest.recordDate
+    );
+
+    return this.extractFlowReading(latestGroup, deviceId, new Date(latest.recordDate));
+  }
+
+  private assessDataQuality(
+    reading: DeviceRawDataItem,
+    latestReading: Date
+  ): 'good' | 'fair' | 'poor' {
+    const readingTime = new Date(reading.recordDate);
+    const timeDiff = latestReading.getTime() - readingTime.getTime();
+    const hoursOld = timeDiff / (1000 * 60 * 60);
+
+    if (hoursOld <= 1) return 'good';
+    if (hoursOld <= 6) return 'fair';
+    return 'poor';
+  }
+
+  private calculateSystemStatus(devices: ProcessedDeviceData[]): string {
+    const activeDevices = devices.filter(d => d.active).length;
+    const totalDevices = devices.length;
+
+    if (totalDevices === 0) return 'No devices';
+    if (activeDevices === totalDevices) return 'All systems operational';
+    if (activeDevices > totalDevices * 0.8) return 'Mostly operational';
+    if (activeDevices > totalDevices * 0.5) return 'Partial operation';
+    return 'System issues detected';
+  }
+
+  private calculateAveragePressure(soilReadings: SoilReading[]): number | undefined {
+    const pressureReadings = soilReadings
+      .map(r => r.conductivity)
+      .filter(p => p !== undefined) as number[];
+
+    if (pressureReadings.length === 0) return undefined;
+
+    return pressureReadings.reduce((sum, p) => sum + p, 0) / pressureReadings.length;
+  }
+
+  private calculateTotalFlow(flowReadings: FlowReading[]): number | undefined {
+    const flowValues = flowReadings
+      .map(r => r.waterFlowValue)
+      .filter(f => f !== undefined) as number[];
+
+    if (flowValues.length === 0) return undefined;
+
+    return flowValues.reduce((sum, f) => sum + f, 0);
+  }
+
+  private generateAlerts(
+    devices: ProcessedDeviceData[],
+    readings: { climateReadings: ClimateReading[]; soilReadings: SoilReading[]; flowReadings: FlowReading[] }
+  ): IrrigationAlert[] {
+    const alerts: IrrigationAlert[] = [];
+    const now = new Date();
+
+    // Check for offline devices
+    devices.forEach(device => {
+      const hoursOffline = device.lastReading ? (now.getTime() - device.lastReading.getTime()) / (1000 * 60 * 60) : Number.POSITIVE_INFINITY;
+      if (hoursOffline > 2 && device.active) {
+        alerts.push({
+          id: Math.random(),
+          message: `Device ${device.deviceId} has been offline for ${hoursOffline.toFixed(1)} hours`,
+          severity: hoursOffline > 12 ? 'high' : 'medium',
+          timestamp: now.toISOString(),
+          alertType: 'device_offline'
+        });
+      }
+    });
+
+    // Check climate conditions
+    readings.climateReadings.forEach(reading => {
+      if (reading.temperature && (reading.temperature > 35 || reading.temperature < 5)) {
+        alerts.push({
+          id: Math.random(),
+          message: `Extreme temperature detected: ${reading.temperature}°C on device ${reading.deviceId}`,
+          severity: 'high',
+          timestamp: now.toISOString(),
+          alertType: 'temperature_extreme'
+        });
+      }
+
+      if (reading.humidity && reading.humidity > 90) {
+        alerts.push({
+          id: Math.random(),
+          message: `High humidity detected: ${reading.humidity}% on device ${reading.deviceId}`,
+          severity: 'medium',
+          timestamp: now.toISOString(),
+          alertType: 'humidity_high'
+        });
+      }
+    });
+
+    // Check soil conditions
+    readings.soilReadings.forEach(reading => {
+      if (reading.ph && (reading.ph < 5.5 || reading.ph > 8.5)) {
+        alerts.push({
+          id: Math.random(),
+          message: `Soil pH out of range: ${reading.ph} on device ${reading.deviceId}`,
+          severity: 'medium',
+          timestamp: now.toISOString(),
+          alertType: 'soil_ph_abnormal'
+        });
+      }
+    });
+
+    return alerts;
+  }
+
+  private getDefaultSystemStatus(farmId: number | undefined): any {
+    return {
+      farmId: farmId ?? 0,
+      systemStatus: 'Unknown',
+      devices: [],
+      activeDevices: 0,
+      totalDevices: 0,
+      lastUpdate: new Date().toISOString(),
+      alerts: [],
+      climateReadings: [],
+      soilReadings: [],
+      flowReadings: []
+    };
+  }
+
+  // ============================================================================
+  // BACKWARD COMPATIBILITY METHODS (EXISTING API CALLS)
+  // ============================================================================
+
+  /**
+   * GET /IrrigationEvent - Get irrigation events
+   */
+  getIrrigationEvents(
+    startingDateTime?: string,
+    endingDateTime?: string,
+    cropProductionId?: number
+  ): Observable<IrrigationEvent[]> {
+    let params = new HttpParams();
+    if (startingDateTime) params = params.set('StartingDateTime', startingDateTime);
+    if (endingDateTime) params = params.set('EndingDateTime', endingDateTime);
+    if (cropProductionId) params = params.set('CropProductionId', cropProductionId.toString());
+
+    return this.apiService.get<IrrigationEventResponse>(this.irrigationEventUrl, params).pipe(
+      map(response => response.irrigationEvents || []),
+      catchError(error => {
+        console.error('Error fetching irrigation events:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * GET /IrrigationMeasurement - Get irrigation measurements
+   */
+  getIrrigationMeasurements(
+    eventId?: number,
+    measurementVariableId?: number
+  ): Observable<IrrigationMeasurement[]> {
+    let params = new HttpParams();
+    if (eventId) params = params.set('EventId', eventId.toString());
+    if (measurementVariableId) params = params.set('MeasurementVariableId', measurementVariableId.toString());
+
+    return this.apiService.get<IrrigationMeasurementResponse>(this.irrigationMeasurementUrl, params).pipe(
+      map(response => response.irrigationMeasurements || []),
+      catchError(error => {
+        console.error('Error fetching irrigation measurements:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * GET /Measurement - Get measurements
+   */
+  getMeasurements(
+    cropProductionId: number | string,
+    measurementVariableId?: number | string,
+    startDate?: string | number,
+    endDate?: string | number,
+  ): Observable<Measurement[]> {
+    let params = new HttpParams();
+    if (startDate) params = params.set('StartDate', startDate);
+    if (endDate) params = params.set('EndDate', endDate);
+    if (cropProductionId) params = params.set('CropProductionId', cropProductionId.toString());
+    if (measurementVariableId) params = params.set('MeasurementVariableId', measurementVariableId.toString());
+
+    return this.apiService.get<MeasurementResponse>(this.measurementUrl, params).pipe(
+      map(response => response.measurements || []),
+      catchError(error => {
+        console.error('Error fetching measurements:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * GET /MeasurementBase - Get base measurements
+   */
+  getMeasurementBase(
+    cropProductionId?: number,
+    startDate?: string | number,
+    endDate?: string | number,
+    measurementVariableId?: number | string,
+    sensorId?: number | string
+  ): Observable<MeasurementBase[]> {
+    let params = new HttpParams();
+    if (cropProductionId) params = params.set('CropProductionId', cropProductionId.toString());
+    if (startDate) params = params.set('StartDate', startDate);
+    if (endDate) params = params.set('EndDate', endDate);
+    if (measurementVariableId) params = params.set('MeasurementVariableId', measurementVariableId.toString());
+    if (sensorId) params = params.set('SensorId', sensorId.toString());
+
+    return this.apiService.get<MeasurementBaseResponse>(this.measurementBaseUrl, params).pipe(
+      map(response => response.measurements || []),
+      catchError(error => {
+        console.error('Error fetching measurement base:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // ============================================================================
+  // CONTAINER AND EQUIPMENT METHODS (UNCHANGED)
+  // ============================================================================
+
+  getContainers(): Observable<Container[]> {
+    return this.apiService.get<{ containers: Container[] }>('/Container').pipe(
+      map(response => response.containers || []),
+      catchError(error => {
+        console.error('Error fetching containers:', error);
+        return of([]);
+      })
+    );
+  }
+
+  getDroppers(): Observable<Dropper[]> {
+    return this.apiService.get<{ droppers: Dropper[] }>('/Dropper').pipe(
+      map(response => response.droppers || []),
+      catchError(error => {
+        console.error('Error fetching droppers:', error);
+        return of([]);
+      })
+    );
+  }
+
+  getGrowingMediums(): Observable<GrowingMedium[]> {
+    return this.apiService.get<{ growingMediums: GrowingMedium[] }>('/GrowingMedium').pipe(
+      map(response => response.growingMediums || []),
+      catchError(error => {
+        console.error('Error fetching growing mediums:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // ============================================================================
+  // UTILITY METHODS FOR DATA TRANSFORMATION
+  // ============================================================================
+
+  /**
+   * Transform raw device data into structured sensor readings
+   */
+  transformRawDataToReadings(rawData: DeviceRawDataItem[]): { [deviceId: string]: { [sensor: string]: any } } {
+    const result: { [deviceId: string]: { [sensor: string]: any } } = {};
+
+    rawData.forEach(item => {
+      if (!result[item.deviceId]) {
+        result[item.deviceId] = {};
+      }
+
+      const value = parseFloat(item.payload);
+      result[item.deviceId][item.sensor] = {
+        value: isNaN(value) ? item.payload : value,
+        timestamp: new Date(item.recordDate),
+        raw: item
+      };
+    });
+
+    return result;
+  }
+
+  /**
+   * Get device data summary for dashboard display
+   */
+  getDeviceDataSummary(cropProductionId: number): Observable<{
+    climate: any | null;
+    soil: any;
+    flow: any;
+    lastUpdate: Date;
+  }> {
+    return combineLatest([
+      this.getLatestClimateData(cropProductionId),
+      this.getLatestSoilData(cropProductionId),
+      this.getLatestFlowData(cropProductionId)
+    ]).pipe(
+      map(([climate, soil, flow]) => ({
+        climate,
+        soil,
+        flow,
+        lastUpdate: new Date()
+      })),
+      catchError(error => {
+        console.error('Error getting device data summary:', error);
+        return of({
+          climate: null,
+          soil: [],
+          flow: [],
+          lastUpdate: new Date()
+        });
+      })
+    );
+  }
+
+  /**
+   * Get historical data for charting
+   */
+  getHistoricalData(
+    cropProductionId: number,
+    startDate: Date,
+    endDate: Date,
+    sensorTypes?: string[]
+  ): Observable<{
+    timeSeries: { timestamp: Date;[sensor: string]: any }[];
+    devices: string[];
+  }> {
+    return combineLatest([
+      this.getCropProductionDevices(cropProductionId),
+      this.getAgronomicDevices(undefined, undefined, cropProductionId)
+    ]).pipe(
+      switchMap(([cropDevices, devices]) => {
+        const activeDeviceIds = cropDevices
+          .filter(cd => cd.active)
+          .map(cd => {
+            const device = devices.find(d => d.id === cd.deviceId);
+            return device?.deviceId;
+          })
+          .filter(id => id) as string[];
+
+        if (activeDeviceIds.length === 0) {
+          return of({ timeSeries: [], devices: [] });
+        }
+
+        const promises = activeDeviceIds.map(deviceId =>
+          this.getDeviceRawData(
+            deviceId,
+            startDate.toISOString(),
+            endDate.toISOString(),
+            undefined,
+            1,
+            10000
+          )
+        );
+
+        return combineLatest(promises).pipe(
+          map(deviceDataArrays => {
+            const allData = deviceDataArrays.flat();
+
+            // Filter by sensor types if specified
+            const filteredData = sensorTypes
+              ? allData.filter(item => sensorTypes.includes(item.sensor))
+              : allData;
+
+            // Group by timestamp
+            const timeGroups: { [timestamp: string]: DeviceRawDataItem[] } = {};
+            filteredData.forEach(item => {
+              const timeKey = item.recordDate;
+              if (!timeGroups[timeKey]) {
+                timeGroups[timeKey] = [];
+              }
+              timeGroups[timeKey].push(item);
+            });
+
+            // Convert to time series format
+            const timeSeries = Object.keys(timeGroups)
+              .sort()
+              .map(timeKey => {
+                const timestamp = new Date(timeKey);
+                const dataPoint: any = { timestamp };
+
+                timeGroups[timeKey].forEach(item => {
+                  const key = `${item.deviceId}_${item.sensor}`;
+                  const value = parseFloat(item.payload);
+                  dataPoint[key] = isNaN(value) ? item.payload : value;
+                });
+
+                return dataPoint;
+              });
+
+            return {
+              timeSeries,
+              devices: activeDeviceIds
+            };
+          })
+        );
+      }),
+      catchError(error => {
+        console.error('Error getting historical data:', error);
+        return of({ timeSeries: [], devices: [] });
+      })
+    );
   }
 }
