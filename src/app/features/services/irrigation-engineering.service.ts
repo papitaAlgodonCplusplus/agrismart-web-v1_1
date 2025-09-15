@@ -389,9 +389,9 @@ export class IrrigationEngineeringService {
       map(response => ({
         recommendedFlowRate: response.recommendedFlowRate || 0,
         pressureLoss: response.estimatedPressureLoss || 0,
-        systemEfficiency: response.estimatedEfficiency || 85,
-        waterVelocity: response.averageVelocity || 1.5,
-        recommendedEmitterSpacing: response.recommendedSpacing || 0.3
+        systemEfficiency: response.estimatedEfficiency || 0,
+        waterVelocity: response.averageVelocity || 0,
+        recommendedEmitterSpacing: response.recommendedSpacing || 0
       }))
     );
   }
@@ -776,6 +776,8 @@ export class IrrigationEngineeringService {
       }))
     );
   }
+
+
 
   generateBillOfMaterials(design: IrrigationDesign): Observable<any> {
     const endpoint = `${this.apiConfig.agronomicApiUrl}/irrigation/bom/generate`;

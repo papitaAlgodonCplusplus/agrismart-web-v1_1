@@ -1041,54 +1041,54 @@
     <!-- Water Usage Analytics -->
     <div class="analytics-card" *ngIf="waterUsageAnalytics">
       <div class="card-header">
-        <h3><i class="bi bi-graph-up-arrow"></i> Análisis de Uso de Agua</h3>
-        <div class="analytics-period">
-          Período: {{ formatDate(waterUsageAnalytics.startDate) }} - {{ formatDate(waterUsageAnalytics.endDate) }}
-        </div>
+      <h3><i class="bi bi-graph-up-arrow"></i> Análisis de Uso de Agua</h3>
+      <div class="analytics-period">
+        Período: {{ formatDate(waterUsageAnalytics.startDate) }} - {{ formatDate(waterUsageAnalytics.endDate) }}
+      </div>
       </div>
 
       <div class="analytics-content">
-        <div class="analytics-summary">
-          <div class="summary-item">
-            <div class="summary-label">Uso Total</div>
-            <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.totalUsage) }}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Promedio Diario</div>
-            <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.dailyAverage) }}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Pico de Uso</div>
-            <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.peakUsage) }}</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-label">Eficiencia</div>
-            <div class="summary-value">{{ formatPercentage(waterUsageAnalytics.efficiency) }}</div>
-          </div>
+      <div class="analytics-summary">
+        <div class="summary-item">
+        <div class="summary-label">Uso Total</div>
+        <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.totalUsage) }}</div>
         </div>
+        <div class="summary-item">
+        <div class="summary-label">Promedio Diario</div>
+        <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.dailyAverage) }}</div>
+        </div>
+        <div class="summary-item">
+        <div class="summary-label">Pico de Uso</div>
+        <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.peakUsage) }}</div>
+        </div>
+        <div class="summary-item">
+        <div class="summary-label">Eficiencia</div>
+        <div class="summary-value">{{ formatPercentage(waterUsageAnalytics.efficiency) }}</div>
+        </div>
+      </div>
 
-        <div class="usage-trends" *ngIf="waterUsageAnalytics.trends">
-          <h5>Tendencias de Uso</h5>
-          <div class="trend-items">
-            <div class="trend-item" *ngFor="let trend of waterUsageAnalytics.trends">
-              <div class="trend-date">{{ formatDate(trend.date) }}</div>
-              <div class="trend-bar" [style.width.%]="(trend.usage / waterUsageAnalytics.peakUsage) * 100">
-                <div class="trend-value">{{ formatWaterAmount(trend.usage) }}</div>
-              </div>
-            </div>
+      <div class="usage-trends" *ngIf="waterUsageAnalytics.trends">
+        <h5>Tendencias de Uso</h5>
+        <div class="trend-items">
+        <div class="trend-item" *ngFor="let trend of waterUsageAnalytics.trends">
+          <div class="trend-date">{{ formatDate(trend.date) }}</div>
+          <div class="trend-bar" [style.width.%]="(trend.usage / waterUsageAnalytics.peakUsage) * 100">
+          <div class="trend-value">{{ formatWaterAmount(trend.usage) }}</div>
           </div>
         </div>
+        </div>
+      </div>
       </div>
     </div>
 
     <!-- Environmental Impact -->
     <div class="impact-card" *ngIf="environmentalImpact">
       <div class="card-header">
-        <h3><i class="bi bi-tree"></i> Impacto Ambiental</h3>
+      <h3><i class="bi bi-tree"></i> Impacto Ambiental</h3>
       </div>
 
       <div class="impact-content">
-        <div class="impact-metrics">
+      <div class="impact-metrics">
           <div class="impact-item">
             <div class="impact-icon">
               <i class="bi bi-droplet-half"></i>

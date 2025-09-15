@@ -685,19 +685,19 @@ export class IrrigationSectorService {
         // Get latest values
         const latestTemperature = temperatureReadings.length > 0
           ? temperatureReadings[temperatureReadings.length - 1].recordValue
-          : 22;
+          : 0;
 
         const latestHumidity = humidityReadings.length > 0
           ? humidityReadings[humidityReadings.length - 1].recordValue
-          : 65;
+          : 0;
 
         const latestSoilMoisture = soilMoistureReadings.length > 0
           ? soilMoistureReadings[soilMoistureReadings.length - 1].recordValue
-          : 45;
+          : 0;
 
         const latestPressure = pressureReadings.length > 0
           ? pressureReadings[pressureReadings.length - 1].recordValue
-          : 1.5;
+          : 0;
 
         return {
           cropProductionId,

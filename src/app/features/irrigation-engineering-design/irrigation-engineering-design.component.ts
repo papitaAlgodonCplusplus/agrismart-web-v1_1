@@ -1,20 +1,21 @@
-// src/app/features/irrigation/irrigation-engineering-design/irrigation-engineering-design.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+// src/app/features/irrigation-engineering-design/irrigation-engineering-design.component.ts
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, Subject, combineLatest, BehaviorSubject } from 'rxjs';
-import { takeUntil, map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { Observable, Subject, combineLatest, BehaviorSubject, forkJoin, interval, of } from 'rxjs';
+import { takeUntil, map, debounceTime, distinctUntilChanged, switchMap, catchError, startWith } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 
 // Services
 import { IrrigationEngineeringService } from '../services/irrigation-engineering.service';
 import { IrrigationSectorService } from '../services/irrigation-sector.service';
 import { CropProductionService } from '../crop-production/services/crop-production.service';
+import { FarmService } from '../farms/services/farm.service';
 import { AlertService } from '../../core/services/alert.service';
 
 // Models and Interfaces
-import { 
-  IrrigationDesign, 
-  HydraulicParameters, 
+import {
+  IrrigationDesign,
+  HydraulicParameters,
   SystemValidation,
   DesignOptimization,
   PipelineDesign,
@@ -23,7 +24,51 @@ import {
   EconomicAnalysis
 } from '../../core/models/models';
 import { Container, Dropper, GrowingMedium } from '../services/irrigation-sector.service';
-import { CropProduction } from '../../core/models/models';
+import { CropProduction, Farm } from '../../core/models/models';
+
+// Real-time data interfaces
+interface RealTimeData {
+  climate: {
+    deviceId: string;
+    timestamp: Date;
+    temperature?: number;
+    humidity?: number;
+    pressure?: number;
+    windSpeed?: number;
+    solarRadiation?: number;
+  };
+  soil: Array<{
+    deviceId: string;
+    ph?: number;
+    temperature?: number;
+    timestamp: Date;
+  }>;
+  flow: Array<{
+    deviceId: string;
+    timestamp: Date;
+    totalPulse: number;
+    waterFlowValue: number;
+  }>;
+  systemPressure?: number;
+  totalFlowRate?: number;
+  lastUpdate: Date;
+}
+
+interface IrrigationSystemStatus {
+  systemPressure: undefined;
+  farmId: number;
+  systemStatus: string;
+  devices: any[];
+  activeDevices: number;
+  totalDevices: number;
+  alerts: any[];
+  climateReadings: any[];
+  soilReadings: any[];
+  flowReadings: any[];
+  totalFlowRate: number;
+  lastUpdate: string;
+  measurements: any;
+}
 
 @Component({
   selector: 'app-irrigation-engineering-design',
@@ -43,58 +88,61 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   hydraulicForm!: FormGroup;
   optimizationForm!: FormGroup;
 
-  // Data
+  // State Management
+  isLoading = false;
+  isSaving = false;
+  isCalculating = false;
+  isOptimizing = false;
+  calculationProgress = 0;
+
+  // Current Design
+  currentDesign: IrrigationDesign | null = null;
+  activeTab = 'design';
+
+  // Data Collections
+  farms: Farm[] = [];
   cropProductions: CropProduction[] = [];
   containers: Container[] = [];
   droppers: Dropper[] = [];
   growingMediums: GrowingMedium[] = [];
 
-  // Current Design
-  currentDesign: any | null = null;
-  savedDesigns: any[] = [];
+  // Real-time data properties
+  realTimeData: any | null = null;
+  systemStatus: IrrigationSystemStatus | null = null;
+  selectedFarm: number | null = null;
+  selectedCropProduction: number | null = null;
+  isLoadingRealTimeData = false;
 
-  // Calculations and Results
-  hydraulicResults: any | null = null;
-  validationResults: any | null = null;
-  optimizationResults: any | null = null;
-  pipelineDesign: any | null = null;
-  economicAnalysis: any | null = null;
+  // Calculation Results
+  hydraulicResults: HydraulicParameters | null = null;
+  validationResults: SystemValidation | null = null;
+  optimizationResults: DesignOptimization | null = null;
 
   // UI State
-  activeTab = 'design';
-  isCalculating = false;
-  isOptimizing = false;
-  isSaving = false;
-  showAdvancedOptions = false;
-  calculationProgress = 0;
-
-  // Real-time calculations
-  realTimeCalculations$ = new BehaviorSubject<any>(null);
+  errorMessage = '';
+  successMessage = '';
 
   constructor(
     private fb: FormBuilder,
-    private engineeringService: IrrigationEngineeringService,
-    private irrigationService: IrrigationSectorService,
+    private irrigationEngineeringService: IrrigationEngineeringService,
+    private irrigationSectorService: IrrigationSectorService,
     private cropProductionService: CropProductionService,
-    private alertService: AlertService
-  ) {
-    this.initializeForms();
-  }
+    private farmService: FarmService,
+    private alertService: AlertService,
+    private cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
+    this.initializeForms();
     this.loadInitialData();
-    this.setupRealTimeCalculations();
-    this.loadSavedDesigns();
+    this.setupRealTimeUpdates();
+    this.setupFormSubscriptions();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
-
-  // =============================================================================
-  // FORM INITIALIZATION
-  // =============================================================================
 
   private initializeForms(): void {
     this.initializeDesignForm();
@@ -104,43 +152,53 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
 
   private initializeDesignForm(): void {
     this.designForm = this.fb.group({
-      // Basic Design Information
+      // Basic Information
       name: ['', Validators.required],
       description: [''],
-      cropProductionId: ['', Validators.required],
-      designType: ['drip', Validators.required], // drip, sprinkler, micro-sprinkler
-      
-      // System Configuration
-      containerId: ['', Validators.required],
-      dropperId: ['', Validators.required],
-      growingMediumId: ['', Validators.required],
-      
-      // Area and Layout
-      totalArea: [0, [Validators.required, Validators.min(0.1)]],
-      numberOfSectors: [1, [Validators.required, Validators.min(1)]],
-      containerDensity: [0, [Validators.required, Validators.min(0.01)]],
-      plantDensity: [0, [Validators.required, Validators.min(0.01)]],
-      
+      farmId: [null, Validators.required],
+      cropProductionId: [null, Validators.required],
+
+      // Crop Area Configuration
+      totalArea: [0, [Validators.required, Validators.min(1)]], // m²
+      plantSpacing: [0.3, [Validators.required, Validators.min(0.1)]], // meters
+      rowSpacing: [1.2, [Validators.required, Validators.min(0.5)]], // meters
+      numberOfPlants: [0, [Validators.required, Validators.min(1)]],
+
+      // Container Configuration
+      containerId: [null],
+      dropperId: [null],
+      growingMediumId: [null],
+      containerLength: [1.2, [Validators.required, Validators.min(0.5)]], // meters
+      containerWidth: [0.2, [Validators.required, Validators.min(0.1)]], // meters
+      numberOfContainers: [0, [Validators.required, Validators.min(1)]],
+
+      // Emitter Configuration
+      emitterType: ['dripper', Validators.required], // dripper, sprinkler, mist
+      emitterFlowRate: [2, [Validators.required, Validators.min(0.5)]], // L/h
+      emittersPerPlant: [1, [Validators.required, Validators.min(1)]],
+      operatingPressure: [1.5, [Validators.required, Validators.min(0.5)]], // bar
+      pressureCompensation: [false],
+
       // Water Requirements
       dailyWaterRequirement: [0, [Validators.required, Validators.min(0.1)]], // L/day/plant
       irrigationFrequency: [1, [Validators.required, Validators.min(0.1)]], // times per day
-      
-      // Environmental Parameters
+
+      // Environmental Parameters - NOW USING REAL DATA
       climate: this.fb.group({
-        averageTemperature: [25, Validators.required],
-        averageHumidity: [70, Validators.required],
-        windSpeed: [2, Validators.required],
+        averageTemperature: [22, Validators.required], // Will be updated with real data
+        averageHumidity: [65, Validators.required], // Will be updated with real data
+        windSpeed: [2, Validators.required], // Will be updated with real data
         solarRadiation: [20, Validators.required], // MJ/m²/day
         elevation: [1200, Validators.required] // meters above sea level
       }),
-      
+
       // Water Source
       waterSource: this.fb.group({
         sourceType: ['well', Validators.required], // well, reservoir, municipal
-        waterPressure: [0, Validators.required], // bar
-        waterFlow: [0, Validators.required], // L/min
+        waterPressure: [1.5, Validators.required], // bar - Will be updated with real data
+        waterFlow: [0, Validators.required], // L/min - Will be updated with real data
         waterQuality: this.fb.group({
-          ph: [7, [Validators.min(4), Validators.max(9)]],
+          ph: [7, [Validators.min(4), Validators.max(9)]], // Will be updated with real data
           electricalConductivity: [0.8, Validators.min(0)], // dS/m
           totalDissolvedSolids: [500, Validators.min(0)], // ppm
           nitrates: [10, Validators.min(0)], // ppm
@@ -154,7 +212,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       secondaryPipeDiameter: [32, Validators.required], // mm
       lateralPipeDiameter: [16, Validators.required], // mm
       pipelineMaterial: ['PE', Validators.required], // PE, PVC, HDPE
-      
+
       // System Components
       components: this.fb.group({
         hasFiltration: [true],
@@ -169,502 +227,625 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
 
   private initializeHydraulicForm(): void {
     this.hydraulicForm = this.fb.group({
-      // Operating Parameters
-      operatingPressure: [1.5, [Validators.required, Validators.min(0.5)]],
-      maxFlowRate: [0, [Validators.required, Validators.min(0.1)]],
+      // Operating Parameters - NOW USING REAL DATA
+      operatingPressure: [1.5, [Validators.required, Validators.min(0.5)]], // Will be updated with real data
+      maxFlowRate: [0, [Validators.required, Validators.min(0.1)]], // Will be updated with real data
       designVelocity: [1.5, [Validators.required, Validators.min(0.5), Validators.max(3)]],
-      
+
       // Pressure Loss Calculations
       frictionLossCoefficient: [0.2, Validators.required],
       minorLossCoefficient: [0.1, Validators.required],
-      elevationChange: [0, Validators.required], // meters
-      
-      // Emitter Specifications
-      emitterFlowRate: [0, [Validators.required, Validators.min(0.1)]], // L/h
-      emitterSpacing: [0.3, [Validators.required, Validators.min(0.1)]], // meters
-      emitterPressure: [1, [Validators.required, Validators.min(0.5)]], // bar
-      
-      // Uniformity Requirements
-      targetUniformity: [90, [Validators.required, Validators.min(80), Validators.max(98)]],
-      pressureVariation: [10, [Validators.required, Validators.min(5), Validators.max(20)]] // %
+      elevationDifference: [0, Validators.required],
+
+      // Performance Requirements
+      targetUniformity: [90, [Validators.required, Validators.min(80)]],
+      targetEfficiency: [85, [Validators.required, Validators.min(70)]],
+      maximumPressureVariation: [10, [Validators.required, Validators.min(5)]]
     });
   }
 
   private initializeOptimizationForm(): void {
     this.optimizationForm = this.fb.group({
       // Optimization Objectives
-      primaryObjective: ['efficiency', Validators.required], // efficiency, cost, uniformity, sustainability
-      weightingFactors: this.fb.group({
-        efficiency: [40, [Validators.min(0), Validators.max(100)]],
-        cost: [30, [Validators.min(0), Validators.max(100)]],
-        uniformity: [20, [Validators.min(0), Validators.max(100)]],
-        sustainability: [10, [Validators.min(0), Validators.max(100)]]
+      optimizationGoals: this.fb.group({
+        minimizeCost: [true],
+        maximizeUniformity: [true],
+        maximizeEfficiency: [true],
+        minimizeEnergyConsumption: [false],
+        minimizeWaterUsage: [true]
       }),
-      
+
       // Constraints
-      constraints: this.fb.group({
-        maxInvestment: [0, Validators.min(0)], // currency units
-        minEfficiency: [85, [Validators.min(70), Validators.max(98)]],
-        maxWaterConsumption: [0, Validators.min(0)], // L/day
-        availableArea: [0, Validators.min(0)] // m²
-      }),
-      
-      // Optimization Parameters
-      optimizationMethod: ['genetic', Validators.required], // genetic, gradient, hybrid
-      maxIterations: [1000, [Validators.min(100), Validators.max(10000)]],
-      convergenceTolerance: [0.001, [Validators.min(0.0001), Validators.max(0.1)]],
-      
-      // Scenarios
-      includeScenarios: this.fb.group({
-        climateChange: [false],
-        waterScarcity: [false],
-        expansionPlanning: [false],
-        maintenanceScheduling: [false]
-      })
+      budgetConstraint: [0, Validators.min(0)],
+      areaConstraint: [0, Validators.min(0)],
+      pressureConstraint: [3, [Validators.required, Validators.min(1)]],
+
+      // Economic Parameters
+      waterCostPerM3: [0.5, Validators.min(0)],
+      energyCostPerKWh: [0.15, Validators.min(0)],
+      laborCostPerHour: [15, Validators.min(0)],
+      maintenanceCostPercentage: [5, [Validators.min(0), Validators.max(20)]]
     });
   }
-
-  // =============================================================================
-  // DATA LOADING
-  // =============================================================================
 
   private loadInitialData(): void {
+    this.isLoading = true;
+
+    forkJoin({
+      farms: this.farmService.getAll().pipe(catchError(() => of([]))),
+      cropProductions: this.cropProductionService.getAll().pipe(catchError(() => of([]))),
+      containers: this.irrigationSectorService.getAllContainers().pipe(catchError(() => of([]))),
+      droppers: this.irrigationSectorService.getAllDroppers().pipe(catchError(() => of([]))),
+      growingMediums: this.irrigationSectorService.getAllGrowingMediums().pipe(catchError(() => of([])))
+    }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (data: any) => {
+        this.farms = data.farms?.farms || data.farms || [];
+        this.cropProductions = data.cropProductions?.cropProductions || data.cropProductions || [];
+        this.containers = data.containers?.containers || data.containers || [];
+        this.droppers = data.droppers?.droppers || data.droppers || [];
+        this.growingMediums = data.growingMediums?.growingMediums || data.growingMediums || [];
+
+        // Auto-select first farm if available
+        if (this.farms.length > 0) {
+          this.selectedFarm = this.farms[0].id;
+          this.designForm.patchValue({ farmId: this.selectedFarm });
+        }
+
+        // Auto-select first crop production if available
+        if (this.cropProductions.length > 0) {
+          this.selectedCropProduction = this.cropProductions[0].id;
+          this.designForm.patchValue({ cropProductionId: this.selectedCropProduction });
+        }
+
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading initial data:', error);
+        this.errorMessage = 'Error cargando datos iniciales';
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // === REAL-TIME DATA INTEGRATION (SAME AS SHINY DASHBOARD) ===
+  private setupRealTimeUpdates(): void {
+    interval(10000)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap(() => this.loadRealTimeData())
+      )
+      .subscribe();
+
+    // Initial real-time data load
+    this.loadRealTimeData();
+  }
+
+
+  private setupFormSubscriptions(): void {
+    // Farm selection subscription
+    this.designForm.get('farmId')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(farmId => {
+        if (farmId) {
+          this.selectedFarm = farmId;
+          this.loadRealTimeData();
+        }
+      });
+
+    // Crop production selection subscription
+    this.designForm.get('cropProductionId')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(cropProductionId => {
+        if (cropProductionId) {
+          this.selectedCropProduction = cropProductionId;
+          this.loadRealTimeData();
+        }
+      });
+
+    // Auto-calculate number of plants based on area and spacing
     combineLatest([
-      this.cropProductionService.getAll(),
-      this.irrigationService.getAllContainers(),
-      this.irrigationService.getAllDroppers(),
-      this.irrigationService.getAllGrowingMediums()
+      this.designForm.get('totalArea')?.valueChanges || of(0),
+      this.designForm.get('plantSpacing')?.valueChanges || of(0.3),
+      this.designForm.get('rowSpacing')?.valueChanges || of(1.2)
     ]).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: ([crops, containers, droppers, mediums]) => {
-        this.cropProductions = crops;
-        this.containers = containers;
-        this.droppers = droppers;
-        this.growingMediums = mediums;
-      },
-      error: (error) => {
-        this.alertService.showError('Error loading initial data', error);
+      takeUntil(this.destroy$),
+      debounceTime(300)
+    ).subscribe(([area, plantSpacing, rowSpacing]) => {
+      if (area > 0 && plantSpacing > 0 && rowSpacing > 0) {
+        const plantsPerRow = Math.floor(Math.sqrt(area) / plantSpacing);
+        const numberOfRows = Math.floor(Math.sqrt(area) / rowSpacing);
+        const totalPlants = plantsPerRow * numberOfRows;
+
+        this.designForm.patchValue({
+          numberOfPlants: totalPlants
+        }, { emitEvent: false });
       }
     });
+
+    // Auto-calculate water requirements
+    this.designForm.get('numberOfPlants')?.valueChanges
+      .pipe(takeUntil(this.destroy$), debounceTime(300))
+      .subscribe(numberOfPlants => {
+        if (numberOfPlants > 0) {
+          // Basic calculation: 2L per plant per day
+          const dailyRequirement = numberOfPlants * 2;
+          this.designForm.patchValue({
+            dailyWaterRequirement: dailyRequirement
+          }, { emitEvent: false });
+        }
+      });
   }
 
-  private loadSavedDesigns(): void {
-    this.engineeringService.getSavedDesigns().pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (designs) => {
-        this.savedDesigns = designs;
-      },
-      error: (error) => {
-        console.error('Error loading saved designs:', error);
+  // === UI EVENT HANDLERS ===
+  setActiveTab(tab: string): void {
+    this.activeTab = tab;
+
+    // Load tab-specific data
+    setTimeout(() => {
+      switch (tab) {
+        case 'design':
+          this.loadRealTimeData();
+          break;
+        case 'hydraulic':
+          if (this.currentDesign) {
+            this.performHydraulicCalculations();
+          }
+          break;
+        case 'optimization':
+          if (this.hydraulicResults) {
+            this.performOptimization();
+          }
+          break;
       }
-    });
+    }, 100);
   }
 
-  // =============================================================================
-  // REAL-TIME CALCULATIONS
-  // =============================================================================
+  saveDesign(): void {
+    if (this.designForm.valid) {
+      this.isSaving = true;
 
-  private setupRealTimeCalculations(): void {
-    // Monitor form changes and trigger calculations
-    combineLatest([
-      this.designForm.valueChanges.pipe(debounceTime(1000), distinctUntilChanged()),
-      this.hydraulicForm.valueChanges.pipe(debounceTime(1000), distinctUntilChanged())
-    ]).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(() => {
-      if (this.designForm.valid && this.hydraulicForm.valid) {
-        this.performRealTimeCalculations();
-      }
-    });
-  }
+      const designData = {
+        ...this.designForm.value,
+        hydraulicParameters: this.hydraulicForm.value,
+        optimizationParameters: this.optimizationForm.value
+      };
 
-  private performRealTimeCalculations(): void {
-    const designData = this.designForm.value;
-    const hydraulicData = this.hydraulicForm.value;
-
-    this.engineeringService.performQuickCalculations(designData, hydraulicData).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (calculations) => {
-        this.realTimeCalculations$.next(calculations);
-        this.updateFormWithCalculations(calculations);
-      },
-      error: (error) => {
-        console.error('Real-time calculation error:', error);
-      }
-    });
-  }
-
-  private updateFormWithCalculations(calculations: any): void {
-    if (calculations.recommendedFlowRate) {
-      this.hydraulicForm.patchValue({
-        maxFlowRate: calculations.recommendedFlowRate
-      }, { emitEvent: false });
+      this.irrigationEngineeringService.saveDesign(designData)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (savedDesign: any) => {
+            this.currentDesign = savedDesign;
+            this.successMessage = 'Diseño guardado exitosamente';
+            this.isSaving = false;
+            this.alertService.showSuccess(this.successMessage);
+            this.cdr.detectChanges();
+          },
+          error: (error) => {
+            this.errorMessage = 'Error guardando el diseño';
+            this.isSaving = false;
+            this.alertService.showError(this.errorMessage);
+            console.error('Error saving design:', error);
+            this.cdr.detectChanges();
+          }
+        });
+    } else {
+      this.alertService.showWarning('Por favor complete todos los campos requeridos');
     }
-
-    if (calculations.recommendedEmitterSpacing) {
-      this.hydraulicForm.patchValue({
-        emitterSpacing: calculations.recommendedEmitterSpacing
-      }, { emitEvent: false });
-    }
   }
-
-  // =============================================================================
-  // MAIN CALCULATIONS
-  // =============================================================================
 
   performHydraulicCalculations(): void {
     if (!this.designForm.valid || !this.hydraulicForm.valid) {
-      this.alertService.showWarning('Please complete all required fields');
+      this.alertService.showWarning('Por favor complete los parámetros de diseño e hidráulicos');
       return;
     }
 
     this.isCalculating = true;
     this.calculationProgress = 0;
 
-    const designData = this.designForm.value;
-    const hydraulicData = this.hydraulicForm.value;
-
     // Simulate calculation progress
     const progressInterval = setInterval(() => {
-      this.calculationProgress += 10;
-      if (this.calculationProgress >= 90) {
-        clearInterval(progressInterval);
-      }
+      this.calculationProgress += 20;
+      this.cdr.detectChanges();
     }, 200);
-
-    this.engineeringService.performHydraulicCalculations(designData, hydraulicData).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (results: any) => {
-        this.hydraulicResults = results;
-        this.calculationProgress = 100;
-        this.isCalculating = false;
-        clearInterval(progressInterval);
-        
-        // Automatically perform validation
-        this.performSystemValidation();
-        
-        this.alertService.showSuccess('Hydraulic calculations completed successfully');
-        this.activeTab = 'results';
-      },
-      error: (error) => {
-        this.isCalculating = false;
-        this.calculationProgress = 0;
-        clearInterval(progressInterval);
-        this.alertService.showError('Error performing hydraulic calculations', error);
-      }
-    });
-  }
-
-  performSystemValidation(): void {
-    if (!this.hydraulicResults) {
-      this.alertService.showWarning('Please perform hydraulic calculations first');
-      return;
-    }
 
     const designData = this.designForm.value;
     const hydraulicData = this.hydraulicForm.value;
 
-    this.engineeringService.performSystemValidation(designData, hydraulicData, this.hydraulicResults).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (validation: any) => {
-        this.validationResults = validation;
-        
-        if (validation.isValid) {
-          this.alertService.showSuccess('System validation passed');
-        } else {
-          this.alertService.showWarning('System validation found issues. Please review recommendations.');
+    this.irrigationEngineeringService.performHydraulicCalculations(designData, hydraulicData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (results: any) => {
+          clearInterval(progressInterval);
+          this.calculationProgress = 100;
+          this.hydraulicResults = results;
+          this.isCalculating = false;
+          this.successMessage = 'Cálculos hidráulicos completados';
+          this.cdr.detectChanges();
+
+          // Auto-validate system
+          setTimeout(() => this.validateSystem(), 500);
+        },
+        error: (error) => {
+          clearInterval(progressInterval);
+          this.isCalculating = false;
+          this.errorMessage = 'Error en cálculos hidráulicos';
+          console.error('Hydraulic calculation error:', error);
+          this.cdr.detectChanges();
         }
-      },
-      error: (error) => {
-        this.alertService.showError('Error performing system validation', error);
-      }
-    });
+      });
   }
 
-  // =============================================================================
-  // OPTIMIZATION
-  // =============================================================================
+  validateSystem(): void {
+    if (!this.hydraulicResults) return;
 
-  performDesignOptimization(): void {
-    if (!this.validationResults || !this.validationResults.isValid) {
-      this.alertService.showWarning('Please ensure system validation passes before optimization');
+    const designData = this.designForm.value;
+    const hydraulicData = this.hydraulicForm.value;
+
+    // this.irrigationEngineeringService.validateSystem(designData, hydraulicData, this.hydraulicResults)
+    //   .pipe(takeUntil(this.destroy$))
+    //   .subscribe({
+    //     next: (validation) => {
+    //       this.validationResults = validation;
+    //       this.cdr.detectChanges();
+    //     },
+    //     error: (error) => {
+    //       console.error('System validation error:', error);
+    //     }
+    //   });
+  }
+
+  performOptimization(): void {
+    if (!this.hydraulicResults) {
+      this.alertService.showWarning('Primero debe completar los cálculos hidráulicos');
       return;
     }
 
     this.isOptimizing = true;
-    
+    this.calculationProgress = 0;
+
+    const progressInterval = setInterval(() => {
+      this.calculationProgress += 15;
+      this.cdr.detectChanges();
+    }, 300);
+
     const designData = this.designForm.value;
     const hydraulicData = this.hydraulicForm.value;
     const optimizationData = this.optimizationForm.value;
 
-    this.engineeringService.performDesignOptimization(
-      designData, 
-      hydraulicData, 
+    this.irrigationEngineeringService.performDesignOptimization(
+      designData,
+      hydraulicData,
       optimizationData,
-      this.hydraulicResults!
-    ).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (optimization: any) => {
-        this.optimizationResults = optimization;
-        this.isOptimizing = false;
-        
-        // Apply optimized parameters to forms
-        if (optimization.optimizedParameters) {
-          this.applyOptimizedParameters(optimization.optimizedParameters);
-        }
-        
-        this.alertService.showSuccess('Design optimization completed');
-        this.activeTab = 'optimization';
-      },
-      error: (error) => {
-        this.isOptimizing = false;
-        this.alertService.showError('Error performing design optimization', error);
-      }
-    });
-  }
-
-  public applyOptimizedParameters(optimized: any): void {
-    if (optimized.hydraulic) {
-      this.hydraulicForm.patchValue(optimized.hydraulic);
-    }
-    
-    if (optimized.design) {
-      this.designForm.patchValue(optimized.design);
-    }
-
-    // Trigger recalculation
-    this.performHydraulicCalculations();
-  }
-
-  // =============================================================================
-  // ECONOMIC ANALYSIS
-  // =============================================================================
-
-  performEconomicAnalysis(): void {
-    if (!this.hydraulicResults) {
-      this.alertService.showWarning('Please complete hydraulic calculations first');
-      return;
-    }
-
-    const designData = this.designForm.value;
-    
-    this.engineeringService.performEconomicAnalysis(designData, this.hydraulicResults).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (analysis: any) => {
-        this.economicAnalysis = analysis;
-        this.alertService.showSuccess('Economic analysis completed');
-      },
-      error: (error) => {
-        this.alertService.showError('Error performing economic analysis', error);
-      }
-    });
-  }
-
-  // =============================================================================
-  // DESIGN PERSISTENCE
-  // =============================================================================
-
-  saveDesign(): void {
-    if (!this.designForm.valid) {
-      this.alertService.showWarning('Please complete all required design fields');
-      return;
-    }
-
-    this.isSaving = true;
-    
-    const completeDesign: IrrigationDesign = {
-      id: this.currentDesign?.id || 0,
-      name: this.designForm.value.name,
-      description: this.designForm.value.description,
-      designParameters: this.designForm.value,
-      hydraulicParameters: this.hydraulicForm.value,
-      optimizationParameters: this.optimizationForm.value,
-      calculationResults: {
-        hydraulic: this.hydraulicResults ?? undefined,
-        validation: this.validationResults ?? undefined,
-        optimization: this.optimizationResults ?? undefined,
-        economic: this.economicAnalysis ?? undefined
-      },
-      createdAt: this.currentDesign?.createdAt || new Date(),
-      updatedAt: new Date(),
-      status: this.validationResults?.isValid ? 'validated' : 'draft',
-      cropProductionId: 0,
-      designType: 'drip',
-      version: '',
-      createdBy: 0,
-      tags: [],
-      isTemplate: false,
-      designStandards: [],
-      regulatoryCompliance: undefined
-    };
-
-    this.engineeringService.saveDesign(completeDesign).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (savedDesign: any) => {
-        this.currentDesign = savedDesign;
-        this.isSaving = false;
-        this.loadSavedDesigns(); // Refresh the list
-        this.alertService.showSuccess('Design saved successfully');
-      },
-      error: (error) => {
-        this.isSaving = false;
-        this.alertService.showError('Error saving design', error);
-      }
-    });
-  }
-
-  loadDesign(design: IrrigationDesign): void {
-    this.currentDesign = design;
-    
-    // Populate forms with saved data
-    this.designForm.patchValue(design.designParameters);
-    this.hydraulicForm.patchValue(design.hydraulicParameters);
-    if (design.optimizationParameters) {
-      this.optimizationForm.patchValue(design.optimizationParameters);
-    }
-    
-    // Load calculation results if available
-    if (design.calculationResults) {
-      this.hydraulicResults = design.calculationResults.hydraulic;
-      this.validationResults = design.calculationResults.validation ?? null;
-      this.optimizationResults = design.calculationResults.optimization;
-      this.economicAnalysis = design.calculationResults.economic ?? null;
-    }
-
-    this.alertService.showInfo(`Design "${design.name}" loaded successfully`);
-  }
-
-  deleteDesign(design: IrrigationDesign): void {
-    if (confirm(`Are you sure you want to delete the design "${design.name}"?`)) {
-      this.engineeringService.deleteDesign(design.id).pipe(
-        takeUntil(this.destroy$)
-      ).subscribe({
-        next: () => {
-          this.loadSavedDesigns();
-          if (this.currentDesign?.id === design.id) {
-            this.currentDesign = null;
-          }
-          this.alertService.showSuccess('Design deleted successfully');
+      this.hydraulicResults
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (optimization: any) => {
+          clearInterval(progressInterval);
+          this.calculationProgress = 100;
+          this.optimizationResults = optimization;
+          this.isOptimizing = false;
+          this.successMessage = 'Optimización completada';
+          this.cdr.detectChanges();
         },
         error: (error) => {
-          this.alertService.showError('Error deleting design', error);
+          clearInterval(progressInterval);
+          this.isOptimizing = false;
+          this.errorMessage = 'Error en optimización';
+          console.error('Optimization error:', error);
+          this.cdr.detectChanges();
         }
       });
-    }
-  }
-
-  // =============================================================================
-  // FORM UTILITIES
-  // =============================================================================
-
-  onCropProductionChange(): void {
-    const cropProductionId = this.designForm.get('cropProductionId')?.value;
-    if (cropProductionId) {
-      this.cropProductionService.getCropProduction(cropProductionId).pipe(
-        takeUntil(this.destroy$)
-      ).subscribe({
-        next: (cropProduction: any) => {
-          // Auto-populate related fields
-          this.designForm.patchValue({
-            containerId: cropProduction.containerId,
-            dropperId: cropProduction.dropperId,
-            growingMediumId: cropProduction.growingMediumId,
-            totalArea: cropProduction.plantedArea || 0
-          });
-        },
-        error: (error) => {
-          console.error('Error loading crop production details:', error);
-        }
-      });
-    }
-  }
-
-  resetDesign(): void {
-    if (confirm('Are you sure you want to reset the current design? All unsaved changes will be lost.')) {
-      this.designForm.reset();
-      this.hydraulicForm.reset();
-      this.optimizationForm.reset();
-      
-      this.hydraulicResults = null;
-      this.validationResults = null;
-      this.optimizationResults = null;
-      this.economicAnalysis = null;
-      this.currentDesign = null;
-      
-      this.activeTab = 'design';
-      this.initializeForms(); // Reset to default values
-    }
   }
 
   exportDesign(): void {
     if (!this.currentDesign) {
-      this.alertService.showWarning('Please save the design before exporting');
+      this.alertService.showWarning('No hay diseño para exportar');
       return;
     }
 
-    this.engineeringService.exportDesign(this.currentDesign).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (exportData) => {
-        this.downloadFile(exportData, `irrigation_design_${this.currentDesign!.name}.json`);
-        this.alertService.showSuccess('Design exported successfully');
-      },
-      error: (error) => {
-        this.alertService.showError('Error exporting design', error);
-      }
-    });
+    // Create export data
+    const exportData = {
+      design: this.currentDesign,
+      hydraulicResults: this.hydraulicResults,
+      validationResults: this.validationResults,
+      optimizationResults: this.optimizationResults,
+      realTimeData: this.realTimeData,
+      exportDate: new Date()
+    };
+
+    // Create and download JSON file
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `irrigation-design-${this.currentDesign.name}-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+    this.alertService.showSuccess('Diseño exportado exitosamente');
   }
 
-  private downloadFile(data: any, filename: string): void {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+  resetDesign(): void {
+    if (confirm('¿Está seguro de que desea restablecer el diseño? Se perderán todos los cambios no guardados.')) {
+      this.initializeForms();
+      this.currentDesign = null;
+      this.hydraulicResults = null;
+      this.validationResults = null;
+      this.optimizationResults = null;
+      this.activeTab = 'design';
+      this.successMessage = 'Diseño restablecido';
+      this.cdr.detectChanges();
+    }
   }
 
-  // =============================================================================
-  // UI UTILITIES
-  // =============================================================================
-
-  setActiveTab(tab: string): void {
-    this.activeTab = tab;
+  // === UTILITY METHODS ===
+  formatPressure(pressure: number): string {
+    return pressure ? `${pressure.toFixed(2)} bar` : 'N/A';
   }
 
-  toggleAdvancedOptions(): void {
-    this.showAdvancedOptions = !this.showAdvancedOptions;
+  formatFlowRate(flowRate: number): string {
+    return flowRate ? `${flowRate.toFixed(1)} L/min` : 'N/A';
   }
 
-  getValidationSeverity(issue: any): string {
-    if (issue.severity === 'critical') return 'danger';
-    if (issue.severity === 'warning') return 'warning';
-    return 'info';
-  }
-
-  formatNumber(value: number, decimals: number = 2): string {
-    return value?.toFixed(decimals) || '0.00';
-  }
-
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(value || 0);
+  formatTemperature(temperature: number): string {
+    return temperature ? `${temperature.toFixed(1)}°C` : 'N/A';
   }
 
   formatPercentage(value: number): string {
-    return `${(value || 0).toFixed(1)}%`;
+    return value ? `${value.toFixed(1)}%` : 'N/A';
+  }
+
+  formatArea(area: number): string {
+    return area ? `${area.toFixed(2)} m²` : 'N/A';
+  }
+
+  formatCurrency(amount: number): string {
+    return amount ? `$${amount.toLocaleString('es-CR')}` : 'N/A';
+  }
+
+  // === GETTERS FOR TEMPLATE ===
+  get isDesignValid(): boolean {
+    return this.designForm.valid;
+  }
+
+  get isHydraulicValid(): boolean {
+    return this.hydraulicForm.valid;
+  }
+
+  get canPerformCalculations(): boolean {
+    return this.isDesignValid && this.isHydraulicValid && !this.isCalculating;
+  }
+
+  get canPerformOptimization(): boolean {
+    return this.hydraulicResults !== null && !this.isOptimizing;
+  }
+
+  get hasRealTimeData(): boolean {
+    return this.realTimeData !== null;
+  }
+
+  get realTimeTemperature(): number {
+    if (!this.realTimeData || !this.realTimeData.soilReadings || this.realTimeData.soilReadings.length === 0) {
+      return 0;
+    }
+    const latest = this.realTimeData.soilReadings[this.realTimeData.soilReadings.length - 1];
+    return latest.temperature || 0;
+  }
+
+  get realTimePressure(): number {
+    if (!this.realTimeData || !this.realTimeData.climateReadings || this.realTimeData.climateReadings.length === 0) {
+      return 0;
+    }
+    const latest = this.realTimeData.climateReadings[this.realTimeData.climateReadings.length - 1];
+    return latest.pressure || 0;
+  }
+
+  get realTimeFlowRate(): number {
+    if (!this.realTimeData || this.realTimeData.totalFlowRate === undefined) {
+      return 0;
+    }
+    return this.realTimeData.totalFlowRate;
+  }
+
+  get realTimeHumidity(): number {
+    if (!this.realTimeData || !this.realTimeData.climateReadings || this.realTimeData.climateReadings.length === 0) {
+      return 0;
+    }
+    const latest = this.realTimeData.climateReadings[this.realTimeData.climateReadings.length - 1];
+    return latest.humidity || 0;
+  }
+
+  get realTimeSoilPH(): number {
+    if (!this.realTimeData || !this.realTimeData.soilReadings || this.realTimeData.soilReadings.length === 0) {
+      return 0;
+    }
+    const latest = this.realTimeData.soilReadings[this.realTimeData.soilReadings.length - 1];
+    return latest.ph || 0;
+  }
+
+  get systemStatusText(): string {
+    if (!this.systemStatus) return 'Sin conexión';
+    return this.systemStatus.systemStatus || 'Desconocido';
+  }
+
+  get lastUpdateTime(): string {
+    if (!this.systemStatus || !this.systemStatus.lastUpdate) return 'Nunca';
+    return new Date(this.systemStatus.lastUpdate).toLocaleString('es-CR');
+  }
+
+  get activeDevicesCount(): number {
+    return this.realTimeData?.devices.filter((device: { active: any; }) => device.active).length || 0;
+  }
+
+  get totalDevicesCount(): number {
+    return this.realTimeData?.devices.length || 0;
+  }
+
+  get calculationStatusText(): string {
+    if (this.isCalculating) return 'Calculando parámetros hidráulicos...';
+    if (this.isOptimizing) return 'Optimizando diseño...';
+    if (this.isSaving) return 'Guardando diseño...';
+    return '';
+  }
+
+  get validationStatusClass(): string {
+    if (!this.validationResults) return '';
+    return this.validationResults.isValid ? 'text-success' : 'text-danger';
+  }
+
+  get validationStatusIcon(): string {
+    if (!this.validationResults) return 'bi-question-circle';
+    return this.validationResults.isValid ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+  }
+
+  get optimizationScoreClass(): string {
+    if (!this.optimizationResults) return '';
+    const score = this.optimizationResults.finalScore || 0;
+    if (score >= 80) return 'text-success';
+    if (score >= 60) return 'text-warning';
+    return 'text-danger';
+  }
+
+  get estimatedCost(): number {
+    if (!this.optimizationResults) return 0;
+    return this.optimizationResults.estimatedCost || 0;
+  }
+
+  get waterSavings(): number {
+    if (!this.optimizationResults) return 0;
+    return this.optimizationResults.waterSavings || 0;
+  }
+
+  get energySavings(): number {
+    if (!this.optimizationResults) return 0;
+    return this.optimizationResults.energySavings || 0;
+  }
+
+  get uniformityAchieved(): number {
+    if (!this.hydraulicResults) return 0;
+    return this.hydraulicResults.distributionUniformity || 0;
+  }
+
+  get efficiencyAchieved(): number {
+    if (!this.hydraulicResults) return 0;
+    return this.hydraulicResults.applicationEfficiency || 0;
+  }
+
+  get totalPressureLoss(): number {
+    if (!this.hydraulicResults) return 0;
+    return this.hydraulicResults.totalPressureLoss || 0;
+  }
+
+  get systemReliabilityScore(): number {
+    if (!this.hydraulicResults || !this.hydraulicResults.systemReliability) return 0;
+    const reliability = this.hydraulicResults.systemReliability;
+    return (
+      (reliability.pressureStability || 0) +
+      (reliability.flowStability || 0) +
+      (100 - (reliability.cloggingRisk || 0)) +
+      (100 - (reliability.maintenanceRequirement || 0))
+    ) / 4;
+  }
+
+  // 3. Update the loadRealTimeData method to better extract climate data
+  private loadRealTimeData(): Observable<any> {
+    if (!this.selectedCropProduction) {
+      console.error('No crop production selected for real-time data');
+      return of(null);
+    }
+
+    return combineLatest([
+      this.irrigationSectorService.getDeviceDataSummary(this.selectedCropProduction),
+      this.irrigationSectorService.getIrrigationSystemStatus(
+        this.selectedFarm || 0,
+        this.selectedCropProduction
+      )
+    ]).pipe(
+      map(([dataSummary, systemStatus]: [any, any]) => {
+        // Extract climate data - prioritize systemStatus.climateReadings
+        const climateReadings = systemStatus?.climateReadings || dataSummary?.climateReadings || [];
+        if (climateReadings.length > 0) {
+          const latestClimate = climateReadings[0]; // Most recent reading
+
+          const climateData = {
+            temperature: latestClimate.temperature ||
+              (systemStatus?.soilReadings && systemStatus.soilReadings[0]?.temperature) ||
+              (dataSummary?.soil && dataSummary.soil[0]?.temperature) ||
+              null,
+            humidity: latestClimate.humidity || null,
+            pressure: latestClimate.pressure || null,
+            windSpeed: latestClimate.windSpeed || null,
+            windDirection: latestClimate.windDirection || null,
+            solarRadiation: latestClimate.solarRadiation || null,
+            precipitation: latestClimate.precipitation || null,
+            lastUpdate: new Date(latestClimate.timestamp || systemStatus?.lastUpdate || dataSummary?.lastUpdate || new Date())
+          };
+        }
+
+        // Create comprehensive dashboard summary
+        const summary = {
+          // Climate data from systemStatus (more complete)
+          climate: systemStatus?.climateReadings?.[0] || dataSummary?.climate || null,
+          climateReadings: systemStatus?.climateReadings || [], // ADD THIS for chart updates
+
+          // Soil data - combine from both sources
+          soil: systemStatus?.soilReadings || dataSummary?.soil || [],
+          soilReadings: systemStatus?.soilReadings || [], // ADD THIS for chart updates
+
+          // Flow data
+          flow: systemStatus?.flowReadings || dataSummary?.flow || [],
+
+          // System information
+          systemStatus: systemStatus?.systemStatus || 'Unknown',
+          farmId: systemStatus?.farmId || dataSummary?.farmId,
+
+          // Device information
+          devices: systemStatus?.devices || [],
+          activeDevices: systemStatus?.activeDevices || 0,
+          totalDevices: systemStatus?.totalDevices || 0,
+
+          // Alerts and monitoring
+          alerts: systemStatus?.alerts || [],
+
+          // Flow metrics
+          totalFlowRate: systemStatus?.totalFlowRate || 0,
+          systemPressure: systemStatus?.systemPressure,
+
+          // Timestamps
+          lastUpdate: systemStatus?.lastUpdate || dataSummary?.lastUpdate || new Date().toISOString(),
+
+          // Additional measurements structure
+          measurements: systemStatus?.measurements || {
+            flow: [],
+            humidity: [],
+            pressure: [],
+            soilMoisture: [],
+            temperature: []
+          },
+
+          // Raw data for debugging/advanced use
+          _raw: {
+            dataSummary,
+            systemStatus
+          }
+        };
+
+        console.log('Real-time data summary:', summary);
+        this.realTimeData = summary;
+        this.cdr.detectChanges();
+ 
+        return {
+          dataSummary,
+          systemStatus,
+          combinedSummary: summary
+        };
+      })
+    );
   }
 }

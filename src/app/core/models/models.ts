@@ -362,6 +362,10 @@ export interface IrrigationDesign {
 // =============================================================================
 
 export interface HydraulicParameters {
+  systemReliability: any;
+  totalPressureLoss: number;
+  applicationEfficiency: number;
+  distributionUniformity: number;
   // Operating Conditions
   operatingPressure: number; // bar
   maxFlowRate: number; // L/min
@@ -490,6 +494,9 @@ export interface SystemValidation {
   };
 
   flowValidation: {
+flowBalance: number;
+flowVariation: number;
+adequateFlow: any;
     isValid: boolean;
     score: number;
     totalFlowBalance: number; // percentage deviation
@@ -565,6 +572,13 @@ export interface SystemValidation {
 // =============================================================================
 
 export interface DesignOptimization {
+operationalCosts: any;
+paybackPeriod: any;
+optimizationSteps: any;
+  energySavings: number;
+  waterSavings: number;
+  estimatedCost: number;
+  finalScore: number;
   // Optimization Configuration
   optimizationId: string;
   optimizationMethod: 'genetic' | 'gradient' | 'simulated-annealing' | 'particle-swarm' | 'hybrid';
