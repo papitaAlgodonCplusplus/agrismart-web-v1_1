@@ -13,12 +13,6 @@
 
     <div class="header-actions">
       <div class="btn-group" role="group">
-        <button class="btn btn-outline-primary" (click)="saveDesign()" [disabled]="isSaving">
-          <i class="bi" [class.bi-check-circle]="!isSaving" [class.bi-arrow-clockwise]="isSaving"
-            [class.spinner-border]="isSaving"></i>
-          {{ isSaving ? 'Guardando...' : 'Guardar Diseño' }}
-        </button>
-
         <button class="btn btn-outline-secondary" (click)="exportDesign()" [disabled]="!currentDesign">
           <i class="bi bi-download"></i>
           Exportar
@@ -1089,7 +1083,7 @@
                     <span class="timeline-badge bg-primary">{{ i + 1 }}</span>
                     <div class="timeline-content">
                       <h6>Iteración {{ step.iteration }}</h6>
-                      <p class="text-muted">Mejor valor objetivo: {{ step.bestObjectiveValue?.toFixed(2) || 0 }}</p>
+                      <p class="text-muted">Mejor valor objetivo: {{ step.bestObjectiveValue.toFixed(2) || 0 }}</p>
                       <small class="text-success">Mejora: {{ formatPercentage(step.improvement || 0) }}</small>
                     </div>
                   </div>
@@ -1402,10 +1396,6 @@
               Volver a Optimización
             </button>
             <div>
-              <button type="button" class="btn btn-success me-2" (click)="saveDesign()" [disabled]="isSaving">
-                <i class="bi bi-save"></i>
-                {{ isSaving ? 'Guardando...' : 'Guardar Diseño Final' }}
-              </button>
               <button type="button" class="btn btn-primary me-2" (click)="exportDesign()">
                 <i class="bi bi-download"></i>
                 Exportar Diseño

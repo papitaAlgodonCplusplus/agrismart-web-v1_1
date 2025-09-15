@@ -16,7 +16,6 @@ import { AlertService } from '../../core/services/alert.service';
 import {
   IrrigationDesign,
   HydraulicParameters,
-  SystemValidation,
   DesignOptimization,
   PipelineDesign,
   EmitterConfiguration,
@@ -115,8 +114,8 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
 
   // Calculation Results
   hydraulicResults: HydraulicParameters | null = null;
-  validationResults: SystemValidation | null = null;
-  optimizationResults: DesignOptimization | null = null;
+  validationResults: any | null = null;
+  optimizationResults: any | null = null;
 
   // UI State
   errorMessage = '';
@@ -391,8 +390,15 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
           this.loadRealTimeData();
           break;
         case 'hydraulic':
-          if (this.currentDesign) {
-            this.performHydraulicCalculations();
+          this.currentDesign = this.designForm.value;
+          this.performHydraulicCalculations();
+          break;
+        case 'validation':
+          if (this.hydraulicResults) {
+            this.validationResults = this.validateSystem();
+          } else {
+            console.error('Please perform hydraulic calculations first');
+            this.alertService.showWarning('Por favor realice los cálculos hidráulicos primero');
           }
           break;
         case 'optimization':
@@ -404,45 +410,155 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     }, 100);
   }
 
-  saveDesign(): void {
-    if (this.designForm.valid) {
-      this.isSaving = true;
+  calculateHydraulicSolution(designData: any, hydraulicData: any): any {
+    // Extract design parameters
+    const {
+      totalArea = 0,
+      numberOfPlants = 0,
+      emitterFlowRate = 0,
+      emittersPerPlant = 0,
+      irrigationFrequency = 0,
+      dailyWaterRequirement = 0,
+      operatingPressure = 0,
+      mainPipeDiameter = 0,
+      secondaryPipeDiameter = 0,
+      lateralPipeDiameter = 0,
+      pipelineMaterial = '',
+      pressureCompensation = false
+    } = {
+      ...designData,
+      ...designData.components,
+      ...designData.waterSource,
+      ...designData.climate
+    };
 
-      const designData = {
-        ...this.designForm.value,
-        hydraulicParameters: this.hydraulicForm.value,
-        optimizationParameters: this.optimizationForm.value
-      };
+    // Extract hydraulic parameters
+    const {
+      designVelocity,
+      frictionLossCoefficient,
+      minorLossCoefficient,
+      elevationDifference,
+      targetUniformity,
+      targetEfficiency,
+      maximumPressureVariation,
+      maxFlowRate
+    } = hydraulicData;
 
-      this.irrigationEngineeringService.saveDesign(designData)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (savedDesign: any) => {
-            this.currentDesign = savedDesign;
-            this.successMessage = 'Diseño guardado exitosamente';
-            this.isSaving = false;
-            this.alertService.showSuccess(this.successMessage);
-            this.cdr.detectChanges();
-          },
-          error: (error) => {
-            this.errorMessage = 'Error guardando el diseño';
-            this.isSaving = false;
-            this.alertService.showError(this.errorMessage);
-            console.error('Error saving design:', error);
-            this.cdr.detectChanges();
-          }
-        });
-    } else {
-      this.alertService.showWarning('Por favor complete todos los campos requeridos');
+    // 1. Calculate total emitter flow (L/h)
+    const totalEmitters = numberOfPlants * emittersPerPlant;
+    const totalEmitterFlowLph = totalEmitters * emitterFlowRate;
+
+    // 2. Calculate system flow rate (L/min)
+    const systemFlowRate = totalEmitterFlowLph / 60;
+
+    // 3. Calculate irrigation time per event (minutes)
+    const irrigationEvents = irrigationFrequency > 0 ? irrigationFrequency : 1;
+    const irrigationTimePerEvent = (dailyWaterRequirement * numberOfPlants) / (systemFlowRate * irrigationEvents);
+
+    // 4. Calculate pipe velocities (m/s)
+    function pipeVelocity(diameterMM: number, flowLmin: number): number {
+      const diameterM = diameterMM / 1000;
+      const area = Math.PI * Math.pow(diameterM / 2, 2);
+      const flowM3s = (flowLmin / 1000) / 60;
+      return area > 0 ? flowM3s / area : 0;
     }
+    const mainPipeVelocity = pipeVelocity(mainPipeDiameter, systemFlowRate);
+    const secondaryPipeVelocity = pipeVelocity(secondaryPipeDiameter, systemFlowRate);
+    const lateralPipeVelocity = pipeVelocity(lateralPipeDiameter, systemFlowRate);
+
+    // 5. Calculate friction losses (Hazen-Williams for plastic pipes)
+    function hazenWilliamsLoss(flowLmin: number, diameterMM: number, lengthM: number, c = 150): number {
+      // Q in L/min, D in mm, L in m, c = Hazen-Williams coefficient
+      const Q = flowLmin / 60; // L/min to L/s
+      const D = diameterMM / 1000; // mm to m
+      if (Q <= 0 || D <= 0 || lengthM <= 0) return 0;
+      // Convert Q to m3/s
+      const Qm3s = Q / 1000;
+      // Hazen-Williams formula (SI units): h_f = 10.67 * L * Q^1.852 / (C^1.852 * D^4.87)
+      return 10.67 * lengthM * Math.pow(Qm3s, 1.852) / (Math.pow(c, 1.852) * Math.pow(D, 4.87));
+    }
+    // Assume lengths (could be improved with real design data)
+    const mainPipeLength = Math.sqrt(totalArea); // main line ~ field length
+    const secondaryPipeLength = Math.sqrt(totalArea); // secondary ~ field width
+    const lateralPipeLength = Math.sqrt(totalArea) / 2; // lateral ~ half field width
+
+    const mainPipeLoss = hazenWilliamsLoss(systemFlowRate, mainPipeDiameter, mainPipeLength);
+    const secondaryPipeLoss = hazenWilliamsLoss(systemFlowRate, secondaryPipeDiameter, secondaryPipeLength);
+    const lateralPipeLoss = hazenWilliamsLoss(systemFlowRate, lateralPipeDiameter, lateralPipeLength);
+
+    // 6. Minor losses (fittings, valves, etc.)
+    const totalMinorLoss = minorLossCoefficient * (mainPipeLoss + secondaryPipeLoss + lateralPipeLoss);
+
+    // 7. Elevation loss/gain (m)
+    const elevationLoss = elevationDifference || 0;
+
+    // 8. Total pressure loss (m)
+    const totalPressureLossM = mainPipeLoss + secondaryPipeLoss + lateralPipeLoss + totalMinorLoss + elevationLoss;
+
+    // 9. Convert pressure loss to bar (1 bar = 10.1972 m H2O)
+    const totalPressureLossBar = totalPressureLossM / 10.1972;
+
+    // 10. Calculate distribution uniformity (simple model)
+    let distributionUniformity = 100;
+    if (!pressureCompensation) {
+      // Uniformity drops with pressure variation
+      const pressureVariation = maximumPressureVariation || 10;
+      distributionUniformity = Math.max(80, 100 - pressureVariation * 0.8);
+    }
+
+    // 11. Application efficiency (assume 85-95% for drip, lower for sprinkler)
+    let applicationEfficiency = 90;
+    if (designData.emitterType === 'sprinkler') applicationEfficiency = 80;
+    if (designData.emitterType === 'mist') applicationEfficiency = 75;
+
+    // 12. Reynolds number (for main pipe)
+    function reynoldsNumber(velocity: number, diameterMM: number): number {
+      // Water at 20°C: kinematic viscosity ~1e-6 m2/s
+      const diameterM = diameterMM / 1000;
+      return velocity * diameterM / 1e-6;
+    }
+    const mainPipeReynolds = reynoldsNumber(mainPipeVelocity, mainPipeDiameter);
+
+    // 13. Emitter performance
+    const emissionUniformity = pressureCompensation ? 95 : distributionUniformity - 5;
+    const coefficientOfVariation = pressureCompensation ? 5 : 10;
+
+    // 14. System reliability (simple estimation)
+    const systemReliability = {
+      pressureStability: 100 - (maximumPressureVariation || 10),
+      flowStability: 100 - Math.abs(systemFlowRate - (maxFlowRate || systemFlowRate)),
+      cloggingRisk: designData.components?.hasFiltration ? 5 : 20,
+      maintenanceRequirement: designData.components?.hasAutomation ? 10 : 20
+    };
+
+    // 15. Build HydraulicParameters result
+    return {
+      systemFlowRate,
+      designFlowRate: systemFlowRate,
+      irrigationTimePerEvent,
+      mainPipeVelocity,
+      secondaryPipeVelocity,
+      lateralPipeVelocity,
+      mainPipeLoss,
+      secondaryPipeLoss,
+      lateralPipeLoss,
+      totalMinorLoss,
+      elevationLoss,
+      totalPressureLoss: totalPressureLossBar,
+      operatingPressure: operatingPressure,
+      pressureVariation: maximumPressureVariation,
+      distributionUniformity,
+      applicationEfficiency,
+      reynoldsNumber: mainPipeReynolds,
+      emitterPerformance: {
+        emissionUniformity,
+        coefficientOfVariation
+      },
+      systemReliability
+    };
   }
 
   performHydraulicCalculations(): void {
-    if (!this.designForm.valid || !this.hydraulicForm.valid) {
-      this.alertService.showWarning('Por favor complete los parámetros de diseño e hidráulicos');
-      return;
-    }
-
     this.isCalculating = true;
     this.calculationProgress = 0;
 
@@ -455,47 +571,590 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     const designData = this.designForm.value;
     const hydraulicData = this.hydraulicForm.value;
 
-    this.irrigationEngineeringService.performHydraulicCalculations(designData, hydraulicData)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (results: any) => {
-          clearInterval(progressInterval);
-          this.calculationProgress = 100;
-          this.hydraulicResults = results;
-          this.isCalculating = false;
-          this.successMessage = 'Cálculos hidráulicos completados';
-          this.cdr.detectChanges();
+    const result = this.calculateHydraulicSolution(designData, hydraulicData)
+    console.log('Hydraulic calculation results:', result);
+    clearInterval(progressInterval);
+    this.calculationProgress = 100;
+    this.hydraulicResults = result;
+    this.isCalculating = false;
+    this.successMessage = 'Cálculos hidráulicos completados';
+    this.cdr.detectChanges();
 
-          // Auto-validate system
-          setTimeout(() => this.validateSystem(), 500);
-        },
-        error: (error) => {
-          clearInterval(progressInterval);
-          this.isCalculating = false;
-          this.errorMessage = 'Error en cálculos hidráulicos';
-          console.error('Hydraulic calculation error:', error);
-          this.cdr.detectChanges();
-        }
-      });
+    // Auto-validate system
+    setTimeout(() => this.validateSystem(), 500);
   }
 
-  validateSystem(): void {
-    if (!this.hydraulicResults) return;
+  // Private system validation function based on project documentation
+  // Add this to your irrigation-engineering-design.component.ts
+
+  public validateSystem(): any {
+    if (!this.hydraulicResults) {
+      this.alertService.showWarning('Please perform hydraulic calculations first');
+      return this.createEmptyValidationResult(false);
+    }
 
     const designData = this.designForm.value;
     const hydraulicData = this.hydraulicForm.value;
+    const hydraulicResults = this.hydraulicResults;
 
-    // this.irrigationEngineeringService.validateSystem(designData, hydraulicData, this.hydraulicResults)
-    //   .pipe(takeUntil(this.destroy$))
-    //   .subscribe({
-    //     next: (validation) => {
-    //       this.validationResults = validation;
-    //       this.cdr.detectChanges();
-    //     },
-    //     error: (error) => {
-    //       console.error('System validation error:', error);
-    //     }
-    //   });
+    // Initialize validation result
+    const validationResult = {
+      isValid: true,
+      overallScore: 100,
+      issues: [],
+      recommendations: [],
+      pressureValidation: {
+        isValid: true,
+        minPressure: 0,
+        maxPressure: 0,
+        pressureVariation: 0
+      },
+      flowValidation: {
+        isValid: true,
+        flowBalance: 0,
+        flowVariation: 0,
+        adequateFlow: true
+      },
+      uniformityValidation: {
+        isValid: true,
+        achievedUniformity: 0,
+        targetUniformity: hydraulicData.targetUniformity || 90,
+        uniformityGrade: 'Good'
+      },
+      technicalCompliance: {
+        velocityCompliance: true,
+        pressureCompliance: true,
+        materialCompatibility: true,
+        standardsCompliance: true
+      },
+      performancePrediction: {
+        expectedLifespan: 15,
+        maintenanceFrequency: 12,
+        energyEfficiency: 85,
+        waterUseEfficiency: 88
+      }
+    };
+
+    // 1. VALIDATE DESIGN PARAMETERS
+    this.validateDesignParameters(designData, validationResult);
+
+    // 2. VALIDATE PRESSURE PARAMETERS
+    this.validatePressureParameters(hydraulicData, hydraulicResults, validationResult);
+
+    // 3. VALIDATE FLOW PARAMETERS
+    this.validateFlowParameters(hydraulicData, hydraulicResults, validationResult);
+
+    // 4. VALIDATE UNIFORMITY PARAMETERS
+    this.validateUniformityParameters(hydraulicData, hydraulicResults, validationResult);
+
+    // 5. VALIDATE TECHNICAL COMPLIANCE
+    this.validateTechnicalCompliance(hydraulicData, hydraulicResults, validationResult);
+
+    // 6. CALCULATE OVERALL SCORE AND FINAL VALIDATION
+    validationResult.overallScore = this.calculateOverallScore(validationResult);
+    validationResult.isValid = !this.hasCriticalIssues(validationResult) && validationResult.overallScore >= 70;
+
+    // 7. GENERATE RECOMMENDATIONS
+    this.generateRecommendations(validationResult);
+
+    return validationResult;
+  }
+
+  private validateDesignParameters(designData: any, result: any): void {
+    // Validar área total
+    if (!designData.totalArea || designData.totalArea <= 0) {
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Área',
+        severity: 'critical',
+        message: 'El área total debe ser mayor que 0',
+        affectedParameter: 'TotalArea',
+        currentValue: designData.totalArea,
+        recommendedValue: 100
+      });
+    }
+
+    // Validar requerimiento diario de agua
+    if (!designData.dailyWaterRequirement || designData.dailyWaterRequirement <= 0) {
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Requerimiento de Agua',
+        severity: 'critical',
+        message: 'El requerimiento diario de agua debe ser mayor que 0',
+        affectedParameter: 'DailyWaterRequirement',
+        currentValue: designData.dailyWaterRequirement,
+        recommendedValue: 2.0
+      });
+    }
+
+    // Validar densidad de plantas
+    if (!designData.plantDensity || designData.plantDensity <= 0) {
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Densidad de Plantas',
+        severity: 'critical',
+        message: 'La densidad de plantas debe ser mayor que 0',
+        affectedParameter: 'PlantDensity',
+        currentValue: designData.plantDensity,
+        recommendedValue: 1.0
+      });
+    }
+
+    // Validar presión de la fuente de agua
+    if (designData.waterSource?.waterPressure <= 0) {
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Fuente de Agua',
+        severity: 'critical',
+        message: 'Debe especificar la presión de la fuente de agua',
+        affectedParameter: 'WaterPressure',
+        currentValue: designData.waterSource.waterPressure,
+        recommendedValue: 2.0
+      });
+    }
+
+    // Validar parámetros de calidad de agua
+    const waterQuality = designData.waterSource?.waterQuality;
+    if (waterQuality) {
+      if (waterQuality.ph < 5.5 || waterQuality.ph > 8.5) {
+        result.issues.push({
+          id: this.generateId(),
+          category: 'Calidad de Agua',
+          severity: 'warning',
+          message: 'El nivel de pH está fuera del rango óptimo (5.5-8.5)',
+          affectedParameter: 'pH',
+          currentValue: waterQuality.ph,
+          recommendedValue: 7.0
+        });
+      }
+
+      if (waterQuality.electricalConductivity > 2.0) {
+        result.issues.push({
+          id: this.generateId(),
+          category: 'Calidad de Agua',
+          severity: 'warning',
+          message: 'La conductividad eléctrica es demasiado alta, puede causar estrés salino',
+          affectedParameter: 'ElectricalConductivity',
+          currentValue: waterQuality.electricalConductivity,
+          recommendedValue: 1.5
+        });
+      }
+    }
+  }
+
+  private validatePressureParameters(hydraulicData: any, hydraulicResults: any, result: any): void {
+    const operatingPressure = hydraulicData.operatingPressure || 0;
+    const totalPressureLoss = hydraulicResults.totalPressureLoss || 0;
+    const minRequiredPressure = 1.0; // bar
+    const maxRecommendedPressure = 4.0; // bar
+
+    // Calculate pressure variation
+    const pressureVariation = hydraulicData.pressureVariation || 10;
+    const minSystemPressure = operatingPressure - (operatingPressure * pressureVariation / 100);
+    const maxSystemPressure = operatingPressure + (operatingPressure * pressureVariation / 100);
+
+    result.pressureValidation = {
+      isValid: true,
+      minPressure: minSystemPressure,
+      maxPressure: maxSystemPressure,
+      pressureVariation: pressureVariation
+    };
+
+    // Validar presión mínima
+    if (minSystemPressure < minRequiredPressure) {
+      result.pressureValidation.isValid = false;
+      result.issues.push({
+      id: this.generateId(),
+      category: 'Presión',
+      severity: 'critical',
+      message: 'La presión mínima del sistema está por debajo del umbral aceptable',
+      affectedParameter: 'MinPressure',
+      currentValue: minSystemPressure,
+      recommendedValue: minRequiredPressure
+      });
+    }
+
+    // Validar presión máxima
+    if (maxSystemPressure > maxRecommendedPressure) {
+      result.pressureValidation.isValid = false;
+      result.issues.push({
+      id: this.generateId(),
+      category: 'Presión',
+      severity: 'warning',
+      message: 'La presión máxima del sistema supera los límites recomendados',
+      affectedParameter: 'MaxPressure',
+      currentValue: maxSystemPressure,
+      recommendedValue: maxRecommendedPressure
+      });
+    }
+
+    // Validar pérdida de presión vs presión de operación
+    if (totalPressureLoss > operatingPressure * 0.8) {
+      result.pressureValidation.isValid = false;
+      result.issues.push({
+      id: this.generateId(),
+      category: 'Presión',
+      severity: 'critical',
+      message: 'La pérdida total de presión excede el 80% de la presión de operación',
+      affectedParameter: 'PressureLoss',
+      currentValue: totalPressureLoss,
+      recommendedValue: operatingPressure * 0.6
+      });
+    }
+
+    // Validar variación de presión
+    if (pressureVariation > 20) {
+      result.pressureValidation.isValid = false;
+      result.issues.push({
+      id: this.generateId(),
+      category: 'Presión',
+      severity: 'warning',
+      message: 'La variación de presión excede el 20% recomendado',
+      affectedParameter: 'PressureVariation',
+      currentValue: pressureVariation,
+      recommendedValue: 15
+      });
+    }
+  }
+
+  private validateFlowParameters(hydraulicData: any, hydraulicResults: any, result: any): void {
+    const systemFlowRate = hydraulicResults.systemFlowRate || 0;
+    const designFlowRate = hydraulicResults.designFlowRate || 0;
+    const maxFlowRate = hydraulicData.maxFlowRate || 0;
+
+    // Calculate flow balance deviation
+    const flowBalance = designFlowRate > 0 ?
+      Math.abs(systemFlowRate - designFlowRate) / designFlowRate * 100 : 100;
+
+    // Calculate flow variation
+    const flowVariation = systemFlowRate > 0 ?
+      Math.abs(maxFlowRate - systemFlowRate) / systemFlowRate * 100 : 0;
+
+    const adequateFlow = systemFlowRate >= designFlowRate * 0.9;
+
+    result.flowValidation = {
+      isValid: true,
+      flowBalance: flowBalance,
+      flowVariation: flowVariation,
+      adequateFlow: adequateFlow
+    };
+
+    // Validate flow balance
+    if (flowBalance > 10) {
+      result.flowValidation.isValid = false;
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Flow',
+        severity: 'warning',
+        message: 'Flow balance deviation exceeds acceptable limits',
+        affectedParameter: 'FlowBalance',
+        currentValue: flowBalance,
+        recommendedValue: 5
+      });
+    }
+
+    // Validate adequate flow
+    if (!adequateFlow) {
+      result.flowValidation.isValid = false;
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Flow',
+        severity: 'critical',
+        message: 'System flow rate insufficient for design requirements',
+        affectedParameter: 'SystemFlowRate',
+        currentValue: systemFlowRate,
+        recommendedValue: designFlowRate
+      });
+    }
+
+    // Validate flow variation
+    if (flowVariation > 15) {
+      result.flowValidation.isValid = false;
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Flow',
+        severity: 'warning',
+        message: 'Flow variation exceeds recommended limits',
+        affectedParameter: 'FlowVariation',
+        currentValue: flowVariation,
+        recommendedValue: 10
+      });
+    }
+  }
+
+  private validateUniformityParameters(hydraulicData: any, hydraulicResults: any, result: any): void {
+    const targetUniformity = hydraulicData.targetUniformity || 90;
+    const achievedUniformity = hydraulicResults.distributionUniformity || 0;
+
+    result.uniformityValidation = {
+      isValid: achievedUniformity >= targetUniformity,
+      achievedUniformity: achievedUniformity,
+      targetUniformity: targetUniformity,
+      uniformityGrade: this.getUniformityGrade(achievedUniformity)
+    };
+
+    // Validate distribution uniformity
+    if (achievedUniformity < targetUniformity) {
+      result.uniformityValidation.isValid = false;
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Uniformity',
+        severity: 'warning',
+        message: 'Distribution uniformity below target',
+        affectedParameter: 'DistributionUniformity',
+        currentValue: achievedUniformity,
+        recommendedValue: targetUniformity
+      });
+    }
+
+    // Check for extremely poor uniformity
+    if (achievedUniformity < 80) {
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Uniformity',
+        severity: 'critical',
+        message: 'Distribution uniformity critically low',
+        affectedParameter: 'DistributionUniformity',
+        currentValue: achievedUniformity,
+        recommendedValue: 85
+      });
+    }
+
+    // Validate emission uniformity if available
+    if (hydraulicResults.emitterPerformance?.emissionUniformity) {
+      const emissionUniformity = hydraulicResults.emitterPerformance.emissionUniformity;
+      if (emissionUniformity < 85) {
+        result.issues.push({
+          id: this.generateId(),
+          category: 'Uniformity',
+          severity: 'warning',
+          message: 'Emission uniformity below recommended threshold',
+          affectedParameter: 'EmissionUniformity',
+          currentValue: emissionUniformity,
+          recommendedValue: 90
+        });
+      }
+    }
+
+    // Validate coefficient of variation
+    if (hydraulicResults.emitterPerformance?.coefficientOfVariation) {
+      const cv = hydraulicResults.emitterPerformance.coefficientOfVariation;
+      if (cv > 10) {
+        result.issues.push({
+          id: this.generateId(),
+          category: 'Uniformity',
+          severity: 'warning',
+          message: 'Coefficient of variation exceeds recommended limits',
+          affectedParameter: 'CoefficientOfVariation',
+          currentValue: cv,
+          recommendedValue: 7
+        });
+      }
+    }
+  }
+
+  private validateTechnicalCompliance(hydraulicData: any, hydraulicResults: any, result: any): void {
+    const averageVelocity = hydraulicResults.averageVelocity || 0;
+    const totalPressureLoss = hydraulicResults.totalPressureLoss || 0;
+    const operatingPressure = hydraulicData.operatingPressure || 0;
+
+    result.technicalCompliance = {
+      velocityCompliance: averageVelocity >= 0.3 && averageVelocity <= 3.0,
+      pressureCompliance: totalPressureLoss <= operatingPressure,
+      materialCompatibility: true, // Assume compatible unless specific checks needed
+      standardsCompliance: true    // Assume compliant unless specific standards validation needed
+    };
+
+    // Validate velocity compliance
+    if (averageVelocity < 0.3) {
+      result.technicalCompliance.velocityCompliance = false;
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Technical',
+        severity: 'warning',
+        message: 'Average velocity too low, may cause sedimentation',
+        affectedParameter: 'AverageVelocity',
+        currentValue: averageVelocity,
+        recommendedValue: 0.5
+      });
+    }
+
+    if (averageVelocity > 3.0) {
+      result.technicalCompliance.velocityCompliance = false;
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Technical',
+        severity: 'critical',
+        message: 'Average velocity too high, excessive pressure loss',
+        affectedParameter: 'AverageVelocity',
+        currentValue: averageVelocity,
+        recommendedValue: 2.0
+      });
+    }
+
+    // Validate pressure compliance
+    if (totalPressureLoss > operatingPressure) {
+      result.technicalCompliance.pressureCompliance = false;
+      result.issues.push({
+        id: this.generateId(),
+        category: 'Technical',
+        severity: 'critical',
+        message: 'Total pressure loss exceeds operating pressure',
+        affectedParameter: 'TotalPressureLoss',
+        currentValue: totalPressureLoss,
+        recommendedValue: operatingPressure * 0.8
+      });
+    }
+
+    // Validate Reynolds number if available
+    if (hydraulicResults.reynoldsNumber) {
+      const reynolds = hydraulicResults.reynoldsNumber;
+      if (reynolds < 2300) {
+        result.issues.push({
+          id: this.generateId(),
+          category: 'Technical',
+          severity: 'info',
+          message: 'Laminar flow detected, consider increasing velocity',
+          affectedParameter: 'ReynoldsNumber',
+          currentValue: reynolds,
+          recommendedValue: 4000
+        });
+      }
+    }
+  }
+  private generateRecommendations(result: any): void {
+    result.recommendations = [];
+
+    // Pressure-related recommendations
+    if (result.issues.some((i: { category: string; }) => i.category === 'Pressure')) {
+      result.recommendations.push('Considere ajustar los diámetros de las tuberías para optimizar la distribución de presión');
+      result.recommendations.push('Instale reguladores de presión para mantener una presión constante');
+    }
+
+    // Flow-related recommendations
+    if (result.issues.some((i: { category: string; }) => i.category === 'Flow')) {
+      result.recommendations.push('Revise el dimensionamiento de la bomba para asegurar caudales adecuados');
+      result.recommendations.push('Considere sectorizar el sistema para gestionar mejor la distribución del caudal');
+    }
+
+    // Uniformity-related recommendations
+    if (result.issues.some((i: { category: string; }) => i.category === 'Uniformity')) {
+      result.recommendations.push('Utilice emisores autocompensantes para mejorar la uniformidad');
+      result.recommendations.push('Implemente líneas laterales más cortas para reducir la variación de presión');
+      result.recommendations.push('Considere el uso de emisores con menor coeficiente de variación');
+    }
+
+    // Technical compliance recommendations
+    if (result.issues.some((i: { category: string; }) => i.category === 'Technical')) {
+      result.recommendations.push('Ajuste el tamaño de las tuberías para lograr velocidades de flujo óptimas');
+      result.recommendations.push('Incluya filtración adecuada para prevenir obstrucciones');
+    }
+
+    // Water quality recommendations
+    if (result.issues.some((i: { category: string; }) => i.category === 'Calidad de Agua')) {
+      result.recommendations.push('Considere el tratamiento del agua para mejorar los parámetros de calidad');
+      result.recommendations.push('Monitoree regularmente los niveles de CE para evitar acumulación de sales');
+    }
+
+    // General recommendations based on overall score
+    if (result.overallScore < 85) {
+      result.recommendations.push('El sistema requiere mejoras significativas antes de su implementación');
+      result.recommendations.push('Considere la asesoría profesional para la optimización del sistema');
+    } else if (result.overallScore < 95) {
+      result.recommendations.push('El sistema es aceptable pero podría beneficiarse de optimizaciones menores');
+    }
+  }
+
+  // Helper methods
+  private getUniformityGrade(uniformity: number): string {
+    if (uniformity >= 95) return 'Excellent';
+    if (uniformity >= 90) return 'Good';
+    if (uniformity >= 85) return 'Fair';
+    if (uniformity >= 80) return 'Poor';
+    return 'Unacceptable';
+  }
+
+  private calculateOverallScore(result: any): number {
+    let baseScore = 100;
+
+    for (const issue of result.issues) {
+      switch (issue.severity) {
+        case 'critical':
+          baseScore -= 25;
+          break;
+        case 'warning':
+          baseScore -= 10;
+          break;
+        case 'info':
+          baseScore -= 2;
+          break;
+      }
+    }
+
+    return Math.max(0, baseScore);
+  }
+
+  private hasCriticalIssues(result: any): boolean {
+    return result.issues.some((issue: { severity: string; }) => issue.severity === 'critical');
+  }
+
+  private generateId(): string {
+    return Math.random().toString(36).substr(2, 9);
+  }
+
+  private createEmptyValidationResult(isValid: boolean): any {
+    return {
+      isValid: isValid,
+      overallScore: isValid ? 100 : 0,
+      issues: [],
+      recommendations: [],
+      pressureValidation: {
+        isValid: isValid,
+        minPressure: 0,
+        maxPressure: 0,
+        pressureVariation: 0
+      },
+      flowValidation: {
+        isValid: isValid,
+        flowBalance: 0,
+        flowVariation: 0,
+        adequateFlow: isValid
+      },
+      uniformityValidation: {
+        isValid: isValid,
+        achievedUniformity: 0,
+        targetUniformity: 90,
+        uniformityGrade: 'Unknown'
+      },
+      technicalCompliance: {
+        velocityCompliance: isValid,
+        pressureCompliance: isValid,
+        materialCompatibility: isValid,
+        standardsCompliance: isValid
+      },
+      performancePrediction: {
+        expectedLifespan: 15,
+        maintenanceFrequency: 12,
+        energyEfficiency: 85,
+        waterUseEfficiency: 88
+      }
+    };
+  }
+
+  performany(): void {
+    if (!this.hydraulicResults) {
+      this.alertService.showWarning('Please perform hydraulic calculations first');
+      return;
+    }
+
+    // Call the private validation function instead of the service
+    this.validationResults = this.validateSystem();
+
+    if (this.validationResults.isValid) {
+      this.alertService.showSuccess('System validation passed');
+    } else {
+      this.alertService.showWarning('System validation found issues. Please review recommendations.');
+    }
   }
 
   performOptimization(): void {
@@ -516,29 +1175,159 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     const hydraulicData = this.hydraulicForm.value;
     const optimizationData = this.optimizationForm.value;
 
-    this.irrigationEngineeringService.performDesignOptimization(
+    this.performDesignOptimization(
       designData,
       hydraulicData,
       optimizationData,
       this.hydraulicResults
-    ).pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (optimization: any) => {
-          clearInterval(progressInterval);
-          this.calculationProgress = 100;
-          this.optimizationResults = optimization;
-          this.isOptimizing = false;
-          this.successMessage = 'Optimización completada';
-          this.cdr.detectChanges();
-        },
-        error: (error) => {
-          clearInterval(progressInterval);
-          this.isOptimizing = false;
-          this.errorMessage = 'Error en optimización';
-          console.error('Optimization error:', error);
-          this.cdr.detectChanges();
-        }
-      });
+    )
+  }
+
+  performDesignOptimization(
+    designData: any,
+    hydraulicData: any,
+    optimizationData: any,
+    hydraulicResults: any
+  ): void {
+    // Extract optimization goals
+    const goals = optimizationData.optimizationGoals || {};
+    const minimizeCost = !!goals.minimizeCost;
+    const maximizeUniformity = !!goals.maximizeUniformity;
+    const maximizeEfficiency = !!goals.maximizeEfficiency;
+    const minimizeEnergy = !!goals.minimizeEnergyConsumption;
+    const minimizeWater = !!goals.minimizeWaterUsage;
+
+    // Constraints
+    const budget = optimizationData.budgetConstraint || 0;
+    const areaConstraint = optimizationData.areaConstraint || 0;
+    const pressureConstraint = optimizationData.pressureConstraint || 3;
+
+    // Economic parameters
+    const waterCost = optimizationData.waterCostPerM3 || 0.5;
+    const energyCost = optimizationData.energyCostPerKWh || 0.15;
+    const laborCost = optimizationData.laborCostPerHour || 15;
+    const maintenancePct = optimizationData.maintenanceCostPercentage || 5;
+
+    // Gather relevant hydraulic results
+    const uniformity = hydraulicResults.distributionUniformity || 0;
+    const efficiency = hydraulicResults.applicationEfficiency || 0;
+    const flowRate = hydraulicResults.systemFlowRate || 0;
+    const pressureLoss = hydraulicResults.totalPressureLoss || 0;
+    const operatingPressure = hydraulicResults.operatingPressure || 0;
+    const irrigationTime = hydraulicResults.irrigationTimePerEvent || 0;
+
+    // Estimate cost (very basic, based on pipe size, area, and components)
+    const pipeCostPerM = {
+      PE: 2.5,
+      PVC: 3.0,
+      HDPE: 4.0
+    };
+    const pipelineMaterial: 'PE' | 'PVC' | 'HDPE' = (designData.pipelineMaterial as 'PE' | 'PVC' | 'HDPE') || 'PE';
+    const mainPipeLength = Math.sqrt(designData.totalArea || 0);
+    const secondaryPipeLength = Math.sqrt(designData.totalArea || 0);
+    const lateralPipeLength = Math.sqrt(designData.totalArea || 0) / 2;
+    const totalPipeLength = mainPipeLength + secondaryPipeLength + lateralPipeLength;
+    const pipeCost = totalPipeLength * (pipeCostPerM[pipelineMaterial] || 2.5);
+
+    // Emitter cost
+    const emitterUnitCost = 0.25;
+    const totalEmitters = (designData.numberOfPlants || 0) * (designData.emittersPerPlant || 1);
+    const emitterCost = totalEmitters * emitterUnitCost;
+
+    // Component cost
+    let componentCost = 0;
+    if (designData.components?.hasFiltration) componentCost += 150;
+    if (designData.components?.hasAutomation) componentCost += 300;
+    if (designData.components?.hasFertigation) componentCost += 200;
+    if (designData.components?.hasBackflowPrevention) componentCost += 100;
+    if (designData.components?.hasPressureRegulation) componentCost += 120;
+    if (designData.components?.hasFlowMeter) componentCost += 80;
+
+    // Labor cost (simple estimate)
+    const laborHours = totalPipeLength / 10 + totalEmitters / 100;
+    const totalLaborCost = laborHours * laborCost;
+
+    // Maintenance cost (annualized)
+    const annualMaintenance = ((pipeCost + emitterCost + componentCost) * maintenancePct) / 100;
+
+    // Water and energy cost (annual, based on flow and irrigation time)
+    const dailyWaterM3 = (flowRate * irrigationTime) / 1000; // L/min * min = L/day, /1000 = m3/day
+    const annualWaterCost = dailyWaterM3 * 365 * waterCost;
+
+    // Energy: assume 0.5 kWh per m3 pumped per bar of pressure
+    const dailyEnergyKWh = dailyWaterM3 * (operatingPressure || 1) * 0.5;
+    const annualEnergyCost = dailyEnergyKWh * 365 * energyCost;
+
+    // Total estimated cost
+    const estimatedCost = pipeCost + emitterCost + componentCost + totalLaborCost + annualMaintenance + annualWaterCost + annualEnergyCost;
+
+    // Calculate savings (if goals are set)
+    let waterSavings = 0;
+    let energySavings = 0;
+    let baselineWater = 0;
+    let baselineEnergy = 0;
+    if (minimizeWater) {
+      // Compare to a baseline (e.g., 30% less than conventional)
+      baselineWater = dailyWaterM3 * 1.3;
+      waterSavings = (baselineWater - dailyWaterM3) * 365;
+    }
+    if (minimizeEnergy) {
+      baselineEnergy = dailyEnergyKWh * 1.2;
+      energySavings = (baselineEnergy - dailyEnergyKWh) * 365;
+    }
+
+    // Score calculation (simple weighted sum)
+    let score = 0;
+    let maxScore = 0;
+    if (minimizeCost) {
+      score += Math.max(0, 100 - (estimatedCost / (budget || estimatedCost)) * 100);
+      maxScore += 100;
+    }
+    if (maximizeUniformity) {
+      score += Math.min(uniformity, 100);
+      maxScore += 100;
+    }
+    if (maximizeEfficiency) {
+      score += Math.min(efficiency, 100);
+      maxScore += 100;
+    }
+    if (minimizeWater) {
+      score += Math.max(0, Math.min((waterSavings / (baselineWater * 365)) * 100, 100));
+      maxScore += 100;
+    }
+    if (minimizeEnergy) {
+      score += Math.max(0, Math.min((energySavings / (baselineEnergy * 365)) * 100, 100));
+      maxScore += 100;
+    }
+    const finalScore = maxScore > 0 ? (score / maxScore) * 100 : 0;
+
+    // Build optimization result
+    this.optimizationResults = {
+      estimatedCost,
+      waterSavings,
+      energySavings,
+      uniformityAchieved: uniformity,
+      efficiencyAchieved: efficiency,
+      finalScore,
+      constraints: {
+        budget,
+        areaConstraint,
+        pressureConstraint
+      },
+      pipeCost,
+      emitterCost,
+      componentCost,
+      laborCost: totalLaborCost,
+      annualMaintenance,
+      annualWaterCost,
+      annualEnergyCost
+    };
+
+    clearInterval(this.calculationProgress);
+    this.calculationProgress = 100;
+    this.isOptimizing = false;
+    this.successMessage = 'Optimización completada';
+    this.cdr.detectChanges();
   }
 
   exportDesign(): void {
@@ -839,7 +1628,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         console.log('Real-time data summary:', summary);
         this.realTimeData = summary;
         this.cdr.detectChanges();
- 
+
         return {
           dataSummary,
           systemStatus,
