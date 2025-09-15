@@ -9,8 +9,14 @@ npm run start
 docker redeploy:
 
 1. Rebuild the Docker Image
+# Launch  Docker Desktop
+Docker Desktop windows
+
 # Build the new image with your CORS changes
-docker build -f Dockerfile.X -t agrismart-x .
+docker build -f Dockerfile.agronomic -t agrismart-agronomic .
+docker build -f Dockerfile.agronomic -t alexquesada22/agrismart-agronomic .
+
+docker build -f Dockerfile.iot -t agrismart-iot .
 docker build -f Dockerfile.iot -t alexquesada22/agrismart-iot:latest .
 
 2. Login
@@ -18,6 +24,7 @@ docker login
 
 3. Push the New Container
 docker push alexquesada22/agrismart-iot:latest
+docker push alexquesada22/agrismart-agronomic
 
 4. On render, deploy latest commit
 
