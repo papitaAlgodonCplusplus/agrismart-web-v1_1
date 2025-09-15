@@ -6,7 +6,6 @@ using Microsoft.Extensions.Options;
 using System.Data;
 using AgriSmart.Core.Repositories.Queries;
 using Microsoft.AspNetCore.Http;
-using AgriSmart.Application.Agronomic.Resources;
 
 namespace AgriSmart.Infrastructure.Repositories.Query
 {

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using System.Data;
 using AgriSmart.Core.Repositories.Queries;
 using Microsoft.AspNetCore.Http;
-using AgriSmart.Application.Agronomic.Resources;
+using AgriSmart.Core.Enums;
 using System.Security.Cryptography.X509Certificates;
 
 namespace AgriSmart.Infrastructure.Repositories.Query

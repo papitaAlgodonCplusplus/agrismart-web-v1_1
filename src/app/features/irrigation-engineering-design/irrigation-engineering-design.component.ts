@@ -406,9 +406,99 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
             this.performOptimization();
           }
           break;
+        case 'results':
+          this.saveDesignToDB();
       }
     }, 100);
   }
+
+  private saveDesignToDB(): void {
+    const designData = {
+      name: this.designForm.get('name')?.value,
+      description: this.designForm.get('description')?.value,
+      designType: 'irrigation',
+      cropProductionId: this.designForm.get('cropProductionId')?.value,
+      farmId: this.designForm.get('farmId')?.value,
+      clientId: 1, // TODO: Replace with actual client ID from auth
+      totalArea: this.designForm.get('totalArea')?.value,
+      numberOfSectors: 1, // TODO: Calculate based on design
+      containerDensity: 0, // TODO: Calculate based on design
+      plantDensity: this.designForm.get('numberOfPlants')?.value / (this.designForm.get('totalArea')?.value || 1),
+      dailyWaterRequirement: this.designForm.get('dailyWaterRequirement')?.value,
+      irrigationFrequency: this.designForm.get('irrigationFrequency')?.value,
+      containerId: this.designForm.get('containerId')?.value,
+      dropperId: this.designForm.get('dropperId')?.value,
+      growingMediumId: this.designForm.get('growingMediumId')?.value,
+      averageTemperature: this.designForm.get('climate.averageTemperature')?.value,
+      averageHumidity: this.designForm.get('climate.averageHumidity')?.value,
+      windSpeed: this.designForm.get('climate.windSpeed')?.value,
+      solarRadiation: this.designForm.get('climate.solarRadiation')?.value,
+      elevation: this.designForm.get('climate.elevation')?.value,
+      waterSourceType: this.designForm.get('waterSource.sourceType')?.value,
+      waterPressure: this.designForm.get('waterSource.waterPressure')?.value,
+      waterFlowRate: this.designForm.get('waterSource.waterFlow')?.value,
+      waterPh: this.designForm.get('waterSource.waterQuality.ph')?.value,
+      electricalConductivity: this.designForm.get('waterSource.waterQuality.electricalConductivity')?.value,
+      totalDissolvedSolids: this.designForm.get('waterSource.waterQuality.totalDissolvedSolids')?.value,
+      nitrates: this.designForm.get('waterSource.waterQuality.nitrates')?.value,
+      phosphorus: this.designForm.get('waterSource.waterQuality.phosphorus')?.value,
+      potassium: this.designForm.get('waterSource.waterQuality.potassium')?.value,
+      calcium: 0,
+      magnesium: 0,
+      sulfur: 0,
+      iron: 0,
+      manganese: 0,
+      zinc: 0,
+      copper: 0,
+      boron: 0,
+      mainPipeDiameter: this.designForm.get('mainPipeDiameter')?.value,
+      secondaryPipeDiameter: this.designForm.get('secondaryPipeDiameter')?.value,
+      lateralPipeDiameter: this.designForm.get('lateralPipeDiameter')?.value,
+      mainPipeMaterial: this.designForm.get('pipelineMaterial')?.value,
+      secondaryPipeMaterial: this.designForm.get('pipelineMaterial')?.value,
+      lateralPipeMaterial: this.designForm.get('pipelineMaterial')?.value,
+      mainPipeLength: Math.sqrt(this.designForm.get('totalArea')?.value || 0),
+      secondaryPipeLength: Math.sqrt(this.designForm.get('totalArea')?.value || 0),
+      lateralPipeLength: Math.sqrt(this.designForm.get('totalArea')?.value || 0) / 2,
+      hasFiltration: this.designForm.get('components.hasFiltration')?.value,
+      hasAutomation: this.designForm.get('components.hasAutomation')?.value,
+      hasFertigation: this.designForm.get('components.hasFertigation')?.value,
+      hasFlowMeter: this.designForm.get('components.hasFlowMeter')?.value,
+      hasPressureRegulator: this.designForm.get('components.hasPressureRegulation')?.value,
+      hasBackflowPrevention: this.designForm.get('components.hasBackflowPrevention')?.value,
+      filtrationSystemType: this.designForm.get('components.hasFiltration')?.value ? 'standard' : undefined,
+      automationSystemType: this.designForm.get('components.hasAutomation')?.value ? 'basic' : undefined,
+      fertigationSystemType: this.designForm.get('components.hasFertigation')?.value ? 'standard' : undefined,
+      soilWaterHoldingCapacity: 0,
+      soilInfiltrationRate: 0,
+      soilType: '',
+      slopePercentage: 0,
+      drainageClass: '',
+      tags: '',
+      isTemplate: false,
+      isPublic: false,
+      componentSpecificationsJson: '',
+      operationScheduleJson: '',
+      materialListJson: '',
+      installationInstructionsJson: '',
+      maintenanceScheduleJson: ''
+    };
+    this.irrigationEngineeringService.createDesign(designData)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.successMessage = 'Diseño guardado exitosamente';
+          console.log('Design saved:', result);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error saving design:', error);
+          this.errorMessage = 'Error guardando el diseño';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
 
   calculateHydraulicSolution(designData: any, hydraulicData: any): any {
     // Extract design parameters
@@ -764,13 +854,13 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     if (minSystemPressure < minRequiredPressure) {
       result.pressureValidation.isValid = false;
       result.issues.push({
-      id: this.generateId(),
-      category: 'Presión',
-      severity: 'critical',
-      message: 'La presión mínima del sistema está por debajo del umbral aceptable',
-      affectedParameter: 'MinPressure',
-      currentValue: minSystemPressure,
-      recommendedValue: minRequiredPressure
+        id: this.generateId(),
+        category: 'Presión',
+        severity: 'critical',
+        message: 'La presión mínima del sistema está por debajo del umbral aceptable',
+        affectedParameter: 'MinPressure',
+        currentValue: minSystemPressure,
+        recommendedValue: minRequiredPressure
       });
     }
 
@@ -778,13 +868,13 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     if (maxSystemPressure > maxRecommendedPressure) {
       result.pressureValidation.isValid = false;
       result.issues.push({
-      id: this.generateId(),
-      category: 'Presión',
-      severity: 'warning',
-      message: 'La presión máxima del sistema supera los límites recomendados',
-      affectedParameter: 'MaxPressure',
-      currentValue: maxSystemPressure,
-      recommendedValue: maxRecommendedPressure
+        id: this.generateId(),
+        category: 'Presión',
+        severity: 'warning',
+        message: 'La presión máxima del sistema supera los límites recomendados',
+        affectedParameter: 'MaxPressure',
+        currentValue: maxSystemPressure,
+        recommendedValue: maxRecommendedPressure
       });
     }
 
@@ -792,13 +882,13 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     if (totalPressureLoss > operatingPressure * 0.8) {
       result.pressureValidation.isValid = false;
       result.issues.push({
-      id: this.generateId(),
-      category: 'Presión',
-      severity: 'critical',
-      message: 'La pérdida total de presión excede el 80% de la presión de operación',
-      affectedParameter: 'PressureLoss',
-      currentValue: totalPressureLoss,
-      recommendedValue: operatingPressure * 0.6
+        id: this.generateId(),
+        category: 'Presión',
+        severity: 'critical',
+        message: 'La pérdida total de presión excede el 80% de la presión de operación',
+        affectedParameter: 'PressureLoss',
+        currentValue: totalPressureLoss,
+        recommendedValue: operatingPressure * 0.6
       });
     }
 
@@ -806,13 +896,13 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     if (pressureVariation > 20) {
       result.pressureValidation.isValid = false;
       result.issues.push({
-      id: this.generateId(),
-      category: 'Presión',
-      severity: 'warning',
-      message: 'La variación de presión excede el 20% recomendado',
-      affectedParameter: 'PressureVariation',
-      currentValue: pressureVariation,
-      recommendedValue: 15
+        id: this.generateId(),
+        category: 'Presión',
+        severity: 'warning',
+        message: 'La variación de presión excede el 20% recomendado',
+        affectedParameter: 'PressureVariation',
+        currentValue: pressureVariation,
+        recommendedValue: 15
       });
     }
   }

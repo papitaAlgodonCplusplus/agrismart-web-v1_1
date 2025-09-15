@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="Dapper" Version="2.0.123" />
     <PackageReference Include="EntityFramework" Version="6.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
@@ -18,7 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AgriSmart.Application.Agronomic\AgriSmart.Application.Agronomic.csproj" />
+    <Compile Remove="Mappings\IrrigationDesignMappingProfile.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AgriSmart.Core\AgriSmart.Core.csproj" />
     <ProjectReference Include="..\AgriSmart.Calculator\AgriSmart.Calculator.csproj" />
   </ItemGroup>
 

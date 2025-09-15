@@ -7,6 +7,8 @@ namespace AgriSmart.Infrastructure.Data
     public class AgriSmartContext : DbContext
     {
         public AgriSmartContext(DbContextOptions<AgriSmartContext> options) : base(options) { }
+        public DbSet<IrrigationEngineeringDesign> IrrigationEngineeringDesigns { get; set; }
+
         public DbSet<Client> Client { get; set; }
         public DbSet<License> License { get; set; }
         public DbSet<Company> Company { get; set; }
