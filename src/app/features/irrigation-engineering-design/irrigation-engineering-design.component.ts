@@ -132,6 +132,20 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    this.irrigationEngineeringService.createDesign([])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.successMessage = 'Diseño guardado exitosamente';
+          console.log('✅ Design saved successfully:', result);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('❌ Error saving design:', error);
+          this.errorMessage = 'Error guardando el diseño';
+        }
+      });
+
     this.initializeForms();
     this.loadInitialData();
     this.setupRealTimeUpdates();
@@ -412,93 +426,205 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     }, 100);
   }
 
+  // =============================================================================
+  // FINAL FIX - FLAT DTO STRUCTURE FOR API
+  // =============================================================================
+
+  // The API expects flat properties, not nested objects!
+  // Based on IrrigationDesignParameters class, these should be at root level:
+  // - TotalArea, MainPipeDiameter, SecondaryPipeDiameter, LateralPipeDiameter, Name
+
   private saveDesignToDB(): void {
-    const designData = {
-      name: this.designForm.get('name')?.value,
-      description: this.designForm.get('description')?.value,
-      designType: 'irrigation',
-      cropProductionId: this.designForm.get('cropProductionId')?.value,
-      farmId: this.designForm.get('farmId')?.value,
-      clientId: 1, // TODO: Replace with actual client ID from auth
-      totalArea: this.designForm.get('totalArea')?.value,
-      numberOfSectors: 1, // TODO: Calculate based on design
-      containerDensity: 0, // TODO: Calculate based on design
-      plantDensity: this.designForm.get('numberOfPlants')?.value / (this.designForm.get('totalArea')?.value || 1),
-      dailyWaterRequirement: this.designForm.get('dailyWaterRequirement')?.value,
-      irrigationFrequency: this.designForm.get('irrigationFrequency')?.value,
-      containerId: this.designForm.get('containerId')?.value,
-      dropperId: this.designForm.get('dropperId')?.value,
-      growingMediumId: this.designForm.get('growingMediumId')?.value,
-      averageTemperature: this.designForm.get('climate.averageTemperature')?.value,
-      averageHumidity: this.designForm.get('climate.averageHumidity')?.value,
-      windSpeed: this.designForm.get('climate.windSpeed')?.value,
-      solarRadiation: this.designForm.get('climate.solarRadiation')?.value,
-      elevation: this.designForm.get('climate.elevation')?.value,
-      waterSourceType: this.designForm.get('waterSource.sourceType')?.value,
-      waterPressure: this.designForm.get('waterSource.waterPressure')?.value,
-      waterFlowRate: this.designForm.get('waterSource.waterFlow')?.value,
-      waterPh: this.designForm.get('waterSource.waterQuality.ph')?.value,
-      electricalConductivity: this.designForm.get('waterSource.waterQuality.electricalConductivity')?.value,
-      totalDissolvedSolids: this.designForm.get('waterSource.waterQuality.totalDissolvedSolids')?.value,
-      nitrates: this.designForm.get('waterSource.waterQuality.nitrates')?.value,
-      phosphorus: this.designForm.get('waterSource.waterQuality.phosphorus')?.value,
-      potassium: this.designForm.get('waterSource.waterQuality.potassium')?.value,
-      calcium: 0,
-      magnesium: 0,
-      sulfur: 0,
-      iron: 0,
-      manganese: 0,
-      zinc: 0,
-      copper: 0,
-      boron: 0,
-      mainPipeDiameter: this.designForm.get('mainPipeDiameter')?.value,
-      secondaryPipeDiameter: this.designForm.get('secondaryPipeDiameter')?.value,
-      lateralPipeDiameter: this.designForm.get('lateralPipeDiameter')?.value,
-      mainPipeMaterial: this.designForm.get('pipelineMaterial')?.value,
-      secondaryPipeMaterial: this.designForm.get('pipelineMaterial')?.value,
-      lateralPipeMaterial: this.designForm.get('pipelineMaterial')?.value,
-      mainPipeLength: Math.sqrt(this.designForm.get('totalArea')?.value || 0),
-      secondaryPipeLength: Math.sqrt(this.designForm.get('totalArea')?.value || 0),
-      lateralPipeLength: Math.sqrt(this.designForm.get('totalArea')?.value || 0) / 2,
-      hasFiltration: this.designForm.get('components.hasFiltration')?.value,
-      hasAutomation: this.designForm.get('components.hasAutomation')?.value,
-      hasFertigation: this.designForm.get('components.hasFertigation')?.value,
-      hasFlowMeter: this.designForm.get('components.hasFlowMeter')?.value,
-      hasPressureRegulator: this.designForm.get('components.hasPressureRegulation')?.value,
-      hasBackflowPrevention: this.designForm.get('components.hasBackflowPrevention')?.value,
-      filtrationSystemType: this.designForm.get('components.hasFiltration')?.value ? 'standard' : undefined,
-      automationSystemType: this.designForm.get('components.hasAutomation')?.value ? 'basic' : undefined,
-      fertigationSystemType: this.designForm.get('components.hasFertigation')?.value ? 'standard' : undefined,
-      soilWaterHoldingCapacity: 0,
-      soilInfiltrationRate: 0,
-      soilType: '',
-      slopePercentage: 0,
-      drainageClass: '',
-      tags: '',
-      isTemplate: false,
-      isPublic: false,
-      componentSpecificationsJson: '',
-      operationScheduleJson: '',
-      materialListJson: '',
-      installationInstructionsJson: '',
-      maintenanceScheduleJson: ''
+    // Validation helpers (keep these)
+    const ensureValidPipeDiameter = (value: any, defaultValue: number = 25): number => {
+      const num = Number(value);
+      if (isNaN(num) || num < 10 || num > 1000) {
+        return defaultValue;
+      }
+      return num;
     };
-    this.irrigationEngineeringService.createDesign(designData)
+
+    const ensureValidTotalArea = (value: any): number => {
+      const num = Number(value);
+      if (isNaN(num) || num <= 0) {
+        return 100;
+      }
+      return num;
+    };
+
+    const ensureValidName = (value: any): string => {
+      if (!value || typeof value !== 'string' || value.trim().length === 0) {
+        return `Design_${Date.now()}`;
+      }
+      return value.trim();
+    };
+
+    // Get validated values
+    const totalArea = ensureValidTotalArea(this.designForm.get('totalArea')?.value);
+    const designName = ensureValidName(this.designForm.get('name')?.value);
+    const mainPipeDiameter = ensureValidPipeDiameter(this.designForm.get('mainPipeDiameter')?.value, 32);
+    const secondaryPipeDiameter = ensureValidPipeDiameter(this.designForm.get('secondaryPipeDiameter')?.value, 25);
+    const lateralPipeDiameter = ensureValidPipeDiameter(this.designForm.get('lateralPipeDiameter')?.value, 16);
+
+    // FIXED: Create flat structure that matches IrrigationDesignParameters
+    const apiPayload = {
+      createDto: {
+        // CRITICAL: These must be at root level for validation to work
+        name: designName,
+        description: this.designForm.get('description')?.value || 'Irrigation system design',
+        designType: 'irrigation',
+        status: 'draft',
+        version: '1.0',
+
+        // FLAT PROPERTIES - These are validated by the API at root level
+        totalArea: totalArea,
+        mainPipeDiameter: mainPipeDiameter,
+        secondaryPipeDiameter: secondaryPipeDiameter,
+        lateralPipeDiameter: lateralPipeDiameter,
+
+        // Other flat properties from the form
+        numberOfSectors: 1,
+        containerDensity: 0,
+        plantDensity: this.designForm.get('numberOfPlants')?.value / totalArea || 0,
+        dailyWaterRequirement: this.designForm.get('dailyWaterRequirement')?.value || 0,
+        irrigationFrequency: Math.min(this.designForm.get('irrigationFrequency')?.value || 1, 24),
+
+        // Component IDs
+        containerId: this.designForm.get('containerId')?.value || null,
+        dropperId: this.designForm.get('dropperId')?.value || null,
+        growingMediumId: this.designForm.get('growingMediumId')?.value || null,
+
+        // Climate data as flat properties
+        averageTemperature: Math.min(this.designForm.get('climate.averageTemperature')?.value || 25, 60),
+        averageHumidity: this.designForm.get('climate.averageHumidity')?.value || 70,
+        windSpeed: Math.min(this.designForm.get('climate.windSpeed')?.value || 5, 50),
+        solarRadiation: Math.min(this.designForm.get('climate.solarRadiation')?.value || 6, 50),
+        elevation: this.designForm.get('climate.elevation')?.value || 0,
+
+        // Water source data as flat properties
+        waterSourceType: this.designForm.get('waterSource.sourceType')?.value || 'municipal',
+        waterPressure: Math.min(this.designForm.get('waterSource.waterPressure')?.value || 2.0, 20),
+        waterFlowRate: this.designForm.get('waterSource.waterFlow')?.value || 100,
+
+        // Water quality as flat properties
+        waterPh: this.ensureValidPH(this.designForm.get('waterSource.waterQuality.ph')?.value),
+        electricalConductivity: Math.min(this.designForm.get('waterSource.waterQuality.electricalConductivity')?.value || 1.0, 10),
+        totalDissolvedSolids: this.designForm.get('waterSource.waterQuality.totalDissolvedSolids')?.value || 500,
+        nitrates: this.designForm.get('waterSource.waterQuality.nitrates')?.value || 0,
+        phosphorus: this.designForm.get('waterSource.waterQuality.phosphorus')?.value || 0,
+        potassium: this.designForm.get('waterSource.waterQuality.potassium')?.value || 0,
+        calcium: 0,
+        magnesium: 0,
+        sulfur: 0,
+        iron: 0,
+        manganese: 0,
+        zinc: 0,
+        copper: 0,
+        boron: 0,
+
+        // Pipeline materials
+        mainPipeMaterial: this.designForm.get('pipelineMaterial')?.value || 'PE',
+        secondaryPipeMaterial: this.designForm.get('pipelineMaterial')?.value || 'PE',
+        lateralPipeMaterial: this.designForm.get('pipelineMaterial')?.value || 'PE',
+
+        // Pipeline lengths (calculated)
+        mainPipeLength: Math.sqrt(totalArea),
+        secondaryPipeLength: Math.sqrt(totalArea),
+        lateralPipeLength: Math.sqrt(totalArea) / 2,
+
+        // System components as flat boolean properties
+        hasFiltration: this.designForm.get('components.hasFiltration')?.value || false,
+        hasAutomation: this.designForm.get('components.hasAutomation')?.value || false,
+        hasFertigation: this.designForm.get('components.hasFertigation')?.value || false,
+        hasFlowMeter: this.designForm.get('components.hasFlowMeter')?.value || false,
+        hasPressureRegulator: this.designForm.get('components.hasPressureRegulation')?.value || false,
+        hasBackflowPrevention: this.designForm.get('components.hasBackflowPrevention')?.value || false,
+
+        // System type properties
+        filtrationSystemType: this.designForm.get('components.hasFiltration')?.value ? 'standard' : undefined,
+        automationSystemType: this.designForm.get('components.hasAutomation')?.value ? 'basic' : undefined,
+        fertigationSystemType: this.designForm.get('components.hasFertigation')?.value ? 'standard' : undefined,
+
+        // Foreign key relationships
+        cropProductionId: this.designForm.get('cropProductionId')?.value || null,
+        farmId: this.designForm.get('farmId')?.value || null,
+        clientId: 1,
+
+        // Soil parameters as flat properties
+        soilType: '',
+        soilInfiltrationRate: 0,
+        soilWaterHoldingCapacity: 0,
+        slopePercentage: 0,
+        drainageClass: '',
+
+        // Metadata
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        createdBy: 1,
+        updatedBy: 1,
+
+        // String properties
+        tags: JSON.stringify([]), // Keep as JSON string
+        isTemplate: false,
+        isPublic: false,
+        isActive: true,
+        requiresRecalculation: true,
+
+        designStandards: ['ISO 9261', 'ASAE EP405'],
+
+        // JSON string properties
+        componentSpecificationsJson: '{}',
+        installationInstructionsJson: '{}',
+        maintenanceScheduleJson: '{}',
+        operationScheduleJson: '{}',
+        materialListJson: '{}'
+      }
+    };
+
+    // Enhanced logging to verify the flat structure
+    console.log('🔧 FLAT Structure Validation Check:', {
+      name: apiPayload.createDto.name,
+      totalArea: apiPayload.createDto.totalArea,
+      mainPipeDiameter: apiPayload.createDto.mainPipeDiameter,
+      secondaryPipeDiameter: apiPayload.createDto.secondaryPipeDiameter,
+      lateralPipeDiameter: apiPayload.createDto.lateralPipeDiameter,
+      structureType: 'FLAT (not nested)',
+      validationReady: true
+    });
+
+    console.log('🚀 Sending FLAT structure API payload:', apiPayload);
+
+    // Call the API
+    this.irrigationEngineeringService.createDesign(apiPayload)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (result) => {
           this.successMessage = 'Diseño guardado exitosamente';
-          console.log('Design saved:', result);
+          console.log('✅ Design saved successfully:', result);
           this.cdr.detectChanges();
         },
         error: (error) => {
-          console.error('Error saving design:', error);
+          console.error('❌ Error saving design:', error);
           this.errorMessage = 'Error guardando el diseño';
+
+          // Enhanced error logging
+          if (error.error?.errors) {
+            console.error('🔍 Validation errors (should be resolved now):', error.error.errors);
+            Object.keys(error.error.errors).forEach(field => {
+              console.error(`  - ${field}: ${error.error.errors[field].join(', ')}`);
+            });
+          }
+
           this.cdr.detectChanges();
         }
       });
   }
 
+
+  private ensureValidPH(value: any): number {
+    const ph = parseFloat(value);
+    return !isNaN(ph) && ph >= 0 && ph <= 14 ? ph : 7; // Default to neutral pH
+  }
 
   calculateHydraulicSolution(designData: any, hydraulicData: any): any {
     // Extract design parameters

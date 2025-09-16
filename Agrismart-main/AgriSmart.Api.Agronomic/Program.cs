@@ -18,7 +18,7 @@ using AgriSmart.Application.Agronomic.Queries;
 using AgriSmart.Core.Entities;
 using AgriSmart.Calculator.Interfaces;
 using AgriSmart.Calculator.Logic;
-// using AgriSmart.Infrastructure.Mappings; // Commented out due to build issues
+using AgriSmart.Infrastructure.Mappings; // Commented out due to build issues
 using AgriSmart.Application.Agronomic.Commands;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,7 +27,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IIrrigationDesignCalculator, IrrigationDesignCalculator>();
 
 // Register AutoMapper Profile
-// builder.Services.AddAutoMapper(typeof(IrrigationDesignMappingProfile)); // Commented out due to build issues
+builder.Services.AddAutoMapper(typeof(IrrigationDesignMappingProfile)); // Commented out due to build issues
 
 // If you haven't added MediatR yet, add it:
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateIrrigationDesignCommand).Assembly));
@@ -150,6 +150,8 @@ builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(GetAllMeasurementsBaseHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(ProcessCropProductionRawDataMeasurementsHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(CreateIrrigationEventHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(CreateIrrigationEngineeringDesignCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetIrrigationEngineeringDesignsQueryHandler).Assembly);
 });
 
 //Repositories
@@ -240,7 +242,8 @@ builder.Services.AddScoped<HydraulicCalculationEngine>();
 builder.Services.AddScoped<ValidationEngine>();
 builder.Services.AddScoped<OptimizationEngine>();
 builder.Services.AddScoped<EconomicAnalysisEngine>();
-// builder.Services.AddAutoMapper(typeof(IrrigationDesignMappingProfile)); // Commented out due to build issues
+builder.Services.AddAutoMapper(typeof(IrrigationDesignMappingProfile)); // Commented out due to build issues
+builder.Services.AddAutoMapper(typeof(AgriSmart.Application.Agronomic.Mappings.IrrigationEngineeringDesignProfile));
 
 builder.Services.AddAuthentication(options =>
 {

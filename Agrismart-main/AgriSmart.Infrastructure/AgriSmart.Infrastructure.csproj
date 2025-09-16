@@ -18,9 +18,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="Mappings\IrrigationDesignMappingProfile.cs" />
-  </ItemGroup>
+
 
   <ItemGroup>
     <ProjectReference Include="..\AgriSmart.Core\AgriSmart.Core.csproj" />

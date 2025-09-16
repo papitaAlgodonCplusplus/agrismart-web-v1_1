@@ -32,7 +32,12 @@
       "Bash(! grep -q \"using AgriSmart.Core.Enums;\" \"$file\")",
       "Bash(then echo \"Updating $file\")",
       "Bash(python:*)",
-      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Infrastructure\\Repositories\\Query\")"
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Infrastructure\\Repositories\\Query\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Handlers\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Core\\Repositories\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Core\\Repositories\\Commands\")",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []
