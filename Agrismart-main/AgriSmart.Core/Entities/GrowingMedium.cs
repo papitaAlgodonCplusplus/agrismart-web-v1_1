@@ -1,4 +1,6 @@
-﻿namespace AgriSmart.Core.Entities
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace AgriSmart.Core.Entities
 {
     public class GrowingMedium : BaseEntity
     {
@@ -6,7 +8,10 @@
         public string? Name { get; set; }
         public double ContainerCapacityPercentage { get; set; }
         public double PermanentWiltingPoint { get; set; }
-        public double FiveKpaHumidity { get; set; }
+
+        [NotMapped]
+        public double FiveKpaHumidity { get; set; } = 10; // Not stored in database
+
         public bool Active { get; set; }
     }
 }

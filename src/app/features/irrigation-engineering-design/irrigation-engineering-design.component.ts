@@ -120,6 +120,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   // UI State
   errorMessage = '';
   successMessage = '';
+  designs: any;
 
   constructor(
     private fb: FormBuilder,
@@ -267,10 +268,232 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     });
   }
 
+  // === DESIGN SELECTION METHODS ===
+
+  loadExistingDesign(design: any): void {
+    try {
+      console.log('Loading existing design:', design);
+
+      // Set current design
+      this.currentDesign = design;
+
+      // Populate the design form with existing data
+      this.designForm.patchValue({
+        name: design.name || '',
+        description: design.description || '',
+        farmId: design.farmId || null,
+        cropProductionId: design.cropProductionId || null,
+        totalArea: design.totalArea || 0,
+        plantSpacing: 0.3, // Default value as not stored in design
+        rowSpacing: 1.2, // Default value as not stored in design
+        numberOfPlants: Math.round(design.totalArea * design.plantDensity) || 0,
+
+        // Container Configuration (if available)
+        containerId: design.containerId || null,
+        dropperId: design.dropperId || null,
+        growingMediumId: design.growingMediumId || null,
+        containerLength: 1.2, // Default
+        containerWidth: 0.2, // Default
+        numberOfContainers: 0, // Default
+
+        // Emitter Configuration
+        emitterType: 'dripper', // Default
+        emitterFlowRate: 2, // Default
+        emittersPerPlant: 1, // Default
+        operatingPressure: design.waterPressure || 1.5,
+        pressureCompensation: false,
+
+        // Water Requirements
+        dailyWaterRequirement: design.dailyWaterRequirement || 0,
+        irrigationFrequency: design.irrigationFrequency || 1,
+
+        // Climate data
+        climate: {
+          averageTemperature: design.averageTemperature || 22,
+          averageHumidity: design.averageHumidity || 65,
+          windSpeed: design.windSpeed || 2,
+          solarRadiation: design.solarRadiation || 20,
+          elevation: design.elevation || 1200
+        },
+
+        // Water Source
+        waterSource: {
+          sourceType: design.waterSourceType || 'well',
+          waterPressure: design.waterPressure || 1.5,
+          waterFlow: design.waterFlowRate || 0,
+          waterQuality: {
+            ph: design.waterPh || 7,
+            electricalConductivity: design.electricalConductivity || 0.8,
+            totalDissolvedSolids: design.totalDissolvedSolids || 500,
+            nitrates: 10, // Default
+            phosphorus: 2, // Default  
+            potassium: 5 // Default
+          }
+        },
+
+        // Pipeline Configuration
+        mainPipeDiameter: design.mainPipeDiameter || 63,
+        secondaryPipeDiameter: design.secondaryPipeDiameter || 32,
+        lateralPipeDiameter: design.lateralPipeDiameter || 16,
+        pipelineMaterial: design.mainPipeMaterial || 'PE',
+
+        // System Components
+        components: {
+          hasFiltration: design.hasFiltration || false,
+          hasAutomation: design.hasAutomation || false,
+          hasFertigation: design.hasFertigation || false,
+          hasBackflowPrevention: true, // Default
+          hasPressureRegulation: true, // Default
+          hasFlowMeter: false // Default
+        }
+      });
+
+      // Update hydraulic form if hydraulic data is available
+      if (design.totalSystemFlowRate || design.requiredPumpPower) {
+        this.hydraulicForm.patchValue({
+          operatingPressure: design.waterPressure || 1.5,
+          maxFlowRate: design.totalSystemFlowRate || 0,
+          designVelocity: 1.5, // Default
+          frictionLossCoefficient: 0.2, // Default
+          minorLossCoefficient: 0.1, // Default
+          elevationDifference: 0, // Default
+          targetUniformity: design.uniformityCoefficient ? design.uniformityCoefficient * 100 : 90,
+          targetEfficiency: design.applicationEfficiency ? design.applicationEfficiency * 100 : 85,
+          maximumPressureVariation: 10 // Default
+        });
+      }
+
+      // Set selected farm and crop production for real-time data
+      if (design.farmId) {
+        this.selectedFarm = design.farmId;
+      }
+      if (design.cropProductionId) {
+        this.selectedCropProduction = design.cropProductionId;
+      }
+
+      // Load real-time data for the selected design
+      this.loadRealTimeData();
+
+      this.successMessage = `Diseño "${design.name}" cargado exitosamente`;
+      this.cdr.detectChanges();
+
+    } catch (error) {
+      console.error('Error loading existing design:', error);
+      this.errorMessage = 'Error al cargar el diseño seleccionado';
+      this.cdr.detectChanges();
+    }
+  }
+
+  duplicateDesign(design: any): void {
+    try {
+      // Create a copy of the design with a new name
+      const duplicatedDesign = { ...design };
+      duplicatedDesign.name = `${design.name} (Copia)`;
+      duplicatedDesign.id = null; // Remove ID to create new design
+      duplicatedDesign.createdAt = new Date().toISOString();
+      duplicatedDesign.status = 'draft';
+      duplicatedDesign.version = '1.0';
+
+      // Load the duplicated design
+      this.loadExistingDesign(duplicatedDesign);
+
+      this.successMessage = `Diseño duplicado como "${duplicatedDesign.name}"`;
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error duplicating design:', error);
+      this.errorMessage = 'Error al duplicar el diseño';
+      this.cdr.detectChanges();
+    }
+  }
+
+  exportSingleDesign(design: any): void {
+    try {
+      // Create export data for single design
+      const exportData = {
+        design: design,
+        exportDate: new Date(),
+        exportType: 'single-design',
+        version: design.version || '1.0'
+      };
+
+      // Create and download JSON file
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `design-${design.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+
+      URL.revokeObjectURL(url);
+      this.successMessage = `Diseño "${design.name}" exportado exitosamente`;
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error exporting design:', error);
+      this.errorMessage = 'Error al exportar el diseño';
+      this.cdr.detectChanges();
+    }
+  }
+
+  clearSelection(): void {
+    this.currentDesign = null;
+    this.selectedFarm = null;
+    this.selectedCropProduction = null;
+
+    // Reset forms to default values
+    this.initializeDesignForm();
+    this.initializeHydraulicForm();
+
+    // Clear results
+    this.hydraulicResults = null;
+    this.validationResults = null;
+    this.optimizationResults = null;
+
+    this.successMessage = 'Selección eliminada. Formulario reiniciado.';
+    this.cdr.detectChanges();
+  }
+
+  createNewDesign(): void {
+    this.clearSelection();
+    this.successMessage = 'Listo para crear un nuevo diseño';
+    this.cdr.detectChanges();
+  }
+
+  // === UTILITY METHODS FOR TEMPLATE ===
+
+  getStatusText(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'draft': 'Borrador',
+      'in-progress': 'En Progreso',
+      'completed': 'Completado',
+      'validated': 'Validado',
+      'archived': 'Archivado'
+    };
+    return statusMap[status] || status;
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-CR', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Fecha inválida';
+    }
+  }
+
+  // === UTILITY METHODS ===
+
   private loadInitialData(): void {
     this.isLoading = true;
 
     forkJoin({
+      designs: this.irrigationEngineeringService.getAll().pipe(catchError(() => of([]))),
       farms: this.farmService.getAll().pipe(catchError(() => of([]))),
       cropProductions: this.cropProductionService.getAll().pipe(catchError(() => of([]))),
       containers: this.irrigationSectorService.getAllContainers().pipe(catchError(() => of([]))),
@@ -280,6 +503,8 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (data: any) => {
+        console.log("allInitialDataGotted", data)
+        this.designs = data.designs?.result || [];
         this.farms = data.farms?.farms || data.farms || [];
         this.cropProductions = data.cropProductions?.cropProductions || data.cropProductions || [];
         this.containers = data.containers?.containers || data.containers || [];
@@ -889,18 +1114,18 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       });
     }
 
-    // Validar densidad de plantas
-    if (!designData.plantDensity || designData.plantDensity <= 0) {
-      result.issues.push({
-        id: this.generateId(),
-        category: 'Densidad de Plantas',
-        severity: 'critical',
-        message: 'La densidad de plantas debe ser mayor que 0',
-        affectedParameter: 'PlantDensity',
-        currentValue: designData.plantDensity,
-        recommendedValue: 1.0
-      });
-    }
+    // // Validar densidad de plantas
+    // if (!designData.plantDensity || designData.plantDensity <= 0) {
+    //   result.issues.push({
+    //     id: this.generateId(),
+    //     category: 'Densidad de Plantas',
+    //     severity: 'critical',
+    //     message: 'La densidad de plantas debe ser mayor que 0',
+    //     affectedParameter: 'PlantDensity',
+    //     currentValue: designData.plantDensity,
+    //     recommendedValue: 1.0
+    //   });
+    // }
 
     // Validar presión de la fuente de agua
     if (designData.waterSource?.waterPressure <= 0) {
@@ -1048,7 +1273,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         id: this.generateId(),
         category: 'Flow',
         severity: 'warning',
-        message: 'Flow balance deviation exceeds acceptable limits',
+        message: 'La desviación del equilibrio del flujo excede los límites aceptables',
         affectedParameter: 'FlowBalance',
         currentValue: flowBalance,
         recommendedValue: 5
@@ -1062,7 +1287,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         id: this.generateId(),
         category: 'Flow',
         severity: 'critical',
-        message: 'System flow rate insufficient for design requirements',
+        message: 'El caudal del sistema es insuficiente para los requisitos de diseño',
         affectedParameter: 'SystemFlowRate',
         currentValue: systemFlowRate,
         recommendedValue: designFlowRate
@@ -1076,7 +1301,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         id: this.generateId(),
         category: 'Flow',
         severity: 'warning',
-        message: 'Flow variation exceeds recommended limits',
+        message: 'La variación del flujo excede los límites recomendados',
         affectedParameter: 'FlowVariation',
         currentValue: flowVariation,
         recommendedValue: 10

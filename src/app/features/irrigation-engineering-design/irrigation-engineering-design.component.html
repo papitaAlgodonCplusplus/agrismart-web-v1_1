@@ -34,7 +34,8 @@
           <h5 class="mb-0">
             <i class="bi bi-cloud-check-fill"></i>
             Estado de Datos IoT en Tiempo Real
-            <span class="badge bg-light text-dark ms-2" [class.bg-success]="hasRealTimeData" [class.bg-secondary]="!hasRealTimeData">
+            <span class="badge bg-light text-dark ms-2" [class.bg-success]="hasRealTimeData"
+              [class.bg-secondary]="!hasRealTimeData">
               {{ hasRealTimeData ? 'CONECTADO' : 'DESCONECTADO' }}
             </span>
           </h5>
@@ -130,43 +131,41 @@
   <!-- Navigation Tabs -->
   <ul class="nav nav-tabs mb-4" id="designTabs" role="tablist">
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'design'" 
-              (click)="setActiveTab('design')" type="button">
+      <button class="nav-link" [class.active]="activeTab === 'design'" (click)="setActiveTab('design')" type="button">
         <i class="bi bi-gear-fill"></i>
         Parámetros de Diseño
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'hydraulic'" 
-              (click)="setActiveTab('hydraulic')" type="button" [disabled]="!isDesignValid">
+      <button class="nav-link" [class.active]="activeTab === 'hydraulic'" (click)="setActiveTab('hydraulic')"
+        type="button" [disabled]="!isDesignValid">
         <i class="bi bi-water"></i>
         Cálculos Hidráulicos
         <span class="badge bg-success ms-1" *ngIf="hydraulicResults">✓</span>
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'validation'" 
-              (click)="setActiveTab('validation')" type="button" [disabled]="!hydraulicResults">
+      <button class="nav-link" [class.active]="activeTab === 'validation'" (click)="setActiveTab('validation')"
+        type="button" [disabled]="!hydraulicResults">
         <i class="bi bi-shield-check"></i>
         Validación
-        <span class="badge ms-1" [class.bg-success]="validationResults?.isValid" 
-              [class.bg-danger]="validationResults && !validationResults?.isValid"
-              *ngIf="validationResults">
+        <span class="badge ms-1" [class.bg-success]="validationResults?.isValid"
+          [class.bg-danger]="validationResults && !validationResults?.isValid" *ngIf="validationResults">
           {{ validationResults?.isValid ? '✓' : '✗' }}
         </span>
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'optimization'" 
-              (click)="setActiveTab('optimization')" type="button" [disabled]="!canPerformOptimization">
+      <button class="nav-link" [class.active]="activeTab === 'optimization'" (click)="setActiveTab('optimization')"
+        type="button" [disabled]="!canPerformOptimization">
         <i class="bi bi-speedometer"></i>
         Optimización
         <span class="badge bg-primary ms-1" *ngIf="optimizationResults">✓</span>
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'results'" 
-              (click)="setActiveTab('results')" type="button" [disabled]="!hydraulicResults">
+      <button class="nav-link" [class.active]="activeTab === 'results'" (click)="setActiveTab('results')" type="button"
+        [disabled]="!hydraulicResults">
         <i class="bi bi-bar-chart-fill"></i>
         Resultados
       </button>
@@ -175,11 +174,124 @@
 
   <!-- Tab Content -->
   <div class="tab-content" id="designTabContent">
-    
+
     <!-- Design Parameters Tab -->
     <div class="tab-pane" [class.show]="activeTab === 'design'" [class.active]="activeTab === 'design'">
+
+      <!-- Existing Designs Selection Table -->
+      <div class="card mb-4" *ngIf="designs && designs.length > 0">
+        <div class="card-header bg-primary text-white">
+          <h4><i class="bi bi-folder-open"></i> Diseños Existentes</h4>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            Seleccione un diseño existente para cargar sus parámetros o cree uno nuevo desde cero.
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Seleccionar</th>
+                  <th>Nombre</th>
+                  <th>Finca</th>
+                  <th>Unidad de Producción</th>
+                  <th>Área Total</th>
+                  <th>Estado</th>
+                  <th>Fecha de Creación</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let design of designs" [class.table-primary]="currentDesign?.id === design.id"
+                  style="cursor: pointer;">
+                  <td>
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="selectedDesign" [id]="'design-' + design.id"
+                        [value]="design.id" (change)="loadExistingDesign(design)"
+                        [checked]="currentDesign?.id === design.id">
+                      <label class="form-check-label" [for]="'design-' + design.id"></label>
+                    </div>
+                  </td>
+                  <td>
+                    <strong>{{ design.name }}</strong>
+                    <br>
+                    <small class="text-muted">{{ design.description }}</small>
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary">{{ design.farmName || 'N/A' }}</span>
+                  </td>
+                  <td>
+                    <span class="badge bg-info">{{ design.cropProductionName || 'N/A' }}</span>
+                  </td>
+                  <td>
+                    <strong>{{ formatArea(design.totalArea) }}</strong>
+                    <br>
+                    <small class="text-muted">{{ design.plantDensity }} plantas/m²</small>
+                  </td>
+                  <td>
+                    <span class="badge" [class.bg-success]="design.status === 'completed'"
+                      [class.bg-warning]="design.status === 'draft'"
+                      [class.bg-primary]="design.status === 'in-progress'">
+                      {{ getStatusText(design.status) }}
+                    </span>
+                    <div class="mt-1">
+                      <small class="badge bg-light text-dark" *ngIf="design.isHydraulicallyValid">
+                        <i class="bi bi-water text-primary"></i> Hidráulico
+                      </small>
+                      <small class="badge bg-light text-dark" *ngIf="design.meetsAgronomicRequirements">
+                        <i class="bi bi-tree text-success"></i> Agronómico
+                      </small>
+                      <small class="badge bg-light text-dark" *ngIf="design.isEconomicallyViable">
+                        <i class="bi bi-currency-dollar text-warning"></i> Económico
+                      </small>
+                    </div>
+                  </td>
+                  <td>
+                    <small>{{ formatDate(design.createdAt) }}</small>
+                    <br>
+                    <small class="text-muted">v{{ design.version }}</small>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button type="button" class="btn btn-outline-primary" (click)="loadExistingDesign(design)"
+                        title="Cargar diseño">
+                        <i class="bi bi-upload"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-info" (click)="duplicateDesign(design)"
+                        title="Duplicar diseño">
+                        <i class="bi bi-files"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-success" (click)="exportSingleDesign(design)"
+                        title="Exportar diseño">
+                        <i class="bi bi-download"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <button type="button" class="btn btn-outline-secondary" (click)="clearSelection()">
+                <i class="bi bi-x-circle"></i>
+                Limpiar Selección
+              </button>
+            </div>
+            <div class="col-md-6 text-end">
+              <button type="button" class="btn btn-success" (click)="createNewDesign()">
+                <i class="bi bi-plus-circle"></i>
+                Crear Nuevo Diseño
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       <form [formGroup]="designForm" novalidate>
-        
+
         <!-- Basic Information -->
         <div class="card mb-4">
           <div class="card-header">
@@ -203,7 +315,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group mb-3">
@@ -217,8 +329,8 @@
               <div class="col-md-6">
                 <div class="form-group mb-3">
                   <label class="form-label">Descripción</label>
-                  <textarea class="form-control" formControlName="description" rows="3" 
-                           placeholder="Descripción del diseño de riego..."></textarea>
+                  <textarea class="form-control" formControlName="description" rows="3"
+                    placeholder="Descripción del diseño de riego..."></textarea>
                 </div>
               </div>
             </div>
@@ -265,7 +377,7 @@
         <div class="card mb-4 border-success">
           <div class="card-header bg-success text-white">
             <h4>
-              <i class="bi bi-cloud-sun"></i> 
+              <i class="bi bi-cloud-sun"></i>
               Parámetros Ambientales
               <span class="badge bg-light text-dark ms-2">
                 <i class="bi bi-wifi"></i> DATOS EN TIEMPO REAL
@@ -281,7 +393,7 @@
               <i class="bi bi-exclamation-triangle"></i>
               Sin conexión a sensores IoT. Se utilizan valores por defecto que pueden ser editados manualmente.
             </div>
-            
+
             <div class="row">
               <div class="col-md-3">
                 <div class="form-group mb-3">
@@ -290,13 +402,14 @@
                     <i class="bi bi-thermometer-half text-danger ms-1" *ngIf="hasRealTimeData"></i>
                   </label>
                   <div class="input-group">
-                    <input type="number" class="form-control" formControlName="averageTemperature" 
-                           min="0" step="0.1" [class.border-success]="hasRealTimeData">
+                    <input type="number" class="form-control" formControlName="averageTemperature" min="0" step="0.1"
+                      [class.border-success]="hasRealTimeData">
                     <span class="input-group-text" *ngIf="hasRealTimeData">
                       <i class="bi bi-wifi text-success"></i>
                     </span>
                   </div>
-                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatTemperature(realTimeTemperature) }}</small>
+                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatTemperature(realTimeTemperature)
+                    }}</small>
                 </div>
               </div>
               <div class="col-md-3">
@@ -306,13 +419,14 @@
                     <i class="bi bi-moisture text-info ms-1" *ngIf="hasRealTimeData"></i>
                   </label>
                   <div class="input-group">
-                    <input type="number" class="form-control" formControlName="averageHumidity" 
-                           min="0" max="100" step="1" [class.border-success]="hasRealTimeData">
+                    <input type="number" class="form-control" formControlName="averageHumidity" min="0" max="100"
+                      step="1" [class.border-success]="hasRealTimeData">
                     <span class="input-group-text" *ngIf="hasRealTimeData">
                       <i class="bi bi-wifi text-success"></i>
                     </span>
                   </div>
-                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatPercentage(realTimeHumidity) }}</small>
+                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatPercentage(realTimeHumidity)
+                    }}</small>
                 </div>
               </div>
               <div class="col-md-3">
@@ -344,7 +458,7 @@
         <div class="card mb-4 border-info">
           <div class="card-header bg-info text-white">
             <h4>
-              <i class="bi bi-droplet-fill"></i> 
+              <i class="bi bi-droplet-fill"></i>
               Fuente de Agua
               <span class="badge bg-light text-dark ms-2">
                 <i class="bi bi-wifi"></i> MONITOREO EN TIEMPO REAL
@@ -371,13 +485,14 @@
                     <i class="bi bi-speedometer2 text-info ms-1" *ngIf="hasRealTimeData"></i>
                   </label>
                   <div class="input-group">
-                    <input type="number" class="form-control" formControlName="waterPressure" 
-                           min="0" step="0.1" [class.border-success]="hasRealTimeData">
+                    <input type="number" class="form-control" formControlName="waterPressure" min="0" step="0.1"
+                      [class.border-success]="hasRealTimeData">
                     <span class="input-group-text" *ngIf="hasRealTimeData">
                       <i class="bi bi-wifi text-success"></i>
                     </span>
                   </div>
-                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatPressure(realTimePressure) }}</small>
+                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatPressure(realTimePressure)
+                    }}</small>
                 </div>
               </div>
               <div class="col-md-4">
@@ -387,13 +502,14 @@
                     <i class="bi bi-droplet text-primary ms-1" *ngIf="hasRealTimeData"></i>
                   </label>
                   <div class="input-group">
-                    <input type="number" class="form-control" formControlName="waterFlow" 
-                           min="0" step="1" [class.border-success]="hasRealTimeData">
+                    <input type="number" class="form-control" formControlName="waterFlow" min="0" step="1"
+                      [class.border-success]="hasRealTimeData">
                     <span class="input-group-text" *ngIf="hasRealTimeData">
                       <i class="bi bi-wifi text-success"></i>
                     </span>
                   </div>
-                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatFlowRate(realTimeFlowRate) }}</small>
+                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatFlowRate(realTimeFlowRate)
+                    }}</small>
                 </div>
               </div>
             </div>
@@ -414,8 +530,8 @@
                       <i class="bi bi-patch-check text-success ms-1" *ngIf="hasRealTimeData"></i>
                     </label>
                     <div class="input-group">
-                      <input type="number" class="form-control" formControlName="ph" 
-                             min="4" max="9" step="0.1" [class.border-success]="hasRealTimeData">
+                      <input type="number" class="form-control" formControlName="ph" min="4" max="9" step="0.1"
+                        [class.border-success]="hasRealTimeData">
                       <span class="input-group-text" *ngIf="hasRealTimeData">
                         <i class="bi bi-wifi text-success"></i>
                       </span>
@@ -426,7 +542,8 @@
                 <div class="col-md-2">
                   <div class="form-group mb-3">
                     <label class="form-label">CE (dS/m)</label>
-                    <input type="number" class="form-control" formControlName="electricalConductivity" min="0" step="0.1">
+                    <input type="number" class="form-control" formControlName="electricalConductivity" min="0"
+                      step="0.1">
                   </div>
                 </div>
                 <div class="col-md-2">
@@ -495,13 +612,14 @@
                     <i class="bi bi-speedometer2 text-info ms-1" *ngIf="hasRealTimeData"></i>
                   </label>
                   <div class="input-group">
-                    <input type="number" class="form-control" formControlName="operatingPressure" 
-                           min="0.5" step="0.1" [class.border-success]="hasRealTimeData">
+                    <input type="number" class="form-control" formControlName="operatingPressure" min="0.5" step="0.1"
+                      [class.border-success]="hasRealTimeData">
                     <span class="input-group-text" *ngIf="hasRealTimeData">
                       <i class="bi bi-activity text-success"></i>
                     </span>
                   </div>
-                  <small class="text-success" *ngIf="hasRealTimeData">Actual: {{ formatPressure(realTimePressure) }}</small>
+                  <small class="text-success" *ngIf="hasRealTimeData">Actual: {{ formatPressure(realTimePressure)
+                    }}</small>
                 </div>
               </div>
             </div>
@@ -510,7 +628,8 @@
               <div class="col-md-6">
                 <div class="form-group mb-3">
                   <label class="form-label">Requerimiento Diario de Agua (L/día/planta)</label>
-                  <input type="number" class="form-control" formControlName="dailyWaterRequirement" min="0.1" step="0.1" readonly>
+                  <input type="number" class="form-control" formControlName="dailyWaterRequirement" min="0.1" step="0.1"
+                    readonly>
                   <small class="text-muted">Calculado automáticamente basado en número de plantas</small>
                 </div>
               </div>
@@ -599,7 +718,8 @@
             <div class="row">
               <div class="col-md-4">
                 <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="hasBackflowPrevention" id="hasBackflowPrevention">
+                  <input class="form-check-input" type="checkbox" formControlName="hasBackflowPrevention"
+                    id="hasBackflowPrevention">
                   <label class="form-check-label" for="hasBackflowPrevention">
                     <i class="bi bi-shield-check"></i> Prevención de Reflujo
                   </label>
@@ -607,7 +727,8 @@
               </div>
               <div class="col-md-4">
                 <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="hasPressureRegulation" id="hasPressureRegulation">
+                  <input class="form-check-input" type="checkbox" formControlName="hasPressureRegulation"
+                    id="hasPressureRegulation">
                   <label class="form-check-label" for="hasPressureRegulation">
                     <i class="bi bi-speedometer"></i> Regulación de Presión
                   </label>
@@ -636,8 +757,7 @@
                 </span>
               </div>
               <div>
-                <button type="button" class="btn btn-primary" 
-                        (click)="setActiveTab('hydraulic')">
+                <button type="button" class="btn btn-primary" (click)="setActiveTab('hydraulic')">
                   <i class="bi bi-arrow-right"></i>
                   Continuar a Cálculos Hidráulicos
                 </button>
@@ -651,12 +771,12 @@
     <!-- Hydraulic Calculations Tab -->
     <div class="tab-pane" [class.show]="activeTab === 'hydraulic'" [class.active]="activeTab === 'hydraulic'">
       <form [formGroup]="hydraulicForm" novalidate>
-        
+
         <!-- Operating Parameters with Real-Time Data -->
         <div class="card mb-4 border-warning">
           <div class="card-header bg-warning text-dark">
             <h4>
-              <i class="bi bi-sliders"></i> 
+              <i class="bi bi-sliders"></i>
               Parámetros de Operación
               <span class="badge bg-dark ms-2">
                 <i class="bi bi-wifi"></i> TIEMPO REAL
@@ -672,13 +792,14 @@
                     <i class="bi bi-speedometer2 text-warning ms-1" *ngIf="hasRealTimeData"></i>
                   </label>
                   <div class="input-group">
-                    <input type="number" class="form-control" formControlName="operatingPressure" 
-                           min="0.5" step="0.1" [class.border-warning]="hasRealTimeData">
+                    <input type="number" class="form-control" formControlName="operatingPressure" min="0.5" step="0.1"
+                      [class.border-warning]="hasRealTimeData">
                     <span class="input-group-text" *ngIf="hasRealTimeData">
                       <i class="bi bi-wifi text-warning"></i>
                     </span>
                   </div>
-                  <small class="text-warning" *ngIf="hasRealTimeData">Actual: {{ formatPressure(realTimePressure) }}</small>
+                  <small class="text-warning" *ngIf="hasRealTimeData">Actual: {{ formatPressure(realTimePressure)
+                    }}</small>
                 </div>
               </div>
               <div class="col-md-4">
@@ -688,19 +809,21 @@
                     <i class="bi bi-droplet text-primary ms-1" *ngIf="hasRealTimeData"></i>
                   </label>
                   <div class="input-group">
-                    <input type="number" class="form-control" formControlName="maxFlowRate" 
-                           min="0.1" step="0.1" [class.border-warning]="hasRealTimeData">
+                    <input type="number" class="form-control" formControlName="maxFlowRate" min="0.1" step="0.1"
+                      [class.border-warning]="hasRealTimeData">
                     <span class="input-group-text" *ngIf="hasRealTimeData">
                       <i class="bi bi-wifi text-warning"></i>
                     </span>
                   </div>
-                  <small class="text-warning" *ngIf="hasRealTimeData">Actual: {{ formatFlowRate(realTimeFlowRate) }}</small>
+                  <small class="text-warning" *ngIf="hasRealTimeData">Actual: {{ formatFlowRate(realTimeFlowRate)
+                    }}</small>
                 </div>
               </div>
               <div class="col-md-4">
                 <div class="form-group mb-3">
                   <label class="form-label">Velocidad de Diseño (m/s)</label>
-                  <input type="number" class="form-control" formControlName="designVelocity" min="0.5" max="3" step="0.1">
+                  <input type="number" class="form-control" formControlName="designVelocity" min="0.5" max="3"
+                    step="0.1">
                   <small class="text-muted">Recomendado: 1.5 - 2.0 m/s</small>
                 </div>
               </div>
@@ -718,13 +841,15 @@
               <div class="col-md-4">
                 <div class="form-group mb-3">
                   <label class="form-label">Coeficiente de Fricción</label>
-                  <input type="number" class="form-control" formControlName="frictionLossCoefficient" min="0.1" step="0.01">
+                  <input type="number" class="form-control" formControlName="frictionLossCoefficient" min="0.1"
+                    step="0.01">
                 </div>
               </div>
               <div class="col-md-4">
                 <div class="form-group mb-3">
                   <label class="form-label">Coeficiente de Pérdidas Menores</label>
-                  <input type="number" class="form-control" formControlName="minorLossCoefficient" min="0.05" step="0.01">
+                  <input type="number" class="form-control" formControlName="minorLossCoefficient" min="0.05"
+                    step="0.01">
                 </div>
               </div>
               <div class="col-md-4">
@@ -747,21 +872,24 @@
               <div class="col-md-4">
                 <div class="form-group mb-3">
                   <label class="form-label">Uniformidad Objetivo (%)</label>
-                  <input type="number" class="form-control" formControlName="targetUniformity" min="80" max="100" step="1">
+                  <input type="number" class="form-control" formControlName="targetUniformity" min="80" max="100"
+                    step="1">
                   <small class="text-muted">Mínimo recomendado: 85%</small>
                 </div>
               </div>
               <div class="col-md-4">
                 <div class="form-group mb-3">
                   <label class="form-label">Eficiencia Objetivo (%)</label>
-                  <input type="number" class="form-control" formControlName="targetEfficiency" min="70" max="100" step="1">
+                  <input type="number" class="form-control" formControlName="targetEfficiency" min="70" max="100"
+                    step="1">
                   <small class="text-muted">Mínimo recomendado: 80%</small>
                 </div>
               </div>
               <div class="col-md-4">
                 <div class="form-group mb-3">
                   <label class="form-label">Variación Máxima de Presión (%)</label>
-                  <input type="number" class="form-control" formControlName="maximumPressureVariation" min="5" max="20" step="1">
+                  <input type="number" class="form-control" formControlName="maximumPressureVariation" min="5" max="20"
+                    step="1">
                   <small class="text-muted">Máximo recomendado: 10%</small>
                 </div>
               </div>
@@ -797,7 +925,8 @@
               <div class="col-md-3">
                 <div class="metric-card">
                   <h6>Confiabilidad del Sistema</h6>
-                  <h4 [class]="systemReliabilityScore >= 80 ? 'text-success' : systemReliabilityScore >= 60 ? 'text-warning' : 'text-danger'">
+                  <h4
+                    [class]="systemReliabilityScore >= 80 ? 'text-success' : systemReliabilityScore >= 60 ? 'text-warning' : 'text-danger'">
                     {{ formatPercentage(systemReliabilityScore) }}
                   </h4>
                 </div>
@@ -815,14 +944,12 @@
                 Volver a Diseño
               </button>
               <div>
-                <button type="button" class="btn btn-success me-2" 
-                        [disabled]="!canPerformCalculations" 
-                        (click)="performHydraulicCalculations()">
+                <button type="button" class="btn btn-success me-2" [disabled]="!canPerformCalculations"
+                  (click)="performHydraulicCalculations()">
                   <i class="bi bi-calculator"></i>
                   {{ hydraulicResults ? 'Recalcular' : 'Calcular' }} Hidráulica
                 </button>
-                <button type="button" class="btn btn-primary"
-                        (click)="setActiveTab('validation')">
+                <button type="button" class="btn btn-primary" (click)="setActiveTab('validation')">
                   <i class="bi bi-arrow-right"></i>
                   Continuar a Validación
                 </button>
@@ -836,26 +963,30 @@
     <!-- Validation Tab -->
     <div class="tab-pane" [class.show]="activeTab === 'validation'" [class.active]="activeTab === 'validation'">
       <div class="card mb-4" *ngIf="validationResults">
-        <div class="card-header" [class.bg-success]="validationResults.isValid" [class.bg-danger]="!validationResults.isValid" class="text-white">
+        <div class="card-header" [class.bg-success]="validationResults.isValid"
+          [class.bg-danger]="!validationResults.isValid" class="text-white">
           <h4>
-            <i class="bi" [class.bi-check-circle-fill]="validationResults.isValid" [class.bi-x-circle-fill]="!validationResults.isValid"></i>
+            <i class="bi" [class.bi-check-circle-fill]="validationResults.isValid"
+              [class.bi-x-circle-fill]="!validationResults.isValid"></i>
             Estado de Validación del Sistema
           </h4>
         </div>
         <div class="card-body">
           <div class="row">
             <div class="col-md-12">
-              <div class="alert" [class.alert-success]="validationResults.isValid" [class.alert-danger]="!validationResults.isValid">
+              <div class="alert" [class.alert-success]="validationResults.isValid"
+                [class.alert-danger]="!validationResults.isValid">
                 <h5>
                   {{ validationResults.isValid ? 'Sistema Válido' : 'Sistema Requiere Ajustes' }}
-                  <span class="badge ms-2" [class.bg-success]="validationResults.isValid" [class.bg-danger]="!validationResults.isValid">
+                  <span class="badge ms-2" [class.bg-success]="validationResults.isValid"
+                    [class.bg-danger]="!validationResults.isValid">
                     Puntuación: {{ validationResults.overallScore }}/100
                   </span>
                 </h5>
                 <p class="mb-0">
-                  {{ validationResults.isValid ? 
-                     'El diseño cumple con todos los criterios de validación técnica.' : 
-                     'El diseño presenta problemas que deben ser corregidos antes de la implementación.' }}
+                  {{ validationResults.isValid ?
+                  'El diseño cumple con todos los criterios de validación técnica.' :
+                  'El diseño presenta problemas que deben ser corregidos antes de la implementación.' }}
                 </p>
               </div>
             </div>
@@ -864,8 +995,10 @@
           <div class="row">
             <div class="col-md-4">
               <h6>Validación de Presión</h6>
-              <div class="validation-item" [class.text-success]="validationResults.pressureValidation.isValid" [class.text-danger]="!validationResults.pressureValidation.isValid">
-                <i class="bi" [class.bi-check-circle]="validationResults.pressureValidation.isValid" [class.bi-x-circle]="!validationResults.pressureValidation.isValid"></i>
+              <div class="validation-item" [class.text-success]="validationResults.pressureValidation.isValid"
+                [class.text-danger]="!validationResults.pressureValidation.isValid">
+                <i class="bi" [class.bi-check-circle]="validationResults.pressureValidation.isValid"
+                  [class.bi-x-circle]="!validationResults.pressureValidation.isValid"></i>
                 {{ validationResults.pressureValidation.isValid ? 'Válido' : 'Inválido' }}
               </div>
               <small class="text-muted">
@@ -876,8 +1009,10 @@
             </div>
             <div class="col-md-4">
               <h6>Validación de Flujo</h6>
-              <div class="validation-item" [class.text-success]="validationResults.flowValidation.isValid" [class.text-danger]="!validationResults.flowValidation.isValid">
-                <i class="bi" [class.bi-check-circle]="validationResults.flowValidation.isValid" [class.bi-x-circle]="!validationResults.flowValidation.isValid"></i>
+              <div class="validation-item" [class.text-success]="validationResults.flowValidation.isValid"
+                [class.text-danger]="!validationResults.flowValidation.isValid">
+                <i class="bi" [class.bi-check-circle]="validationResults.flowValidation.isValid"
+                  [class.bi-x-circle]="!validationResults.flowValidation.isValid"></i>
                 {{ validationResults.flowValidation.isValid ? 'Válido' : 'Inválido' }}
               </div>
               <small class="text-muted">
@@ -888,12 +1023,15 @@
             </div>
             <div class="col-md-4">
               <h6>Validación de Uniformidad</h6>
-              <div class="validation-item" [class.text-success]="validationResults.uniformityValidation.isValid" [class.text-danger]="!validationResults.uniformityValidation.isValid">
-                <i class="bi" [class.bi-check-circle]="validationResults.uniformityValidation.isValid" [class.bi-x-circle]="!validationResults.uniformityValidation.isValid"></i>
+              <div class="validation-item" [class.text-success]="validationResults.uniformityValidation.isValid"
+                [class.text-danger]="!validationResults.uniformityValidation.isValid">
+                <i class="bi" [class.bi-check-circle]="validationResults.uniformityValidation.isValid"
+                  [class.bi-x-circle]="!validationResults.uniformityValidation.isValid"></i>
                 {{ validationResults.uniformityValidation.isValid ? 'Válido' : 'Inválido' }}
               </div>
               <small class="text-muted">
-                Uniformidad alcanzada: {{ formatPercentage(validationResults.uniformityValidation.achievedUniformity) }}<br>
+                Uniformidad alcanzada: {{ formatPercentage(validationResults.uniformityValidation.achievedUniformity)
+                }}<br>
                 Objetivo: {{ formatPercentage(validationResults.uniformityValidation.targetUniformity) }}<br>
                 Grado: {{ validationResults.uniformityValidation.uniformityGrade }}
               </small>
@@ -904,7 +1042,8 @@
             <h6>Problemas Identificados</h6>
             <div class="alert alert-warning">
               <ul class="mb-0">
-                <li *ngFor="let issue of validationResults.issues" [class]="'text-' + (issue.severity === 'critical' ? 'danger' : issue.severity === 'warning' ? 'warning' : 'info')">
+                <li *ngFor="let issue of validationResults.issues"
+                  [class]="'text-' + (issue.severity === 'critical' ? 'danger' : issue.severity === 'warning' ? 'warning' : 'info')">
                   <strong>{{ issue.category }}:</strong> {{ issue.message }}
                   <small class="d-block" *ngIf="issue.recommendedAction">{{ issue.recommendedAction }}</small>
                 </li>
@@ -936,9 +1075,8 @@
                 <i class="bi bi-shield-check"></i>
                 Revalidar Sistema
               </button>
-              <button type="button" class="btn btn-primary" 
-                      [disabled]="!canPerformOptimization" 
-                      (click)="setActiveTab('optimization')">
+              <button type="button" class="btn btn-primary" [disabled]="!canPerformOptimization"
+                (click)="setActiveTab('optimization')">
                 <i class="bi bi-arrow-right"></i>
                 Continuar a Optimización
               </button>
@@ -951,7 +1089,7 @@
     <!-- Optimization Tab -->
     <div class="tab-pane" [class.show]="activeTab === 'optimization'" [class.active]="activeTab === 'optimization'">
       <form [formGroup]="optimizationForm" novalidate>
-        
+
         <!-- Optimization Goals -->
         <div class="card mb-4">
           <div class="card-header">
@@ -969,7 +1107,8 @@
               </div>
               <div class="col-md-6">
                 <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="maximizeUniformity" id="maximizeUniformity">
+                  <input class="form-check-input" type="checkbox" formControlName="maximizeUniformity"
+                    id="maximizeUniformity">
                   <label class="form-check-label" for="maximizeUniformity">
                     <i class="bi bi-graph-up"></i> Maximizar Uniformidad
                   </label>
@@ -979,7 +1118,8 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="maximizeEfficiency" id="maximizeEfficiency">
+                  <input class="form-check-input" type="checkbox" formControlName="maximizeEfficiency"
+                    id="maximizeEfficiency">
                   <label class="form-check-label" for="maximizeEfficiency">
                     <i class="bi bi-speedometer2"></i> Maximizar Eficiencia
                   </label>
@@ -987,7 +1127,8 @@
               </div>
               <div class="col-md-6">
                 <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="minimizeEnergyConsumption" id="minimizeEnergyConsumption">
+                  <input class="form-check-input" type="checkbox" formControlName="minimizeEnergyConsumption"
+                    id="minimizeEnergyConsumption">
                   <label class="form-check-label" for="minimizeEnergyConsumption">
                     <i class="bi bi-lightning"></i> Minimizar Consumo Energético
                   </label>
@@ -997,7 +1138,8 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="minimizeWaterUsage" id="minimizeWaterUsage">
+                  <input class="form-check-input" type="checkbox" formControlName="minimizeWaterUsage"
+                    id="minimizeWaterUsage">
                   <label class="form-check-label" for="minimizeWaterUsage">
                     <i class="bi bi-droplet"></i> Minimizar Uso de Agua
                   </label>
@@ -1035,7 +1177,8 @@
               <div class="col-md-3">
                 <div class="form-group mb-3">
                   <label class="form-label">Costo de Mantenimiento (%)</label>
-                  <input type="number" class="form-control" formControlName="maintenanceCostPercentage" min="0" max="20" step="0.5">
+                  <input type="number" class="form-control" formControlName="maintenanceCostPercentage" min="0" max="20"
+                    step="0.5">
                 </div>
               </div>
             </div>
@@ -1075,11 +1218,13 @@
               </div>
             </div>
 
-            <div class="row mt-4" *ngIf="optimizationResults.results?.convergenceHistory && optimizationResults.results.convergenceHistory.length > 0">
+            <div class="row mt-4"
+              *ngIf="optimizationResults.results?.convergenceHistory && optimizationResults.results.convergenceHistory.length > 0">
               <div class="col-12">
                 <h6>Pasos de Optimización Realizados</h6>
                 <div class="timeline">
-                  <div class="timeline-item" *ngFor="let step of optimizationResults.results?.convergenceHistory; let i = index">
+                  <div class="timeline-item"
+                    *ngFor="let step of optimizationResults.results?.convergenceHistory; let i = index">
                     <span class="timeline-badge bg-primary">{{ i + 1 }}</span>
                     <div class="timeline-content">
                       <h6>Iteración {{ step.iteration }}</h6>
@@ -1102,15 +1247,13 @@
                 Volver a Validación
               </button>
               <div>
-                <button type="button" class="btn btn-primary me-2" 
-                        [disabled]="!canPerformOptimization" 
-                        (click)="performOptimization()">
+                <button type="button" class="btn btn-primary me-2" [disabled]="!canPerformOptimization"
+                  (click)="performOptimization()">
                   <i class="bi bi-lightning"></i>
                   {{ optimizationResults ? 'Reoptimizar' : 'Optimizar' }} Diseño
                 </button>
-                <button type="button" class="btn btn-success" 
-                        [disabled]="!optimizationResults" 
-                        (click)="setActiveTab('results')">
+                <button type="button" class="btn btn-success" [disabled]="!optimizationResults"
+                  (click)="setActiveTab('results')">
                   <i class="bi bi-arrow-right"></i>
                   Ver Resultados Finales
                 </button>
@@ -1123,7 +1266,7 @@
 
     <!-- Results Tab -->
     <div class="tab-pane" [class.show]="activeTab === 'results'" [class.active]="activeTab === 'results'">
-      
+
       <!-- Summary Dashboard -->
       <div class="row mb-4">
         <div class="col-12">
@@ -1135,8 +1278,9 @@
               <div class="row">
                 <div class="col-md-8">
                   <h5>{{ designForm.get('name')?.value || 'Diseño de Riego' }}</h5>
-                  <p class="text-muted">{{ designForm.get('description')?.value || 'Sistema de riego optimizado con datos IoT en tiempo real' }}</p>
-                  
+                  <p class="text-muted">{{ designForm.get('description')?.value || 'Sistema de riego optimizado con
+                    datos IoT en tiempo real' }}</p>
+
                   <div class="row mt-3">
                     <div class="col-md-6">
                       <strong>Área Total:</strong> {{ formatArea(designForm.get('totalArea')?.value || 0) }}<br>
@@ -1144,8 +1288,10 @@
                       <strong>Tipo de Emisor:</strong> {{ designForm.get('emitterType')?.value || 'N/A' }}
                     </div>
                     <div class="col-md-6">
-                      <strong>Presión de Operación:</strong> {{ formatPressure(hydraulicForm.get('operatingPressure')?.value || 0) }}<br>
-                      <strong>Caudal Total:</strong> {{ formatFlowRate(hydraulicForm.get('maxFlowRate')?.value || 0) }}<br>
+                      <strong>Presión de Operación:</strong> {{
+                      formatPressure(hydraulicForm.get('operatingPressure')?.value || 0) }}<br>
+                      <strong>Caudal Total:</strong> {{ formatFlowRate(hydraulicForm.get('maxFlowRate')?.value || 0)
+                      }}<br>
                       <strong>Material de Tubería:</strong> {{ designForm.get('pipelineMaterial')?.value || 'N/A' }}
                     </div>
                   </div>
@@ -1153,8 +1299,10 @@
                 <div class="col-md-4">
                   <div class="text-center">
                     <h6>Estado del Diseño</h6>
-                    <div class="status-badge" [class.bg-success]="validationResults?.isValid" [class.bg-warning]="!validationResults?.isValid">
-                      <i class="bi" [class.bi-check-circle-fill]="validationResults?.isValid" [class.bi-exclamation-triangle-fill]="!validationResults?.isValid"></i>
+                    <div class="status-badge" [class.bg-success]="validationResults?.isValid"
+                      [class.bg-warning]="!validationResults?.isValid">
+                      <i class="bi" [class.bi-check-circle-fill]="validationResults?.isValid"
+                        [class.bi-exclamation-triangle-fill]="!validationResults?.isValid"></i>
                       {{ validationResults?.isValid ? 'VALIDADO' : 'PENDIENTE' }}
                     </div>
                     <small class="text-muted d-block mt-2">
@@ -1196,7 +1344,8 @@
               <i class="bi bi-graph-down text-info fs-1"></i>
               <h5 class="card-title mt-2">Pérdida de Presión</h5>
               <h3 class="text-info">{{ formatPressure(totalPressureLoss) }}</h3>
-              <small class="text-muted">Máximo: {{ formatPressure((hydraulicForm.get('operatingPressure')?.value || 0) * 0.2) }}</small>
+              <small class="text-muted">Máximo: {{ formatPressure((hydraulicForm.get('operatingPressure')?.value || 0) *
+                0.2) }}</small>
             </div>
           </div>
         </div>
@@ -1224,32 +1373,42 @@
                 <div class="col-md-6">
                   <h6>Datos Ambientales Utilizados</h6>
                   <ul class="list-unstyled">
-                    <li><i class="bi bi-thermometer-half text-danger"></i> <strong>Temperatura:</strong> {{ formatTemperature(realTimeTemperature) }}</li>
-                    <li><i class="bi bi-moisture text-info"></i> <strong>Humedad:</strong> {{ formatPercentage(realTimeHumidity) }}</li>
-                    <li><i class="bi bi-speedometer2 text-warning"></i> <strong>Presión del Sistema:</strong> {{ formatPressure(realTimePressure) }}</li>
-                    <li><i class="bi bi-droplet text-primary"></i> <strong>Flujo Total:</strong> {{ formatFlowRate(realTimeFlowRate) }}</li>
+                    <li><i class="bi bi-thermometer-half text-danger"></i> <strong>Temperatura:</strong> {{
+                      formatTemperature(realTimeTemperature) }}</li>
+                    <li><i class="bi bi-moisture text-info"></i> <strong>Humedad:</strong> {{
+                      formatPercentage(realTimeHumidity) }}</li>
+                    <li><i class="bi bi-speedometer2 text-warning"></i> <strong>Presión del Sistema:</strong> {{
+                      formatPressure(realTimePressure) }}</li>
+                    <li><i class="bi bi-droplet text-primary"></i> <strong>Flujo Total:</strong> {{
+                      formatFlowRate(realTimeFlowRate) }}</li>
                   </ul>
                 </div>
                 <div class="col-md-6">
                   <h6>Calidad del Agua Monitoreada</h6>
                   <ul class="list-unstyled">
-                    <li><i class="bi bi-patch-check text-success"></i> <strong>pH del Suelo:</strong> {{ realTimeSoilPH.toFixed(2) }}</li>
-                    <li><i class="bi bi-activity text-info"></i> <strong>Estado del Sistema:</strong> {{ systemStatusText }}</li>
-                    <li><i class="bi bi-router text-warning"></i> <strong>Dispositivos Activos:</strong> {{ activeDevicesCount }}/{{ totalDevicesCount }}</li>
-                    <li><i class="bi bi-clock text-muted"></i> <strong>Última Actualización:</strong> {{ lastUpdateTime }}</li>
+                    <li><i class="bi bi-patch-check text-success"></i> <strong>pH del Suelo:</strong> {{
+                      realTimeSoilPH.toFixed(2) }}</li>
+                    <li><i class="bi bi-activity text-info"></i> <strong>Estado del Sistema:</strong> {{
+                      systemStatusText }}</li>
+                    <li><i class="bi bi-router text-warning"></i> <strong>Dispositivos Activos:</strong> {{
+                      activeDevicesCount }}/{{ totalDevicesCount }}</li>
+                    <li><i class="bi bi-clock text-muted"></i> <strong>Última Actualización:</strong> {{ lastUpdateTime
+                      }}</li>
                   </ul>
                 </div>
               </div>
-              
+
               <div class="alert alert-success mt-3" *ngIf="hasRealTimeData">
                 <i class="bi bi-check-circle"></i>
-                <strong>Conexión Activa:</strong> El diseño se ha optimizado utilizando datos en tiempo real de {{ activeDevicesCount }} sensores IoT activos.
+                <strong>Conexión Activa:</strong> El diseño se ha optimizado utilizando datos en tiempo real de {{
+                activeDevicesCount }} sensores IoT activos.
                 Los parámetros se actualizan automáticamente cada 30 segundos para mantener la precisión del diseño.
               </div>
-              
+
               <div class="alert alert-warning mt-3" *ngIf="!hasRealTimeData">
                 <i class="bi bi-exclamation-triangle"></i>
-                <strong>Sin Conexión IoT:</strong> El diseño utiliza valores por defecto. Conecte los sensores IoT para obtener 
+                <strong>Sin Conexión IoT:</strong> El diseño utiliza valores por defecto. Conecte los sensores IoT para
+                obtener
                 datos en tiempo real y mejorar la precisión del diseño.
               </div>
             </div>

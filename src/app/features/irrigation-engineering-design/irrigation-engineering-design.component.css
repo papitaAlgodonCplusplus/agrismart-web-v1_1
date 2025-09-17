@@ -844,3 +844,243 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* =============================================================================
+   DESIGN SELECTION TABLE
+   ============================================================================= */
+
+.design-selection-table {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.design-selection-table .table {
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+.design-selection-table .table th {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  color: #2c3e50;
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
+  padding: 1rem 0.75rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.design-selection-table .table td {
+  padding: 0.875rem 0.75rem;
+  vertical-align: middle;
+  border-top: 1px solid #e9ecef;
+}
+
+.design-selection-table .table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.design-selection-table .table tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.design-selection-table .table tbody tr.table-primary {
+  background-color: rgba(0, 123, 255, 0.1);
+  border-left: 4px solid #007bff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+}
+
+.design-selection-table .form-check-input {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #dee2e6;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.design-selection-table .form-check-input:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.design-selection-table .form-check-input:hover {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.15);
+}
+
+/* Status badges in table */
+.design-selection-table .badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 15px;
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+/* Action buttons in table */
+.design-selection-table .btn-group-sm .btn {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.design-selection-table .btn-group-sm .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* Design information layout */
+.design-info-primary {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
+}
+
+.design-info-secondary {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.design-metrics-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.design-metrics-inline .badge {
+  font-size: 0.65rem;
+  padding: 0.2rem 0.5rem;
+}
+
+/* Validation status indicators */
+.validation-indicators {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.validation-indicators .badge {
+  font-size: 0.6rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 10px;
+}
+
+/* Date formatting */
+.design-date {
+  font-size: 0.8rem;
+  color: #495057;
+  white-space: nowrap;
+}
+
+.design-version {
+  font-size: 0.7rem;
+  color: #6c757d;
+  background: #f8f9fa;
+  padding: 0.1rem 0.4rem;
+  border-radius: 8px;
+  margin-top: 0.25rem;
+  display: inline-block;
+}
+
+/* Table responsive enhancements */
+@media (max-width: 1200px) {
+  .design-selection-table .table {
+    font-size: 0.8rem;
+  }
+  
+  .design-selection-table .table th,
+  .design-selection-table .table td {
+    padding: 0.6rem 0.5rem;
+  }
+  
+  .design-selection-table .btn-group-sm .btn {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+  }
+  
+  .design-selection-table .badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .design-selection-table {
+    margin: 0 -0.5rem;
+  }
+  
+  .design-selection-table .table {
+    font-size: 0.75rem;
+  }
+  
+  .design-selection-table .table th,
+  .design-selection-table .table td {
+    padding: 0.5rem 0.25rem;
+  }
+}
+
+/* =============================================================================
+   DESIGN CARDS (Saved Designs) - LEGACY
+   ============================================================================= */
+
+.design-card {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.design-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.design-card.border-primary {
+  border-color: #007bff !important;
+  border-width: 3px !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.1);
+}
+
+.design-card .card-header {
+  background: linear-gradient(135deg, #f8f9fa, #ffffff);
+  border-bottom: 1px solid #e9ecef;
+}
+
+.design-card .card-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 0.75rem 1rem;
+}
+
+.design-card .btn-group .btn {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+}
+
+.quick-stats {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.stat-item {
+  text-align: center;
+  flex: 1;
+}
+
+.stat-item small {
+  display: block;
+  margin-bottom: 0.25rem;
+}

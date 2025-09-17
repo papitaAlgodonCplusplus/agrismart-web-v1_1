@@ -362,6 +362,27 @@ export class IrrigationEngineeringService {
   // AUTHENTICATION HEADERS - CRITICAL FIX
   // =============================================================================
 
+
+  getAll(): Observable<any> {
+    const url = `${this.apiConfig.agronomicApiUrl}/api/IrrigationEngineeringDesign`;
+    const headers = this.getAuthHeaders(); // CRITICAL FIX: Add auth headers
+
+    return this.http.get<BackendResponse<IrrigationDesign>>(url, { headers })
+      .pipe(
+        map(response => {
+          console.log('createDesign response:', response);
+          if (response) {
+            return response;
+          }
+          throw new Error(`createDesign failed: ${response}`);
+        }),
+        catchError(error => {
+          console.error('IrrigationEngineeringService.createDesign error:', error);
+          return this.handleError(error);
+        })
+      );
+  }
+
   /**
    * Get authentication headers - ADDED TO FIX 401 ERROR
    */
