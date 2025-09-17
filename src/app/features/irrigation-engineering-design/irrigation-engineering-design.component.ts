@@ -132,20 +132,6 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.irrigationEngineeringService.createDesign([])
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (result) => {
-          this.successMessage = 'Diseño guardado exitosamente';
-          console.log('✅ Design saved successfully:', result);
-          this.cdr.detectChanges();
-        },
-        error: (error) => {
-          console.error('❌ Error saving design:', error);
-          this.errorMessage = 'Error guardando el diseño';
-        }
-      });
-
     this.initializeForms();
     this.loadInitialData();
     this.setupRealTimeUpdates();

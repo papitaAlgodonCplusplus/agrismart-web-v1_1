@@ -402,175 +402,25 @@ export class IrrigationEngineeringService {
   // DESIGN PERSISTENCE - FIXED WITH AUTHENTICATION
   // =============================================================================
 
-  createDesign(designPayload: any): Observable<IrrigationDesign> {
-  const url = `${this.apiConfig.agronomicApiUrl}/api/IrrigationEngineeringDesign`;
-  const headers = this.getAuthHeaders();
+  createDesign(design: any): Observable<IrrigationDesign> {
+    const url = `${this.apiConfig.agronomicApiUrl}/api/IrrigationEngineeringDesign`;
+    const headers = this.getAuthHeaders(); // CRITICAL FIX: Add auth headers
 
-  console.log('📡 Sending to API:', url);
-  
-  // DATABASE-SAFE STRUCTURE: Use valid foreign key values instead of null
-  const databaseSafePayload = {
-    // Required basic fields
-    name: "Test Design Database Safe",
-    description: "Database-safe irrigation system design",
-    designType: "irrigation",
-    status: "draft", 
-    version: "1.0",
-    
-    // CRITICAL: Use valid foreign key IDs instead of null
-    // These were likely causing the database constraint violations
-    cropProductionId: 8,  // Use a valid crop production ID from your form
-    farmId: 7,           // Use a valid farm ID from your form  
-    clientId: 1,         // Keep as 1
-    
-    // Validation fields (these are now working)
-    totalArea: 300,
-    mainPipeDiameter: 65,
-    secondaryPipeDiameter: 50,  
-    lateralPipeDiameter: 35,
-    
-    // Other required fields
-    numberOfSectors: 1,
-    containerDensity: 0,
-    plantDensity: 2.5,
-    dailyWaterRequirement: 200,
-    irrigationFrequency: 2,
-    
-    // Component IDs - try with null first, then valid IDs if needed
-    containerId: null,
-    dropperId: null, 
-    growingMediumId: null,
-    
-    // Climate data
-    averageTemperature: 28,
-    averageHumidity: 80,
-    windSpeed: 6,
-    solarRadiation: 8,
-    elevation: 200,
-    
-    // Water source
-    waterSourceType: "well",
-    waterPressure: 3.5,
-    waterFlowRate: 200,
-    
-    // Water quality
-    waterPh: 7.2,
-    electricalConductivity: 1.8,
-    totalDissolvedSolids: 450,
-    nitrates: 12,
-    phosphorus: 6,
-    potassium: 18,
-    calcium: 8,
-    magnesium: 4,
-    sulfur: 3,
-    iron: 2,
-    manganese: 1,
-    zinc: 1,
-    copper: 1,
-    boron: 1,
-    
-    // Pipeline materials
-    mainPipeMaterial: "PE",
-    secondaryPipeMaterial: "PE",
-    lateralPipeMaterial: "PE",
-    
-    // Pipeline lengths
-    mainPipeLength: 150,
-    secondaryPipeLength: 100,
-    lateralPipeLength: 75,
-    
-    // System components
-    hasFiltration: false,  // Simplified to reduce complexity
-    hasAutomation: false,
-    hasFertigation: false,
-    hasFlowMeter: false,
-    hasPressureRegulator: false,
-    hasBackflowPrevention: false,
-    
-    // System types - all undefined to avoid conflicts
-    filtrationSystemType: undefined,
-    automationSystemType: undefined,
-    fertigationSystemType: undefined,
-    
-    // Soil parameters
-    soilType: "clay",
-    soilInfiltrationRate: 8,
-    soilWaterHoldingCapacity: 300,
-    slopePercentage: 1,
-    drainageClass: "moderate",
-    
-    // Metadata
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    createdBy: 1,
-    updatedBy: 1,
-    
-    // Tags as JSON string
-    tags: "[]",
-    
-    // Flags
-    isTemplate: false,
-    isPublic: false,
-    isActive: true,
-    requiresRecalculation: false,  // Set to false to avoid triggering calculations
-    
-    // Design standards
-    designStandards: ["ISO 9261"],  // Simplified
-    
-    // JSON properties as empty objects
-    componentSpecificationsJson: "{}",
-    installationInstructionsJson: "{}",
-    maintenanceScheduleJson: "{}",
-    operationScheduleJson: "{}",
-    materialListJson: "{}"
-  };
-
-  console.log('💾 DATABASE-SAFE Structure:', {
-    structure: 'CreateIrrigationEngineeringDesignDto with valid FKs',
-    name: databaseSafePayload.name,
-    cropProductionId: databaseSafePayload.cropProductionId,
-    farmId: databaseSafePayload.farmId,
-    clientId: databaseSafePayload.clientId,
-    totalArea: databaseSafePayload.totalArea,
-    mainPipeDiameter: databaseSafePayload.mainPipeDiameter,
-    hasNullForeignKeys: 'NO - using valid IDs',
-    simplified: 'Removed complex features to focus on basic save'
-  });
-
-  return this.http.post<BackendResponse<IrrigationDesign>>(url, databaseSafePayload, { headers })
-    .pipe(
-      map(response => {
-        console.log('🎉 DATABASE SUCCESS! Design created:', response);
-        if (response.success) {
-          return response.result;
-        }
-        throw new Error(`API Error: ${response.exception}`);
-      }),
-      catchError(error => {
-        console.error('💾 Database save failed:', error);
-        console.error('Database-safe payload:', databaseSafePayload);
-        
-        // Enhanced database error analysis
-        if (error.error?.exception) {
-          console.error('🔍 Database Exception Details:');
-          console.error('Exception:', error.error.exception);
-          
-          // Check for common database issues
-          if (error.error.exception.includes('foreign key')) {
-            console.error('💡 FOREIGN KEY ISSUE: Check if cropProductionId, farmId, clientId exist in database');
+    return this.http.post<BackendResponse<IrrigationDesign>>(url, design, { headers })
+      .pipe(
+        map(response => {
+          console.log('createDesign response:', response);
+          if (response.success) {
+            return response.result;
           }
-          if (error.error.exception.includes('null')) {
-            console.error('💡 NULL CONSTRAINT: Some required database field is null');
-          }
-          if (error.error.exception.includes('duplicate')) {
-            console.error('💡 DUPLICATE KEY: Name or unique field already exists');
-          }
-        }
-        
-        return this.handleError(error);
-      })
-    );
-}
+          throw new Error(`createDesign failed: ${response.exception}`);
+        }),
+        catchError(error => {
+          console.error('IrrigationEngineeringService.createDesign error:', error);
+          return this.handleError(error);
+        })
+      );
+  }
 
   /**
    * Save design (create or update)

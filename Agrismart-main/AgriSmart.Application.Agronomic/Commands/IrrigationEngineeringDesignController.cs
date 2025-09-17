@@ -124,9 +124,9 @@ namespace AgriSmart.Api.Agronomic.Controllers
                 };
 
                 var result = await _mediator.Send(query);
-                
+
                 _logger.LogInformation("Retrieved {Count} irrigation designs for page {Page}", result.Count, pageNumber);
-                
+
                 return Ok(Response<List<IrrigationEngineeringDesignDto>>.CreateSuccess(result));
             }
             catch (Exception ex)
@@ -152,10 +152,10 @@ namespace AgriSmart.Api.Agronomic.Controllers
         {
             try
             {
-                var query = new GetIrrigationEngineeringDesignByIdQuery 
-                { 
-                    Id = id, 
-                    IncludeInactive = includeInactive 
+                var query = new GetIrrigationEngineeringDesignByIdQuery
+                {
+                    Id = id,
+                    IncludeInactive = includeInactive
                 };
 
                 var result = await _mediator.Send(query);
@@ -167,7 +167,7 @@ namespace AgriSmart.Api.Agronomic.Controllers
                 }
 
                 _logger.LogInformation("Retrieved irrigation design {Id}: {Name}", id, result.Name);
-                
+
                 return Ok(Response<IrrigationEngineeringDesignDetailDto>.CreateSuccess(result));
             }
             catch (Exception ex)
@@ -205,9 +205,9 @@ namespace AgriSmart.Api.Agronomic.Controllers
                 };
 
                 var result = await _mediator.Send(query);
-                
+
                 _logger.LogInformation("Retrieved {Count} irrigation design templates", result.Count);
-                
+
                 return Ok(Response<List<IrrigationEngineeringDesignDto>>.CreateSuccess(result));
             }
             catch (Exception ex)
@@ -248,9 +248,9 @@ namespace AgriSmart.Api.Agronomic.Controllers
                 };
 
                 var result = await _mediator.Send(query);
-                
+
                 _logger.LogInformation("Retrieved irrigation design summary for client {ClientId}", clientId);
-                
+
                 return Ok(Response<IrrigationDesignSummaryDto>.CreateSuccess(result));
             }
             catch (Exception ex)
@@ -295,13 +295,13 @@ namespace AgriSmart.Api.Agronomic.Controllers
                 command.CreatedBy = userId;
 
                 var result = await _mediator.Send(command);
-                
-                _logger.LogInformation("Created irrigation design {Id}: {Name} by user {UserId}", 
+
+                _logger.LogInformation("Created irrigation design {Id}: {Name} by user {UserId}",
                     result.Id, result.Name, userId);
-                
+
                 return CreatedAtAction(
-                    nameof(GetDesignById), 
-                    new { id = result.Id }, 
+                    nameof(GetDesignById),
+                    new { id = result.Id },
                     Response<IrrigationEngineeringDesignDto>.CreateSuccess(result));
             }
             catch (ArgumentException ex)
@@ -312,7 +312,10 @@ namespace AgriSmart.Api.Agronomic.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating irrigation design");
-                return BadRequest(Response<object>.CreateError($"Error creating design: {ex.Message}"));
+                var errorMsg = ex.InnerException != null
+                    ? $"Error creating design: {ex.Message} | Inner: {ex.InnerException.Message}"
+                    : $"Error creating design: {ex.Message}";
+                return BadRequest(Response<object>.CreateError(errorMsg));
             }
         }
 
@@ -352,10 +355,10 @@ namespace AgriSmart.Api.Agronomic.Controllers
                 };
 
                 var result = await _mediator.Send(command);
-                
-                _logger.LogInformation("Calculated irrigation design {Id} by user {UserId}. Success: {Success}", 
+
+                _logger.LogInformation("Calculated irrigation design {Id} by user {UserId}. Success: {Success}",
                     id, userId, result.Success);
-                
+
                 return Ok(Response<IrrigationDesignCalculationResultDto>.CreateSuccess(result));
             }
             catch (ArgumentException ex)
@@ -411,10 +414,10 @@ namespace AgriSmart.Api.Agronomic.Controllers
                 command.UpdatedBy = userId;
 
                 var result = await _mediator.Send(command);
-                
-                _logger.LogInformation("Updated irrigation design {Id}: {Name} by user {UserId}", 
+
+                _logger.LogInformation("Updated irrigation design {Id}: {Name} by user {UserId}",
                     result.Id, result.Name, userId);
-                
+
                 return Ok(Response<IrrigationEngineeringDesignDto>.CreateSuccess(result));
             }
             catch (ArgumentException ex)
@@ -465,9 +468,9 @@ namespace AgriSmart.Api.Agronomic.Controllers
                 }
 
                 var userId = GetCurrentUserId();
-                _logger.LogInformation("Deleted irrigation design {Id} by user {UserId}. Hard delete: {HardDelete}", 
+                _logger.LogInformation("Deleted irrigation design {Id} by user {UserId}. Hard delete: {HardDelete}",
                     id, userId, hardDelete);
-                
+
                 return Ok(Response<bool>.CreateSuccess(result));
             }
             catch (Exception ex)
@@ -514,13 +517,13 @@ namespace AgriSmart.Api.Agronomic.Controllers
                         // Get the current design to update only the status
                         var query = new GetIrrigationEngineeringDesignByIdQuery { Id = id };
                         var design = await _mediator.Send(query);
-                        
+
                         if (design != null)
                         {
                             var updateCommand = _mapper.Map<UpdateIrrigationEngineeringDesignCommand>(design);
                             updateCommand.Status = status;
                             updateCommand.UpdatedBy = userId;
-                            
+
                             await _mediator.Send(updateCommand);
                             updatedCount++;
                         }
@@ -530,10 +533,10 @@ namespace AgriSmart.Api.Agronomic.Controllers
                         _logger.LogWarning(ex, "Failed to update status for design {Id}", id);
                     }
                 }
-                
-                _logger.LogInformation("Bulk updated status to {Status} for {Count}/{Total} designs by user {UserId}", 
+
+                _logger.LogInformation("Bulk updated status to {Status} for {Count}/{Total} designs by user {UserId}",
                     status, updatedCount, ids.Count, userId);
-                
+
                 return Ok(Response<int>.CreateSuccess(updatedCount));
             }
             catch (Exception ex)
@@ -575,7 +578,7 @@ namespace AgriSmart.Api.Agronomic.Controllers
                             RunOptimization = false,
                             RequestedBy = userId
                         };
-                        
+
                         await _mediator.Send(command);
                         triggeredCount++;
                     }
@@ -584,10 +587,10 @@ namespace AgriSmart.Api.Agronomic.Controllers
                         _logger.LogWarning(ex, "Failed to trigger recalculation for design {Id}", id);
                     }
                 }
-                
-                _logger.LogInformation("Bulk triggered recalculation for {Count}/{Total} designs by user {UserId}", 
+
+                _logger.LogInformation("Bulk triggered recalculation for {Count}/{Total} designs by user {UserId}",
                     triggeredCount, ids.Count, userId);
-                
+
                 return Ok(Response<int>.CreateSuccess(triggeredCount));
             }
             catch (Exception ex)
@@ -607,8 +610,8 @@ namespace AgriSmart.Api.Agronomic.Controllers
         /// <returns>User ID or 0 if not found</returns>
         private int GetCurrentUserId()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                             ?? User.FindFirst("sub")?.Value 
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                             ?? User.FindFirst("sub")?.Value
                              ?? User.FindFirst("id")?.Value
                              ?? User.FindFirst("userId")?.Value;
 
