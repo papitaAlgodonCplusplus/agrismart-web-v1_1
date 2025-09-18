@@ -302,7 +302,6 @@ export class FertilizerService {
           });
         }
 
-        console.log("from service fertilizers ", fertilizers)
         return fertilizers || []; // Return empty array as fallback
       }),
       catchError(error => {

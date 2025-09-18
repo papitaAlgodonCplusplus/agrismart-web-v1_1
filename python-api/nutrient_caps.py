@@ -255,50 +255,54 @@ class NutrientCaps:
         
         return result
 
-    def _validate_nutrient_ratios(self, concentrations: Dict[str, float]) -> list:
-        """Validate critical nutrient ratios"""
+    def _validate_nutrient_ratios(self, concentrations):
+        """
+        Validate nutrient ratios with comprehensive zero-division protection.
+        """
         ratio_warnings = []
         
-        # K:Ca ratio
-        if 'K' in concentrations and 'Ca' in concentrations:
-            k_ca_ratio = concentrations['K'] / concentrations['Ca']
-            expected = self.critical_ratios['K_Ca']
-            if not (expected['min'] <= k_ca_ratio <= expected['max']):
+        # Helper function to safely calculate ratios
+        def safe_ratio(numerator_key, denominator_key, optimal_min, optimal_max, ratio_name):
+            num_val = concentrations.get(numerator_key, 0)
+            den_val = concentrations.get(denominator_key, 0)
+            
+            if num_val == 0 and den_val == 0:
+                return  # Both are zero, skip this ratio
+            elif den_val == 0:
                 ratio_warnings.append({
-                    'nutrient': 'K:Ca Ratio',
-                    'value': k_ca_ratio,
-                    'expected_range': f"{expected['min']}-{expected['max']}",
-                    'severity': 'MEDIUM',
-                    'notes': f'Current: {k_ca_ratio:.2f}, Optimal: {expected["optimal"]}'
+                    'nutrient_pair': ratio_name,
+                    'current_ratio': f'undefined ({denominator_key} = 0)',
+                    'optimal_range': f'{optimal_min}:1 to {optimal_max}:1',
+                    'severity': 'critical',
+                    'message': f'{denominator_key} concentration is zero, {ratio_name} ratio cannot be calculated'
                 })
+            elif num_val == 0:
+                ratio_warnings.append({
+                    'nutrient_pair': ratio_name,
+                    'current_ratio': f'0 ({numerator_key} = 0)',
+                    'optimal_range': f'{optimal_min}:1 to {optimal_max}:1',
+                    'severity': 'warning',
+                    'message': f'{numerator_key} concentration is zero'
+                })
+            else:
+                ratio = num_val / den_val
+                if ratio < optimal_min or ratio > optimal_max:
+                    severity = 'warning' if (optimal_min * 0.75) < ratio < (optimal_max * 1.25) else 'critical'
+                    ratio_warnings.append({
+                        'nutrient_pair': ratio_name,
+                        'current_ratio': round(ratio, 3),
+                        'optimal_range': f'{optimal_min}:1 to {optimal_max}:1',
+                        'severity': severity
+                    })
         
-        # Ca:Mg ratio
-        if 'Ca' in concentrations and 'Mg' in concentrations:
-            ca_mg_ratio = concentrations['Ca'] / concentrations['Mg']
-            expected = self.critical_ratios['Ca_Mg']
-            if not (expected['min'] <= ca_mg_ratio <= expected['max']):
-                ratio_warnings.append({
-                    'nutrient': 'Ca:Mg Ratio',
-                    'value': ca_mg_ratio,
-                    'expected_range': f"{expected['min']}-{expected['max']}",
-                    'severity': 'MEDIUM',
-                    'notes': f'Current: {ca_mg_ratio:.2f}, Optimal: {expected["optimal"]}'
-                })
-        
-        # N:K ratio
-        if 'N' in concentrations and 'K' in concentrations:
-            n_k_ratio = concentrations['N'] / concentrations['K']
-            expected = self.critical_ratios['N_K']
-            if not (expected['min'] <= n_k_ratio <= expected['max']):
-                ratio_warnings.append({
-                    'nutrient': 'N:K Ratio',
-                    'value': n_k_ratio,
-                    'expected_range': f"{expected['min']}-{expected['max']}",
-                    'severity': 'MEDIUM',
-                    'notes': f'Current: {n_k_ratio:.2f}, Optimal: {expected["optimal"]}'
-                })
+        # Validate all important ratios
+        safe_ratio('Ca', 'Mg', 2.0, 5.0, 'Ca:Mg')
+        safe_ratio('K', 'Ca', 0.8, 1.5, 'K:Ca')  
+        safe_ratio('N', 'K', 1.0, 1.5, 'N:K')
         
         return ratio_warnings
+
+
 
     def _generate_adjustment_summary(self, adjustments: list, warnings: list) -> Dict[str, Any]:
         """Generate a summary of all adjustments and warnings"""

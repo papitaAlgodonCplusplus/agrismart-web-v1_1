@@ -1,497 +1,323 @@
-<!-- src/app/features/dashboard/shiny/shiny-dashboard.component.html -->
-<div class="shiny-dashboard">
-  <!-- Loading Overlay -->
-  <div *ngIf="isLoading" class="loading-overlay">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Cargando...</span>
-    </div>
-    <p class="mt-2">{{ loadingMessage }}</p>
-  </div>
-
-  <!-- Error Alert -->
-  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
-    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-    {{ errorMessage }}
-    <button type="button" class="btn-close" (click)="errorMessage = null"></button>
-    <div class="mt-2" *ngIf="errorMessage">
-      <button type="button" class="btn btn-sm btn-outline-danger" (click)="retry()">
-        <i class="bi bi-arrow-clockwise me-1"></i>
-        Reintentar
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Irrigation System Dashboard</h1>
+    <div class="header-controls">
+      <button class="chart-toggle-btn" (click)="toggleCharts()">
+        {{ showCharts ? 'Hide Charts' : 'Show Charts' }}
+      </button>
+      <button class="refresh-btn" (click)="refreshData()" [disabled]="isLoading">
+        {{ isLoading ? 'Loading...' : 'Refresh Data' }}
       </button>
     </div>
   </div>
 
-  <!-- Dashboard Header -->
-  <div class="dashboard-header mb-4">
-    <div class="row align-items-center">
-      <div class="col-md-8">
-        <h1 class="dashboard-title">
-          <i class="bi bi-graph-up me-3"></i>
-          Dashboard IoT - AgriSmart
-        </h1>
-        <p class="mb-0">Panel de monitoreo en tiempo real con integración IoT</p>
+  <!-- System Overview -->
+  <div *ngIf="!isLoading && !error" class="system-overview">
+    <div class="overview-card">
+      <h3>Flow Meters</h3>
+      <div class="status-summary">
+        <span class="status-item online">{{ getDeviceTypeSummary(flowDevices).online }} Online</span>
+        <span class="status-item warning">{{ getDeviceTypeSummary(flowDevices).warning }} Warning</span>
+        <span class="status-item offline">{{ getDeviceTypeSummary(flowDevices).offline }} Offline</span>
       </div>
-      <div class="col-md-4">
-        <div class="header-info">
-          <small class="d-block text-light opacity-75">Última actualización</small>
-          <strong>{{ lastUpdateFormatted }}</strong>
-          <div class="mt-1">
-            <button class="btn btn-sm btn-light btn-outline-primary" (click)="refreshData()">
-              <i class="bi bi-arrow-clockwise me-1"></i>
-              Actualizar
-            </button>
-          </div>
-        </div>
+    </div>
+    <div class="overview-card">
+      <h3>Soil Sensors</h3>
+      <div class="status-summary">
+        <span class="status-item online">{{ getDeviceTypeSummary(soilDevices).online }} Online</span>
+        <span class="status-item warning">{{ getDeviceTypeSummary(soilDevices).warning }} Warning</span>
+        <span class="status-item offline">{{ getDeviceTypeSummary(soilDevices).offline }} Offline</span>
+      </div>
+    </div>
+    <div class="overview-card">
+      <h3>Climate Stations</h3>
+      <div class="status-summary">
+        <span class="status-item online">{{ getDeviceTypeSummary(climateDevices).online }} Online</span>
+        <span class="status-item warning">{{ getDeviceTypeSummary(climateDevices).warning }} Warning</span>
+        <span class="status-item offline">{{ getDeviceTypeSummary(climateDevices).offline }} Offline</span>
+      </div>
+    </div>
+    <div class="overview-card">
+      <h3>Pressure Sensors</h3>
+      <div class="status-summary">
+        <span class="status-item online">{{ getDeviceTypeSummary(pressureDevices).online }} Online</span>
+        <span class="status-item warning">{{ getDeviceTypeSummary(pressureDevices).warning }} Warning</span>
+        <span class="status-item offline">{{ getDeviceTypeSummary(pressureDevices).offline }} Offline</span>
       </div>
     </div>
   </div>
 
-  <!-- Scope Selection -->
-  <div class="scope-section mb-4">
-    <div class="card">
-      <div class="card-header text-white">
-        <h6 class="card-title mb-0">
-          <i class="bi bi-funnel me-2"></i>
-          Selección de Ámbito
-        </h6>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <!-- Farm Selection -->
-          <div class="col-md-3 mb-3">
-            <label for="farmSelect" class="form-label">Finca</label>
-            <select id="farmSelect" class="form-select" [(ngModel)]="selectedFarm" (change)="onFarmChange()">
-              <option [value]="null">Seleccione una finca</option>
-              <option *ngFor="let farm of farms" [value]="farm.id">
-                {{ farm.name }}
-              </option>
-            </select>
-            <div class="form-text">{{ selectedFarmName }}</div>
-          </div>
-
-          <!-- Production Unit Selection -->
-          <div class="col-md-3 mb-3">
-            <label for="productionUnitSelect" class="form-label">Unidad de Producción</label>
-            <select id="productionUnitSelect" class="form-select" 
-                    [(ngModel)]="selectedProductionUnit" 
-                    (change)="onProductionUnitChange()"
-                    [disabled]="!selectedFarm">
-              <option [value]="null">Seleccione una unidad</option>
-              <option *ngFor="let unit of productionUnits" [value]="unit.id">
-                {{ unit.name || 'Unidad sin nombre' }}
-              </option>
-            </select>
-            <div class="form-text">{{ selectedProductionUnitName }}</div>
-          </div>
-
-          <!-- Crop Production Selection -->
-          <div class="col-md-3 mb-3">
-            <label for="cropProductionSelect" class="form-label">Cultivo</label>
-            <select id="cropProductionSelect" class="form-select" 
-                    [(ngModel)]="selectedCropProduction" 
-                    (change)="onCropProductionChange()"
-                    [disabled]="!selectedProductionUnit">
-              <option [value]="null">Seleccione un cultivo</option>
-              <option *ngFor="let crop of cropProductions" [value]="crop.id">
-                {{ crop.name || 'Cultivo sin nombre' }}
-              </option>
-            </select>
-            <div class="form-text">{{ selectedCropProductionName }}</div>
-          </div>
-
-          <!-- System Status Summary -->
-          <div class="col-md-3 mb-3">
-            <div class="summary-stats">
-              <div class="text-center">
-                <h6 class="text-muted mb-2">Estado del Sistema</h6>
-                <div class="row text-center">
-                  <div class="col-6">
-                    <div class="summary-stat">
-                      <span class="summary-number text-primary">{{ dashboardSummary?.activeDevices || 0 }}</span>
-                      <small class="text-muted d-block">Dispositivos Activos</small>
-                    </div>
-                  </div>
-                  <div class="col-6">
-                    <div class="summary-stat">
-                      <span class="summary-number text-secondary">{{ dashboardSummary?.totalDevices || 0 }}</span>
-                      <small class="text-muted d-block">Total Dispositivos</small>
-                    </div>
-                  </div>
-                </div>
-                <div class="mt-2">
-                  <span class="badge" [ngClass]="getSystemStatusClass()">
-                    {{ dashboardSummary?.systemStatus || 'Desconocido' }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading device data...</p>
   </div>
 
-  <!-- Main Content - Only show if crop production is selected -->
-  <div *ngIf="selectedCropProduction">
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="error-state">
+    <p class="error-message">{{ error }}</p>
+    <button class="retry-btn" (click)="refreshData()">Retry</button>
+  </div>
+
+  <!-- Charts Section -->
+  <div *ngIf="showCharts && !isLoading && !error" class="charts-section">
+    <div class="charts-header">
+      <h2>Historical Data Charts</h2>
+      <div class="chart-type-selector">
+        <button 
+          *ngFor="let type of getAvailableChartTypes()" 
+          [class]="'chart-type-btn ' + (selectedChartType === type ? 'active' : '')"
+          (click)="selectChartType(type)">
+          {{ getChartTypeLabel(type) }}
+        </button>
+      </div>
+    </div>
     
-    <!-- System Alerts -->
-    <div *ngIf="hasActiveAlerts" class="alert alert-warning mb-4" role="alert">
-      <div class="d-flex align-items-center">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <div class="flex-grow-1">
-          <strong>Alertas Activas del Sistema</strong>
-          <span class="ms-2">
-            <span *ngIf="criticalAlertsCount > 0" class="badge bg-danger me-1">
-              {{ criticalAlertsCount }} Críticas
-            </span>
-            <span *ngIf="highAlertsCount > 0" class="badge bg-warning">
-              {{ highAlertsCount }} Importantes
-            </span>
-          </span>
+    <div class="charts-grid">
+      <div *ngFor="let chartType of getChartsForType(selectedChartType)" class="chart-container">
+        <div class="chart-header">
+          <h3>{{ chartType }} {{ getSensorUnit(chartType) ? '(' + getSensorUnit(chartType) + ')' : '' }}</h3>
         </div>
-      </div>
-    </div>
-
-    <!-- Real-time Climate Data -->
-    <div class="row mb-4">
-      <!-- Temperature Gauge -->
-      <div class="col-lg-3 mb-3">
-        <div class="card climate-card">
-          <div class="card-header text-center">
-            <h6 class="card-title mb-0">
-              <i class="bi bi-thermometer-half me-2" 
-                 [ngClass]="{'text-danger': getTemperatureStatus() === 'high', 
-                            'text-primary': getTemperatureStatus() === 'low',
-                            'text-success': getTemperatureStatus() === 'normal'}"></i>
-              Temperatura
-            </h6>
-          </div>
-          <div class="card-body text-center">
-            <div class="gauge-container">
-              <canvas #temperatureGauge width="150" height="150"></canvas>
-              <div class="gauge-value">
-                <span class="gauge-number">{{ getClimateValue('temperature') | number:'1.0-1' }}</span>
-                <span class="gauge-unit">°C</span>
-              </div>
-            </div>
-            <div class="mt-2">
-              <small class="text-muted">Estado: 
-                <span [ngClass]="{'text-danger': getTemperatureStatus() === 'high', 
-                                 'text-primary': getTemperatureStatus() === 'low',
-                                 'text-success': getTemperatureStatus() === 'normal'}">
-                  {{ getTemperatureStatus() === 'high' ? 'Alto' : 
-                     getTemperatureStatus() === 'low' ? 'Bajo' : 'Normal' }}
-                </span>
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Humidity -->
-      <div class="col-lg-3 mb-3">
-        <div class="card climate-card">
-          <div class="card-header text-center">
-            <h6 class="card-title mb-0">
-              <i class="bi bi-droplet-fill me-2"
-                 [ngClass]="{'text-danger': getHumidityStatus() === 'high', 
-                            'text-warning': getHumidityStatus() === 'low',
-                            'text-primary': getHumidityStatus() === 'normal'}"></i>
-              Humedad
-            </h6>
-          </div>
-          <div class="card-body text-center">
-            <div class="climate-value-large">
-              <span class="climate-number">{{ getClimateValue('humidity') | number:'1.0-0' }}</span>
-              <span class="climate-unit">%</span>
-            </div>
-            <div class="mt-2">
-              <div class="progress" style="height: 6px;">
-                <div class="progress-bar" 
-                     [ngClass]="{'bg-danger': getHumidityStatus() === 'high', 
-                                'bg-warning': getHumidityStatus() === 'low',
-                                'bg-primary': getHumidityStatus() === 'normal'}"
-                     [style.width.%]="getClimateValue('humidity') || 0"
-                     role="progressbar"></div>
-              </div>
-              <small class="text-muted d-block mt-1">Estado: 
-                <span [ngClass]="{'text-danger': getHumidityStatus() === 'high', 
-                                 'text-warning': getHumidityStatus() === 'low',
-                                 'text-primary': getHumidityStatus() === 'normal'}">
-                  {{ getHumidityStatus() === 'high' ? 'Alto' : 
-                     getHumidityStatus() === 'low' ? 'Bajo' : 'Normal' }}
-                </span>
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Wind Speed & Direction -->
-      <div class="col-lg-3 mb-3">
-        <div class="card climate-card">
-          <div class="card-header text-center">
-            <h6 class="card-title mb-0">
-              <i class="bi bi-wind text-info me-2"></i>
-              Viento
-            </h6>
-          </div>
-          <div class="card-body text-center">
-            <div class="gauge-container">
-              <canvas #windSpeedGauge width="120" height="120"></canvas>
-              <div class="gauge-value">
-                <span class="gauge-number">{{ getClimateValue('windSpeed') | number:'1.0-1' }}</span>
-                <span class="gauge-unit">km/h</span>
-              </div>
-            </div>
-            <div class="mt-2">
-              <small class="text-muted">
-                Dirección: {{ getClimateValue('windDirection') | number:'1.0-0' }}°
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- System Summary -->
-      <div class="col-lg-3 mb-3">
-        <div class="card climate-card">
-          <div class="card-header text-center">
-            <h6 class="card-title mb-0">
-              <i class="bi bi-cpu me-2"></i>
-              Resumen del Sistema
-            </h6>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <small class="text-muted d-block">Estado Dispositivos</small>
-              <strong>{{ getDeviceStatusSummary() }}</strong>
-            </div>
-            <div class="mb-3">
-              <small class="text-muted d-block">Flujo Total</small>
-              <strong class="text-info">{{ getFlowSummary() }}</strong>
-            </div>
-            <div class="mb-2">
-              <small class="text-muted d-block">Suelo</small>
-              <strong class="text-success">{{ getSoilSummary() }}</strong>
-            </div>
-            <div class="mt-3 text-center">
-              <small class="text-muted">
-                <i class="bi bi-clock me-1"></i>
-                {{ lastUpdateFormatted }}
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Charts Section -->
-    <div class="row">
-      <!-- Main Multi-Variable Chart -->
-      <div class="col-xl-8 mb-4">
-        <div class="card">
-          <div class="card-header">
-            <div class="d-flex justify-content-between align-items-center">
-              <h6 class="card-title mb-0">
-                <i class="bi bi-graph-up me-2"></i>
-                Datos en Tiempo Real - Últimas 24 Horas
-              </h6>
-              <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-outline-primary" (click)="refreshData()">
-                  <i class="bi bi-arrow-clockwise"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="chart-container">
-              <canvas #mainChart></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Climate Trend Chart -->
-      <div class="col-xl-4 mb-4">
-        <div class="card">
-          <div class="card-header">
-            <h6 class="card-title mb-0">
-              <i class="bi bi-cloud-sun me-2"></i>
-              Tendencias Climáticas - 7 Días
-            </h6>
-          </div>
-          <div class="card-body">
-            <div class="chart-container" style="height: 300px;">
-              <canvas #climateChart></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Additional Monitoring Cards -->
-    <div class="row">
-      <!-- Pressure & Radiation -->
-      <div class="col-md-6 mb-4">
-        <div class="card">
-          <div class="card-header">
-            <h6 class="card-title mb-0">
-              <i class="bi bi-speedometer me-2"></i>
-              Condiciones Atmosféricas
-            </h6>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-6 text-center">
-                <h5 class="text-primary mb-1">{{ getClimateValue('pressure') | number:'1.0-0' }}</h5>
-                <small class="text-muted">hPa - Presión</small>
-              </div>
-              <div class="col-6 text-center">
-                <h5 class="text-warning mb-1">{{ getClimateValue('solarRadiation') | number:'1.0-1' }}</h5>
-                <small class="text-muted">W/m² - Radiación</small>
-              </div>
-            </div>
-            <hr>
-            <div class="text-center">
-              <h5 class="text-info mb-1">{{ getClimateValue('precipitation') | number:'1.0-1' }}</h5>
-              <small class="text-muted">mm - Precipitación</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- System Status Details -->
-      <div class="col-md-6 mb-4">
-        <div class="card">
-          <div class="card-header">
-            <h6 class="card-title mb-0">
-              <i class="bi bi-gear me-2"></i>
-              Estado Detallado del Sistema
-            </h6>
-          </div>
-          <div class="card-body">
-            <div *ngIf="dashboardSummary; else noSystemStatus">
-              <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center">
-                  <span>Estado General:</span>
-                  <span class="badge" [ngClass]="getSystemStatusClass()">
-                    {{ dashboardSummary.systemStatus }}
-                  </span>
-                </div>
-              </div>
-              
-              <div class="progress mb-3" style="height: 20px;">
-                <div class="progress-bar bg-success" 
-                     [style.width.%]="getDeviceProgressPercentage()"
-                     role="progressbar">
-                  {{ dashboardSummary.activeDevices }}/{{ dashboardSummary.totalDevices }} Activos
-                </div>
-              </div>
-
-              <div *ngIf="dashboardSummary.alerts && dashboardSummary.alerts.length > 0">
-                <small class="text-muted d-block mb-2">Alertas Recientes:</small>
-                <div *ngFor="let alert of getRecentAlerts()" 
-                     class="alert alert-sm p-2 mb-1"
-                     [ngClass]="getAlertClass(alert.severity)">
-                  <small>{{ alert.message }}</small>
-                </div>
-              </div>
-
-              <!-- Soil Data Display -->
-              <div *ngIf="dashboardSummary.soil && dashboardSummary.soil.length > 0" class="mt-3">
-                <small class="text-muted d-block mb-2">Sensores de Suelo:</small>
-                <div *ngFor="let soilReading of dashboardSummary.soil" class="mb-2">
-                  <div class="d-flex justify-content-between">
-                    <small>{{ getSoilDeviceName(soilReading.deviceId) }}</small>
-                    <div>
-                      <span *ngIf="soilReading.ph" class="badge bg-info me-1">pH: {{ soilReading.ph | number:'1.1-1' }}</span>
-                      <span *ngIf="soilReading.temperature" class="badge bg-warning">{{ soilReading.temperature | number:'1.0-0' }}°C</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Flow Data Display -->
-              <div *ngIf="dashboardSummary.flow && dashboardSummary.flow.length > 0" class="mt-3">
-                <small class="text-muted d-block mb-2">Flujo de Agua:</small>
-                <div *ngFor="let flowReading of dashboardSummary.flow" class="mb-2">
-                  <div class="d-flex justify-content-between">
-                    <small>{{ getFlowDeviceName(flowReading.deviceId) }}</small>
-                    <span class="badge bg-primary">{{ flowReading.waterFlowValue | number:'1.0-0' }} L</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <ng-template #noSystemStatus>
-              <div class="text-center text-muted">
-                <i class="bi bi-exclamation-circle mb-2 d-block fs-1"></i>
-                <p>No hay datos del sistema disponibles</p>
-              </div>
-            </ng-template>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Device Status Overview -->
-    <div class="row" *ngIf="dashboardSummary?.devices && dashboardSummary.devices.length > 0">
-      <div class="col-12 mb-4">
-        <div class="card">
-          <div class="card-header">
-            <h6 class="card-title mb-0">
-              <i class="bi bi-router me-2"></i>
-              Estado de Dispositivos IoT
-            </h6>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div *ngFor="let device of dashboardSummary.devices" class="col-md-4 col-lg-3 mb-3">
-                <div class="card border-0 bg-light">
-                  <div class="card-body p-3">
-                    <div class="d-flex align-items-center">
-                      <div class="me-3">
-                        <i class="bi" [ngClass]="getDeviceIcon(device.deviceId)"></i>
-                      </div>
-                      <div class="flex-grow-1">
-                        <h6 class="mb-1">{{ getDeviceDisplayName(device.deviceId) }}</h6>
-                        <small class="text-muted">{{ device.deviceId }}</small>
-                        <div class="mt-1">
-                          <span class="badge" [ngClass]="device.active ? 'bg-success' : 'bg-danger'">
-                            {{ device.active ? 'Activo' : 'Inactivo' }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- No Selection State -->
-  <div *ngIf="!selectedCropProduction && !isLoading" class="text-center mt-5">
-    <div class="card border-0 bg-light">
-      <div class="card-body py-5">
-        <i class="bi bi-graph-up text-muted mb-3 d-block" style="font-size: 4rem;"></i>
-        <h4 class="text-muted mb-3">Seleccione un Cultivo</h4>
-        <p class="text-muted">
-          Para visualizar los datos del dashboard, por favor seleccione una finca, 
-          unidad de producción y cultivo en el panel superior.
-        </p>
-        <div class="mt-4">
-          <span class="badge bg-primary me-2">{{ farms.length }} Fincas</span>
-          <span class="badge bg-info me-2">{{ productionUnits.length }} Unidades</span>
-          <span class="badge bg-success">{{ cropProductions.length }} Cultivos</span>
+        <div class="chart-content">
+          <canvas class="mini-chart" [id]="'chart-' + selectedChartType + '-' + chartType"></canvas>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading && !error" class="dashboard-content">
+    
+    <!-- Flow Meters Section -->
+    <div class="dashboard-section">
+      <h2>Flow Meters</h2>
+      <div class="devices-grid">
+        <div *ngFor="let device of flowDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
+          <div class="device-header">
+            <h3>{{ device.deviceId }}</h3>
+            <span class="status-indicator"></span>
+          </div>
+          <div class="device-content">
+            <div class="reading" *ngIf="hasNumericReading(device, 'Water_flow_value')">
+              <span class="label">Flow Value:</span>
+              <span class="value">{{ getReadingValue(device, 'Water_flow_value') }}</span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'MOD')">
+              <span class="label">Flow Rate:</span>
+              <span class="value">{{ getReadingValue(device, 'MOD') }}</span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'Total_pulse')">
+              <span class="label">Total Pulse:</span>
+              <span class="value">{{ getReadingValue(device, 'Total_pulse') }}</span>
+            </div>
+            <div class="reading">
+              <span class="label">Alarm:</span>
+              <span class="value alarm-status" [class]="getRawReadingValue(device, 'Alarm') === 'FALSE' ? 'alarm-ok' : 'alarm-active'">
+                {{ getRawReadingValue(device, 'Alarm') }}
+              </span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'Calculate_flag')">
+              <span class="label">Calculate Flag:</span>
+              <span class="value">{{ getReadingValue(device, 'Calculate_flag') }}</span>
+            </div>
+            <div class="reading">
+              <span class="label">Last Update:</span>
+              <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Soil Sensors Section -->
+    <div class="dashboard-section">
+      <h2>Soil Sensors</h2>
+      <div class="devices-grid">
+        <div *ngFor="let device of soilDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
+          <div class="device-header">
+            <h3>{{ device.deviceId }}</h3>
+            <span class="status-indicator"></span>
+          </div>
+          <div class="device-content">
+            <div class="reading" *ngIf="hasNumericReading(device, 'water_SOIL')">
+              <span class="label">Soil Moisture:</span>
+              <span class="value">{{ getReadingValue(device, 'water_SOIL') }}</span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'conduct_SOIL')">
+              <span class="label">Conductivity:</span>
+              <span class="value">{{ getReadingValue(device, 'conduct_SOIL') }}</span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'temp_DS18B20')">
+              <span class="label">Temperature:</span>
+              <span class="value">{{ getReadingValue(device, 'temp_DS18B20') }}</span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'TEMP_SOIL')">
+              <span class="label">Soil Temperature:</span>
+              <span class="value">{{ getReadingValue(device, 'TEMP_SOIL') }}</span>
+            </div>
+            <div class="reading">
+              <span class="label">Last Update:</span>
+              <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- pH Sensors Section -->
+    <div class="dashboard-section">
+      <h2>pH Sensors</h2>
+      <div class="devices-grid">
+        <div *ngFor="let device of phDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
+          <div class="device-header">
+            <h3>{{ device.deviceId }}</h3>
+            <span class="status-indicator"></span>
+          </div>
+          <div class="device-content">
+            <div class="reading" *ngIf="hasNumericReading(device, 'PH1_SOIL')">
+              <span class="label">pH Level:</span>
+              <span class="value ph-value" [class]="getPhClass(device.readings['PH1_SOIL'] && device.readings['PH1_SOIL'].value != null ? device.readings['PH1_SOIL'].value : null)">
+                {{ getReadingValue(device, 'PH1_SOIL') }}
+              </span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'PH_SOIL')">
+              <span class="label">pH Level:</span>
+              <span class="value ph-value" [class]="getPhClass(device.readings['PH1_SOIL'] && device.readings['PH1_SOIL'].value != null ? device.readings['PH1_SOIL'].value : null)">
+                {{ getReadingValue(device, 'PH_SOIL') }}
+              </span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'TEMP_SOIL')">
+              <span class="label">Soil Temperature:</span>
+              <span class="value">{{ getReadingValue(device, 'TEMP_SOIL') }}</span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'Bat')">
+              <span class="label">Battery:</span>
+              <span class="value battery-level" [class]="getBatteryClass(device.readings['Bat'] && device.readings['Bat'].value != undefined ? device.readings['Bat'].value : null)">
+                {{ getReadingValue(device, 'Bat') }}
+              </span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'Message_type')">
+              <span class="label">Message Type:</span>
+              <span class="value">{{ getReadingValue(device, 'Message_type') }}</span>
+            </div>
+            <div class="reading">
+              <span class="label">Last Update:</span>
+              <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pressure Sensors Section -->
+    <div class="dashboard-section">
+      <h2>Pressure Sensors</h2>
+      <div class="devices-grid">
+        <div *ngFor="let device of pressureDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
+          <div class="device-header">
+            <h3>{{ device.deviceId }}</h3>
+            <span class="status-indicator"></span>
+          </div>
+          <div class="device-content">
+            <div class="reading" *ngIf="hasNumericReading(device, 'IDC_intput_mA')">
+              <span class="label">Current Input:</span>
+              <span class="value">{{ getReadingValue(device, 'IDC_intput_mA') }}</span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'VDC_intput_V')">
+              <span class="label">Voltage Input:</span>
+              <span class="value">{{ getReadingValue(device, 'VDC_intput_V') }}</span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'Water_pressure_MPa')">
+              <span class="label">Water Pressure:</span>
+              <span class="value">{{ getReadingValue(device, 'Water_pressure_MPa') }}</span>
+            </div>
+            <div class="reading">
+              <span class="label">External Status:</span>
+              <span class="value status-value" [class]="getRawReadingValue(device, 'Exti_status') === 'False' ? 'status-inactive' : 'status-active'">
+                {{ getRawReadingValue(device, 'Exti_status') }}
+              </span>
+            </div>
+            <div class="reading">
+              <span class="label">Input Pin Level:</span>
+              <span class="value">{{ getRawReadingValue(device, 'IN2_pin_level') }}</span>
+            </div>
+            <div class="reading">
+              <span class="label">External Pin Level:</span>
+              <span class="value">{{ getRawReadingValue(device, 'Exti_pin_level') }}</span>
+            </div>
+            <div class="reading" *ngIf="hasNumericReading(device, 'Probe_mod')">
+              <span class="label">Probe Mode:</span>
+              <span class="value">{{ getReadingValue(device, 'Probe_mod') }}</span>
+            </div>
+            <div class="reading">
+              <span class="label">Last Update:</span>
+              <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Climate Station Section -->
+    <div class="dashboard-section">
+      <h2>Climate Station</h2>
+      <div class="devices-grid">
+        <div *ngFor="let device of climateDevices" class="device-card climate-card" [class]="getStatusClass(getDeviceStatus(device))">
+          <div class="device-header">
+            <h3>{{ device.deviceId }}</h3>
+            <span class="status-indicator"></span>
+          </div>
+          <div class="device-content">
+            <div class="reading-grid">
+              <div class="reading" *ngIf="hasNumericReading(device, 'TEM')">
+                <span class="label">Temperature:</span>
+                <span class="value temp-value" [class]="getTempClass(device.readings['TEM'] && device.readings['TEM'].value != undefined ? device.readings['TEM'].value : null)">
+                  {{ getReadingValue(device, 'TEM') }}
+                </span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'HUM')">
+                <span class="label">Humidity:</span>
+                <span class="value humidity-value" [class]="getHumidityClass(device.readings['HUM'] && device.readings['HUM'].value != undefined ? device.readings['HUM'].value : null)">
+                  {{ getReadingValue(device, 'HUM') }}
+                </span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'wind_direction_angle')">
+                <span class="label">Wind Direction:</span>
+                <span class="value">{{ getReadingValue(device, 'wind_direction_angle') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'wind_speed')">
+                <span class="label">Wind Speed:</span>
+                <span class="value wind-value" [class]="getWindClass(device.readings['wind_speed'] && device.readings['wind_speed'].value != undefined ? device.readings['wind_speed'].value : null)">
+                  {{ getReadingValue(device, 'wind_speed') }}
+                </span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'pressure')">
+                <span class="label">Atmospheric Pressure:</span>
+                <span class="value">{{ getReadingValue(device, 'pressure') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'rain_gauge')">
+                <span class="label">Rainfall:</span>
+                <span class="value rain-value" [class]="getRainClass(device.readings['rain_gauge'] && device.readings['rain_gauge'].value != undefined ? device.readings['rain_gauge'].value : null)">
+                  {{ getReadingValue(device, 'rain_gauge') }}
+                </span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'PAR')">
+                <span class="label">PAR (Photosynthetic Active Radiation):</span>
+                <span class="value">{{ getReadingValue(device, 'PAR') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'illumination')">
+                <span class="label">Illumination:</span>
+                <span class="value">{{ getReadingValue(device, 'illumination') }}</span>
+              </div>
+            </div>
+            <div class="reading">
+              <span class="label">Last Update:</span>
+              <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

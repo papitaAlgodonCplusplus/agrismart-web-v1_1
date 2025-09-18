@@ -1235,8 +1235,8 @@ export class IrrigationSectorService {
       this.getCropProductionDevices(cropProductionId),
       this.getDeviceRawData(
         undefined,
-        oneDayAgo.toISOString(),
-        now.toISOString(),
+        undefined,
+        undefined,
         undefined,
         1,
         1000
@@ -1265,7 +1265,8 @@ export class IrrigationSectorService {
             soilMoisture: [],
             pressure: [],
             flow: []
-          }
+          },
+          rawData: rawData
         };
       }),
       catchError(error => {

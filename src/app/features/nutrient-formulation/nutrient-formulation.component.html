@@ -483,7 +483,7 @@
                           [class.is-invalid]="calculationForm.get('phase_id')?.invalid && calculationForm.get('phase_id')?.touched">
                           <option value="" disabled>Seleccionar fase...</option>
                           <option *ngFor="let phase of cropPhases" [value]="phase.id">
-                            {{ phase.name }}
+                            {{ phase.cropName }} - {{ phase.name }}
                           </option>
                         </select>
                         <div class="invalid-feedback"

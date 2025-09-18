@@ -218,6 +218,7 @@ interface Crop {
     phases?: any[];
 }
 interface CropPhase {
+cropName: any;
     id: number;
     cropId: number;
     catalogId: number;
@@ -1225,6 +1226,7 @@ export class NutrientFormulationComponent implements OnInit {
         const clientId = this.authService.getCurrentUser()['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid'];
         this.catalogService.getAll(clientId).subscribe({
             next: (response: any) => {
+                console.log('Loaded catalogs:', response);
                 const firstCatalogId = response.catalogs && response.catalogs.length > 0 ? response.catalogs[0].id : null;
                 if (!firstCatalogId) {
                     this.errorMessage = 'No catalog found';
@@ -1240,7 +1242,6 @@ export class NutrientFormulationComponent implements OnInit {
                 const cropPhases$ = this.apiService.get('/CropPhase').pipe(
                     map(response => {
                         if (response && typeof response === 'object' && 'cropPhases' in response && Array.isArray((response as any).cropPhases)) {
-                            this.cropPhases = (response as any).cropPhases || [];
                             return (response as any).cropPhases;
                         }
                         if (Array.isArray(response)) {
@@ -1280,6 +1281,13 @@ export class NutrientFormulationComponent implements OnInit {
                         this.fertilizerChemistries = Array.isArray(data.fertilizerChemistries) ? data.fertilizerChemistries : [];
                         this.cropPhaseSolutionRequirements = Array.isArray(data.solutionRequirements) ? data.solutionRequirements : [];
                         this.loadOptimizedFertilizers(firstCatalogId);
+
+                        for (const phase of this.cropPhases) {
+                            // get name of crop by phase.cropId
+                            const crop = this.crops.find(c => c.id === phase.cropId);
+                            phase.cropName = crop ? crop.name : 'Unknown';
+                        }
+                        console.log('Loaded crop phases:', this.cropPhases);
                     },
                     error: (error) => {
                         this.errorMessage = 'Error al cargar los datos básicos';
@@ -2009,6 +2017,7 @@ export class NutrientFormulationComponent implements OnInit {
             next: (response) => {
                 this.isLoading = false;
                 if (response) {
+                    console.log('Calculation successful:', response);
                     this.calculationResults = response;
                     this.processResults();
                     this.showResults = true;
@@ -2025,6 +2034,7 @@ export class NutrientFormulationComponent implements OnInit {
             },
             error: (error) => {
                 this.isLoading = false;
+                console.error('Subscription Error:', error);
                 this.errorMessage = `Error inesperado: ${error.message}`;
             }
         });
