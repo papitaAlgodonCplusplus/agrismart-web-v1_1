@@ -5,6 +5,7 @@ import {
   IrrigationSectorService,
   ProcessedDeviceData
 } from '../../services/irrigation-sector.service';
+import { DeviceService } from '../../devices/services/device.service';
 
 interface RawDeviceData {
   id: number;
@@ -26,6 +27,15 @@ interface DeviceData {
   deviceId: string;
   lastUpdate: string;
   readings: { [sensor: string]: DeviceReading };
+  isActive: boolean; // New property to track if device is sending data
+  registeredDevice?: any; // Reference to the registered device info
+}
+
+interface DeviceStatusSummary {
+  online: number;
+  warning: number;
+  offline: number;
+  inactive: number; // New status for devices not sending data
 }
 
 interface HistoricalData {
@@ -53,6 +63,7 @@ interface ChartData {
 })
 export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   rawData: RawDeviceData[] = [];
+  allRegisteredDevices: any[] = []; // All devices from deviceService
   processedData: ProcessedDeviceData[] = [];
   isLoading = true;
   error: string | null = null;
@@ -62,7 +73,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   // Chart instances for cleanup
   private chartInstances: { [key: string]: Chart } = {};
 
-  // Grouped data for display
+  // Grouped data for display (now includes inactive devices)
   flowDevices: DeviceData[] = [];
   soilDevices: DeviceData[] = [];
   climateDevices: DeviceData[] = [];
@@ -71,47 +82,51 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   // Historical data for charts
   historicalData: { [key: string]: HistoricalData[] } = {};
-  
+
   // Chart data
   chartData: { [key: string]: { [sensor: string]: ChartData } } = {};
+
+  // Device activity tracking
+  activeDeviceIds: Set<string> = new Set();
+  inactiveDevices: DeviceData[] = [];
 
   // Sensor units mapping
   private sensorUnits: { [key: string]: string } = {
     // pH sensors
     'PH1_SOIL': 'pH',
     'PH_SOIL': 'pH',
-    
+
     // Temperature sensors
     'temp_DS18B20': '°C',
     'TEMP_SOIL': '°C',
     'TEM': '°C',
-    
+
     // Humidity and moisture
     'HUM': '%',
     'Hum_SHT2x': '%',
     'water_SOIL': '%',
-    
+
     // Pressure sensors
     'pressure': 'hPa',
     'Water_pressure_MPa': 'MPa',
     'IDC_intput_mA': 'mA',
     'VDC_intput_V': 'V',
-    
+
     // Flow sensors
     'Water_flow_value': 'L',
     'MOD': 'L/min',
     'Total_pulse': 'pulses',
-    
+
     // Weather sensors
     'wind_speed': 'm/s',
     'wind_direction_angle': '°',
     'rain_gauge': 'mm',
     'PAR': 'μmol/m²/s',
     'illumination': 'lux',
-    
+
     // Electrical sensors
     'Bat': 'V',
-    
+
     // Conductivity
     'conduct_SOIL': 'mS/cm'
   };
@@ -122,7 +137,10 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     '#1abc9c', '#34495e', '#e67e22', '#16a085', '#c0392b'
   ];
 
-  constructor(private irrigationService: IrrigationSectorService) {}
+  constructor(
+    private irrigationService: IrrigationSectorService,
+    private deviceService: DeviceService
+  ) { }
 
   ngOnInit(): void {
     this.loadDeviceData();
@@ -143,48 +161,69 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   loadDeviceData(): void {
     this.isLoading = true;
-    this.irrigationService.getDeviceRawData().subscribe({
-      next: (data: any[]) => {
-        console.log('Raw device data loaded:', data);
-        this.rawData = data;
-        this.processRawData();
-        this.processHistoricalData();
-        this.isLoading = false;
-        
-        // Initialize charts after data is processed and view is ready
-        if (this.showCharts) {
-          setTimeout(() => this.initializeCharts(), 100);
-        }
-      },
-      error: (error) => {
-        this.error = 'Failed to load device data';
-        this.isLoading = false;
-        console.error('Error loading device data:', error);
+    
+    // Load both registered devices and raw data
+    Promise.all([
+      this.deviceService.getAll().toPromise(),
+      this.irrigationService.getDeviceRawData().toPromise()
+    ]).then(([registeredDevices, rawData]: [any[] | undefined, any[] | undefined]) => {
+      console.log('Registered devices loaded:', registeredDevices);
+      console.log('Raw device data loaded:', rawData);
+      
+      this.allRegisteredDevices = registeredDevices || [];
+      this.rawData = rawData || [];
+      
+      // Track which devices are sending data
+      this.activeDeviceIds = new Set(rawData?.map(item => item.deviceId));
+      
+      this.processRawData();
+      this.processHistoricalData();
+      this.createInactiveDevices();
+      this.isLoading = false;
+
+      if (this.showCharts) {
+        setTimeout(() => this.initializeCharts(), 100);
       }
+    }).catch((error) => {
+      this.error = 'Error al cargar los datos de los dispositivos';
+      this.isLoading = false;
+      console.error('Error loading device data:', error);
     });
+  }
+
+  createInactiveDevices(): void {
+    this.inactiveDevices = this.allRegisteredDevices
+      .filter(device => !this.activeDeviceIds.has(device.deviceId))
+      .map(device => ({
+        deviceId: device.deviceId,
+        lastUpdate: new Date().toISOString(),
+        readings: {},
+        isActive: false,
+        registeredDevice: device
+      }));
   }
 
   extractNumericValue(payload: string): number | null {
     if (!payload) return null;
-    
+
     // Handle special cases
     if (payload.toLowerCase() === 'false') return 0;
     if (payload.toLowerCase() === 'true') return 1;
     if (payload.toLowerCase() === 'low') return 0;
     if (payload.toLowerCase() === 'high') return 1;
-    
+
     // Remove any non-numeric characters except decimal point and minus sign
     const numericString = payload.replace(/[^\d.-]/g, '');
-    
+
     // Try to parse as float
     const numericValue = parseFloat(numericString);
-    
+
     // Return null if not a valid number
     return isNaN(numericValue) ? null : numericValue;
   }
 
   processRawData(): void {
-    // Group by device type
+    // Group by device type (including inactive devices)
     this.flowDevices = this.groupByDeviceType('flujo');
     this.soilDevices = this.groupByDeviceType('suelo');
     this.climateDevices = this.groupByDeviceType('estacion-metereologica');
@@ -193,27 +232,31 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   groupByDeviceType(deviceType: string): DeviceData[] {
-    const devices = this.rawData.filter(item => 
+    // Get active devices with data
+    const activeDevices = this.rawData.filter(item =>
       item.deviceId.includes(deviceType)
     );
 
     // Group by specific device ID
     const deviceGroups: { [key: string]: DeviceData } = {};
 
-    devices.forEach(item => {
+    activeDevices.forEach(item => {
       if (!deviceGroups[item.deviceId]) {
+        const registeredDevice = this.allRegisteredDevices.find(d => d.deviceId === item.deviceId);
         deviceGroups[item.deviceId] = {
           deviceId: item.deviceId,
           lastUpdate: item.recordDate,
-          readings: {}
+          readings: {},
+          isActive: true,
+          registeredDevice
         };
       }
 
       const numericValue = this.extractNumericValue(item.payload);
-      
+
       // Always store the latest reading for each sensor
-      if (!deviceGroups[item.deviceId].readings[item.sensor] || 
-          new Date(item.recordDate) > new Date(deviceGroups[item.deviceId].readings[item.sensor].timestamp)) {
+      if (!deviceGroups[item.deviceId].readings[item.sensor] ||
+        new Date(item.recordDate) > new Date(deviceGroups[item.deviceId].readings[item.sensor].timestamp)) {
         deviceGroups[item.deviceId].readings[item.sensor] = {
           value: numericValue,
           rawValue: item.payload,
@@ -227,33 +270,44 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       }
     });
 
-    return Object.values(deviceGroups);
+    // Add inactive devices of this type
+    const inactiveDevicesOfType = this.allRegisteredDevices
+      .filter(device => device.deviceId.includes(deviceType) && !this.activeDeviceIds.has(device.deviceId))
+      .map(device => ({
+        deviceId: device.deviceId,
+        lastUpdate: new Date().toISOString(),
+        readings: {},
+        isActive: false,
+        registeredDevice: device
+      }));
+
+    return [...Object.values(deviceGroups), ...inactiveDevicesOfType];
   }
 
   processHistoricalData(): void {
     // Map device types to their identifiers
     const deviceTypeMap: { [key: string]: string } = {
       'flow': 'flujo',
-      'ph': 'ph-suelo', 
+      'ph': 'ph-suelo',
       'climate': 'estacion-metereologica',
       'pressure': 'presion',
       'soil': 'suelo'
     };
-    
+
     Object.keys(deviceTypeMap).forEach(key => {
       const deviceType = deviceTypeMap[key];
       const typeData = this.rawData.filter(item => item.deviceId.includes(deviceType));
-      
+
       // Group by sensor type
       const sensorGroups: { [key: string]: any[] } = {};
-      
+
       typeData.forEach(item => {
         const numericValue = this.extractNumericValue(item.payload);
         if (numericValue !== null) {
           if (!sensorGroups[item.sensor]) {
             sensorGroups[item.sensor] = [];
           }
-          
+
           sensorGroups[item.sensor].push({
             timestamp: item.recordDate,
             value: numericValue,
@@ -264,7 +318,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
       // Sort by timestamp and create historical data structure
       Object.keys(sensorGroups).forEach(sensor => {
-        sensorGroups[sensor].sort((a, b) => 
+        sensorGroups[sensor].sort((a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
         );
       });
@@ -282,21 +336,23 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   prepareChartData(): void {
     Object.keys(this.historicalData).forEach(deviceType => {
       const data = this.historicalData[deviceType];
-      
+
       if (data && data.length > 0) {
         const chartDataMap: { [key: string]: ChartData } = {};
-        
+
         data.forEach((sensorData) => {
           if (sensorData.values.length > 0) {
-            // Get the most recent 20 readings for charting
-            const recentValues = sensorData.values.slice(-20);
-            
+            // Get the most recent readings for charting
+            const recentValues = sensorData.values.slice(-8000);
+
             // Create unique timestamps
             const uniqueTimestamps = [...new Set(recentValues.map(v => v.timestamp))];
-            const labels = uniqueTimestamps.map(timestamp => 
-              new Date(timestamp).toLocaleTimeString()
-            );
-
+            const labels = uniqueTimestamps.map(timestamp => {
+              const date = new Date(timestamp);
+              const adjustedDate = new Date(date.getTime() - (6 * 60 * 60 * 1000));
+              return adjustedDate.toLocaleTimeString();
+            });
+            
             // Group by device for multiple series
             const deviceGroups: { [key: string]: any[] } = {};
             recentValues.forEach(value => {
@@ -350,16 +406,16 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
     // Create new charts
     const chartsForType = this.getChartsForType(this.selectedChartType);
-    
+
     chartsForType.forEach(chartType => {
       const canvasId = `chart-${this.selectedChartType}-${chartType}`;
       const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
-      
+
       if (canvas && this.chartData[this.selectedChartType] && this.chartData[this.selectedChartType][chartType]) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           const chartData = this.chartData[this.selectedChartType][chartType];
-          
+
           this.chartInstances[canvasId] = new Chart(ctx, {
             type: 'line',
             data: {
@@ -389,14 +445,14 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
                   display: true,
                   title: {
                     display: true,
-                    text: 'Time'
+                    text: 'Tiempo'
                   }
                 },
                 y: {
                   display: true,
                   title: {
                     display: true,
-                    text: this.getSensorUnit(chartType) || 'Value'
+                    text: this.getSensorUnit(chartType) || 'Valor'
                   }
                 }
               },
@@ -411,18 +467,16 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
-  // Existing methods with some modifications...
-  
   getReadingValue(device: DeviceData, sensor: string): string {
     const reading = device.readings[sensor];
     if (!reading || reading.value === null) return 'N/A';
-    
+
     // Get unit from mapping
     const unit = this.sensorUnits[sensor] || '';
-    
+
     // Format based on sensor type
     let formattedValue: string;
-    
+
     if (sensor.includes('temp') || sensor.includes('TEM') || sensor.includes('TEMP')) {
       formattedValue = reading.value.toFixed(1);
     } else if (sensor.includes('PH') || sensor.includes('ph')) {
@@ -434,7 +488,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     } else {
       formattedValue = reading.value.toFixed(1);
     }
-    
+
     return unit ? `${formattedValue} ${unit}` : formattedValue;
   }
 
@@ -449,10 +503,15 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleString();
+    const date = new Date(dateString);
+    // Subtract 6 hours (6 * 60 * 60 * 1000 milliseconds)
+    const adjustedDate = new Date(date.getTime() - (6 * 60 * 60 * 1000));
+    return adjustedDate.toLocaleString();
   }
 
   getDeviceStatus(device: DeviceData): string {
+    if (!device.isActive) return 'inactive';
+    
     const lastUpdate = new Date(device.lastUpdate);
     const now = new Date();
     const diffMinutes = (now.getTime() - lastUpdate.getTime()) / (1000 * 60);
@@ -467,6 +526,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       case 'online': return 'status-online';
       case 'warning': return 'status-warning';
       case 'offline': return 'status-offline';
+      case 'inactive': return 'status-inactive';
       default: return 'status-unknown';
     }
   }
@@ -497,17 +557,6 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     setTimeout(() => this.initializeCharts(), 100);
   }
 
-  getChartTypeLabel(type: string): string {
-    const labels: { [key: string]: string } = {
-      'flow': 'Flow Meters',
-      'ph': 'pH Sensors', 
-      'climate': 'Climate Station',
-      'pressure': 'Pressure Sensors',
-      'soil': 'Soil Sensors'
-    };
-    return labels[type] || type;
-  }
-
   getAvailableChartTypes(): string[] {
     return Object.keys(this.chartData);
   }
@@ -516,11 +565,11 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     return this.chartData[type] ? Object.keys(this.chartData[type]) : [];
   }
 
-  getDeviceTypeSummary(devices: DeviceData[]): { online: number; warning: number; offline: number } {
-    const summary = { online: 0, warning: 0, offline: 0 };
+  getDeviceTypeSummary(devices: DeviceData[]): DeviceStatusSummary {
+    const summary: DeviceStatusSummary = { online: 0, warning: 0, offline: 0, inactive: 0 };
     devices.forEach(device => {
       const status = this.getDeviceStatus(device);
-      summary[status as keyof typeof summary]++;
+      summary[status as keyof DeviceStatusSummary]++;
     });
     return summary;
   }
@@ -586,24 +635,6 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     return uniqueSensors.size;
   }
 
-  getDataTimeRange(): string {
-    if (this.rawData.length === 0) return 'No data';
-    
-    const dates = this.rawData.map(item => new Date(item.recordDate));
-    const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
-    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-    
-    const diffMinutes = (maxDate.getTime() - minDate.getTime()) / (1000 * 60);
-    
-    if (diffMinutes < 60) {
-      return `${diffMinutes.toFixed(0)} minutes`;
-    } else if (diffMinutes < 1440) {
-      return `${(diffMinutes / 60).toFixed(1)} hours`;
-    } else {
-      return `${(diffMinutes / 1440).toFixed(1)} days`;
-    }
-  }
-
   getDeviceTypes(): string[] {
     const deviceTypes = new Set<string>();
     this.rawData.forEach(item => {
@@ -622,8 +653,59 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   getSensorCountForDeviceType(deviceType: string, sensor: string): number {
-    return this.rawData.filter(item => 
+    return this.rawData.filter(item =>
       item.deviceId.includes(deviceType) && item.sensor === sensor
     ).length;
+  }
+
+  getChartTypeLabel(type: string): string {
+    const labels: { [key: string]: string } = {
+      'flow': 'Medidores de Flujo',
+      'ph': 'Sensores de pH',
+      'climate': 'Estación Climática',
+      'pressure': 'Sensores de Presión',
+      'soil': 'Sensores de Suelo'
+    };
+    return labels[type] || type;
+  }
+
+  getDataTimeRange(): string {
+    if (this.rawData.length === 0) return 'Sin datos';
+
+    const dates = this.rawData.map(item => new Date(item.recordDate));
+    const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+
+    const diffMinutes = (maxDate.getTime() - minDate.getTime()) / (1000 * 60);
+
+    if (diffMinutes < 60) {
+      return `${diffMinutes.toFixed(0)} minutos`;
+    } else if (diffMinutes < 1440) {
+      return `${(diffMinutes / 60).toFixed(1)} horas`;
+    } else {
+      return `${(diffMinutes / 1440).toFixed(1)} días`;
+    }
+  }
+
+  // New methods for device activity tracking
+  getTotalRegisteredDevices(): number {
+    return this.allRegisteredDevices.length;
+  }
+
+  getTotalActiveDevices(): number {
+    return this.activeDeviceIds.size;
+  }
+
+  getTotalInactiveDevices(): number {
+    return this.allRegisteredDevices.length - this.activeDeviceIds.size;
+  }
+
+  getDeviceActivityPercentage(): number {
+    if (this.allRegisteredDevices.length === 0) return 0;
+    return (this.activeDeviceIds.size / this.allRegisteredDevices.length) * 100;
+  }
+
+  getInactiveDevicesByType(deviceType: string): DeviceData[] {
+    return this.inactiveDevices.filter(device => device.deviceId.includes(deviceType));
   }
 }

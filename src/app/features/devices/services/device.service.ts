@@ -108,7 +108,7 @@ export class DeviceService {
   /**
    * Get all devices with optional filters - Backend: GET /Device (REQUIRES AUTH)
    */
-  getAll(onlyActive?: boolean, filters?: DeviceFilters): Observable<Device[]> {
+  getAll(onlyActive?: boolean, filters?: DeviceFilters): Observable<any[]> {
     // Check authentication
     const token = localStorage.getItem('access_token');
     if (!token) {

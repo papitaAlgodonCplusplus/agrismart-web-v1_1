@@ -1145,7 +1145,7 @@ export class IrrigationSectorService {
     sensor?: string,
     pageNumber?: number,
     pageSize?: number
-  ): Observable<DeviceRawDataItem[]> {
+  ): Observable<any[]> {
     let params = new HttpParams();
 
     if (deviceId) params = params.set('DeviceId', deviceId);

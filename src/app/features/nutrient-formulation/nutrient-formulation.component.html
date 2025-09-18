@@ -96,7 +96,7 @@
                           <select class="form-select" id="waterSourceId" formControlName="waterSourceId">
                             <option value="">Seleccione una fuente de agua</option>
                             <option *ngFor="let source of waterSources" [value]="source.id">
-                              {{ source.name || 'Fuente ' + source.id }}
+                              {{ source.name || 'Fuente ' + source.id + ' (' + formatDate(source.dateCreated) + ')' }}
                             </option>
                           </select>
                         </div>
@@ -119,8 +119,6 @@
                             <option value="">Seleccione una fase</option>
                             <option *ngFor="let phase of getFilteredCropPhases()" [value]="phase.id">
                               {{ phase.name }}
-                              <span *ngIf="phase.sequence"> (Semana {{ phase.startingWeek }}-{{ phase.endingWeek
-                                }})</span>
                             </option>
                           </select>
                         </div>
@@ -502,7 +500,7 @@
                           [class.is-invalid]="calculationForm.get('water_id')?.invalid && calculationForm.get('water_id')?.touched">
                           <option value="" disabled>Seleccionar análisis...</option>
                           <option *ngFor="let water of waterSources" [value]="water.waterId">
-                            {{ water.name || 'Análisis #' + water.id + ' ' + (water.dateCreated) }}
+                            {{ water.name || 'Análisis #' + water.id + ' ' + (formatDate(water.dateCreated)) }}
                           </option>
                         </select>
                         <div class="invalid-feedback"

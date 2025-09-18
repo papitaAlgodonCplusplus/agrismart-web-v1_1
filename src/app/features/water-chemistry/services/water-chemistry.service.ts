@@ -164,8 +164,8 @@ export class WaterChemistryService {
   /**
    * Update water chemistry record
    */
-  update(id: number, data: Partial<WaterChemistry>): Observable<WaterChemistry> {
-    return this.apiService.put<WaterChemistry>(`${this.baseUrl}/${id}`, data);
+  update(data: Partial<WaterChemistry>): Observable<WaterChemistry> {
+    return this.apiService.put<WaterChemistry>(`${this.baseUrl}`, data);
   }
 
   /**

@@ -1117,7 +1117,7 @@ export class AdminComponent implements OnInit {
         break;
       case 'waterChemistry':
         if (this.isEditing) {
-          await firstValueFrom(this.waterChemistryService.update(this.currentItem.id!, this.currentItem));
+          await firstValueFrom(this.waterChemistryService.update(this.currentItem));
         } else {
           await firstValueFrom(this.waterChemistryService.create(this.currentItem));
         }

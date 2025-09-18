@@ -218,7 +218,7 @@ interface Crop {
     phases?: any[];
 }
 interface CropPhase {
-cropName: any;
+    cropName: any;
     id: number;
     cropId: number;
     catalogId: number;
@@ -1955,6 +1955,27 @@ export class NutrientFormulationComponent implements OnInit {
                 this.isLoading = false;
             }
         });
+    }
+
+    formatDate(isoDateString: any) {
+        const date = new Date(isoDateString);
+
+        // Check if the date is valid
+        if (isNaN(date.getTime())) {
+            return "Invalid Date"; // Or throw an error, depending on desired behavior
+        }
+
+        // Example 1: Human-readable date string (locale-specific)
+        // return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        // Example 2: Custom format (e.g., YYYY-MM-DD)
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+
+        // Example 3: Full locale-specific date and time string
+        // return date.toLocaleString();
     }
 
     private loadCatalogs(): Observable<Catalog[]> {

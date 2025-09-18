@@ -101,7 +101,7 @@ export class WaterChemistryComponent implements OnInit {
       hcO3: [0, [Validators.min(0), Validators.max(500)]],
       nO3: [0, [Validators.min(0), Validators.max(1000)]],
       nH4: [0, [Validators.min(0), Validators.max(100)]],
-    
+
 
       // Micronutrients (mg/L)
       fe: [0, [Validators.min(0), Validators.max(20)]],
@@ -307,15 +307,23 @@ export class WaterChemistryComponent implements OnInit {
   }
 
   onSubmit(): void {
-    console.log("Form Data: ", this.waterChemistryForm.value);
     this.isLoading = true;
     this.clearMessages();
 
     const formData = this.waterChemistryForm.value;
 
     if (this.isEditMode && this.selectedRecord?.id) {
-      this.updateRecord(this.selectedRecord.id, formData);
+      console.log("updating")
+      // Find the matching record and add its ID to formData
+      const existingRecord = this.waterChemistryRecords.find(record => record.waterId.toString() === formData.waterId.toString());
+      if (existingRecord) {
+        formData.id = existingRecord.id;
+      }
+      console.log("Form Data: ", this.waterChemistryForm.value);
+
+      this.updateRecord(formData);
     } else {
+      console.log("creating")
       this.createRecord(formData);
     }
   }
@@ -348,8 +356,9 @@ export class WaterChemistryComponent implements OnInit {
     });
   }
 
-  private updateRecord(id: number, data: Partial<WaterChemistry>): void {
-    this.waterChemistryService.update(id, data).pipe(
+  private updateRecord(data: Partial<WaterChemistry>): void {
+    console.log("updating with data: ", data)
+    this.waterChemistryService.update(data).pipe(
       catchError(error => {
         console.error('Error updating water chemistry record:', error);
         this.errorMessage = 'Error al actualizar el registro de química del agua';
@@ -361,8 +370,7 @@ export class WaterChemistryComponent implements OnInit {
     ).subscribe(result => {
       if (result) {
         this.successMessage = 'Registro de química del agua actualizado exitosamente';
-        this.loadWaterChemistryRecords();
-        this.cancelForm();
+        window.location.reload()
       }
     });
   }

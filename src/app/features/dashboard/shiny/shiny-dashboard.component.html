@@ -1,49 +1,73 @@
 <div class="dashboard-container">
   <!-- Header -->
   <div class="dashboard-header">
-    <h1>Irrigation System Dashboard</h1>
+    <h1>Panel de Control del Sistema de Riego</h1>
     <div class="header-controls">
       <button class="chart-toggle-btn" (click)="toggleCharts()">
-        {{ showCharts ? 'Hide Charts' : 'Show Charts' }}
+        {{ showCharts ? 'Ocultar Gráficos' : 'Mostrar Gráficos' }}
       </button>
       <button class="refresh-btn" (click)="refreshData()" [disabled]="isLoading">
-        {{ isLoading ? 'Loading...' : 'Refresh Data' }}
+        {{ isLoading ? 'Cargando...' : 'Actualizar Datos' }}
       </button>
+    </div>
+  </div>
+
+  <!-- Device Activity Summary -->
+  <div *ngIf="!isLoading && !error" class="device-activity-summary">
+    <div class="activity-overview">
+      <div class="activity-card total">
+        <h3>Total de Dispositivos</h3>
+        <div class="activity-number">{{ getTotalRegisteredDevices() }}</div>
+      </div>
+      <div class="activity-card active">
+        <h3>Dispositivos Activos</h3>
+        <div class="activity-number">{{ getTotalActiveDevices() }}</div>
+        <div class="activity-percentage">{{ getDeviceActivityPercentage().toFixed(1) }}% del total</div>
+      </div>
+      <div class="activity-card inactive">
+        <h3>Dispositivos Inactivos</h3>
+        <div class="activity-number">{{ getTotalInactiveDevices() }}</div>
+        <div class="activity-percentage">{{ (100 - getDeviceActivityPercentage()).toFixed(1) }}% del total</div>
+      </div>
     </div>
   </div>
 
   <!-- System Overview -->
   <div *ngIf="!isLoading && !error" class="system-overview">
     <div class="overview-card">
-      <h3>Flow Meters</h3>
+      <h3>Medidores de Flujo</h3>
       <div class="status-summary">
-        <span class="status-item online">{{ getDeviceTypeSummary(flowDevices).online }} Online</span>
-        <span class="status-item warning">{{ getDeviceTypeSummary(flowDevices).warning }} Warning</span>
-        <span class="status-item offline">{{ getDeviceTypeSummary(flowDevices).offline }} Offline</span>
+        <span class="status-item online">{{ getDeviceTypeSummary(flowDevices).online }} En Línea</span>
+        <span class="status-item warning">{{ getDeviceTypeSummary(flowDevices).warning }} Advertencia</span>
+        <span class="status-item offline">{{ getDeviceTypeSummary(flowDevices).offline }} Desconectado</span>
+        <span class="status-item inactive">{{ getDeviceTypeSummary(flowDevices).inactive }} Inactivo</span>
       </div>
     </div>
     <div class="overview-card">
-      <h3>Soil Sensors</h3>
+      <h3>Sensores de Suelo</h3>
       <div class="status-summary">
-        <span class="status-item online">{{ getDeviceTypeSummary(soilDevices).online }} Online</span>
-        <span class="status-item warning">{{ getDeviceTypeSummary(soilDevices).warning }} Warning</span>
-        <span class="status-item offline">{{ getDeviceTypeSummary(soilDevices).offline }} Offline</span>
+        <span class="status-item online">{{ getDeviceTypeSummary(soilDevices).online }} En Línea</span>
+        <span class="status-item warning">{{ getDeviceTypeSummary(soilDevices).warning }} Advertencia</span>
+        <span class="status-item offline">{{ getDeviceTypeSummary(soilDevices).offline }} Desconectado</span>
+        <span class="status-item inactive">{{ getDeviceTypeSummary(soilDevices).inactive }} Inactivo</span>
       </div>
     </div>
     <div class="overview-card">
-      <h3>Climate Stations</h3>
+      <h3>Estaciones Climáticas</h3>
       <div class="status-summary">
-        <span class="status-item online">{{ getDeviceTypeSummary(climateDevices).online }} Online</span>
-        <span class="status-item warning">{{ getDeviceTypeSummary(climateDevices).warning }} Warning</span>
-        <span class="status-item offline">{{ getDeviceTypeSummary(climateDevices).offline }} Offline</span>
+        <span class="status-item online">{{ getDeviceTypeSummary(climateDevices).online }} En Línea</span>
+        <span class="status-item warning">{{ getDeviceTypeSummary(climateDevices).warning }} Advertencia</span>
+        <span class="status-item offline">{{ getDeviceTypeSummary(climateDevices).offline }} Desconectado</span>
+        <span class="status-item inactive">{{ getDeviceTypeSummary(climateDevices).inactive }} Inactivo</span>
       </div>
     </div>
     <div class="overview-card">
-      <h3>Pressure Sensors</h3>
+      <h3>Sensores de Presión</h3>
       <div class="status-summary">
-        <span class="status-item online">{{ getDeviceTypeSummary(pressureDevices).online }} Online</span>
-        <span class="status-item warning">{{ getDeviceTypeSummary(pressureDevices).warning }} Warning</span>
-        <span class="status-item offline">{{ getDeviceTypeSummary(pressureDevices).offline }} Offline</span>
+        <span class="status-item online">{{ getDeviceTypeSummary(pressureDevices).online }} En Línea</span>
+        <span class="status-item warning">{{ getDeviceTypeSummary(pressureDevices).warning }} Advertencia</span>
+        <span class="status-item offline">{{ getDeviceTypeSummary(pressureDevices).offline }} Desconectado</span>
+        <span class="status-item inactive">{{ getDeviceTypeSummary(pressureDevices).inactive }} Inactivo</span>
       </div>
     </div>
   </div>
@@ -51,19 +75,19 @@
   <!-- Loading State -->
   <div *ngIf="isLoading" class="loading-state">
     <div class="spinner"></div>
-    <p>Loading device data...</p>
+    <p>Cargando datos de dispositivos...</p>
   </div>
 
   <!-- Error State -->
   <div *ngIf="error && !isLoading" class="error-state">
     <p class="error-message">{{ error }}</p>
-    <button class="retry-btn" (click)="refreshData()">Retry</button>
+    <button class="retry-btn" (click)="refreshData()">Reintentar</button>
   </div>
 
   <!-- Charts Section -->
   <div *ngIf="showCharts && !isLoading && !error" class="charts-section">
     <div class="charts-header">
-      <h2>Historical Data Charts</h2>
+      <h2>Gráficos de Datos Históricos</h2>
       <div class="chart-type-selector">
         <button 
           *ngFor="let type of getAvailableChartTypes()" 
@@ -91,39 +115,51 @@
     
     <!-- Flow Meters Section -->
     <div class="dashboard-section">
-      <h2>Flow Meters</h2>
+      <h2>Medidores de Flujo</h2>
       <div class="devices-grid">
         <div *ngFor="let device of flowDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
             <span class="status-indicator"></span>
+            <div class="device-status-badge">
+              <span *ngIf="!device.isActive" class="inactive-badge">INACTIVO</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'online'" class="online-badge">EN LÍNEA</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'warning'" class="warning-badge">ADVERTENCIA</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'offline'" class="offline-badge">DESCONECTADO</span>
+            </div>
           </div>
           <div class="device-content">
-            <div class="reading" *ngIf="hasNumericReading(device, 'Water_flow_value')">
-              <span class="label">Flow Value:</span>
-              <span class="value">{{ getReadingValue(device, 'Water_flow_value') }}</span>
+            <div *ngIf="!device.isActive" class="inactive-message">
+              <p>Este dispositivo está registrado pero no está enviando datos.</p>
+              <p><small>ID de Registro: {{ device.registeredDevice?.id }}</small></p>
             </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'MOD')">
-              <span class="label">Flow Rate:</span>
-              <span class="value">{{ getReadingValue(device, 'MOD') }}</span>
-            </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'Total_pulse')">
-              <span class="label">Total Pulse:</span>
-              <span class="value">{{ getReadingValue(device, 'Total_pulse') }}</span>
-            </div>
-            <div class="reading">
-              <span class="label">Alarm:</span>
-              <span class="value alarm-status" [class]="getRawReadingValue(device, 'Alarm') === 'FALSE' ? 'alarm-ok' : 'alarm-active'">
-                {{ getRawReadingValue(device, 'Alarm') }}
-              </span>
-            </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'Calculate_flag')">
-              <span class="label">Calculate Flag:</span>
-              <span class="value">{{ getReadingValue(device, 'Calculate_flag') }}</span>
-            </div>
-            <div class="reading">
-              <span class="label">Last Update:</span>
-              <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+            <div *ngIf="device.isActive">
+              <div class="reading" *ngIf="hasNumericReading(device, 'Water_flow_value')">
+                <span class="label">Valor de Flujo:</span>
+                <span class="value">{{ getReadingValue(device, 'Water_flow_value') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'MOD')">
+                <span class="label">Tasa de Flujo:</span>
+                <span class="value">{{ getReadingValue(device, 'MOD') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'Total_pulse')">
+                <span class="label">Pulsos Totales:</span>
+                <span class="value">{{ getReadingValue(device, 'Total_pulse') }}</span>
+              </div>
+              <div class="reading">
+                <span class="label">Alarma:</span>
+                <span class="value alarm-status" [class]="getRawReadingValue(device, 'Alarm') === 'FALSE' ? 'alarm-ok' : 'alarm-active'">
+                  {{ getRawReadingValue(device, 'Alarm') }}
+                </span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'Calculate_flag')">
+                <span class="label">Bandera de Cálculo:</span>
+                <span class="value">{{ getReadingValue(device, 'Calculate_flag') }}</span>
+              </div>
+              <div class="reading">
+                <span class="label">Última Actualización:</span>
+                <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -132,33 +168,45 @@
 
     <!-- Soil Sensors Section -->
     <div class="dashboard-section">
-      <h2>Soil Sensors</h2>
+      <h2>Sensores de Suelo</h2>
       <div class="devices-grid">
         <div *ngFor="let device of soilDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
             <span class="status-indicator"></span>
+            <div class="device-status-badge">
+              <span *ngIf="!device.isActive" class="inactive-badge">INACTIVO</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'online'" class="online-badge">EN LÍNEA</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'warning'" class="warning-badge">ADVERTENCIA</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'offline'" class="offline-badge">DESCONECTADO</span>
+            </div>
           </div>
           <div class="device-content">
-            <div class="reading" *ngIf="hasNumericReading(device, 'water_SOIL')">
-              <span class="label">Soil Moisture:</span>
-              <span class="value">{{ getReadingValue(device, 'water_SOIL') }}</span>
+            <div *ngIf="!device.isActive" class="inactive-message">
+              <p>Este dispositivo está registrado pero no está enviando datos.</p>
+              <p><small>ID de Registro: {{ device.registeredDevice?.id }}</small></p>
             </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'conduct_SOIL')">
-              <span class="label">Conductivity:</span>
-              <span class="value">{{ getReadingValue(device, 'conduct_SOIL') }}</span>
-            </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'temp_DS18B20')">
-              <span class="label">Temperature:</span>
-              <span class="value">{{ getReadingValue(device, 'temp_DS18B20') }}</span>
-            </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'TEMP_SOIL')">
-              <span class="label">Soil Temperature:</span>
-              <span class="value">{{ getReadingValue(device, 'TEMP_SOIL') }}</span>
-            </div>
-            <div class="reading">
-              <span class="label">Last Update:</span>
-              <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+            <div *ngIf="device.isActive">
+              <div class="reading" *ngIf="hasNumericReading(device, 'water_SOIL')">
+                <span class="label">Humedad del Suelo:</span>
+                <span class="value">{{ getReadingValue(device, 'water_SOIL') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'conduct_SOIL')">
+                <span class="label">Conductividad:</span>
+                <span class="value">{{ getReadingValue(device, 'conduct_SOIL') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'temp_DS18B20')">
+                <span class="label">Temperatura:</span>
+                <span class="value">{{ getReadingValue(device, 'temp_DS18B20') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'TEMP_SOIL')">
+                <span class="label">Temperatura del Suelo:</span>
+                <span class="value">{{ getReadingValue(device, 'TEMP_SOIL') }}</span>
+              </div>
+              <div class="reading">
+                <span class="label">Última Actualización:</span>
+                <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -167,43 +215,55 @@
 
     <!-- pH Sensors Section -->
     <div class="dashboard-section">
-      <h2>pH Sensors</h2>
+      <h2>Sensores de pH</h2>
       <div class="devices-grid">
         <div *ngFor="let device of phDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
             <span class="status-indicator"></span>
+            <div class="device-status-badge">
+              <span *ngIf="!device.isActive" class="inactive-badge">INACTIVO</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'online'" class="online-badge">EN LÍNEA</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'warning'" class="warning-badge">ADVERTENCIA</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'offline'" class="offline-badge">DESCONECTADO</span>
+            </div>
           </div>
           <div class="device-content">
-            <div class="reading" *ngIf="hasNumericReading(device, 'PH1_SOIL')">
-              <span class="label">pH Level:</span>
-              <span class="value ph-value" [class]="getPhClass(device.readings['PH1_SOIL'] && device.readings['PH1_SOIL'].value != null ? device.readings['PH1_SOIL'].value : null)">
-                {{ getReadingValue(device, 'PH1_SOIL') }}
-              </span>
+            <div *ngIf="!device.isActive" class="inactive-message">
+              <p>Este dispositivo está registrado pero no está enviando datos.</p>
+              <p><small>ID de Registro: {{ device.registeredDevice?.id }}</small></p>
             </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'PH_SOIL')">
-              <span class="label">pH Level:</span>
-              <span class="value ph-value" [class]="getPhClass(device.readings['PH1_SOIL'] && device.readings['PH1_SOIL'].value != null ? device.readings['PH1_SOIL'].value : null)">
-                {{ getReadingValue(device, 'PH_SOIL') }}
-              </span>
-            </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'TEMP_SOIL')">
-              <span class="label">Soil Temperature:</span>
-              <span class="value">{{ getReadingValue(device, 'TEMP_SOIL') }}</span>
-            </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'Bat')">
-              <span class="label">Battery:</span>
-              <span class="value battery-level" [class]="getBatteryClass(device.readings['Bat'] && device.readings['Bat'].value != undefined ? device.readings['Bat'].value : null)">
-                {{ getReadingValue(device, 'Bat') }}
-              </span>
-            </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'Message_type')">
-              <span class="label">Message Type:</span>
-              <span class="value">{{ getReadingValue(device, 'Message_type') }}</span>
-            </div>
-            <div class="reading">
-              <span class="label">Last Update:</span>
-              <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+            <div *ngIf="device.isActive">
+              <div class="reading" *ngIf="hasNumericReading(device, 'PH1_SOIL')">
+                <span class="label">Nivel de pH:</span>
+                <span class="value ph-value" [class]="getPhClass(device.readings['PH1_SOIL'] && device.readings['PH1_SOIL'].value != null ? device.readings['PH1_SOIL'].value : null)">
+                  {{ getReadingValue(device, 'PH1_SOIL') }}
+                </span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'PH_SOIL')">
+                <span class="label">Nivel de pH:</span>
+                <span class="value ph-value" [class]="getPhClass(device.readings['PH_SOIL'] && device.readings['PH_SOIL'].value != null ? device.readings['PH_SOIL'].value : null)">
+                  {{ getReadingValue(device, 'PH_SOIL') }}
+                </span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'TEMP_SOIL')">
+                <span class="label">Temperatura del Suelo:</span>
+                <span class="value">{{ getReadingValue(device, 'TEMP_SOIL') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'Bat')">
+                <span class="label">Batería:</span>
+                <span class="value battery-level" [class]="getBatteryClass(device.readings['Bat'] && device.readings['Bat'].value != undefined ? device.readings['Bat'].value : null)">
+                  {{ getReadingValue(device, 'Bat') }}
+                </span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'Message_type')">
+                <span class="label">Tipo de Mensaje:</span>
+                <span class="value">{{ getReadingValue(device, 'Message_type') }}</span>
+              </div>
+              <div class="reading">
+                <span class="label">Última Actualización:</span>
+                <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -212,47 +272,59 @@
 
     <!-- Pressure Sensors Section -->
     <div class="dashboard-section">
-      <h2>Pressure Sensors</h2>
+      <h2>Sensores de Presión</h2>
       <div class="devices-grid">
         <div *ngFor="let device of pressureDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
             <span class="status-indicator"></span>
+            <div class="device-status-badge">
+              <span *ngIf="!device.isActive" class="inactive-badge">INACTIVO</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'online'" class="online-badge">EN LÍNEA</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'warning'" class="warning-badge">ADVERTENCIA</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'offline'" class="offline-badge">DESCONECTADO</span>
+            </div>
           </div>
           <div class="device-content">
-            <div class="reading" *ngIf="hasNumericReading(device, 'IDC_intput_mA')">
-              <span class="label">Current Input:</span>
-              <span class="value">{{ getReadingValue(device, 'IDC_intput_mA') }}</span>
+            <div *ngIf="!device.isActive" class="inactive-message">
+              <p>Este dispositivo está registrado pero no está enviando datos.</p>
+              <p><small>ID de Registro: {{ device.registeredDevice?.id }}</small></p>
             </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'VDC_intput_V')">
-              <span class="label">Voltage Input:</span>
-              <span class="value">{{ getReadingValue(device, 'VDC_intput_V') }}</span>
-            </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'Water_pressure_MPa')">
-              <span class="label">Water Pressure:</span>
-              <span class="value">{{ getReadingValue(device, 'Water_pressure_MPa') }}</span>
-            </div>
-            <div class="reading">
-              <span class="label">External Status:</span>
-              <span class="value status-value" [class]="getRawReadingValue(device, 'Exti_status') === 'False' ? 'status-inactive' : 'status-active'">
-                {{ getRawReadingValue(device, 'Exti_status') }}
-              </span>
-            </div>
-            <div class="reading">
-              <span class="label">Input Pin Level:</span>
-              <span class="value">{{ getRawReadingValue(device, 'IN2_pin_level') }}</span>
-            </div>
-            <div class="reading">
-              <span class="label">External Pin Level:</span>
-              <span class="value">{{ getRawReadingValue(device, 'Exti_pin_level') }}</span>
-            </div>
-            <div class="reading" *ngIf="hasNumericReading(device, 'Probe_mod')">
-              <span class="label">Probe Mode:</span>
-              <span class="value">{{ getReadingValue(device, 'Probe_mod') }}</span>
-            </div>
-            <div class="reading">
-              <span class="label">Last Update:</span>
-              <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+            <div *ngIf="device.isActive">
+              <div class="reading" *ngIf="hasNumericReading(device, 'IDC_intput_mA')">
+                <span class="label">Entrada de Corriente:</span>
+                <span class="value">{{ getReadingValue(device, 'IDC_intput_mA') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'VDC_intput_V')">
+                <span class="label">Entrada de Voltaje:</span>
+                <span class="value">{{ getReadingValue(device, 'VDC_intput_V') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'Water_pressure_MPa')">
+                <span class="label">Presión del Agua:</span>
+                <span class="value">{{ getReadingValue(device, 'Water_pressure_MPa') }}</span>
+              </div>
+              <div class="reading">
+                <span class="label">Estado Externo:</span>
+                <span class="value status-value" [class]="getRawReadingValue(device, 'Exti_status') === 'False' ? 'status-inactive' : 'status-active'">
+                  {{ getRawReadingValue(device, 'Exti_status') }}
+                </span>
+              </div>
+              <div class="reading">
+                <span class="label">Nivel de Pin de Entrada:</span>
+                <span class="value">{{ getRawReadingValue(device, 'IN2_pin_level') }}</span>
+              </div>
+              <div class="reading">
+                <span class="label">Nivel de Pin Externo:</span>
+                <span class="value">{{ getRawReadingValue(device, 'Exti_pin_level') }}</span>
+              </div>
+              <div class="reading" *ngIf="hasNumericReading(device, 'Probe_mod')">
+                <span class="label">Modo de Sonda:</span>
+                <span class="value">{{ getReadingValue(device, 'Probe_mod') }}</span>
+              </div>
+              <div class="reading">
+                <span class="label">Última Actualización:</span>
+                <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -261,59 +333,71 @@
 
     <!-- Climate Station Section -->
     <div class="dashboard-section">
-      <h2>Climate Station</h2>
+      <h2>Estación Climática</h2>
       <div class="devices-grid">
         <div *ngFor="let device of climateDevices" class="device-card climate-card" [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
             <span class="status-indicator"></span>
+            <div class="device-status-badge">
+              <span *ngIf="!device.isActive" class="inactive-badge">INACTIVO</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'online'" class="online-badge">EN LÍNEA</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'warning'" class="warning-badge">ADVERTENCIA</span>
+              <span *ngIf="device.isActive && getDeviceStatus(device) === 'offline'" class="offline-badge">DESCONECTADO</span>
+            </div>
           </div>
           <div class="device-content">
-            <div class="reading-grid">
-              <div class="reading" *ngIf="hasNumericReading(device, 'TEM')">
-                <span class="label">Temperature:</span>
-                <span class="value temp-value" [class]="getTempClass(device.readings['TEM'] && device.readings['TEM'].value != undefined ? device.readings['TEM'].value : null)">
-                  {{ getReadingValue(device, 'TEM') }}
-                </span>
-              </div>
-              <div class="reading" *ngIf="hasNumericReading(device, 'HUM')">
-                <span class="label">Humidity:</span>
-                <span class="value humidity-value" [class]="getHumidityClass(device.readings['HUM'] && device.readings['HUM'].value != undefined ? device.readings['HUM'].value : null)">
-                  {{ getReadingValue(device, 'HUM') }}
-                </span>
-              </div>
-              <div class="reading" *ngIf="hasNumericReading(device, 'wind_direction_angle')">
-                <span class="label">Wind Direction:</span>
-                <span class="value">{{ getReadingValue(device, 'wind_direction_angle') }}</span>
-              </div>
-              <div class="reading" *ngIf="hasNumericReading(device, 'wind_speed')">
-                <span class="label">Wind Speed:</span>
-                <span class="value wind-value" [class]="getWindClass(device.readings['wind_speed'] && device.readings['wind_speed'].value != undefined ? device.readings['wind_speed'].value : null)">
-                  {{ getReadingValue(device, 'wind_speed') }}
-                </span>
-              </div>
-              <div class="reading" *ngIf="hasNumericReading(device, 'pressure')">
-                <span class="label">Atmospheric Pressure:</span>
-                <span class="value">{{ getReadingValue(device, 'pressure') }}</span>
-              </div>
-              <div class="reading" *ngIf="hasNumericReading(device, 'rain_gauge')">
-                <span class="label">Rainfall:</span>
-                <span class="value rain-value" [class]="getRainClass(device.readings['rain_gauge'] && device.readings['rain_gauge'].value != undefined ? device.readings['rain_gauge'].value : null)">
-                  {{ getReadingValue(device, 'rain_gauge') }}
-                </span>
-              </div>
-              <div class="reading" *ngIf="hasNumericReading(device, 'PAR')">
-                <span class="label">PAR (Photosynthetic Active Radiation):</span>
-                <span class="value">{{ getReadingValue(device, 'PAR') }}</span>
-              </div>
-              <div class="reading" *ngIf="hasNumericReading(device, 'illumination')">
-                <span class="label">Illumination:</span>
-                <span class="value">{{ getReadingValue(device, 'illumination') }}</span>
-              </div>
+            <div *ngIf="!device.isActive" class="inactive-message">
+              <p>Este dispositivo está registrado pero no está enviando datos.</p>
+              <p><small>ID de Registro: {{ device.registeredDevice?.id }}</small></p>
             </div>
-            <div class="reading">
-              <span class="label">Last Update:</span>
-              <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+            <div *ngIf="device.isActive">
+              <div class="reading-grid">
+                <div class="reading" *ngIf="hasNumericReading(device, 'TEM')">
+                  <span class="label">Temperatura:</span>
+                  <span class="value temp-value" [class]="getTempClass(device.readings['TEM'] && device.readings['TEM'].value != undefined ? device.readings['TEM'].value : null)">
+                    {{ getReadingValue(device, 'TEM') }}
+                  </span>
+                </div>
+                <div class="reading" *ngIf="hasNumericReading(device, 'HUM')">
+                  <span class="label">Humedad:</span>
+                  <span class="value humidity-value" [class]="getHumidityClass(device.readings['HUM'] && device.readings['HUM'].value != undefined ? device.readings['HUM'].value : null)">
+                    {{ getReadingValue(device, 'HUM') }}
+                  </span>
+                </div>
+                <div class="reading" *ngIf="hasNumericReading(device, 'wind_direction_angle')">
+                  <span class="label">Dirección del Viento:</span>
+                  <span class="value">{{ getReadingValue(device, 'wind_direction_angle') }}</span>
+                </div>
+                <div class="reading" *ngIf="hasNumericReading(device, 'wind_speed')">
+                  <span class="label">Velocidad del Viento:</span>
+                  <span class="value wind-value" [class]="getWindClass(device.readings['wind_speed'] && device.readings['wind_speed'].value != undefined ? device.readings['wind_speed'].value : null)">
+                    {{ getReadingValue(device, 'wind_speed') }}
+                  </span>
+                </div>
+                <div class="reading" *ngIf="hasNumericReading(device, 'pressure')">
+                  <span class="label">Presión Atmosférica:</span>
+                  <span class="value">{{ getReadingValue(device, 'pressure') }}</span>
+                </div>
+                <div class="reading" *ngIf="hasNumericReading(device, 'rain_gauge')">
+                  <span class="label">Precipitación:</span>
+                  <span class="value rain-value" [class]="getRainClass(device.readings['rain_gauge'] && device.readings['rain_gauge'].value != undefined ? device.readings['rain_gauge'].value : null)">
+                    {{ getReadingValue(device, 'rain_gauge') }}
+                  </span>
+                </div>
+                <div class="reading" *ngIf="hasNumericReading(device, 'PAR')">
+                  <span class="label">PAR (Radiación Fotosintética Activa):</span>
+                  <span class="value">{{ getReadingValue(device, 'PAR') }}</span>
+                </div>
+                <div class="reading" *ngIf="hasNumericReading(device, 'illumination')">
+                  <span class="label">Iluminación:</span>
+                  <span class="value">{{ getReadingValue(device, 'illumination') }}</span>
+                </div>
+              </div>
+              <div class="reading">
+                <span class="label">Última Actualización:</span>
+                <span class="value">{{ formatDate(device.lastUpdate) }}</span>
+              </div>
             </div>
           </div>
         </div>
