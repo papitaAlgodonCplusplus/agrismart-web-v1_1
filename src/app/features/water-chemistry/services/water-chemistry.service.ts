@@ -9,6 +9,7 @@ export interface WaterChemistry {
   name?: string;
   no3?: number;
   nO3?: number;
+  dateCreated?: any;
   analysisDate?: any;
   waterId?: any;
   pH?: any;

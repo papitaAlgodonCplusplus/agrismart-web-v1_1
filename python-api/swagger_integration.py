@@ -433,51 +433,84 @@ class SwaggerAPIClient:
 
         return targets
 
-    def map_water_to_analysis(self, water: Dict[str, Any]) -> Dict[str, float]:
-        """
-        Map Swagger water data to our water analysis format
-        """
-        print(f"[FETCH] Mapping water analysis...")
+    def map_water_to_analysis(self, water_data):
+        """Map API water data to our analysis format with null safety"""
         
-        # Mapping from Swagger API field names to our element names
-        element_mapping = {
-            # Cations
-            'ca': 'Ca',
-            'k': 'K',
-            'mg': 'Mg', 
-            'na': 'Na',
-            'nH4': 'NH4',
-            'fe': 'Fe',
-            'mn': 'Mn',
-            'zn': 'Zn',
-            'cu': 'Cu',
-            
-            # Anions
-            'nO3': 'N',     # Nitrate as N
-            'sO4': 'S',     # Sulfate as S  
-            'cl': 'Cl',
-            'h2PO4': 'P',   # Phosphate as P
-            'hcO3': 'HCO3',
-            'b': 'B',
-            'moO4': 'Mo'    # Molybdate as Mo
-        }
-
+        # Initialize with default empty analysis
         analysis = {}
         
+        # Check if water_data exists and is not None
+        if not water_data:
+            print("[WARNING] No water analysis data found - using default values")
+            return analysis
+        
+        # Element mapping from API fields to our analysis fields
+        element_mapping = {
+            'no3': 'NO3',
+            'po4': 'PO4', 
+            'k': 'K',
+            'ca': 'Ca',
+            'mg': 'Mg',
+            'na': 'Na',
+            'cl': 'Cl',
+            'sul': 'SO4',
+            'sO4': 'SO4',  # Alternative field name
+            'bO4': 'BO4',
+            'bo4': 'BO4',  # Alternative field name
+            'nh4': 'NH4',
+            'nH4': 'NH4',  # Alternative field name
+            'hco3': 'HCO3',
+            'hcO3': 'HCO3',  # Alternative field name
+            'nO3': 'NO3',   # Alternative field name
+            'h2PO4': 'H2PO4',
+            'h2po4': 'H2PO4',  # Alternative field name
+            'moO4': 'MoO4',
+            'fe': 'Fe',
+            'b': 'B',
+            'cu': 'Cu',
+            'zn': 'Zn',
+            'mn': 'Mn',
+            'mo': 'Mo',
+            'pH': 'pH',
+            'ph': 'pH',  # Alternative field name
+            'phLevel': 'pH',  # Alternative field name
+            'ec': 'EC',
+            'ecLevel': 'EC',  # Alternative field name
+            'tdsLevel': 'TDS',
+            'temperature': 'Temperature',
+            'oxygenLevel': 'DO'  # Dissolved oxygen
+        }
+        
+        print(f"[FETCH] Mapping water analysis...")
+        
+        # Ensure water_data is a dictionary
+        water = water_data
+        if isinstance(water_data, list) and len(water_data) > 0:
+            water = water_data[0]  # Take first item if it's a list
+        
+        # Additional null check after potential list extraction
+        if not water or not isinstance(water, dict):
+            print("[WARNING] Invalid water analysis data format - using default values")
+            return analysis
+        
+        # Map the fields safely
+        mapped_count = 0
         for api_field, our_field in element_mapping.items():
+            # Safe check for field existence
             if api_field in water:
-                value = water[api_field]
+                value = water.get(api_field)  # Use .get() for additional safety
                 if value is not None and value >= 0:
                     analysis[our_field] = float(value)
                     print(f"  {our_field}: {value} mg/L")
-
-        if not analysis:
-            print(f"  [WARNING]  No valid water analysis found, will use defaults")
+                    mapped_count += 1
+        
+        if mapped_count == 0:
+            print("[WARNING] No valid water analysis parameters found")
         else:
-            print(f"  [SUCCESS] Mapped {len(analysis)} water parameters")
-
+            print(f"[SUCCESS] Mapped {mapped_count} water analysis parameters")
+        
         return analysis
-
+    
     async def test_connection(self) -> bool:
         """
         Test connection to the Swagger API

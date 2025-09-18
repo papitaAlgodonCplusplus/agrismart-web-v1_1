@@ -502,7 +502,7 @@
                           [class.is-invalid]="calculationForm.get('water_id')?.invalid && calculationForm.get('water_id')?.touched">
                           <option value="" disabled>Seleccionar análisis...</option>
                           <option *ngFor="let water of waterSources" [value]="water.waterId">
-                            {{ water.name || 'Análisis #' + water.id }}
+                            {{ water.name || 'Análisis #' + water.id + ' ' + (water.dateCreated) }}
                           </option>
                         </select>
                         <div class="invalid-feedback"
