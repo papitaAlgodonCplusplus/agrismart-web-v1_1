@@ -965,3 +965,510 @@
         border: 1px solid #000;
     }
 }
+
+/* css-additions-to-make.css */
+/* Add these styles to your admin.component.css */
+
+/* Enhanced Modal Size */
+.modal-xl {
+    max-width: 1200px;
+}
+
+/* Catalog Selection Banner */
+.catalog-banner {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    border: 1px solid #2196f3;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.catalog-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #1976d2;
+    font-weight: 500;
+}
+
+.catalog-info i {
+    font-size: 1.2rem;
+}
+
+/* Fertilizer Form Container */
+.fertilizer-form {
+    margin-top: 1rem;
+}
+
+/* Enhanced Tab Navigation */
+.fertilizer-tabs {
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 2rem;
+}
+
+.fertilizer-tabs .nav-link {
+    border: none;
+    border-radius: 8px 8px 0 0;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+    color: #6c757d;
+    background: rgba(248, 249, 250, 0.8);
+    margin-right: 0.25rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fertilizer-tabs .nav-link:hover {
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+    transform: translateY(-2px);
+}
+
+.fertilizer-tabs .nav-link.active {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border-bottom: 2px solid #3498db;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.fertilizer-tabs .nav-link i {
+    font-size: 1rem;
+}
+
+/* Tab Content Styling */
+.fertilizer-tab-content {
+    background: white;
+    border-radius: 0 15px 15px 15px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    min-height: 400px;
+}
+
+.fertilizer-tab-content .tab-pane {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+/* Section Headers Within Tabs */
+.fertilizer-tab-content h6 {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.fertilizer-tab-content h6 i {
+    font-size: 1.1rem;
+}
+
+/* Form Controls Specific to Fertilizer Form */
+.fertilizer-form .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.fertilizer-form .form-control,
+.fertilizer-form .form-select {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    padding: 0.625rem 0.875rem;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.fertilizer-form .form-control:focus,
+.fertilizer-form .form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    transform: translateY(-1px);
+}
+
+/* Input Group Styling for Price Fields */
+.fertilizer-form .input-group-text {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border: 2px solid #e9ecef;
+    border-right: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.fertilizer-form .input-group .form-control {
+    border-left: none;
+}
+
+.fertilizer-form .input-group:focus-within .input-group-text {
+    border-color: #3498db;
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    color: #1976d2;
+}
+
+.fertilizer-form .input-group:focus-within .form-control {
+    border-color: #3498db;
+}
+
+/* Switch Controls */
+.fertilizer-form .form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    background: rgba(52, 152, 219, 0.05);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+}
+
+.fertilizer-form .form-check:hover {
+    border-color: rgba(52, 152, 219, 0.2);
+    background: rgba(52, 152, 219, 0.08);
+}
+
+.fertilizer-form .form-check-input {
+    margin: 0;
+    transform: scale(1.1);
+}
+
+.fertilizer-form .form-check-label {
+    margin: 0;
+    font-weight: 500;
+    color: #495057;
+    cursor: pointer;
+}
+
+/* Alert Styling Within Tabs */
+.fertilizer-tab-content .alert {
+    border: none;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.fertilizer-tab-content .alert-info {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    color: #1976d2;
+    border-left: 4px solid #2196f3;
+}
+
+.fertilizer-tab-content .alert i {
+    font-size: 1.1rem;
+    margin-top: 0.1rem;
+}
+
+/* Fertilizer Section Specific Styles */
+.fertilizer-section {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.fertilizer-controls {
+    background: rgba(248, 249, 250, 0.8);
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid #e9ecef;
+}
+
+.catalog-selector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.catalog-selector .form-label {
+    margin: 0;
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.fertilizer-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+/* Fertilizer Alerts */
+.fertilizer-alerts .alert {
+    border: none;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 0.5rem;
+}
+
+/* Fertilizer Table Specific Styles */
+.fertilizer-table .fertilizer-name {
+    min-width: 150px;
+}
+
+.fertilizer-table .fertilizer-name .name-info strong {
+    font-size: 0.95rem;
+    color: #2c3e50;
+}
+
+.fertilizer-table .fertilizer-name .name-info small {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.fertilizer-table .fertilizer-type {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fertilizer-table .npk-ratio .badge {
+    font-size: 0.8rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.fertilizer-table .stock-info .stock-display {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.fertilizer-table .stock-value {
+    font-weight: 600;
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.fertilizer-table .price-value {
+    font-weight: 600;
+    color: #28a745;
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.fertilizer-table .status-info .badge {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Textarea Specific Styling */
+.fertilizer-form textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.fertilizer-form textarea.form-control:focus {
+    min-height: 120px;
+}
+
+/* Status Indicators */
+.fertilizer-status-low-stock {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.fertilizer-status-expired {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.fertilizer-status-good {
+    background-color: #d1ecf1;
+    border-left: 4px solid #17a2b8;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+/* Responsive Adjustments for Fertilizer Modal */
+@media (max-width: 1200px) {
+    .modal-xl {
+        max-width: 95%;
+        margin: 1rem;
+    }
+    
+    .fertilizer-tab-content {
+        padding: 1.5rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .fertilizer-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .fertilizer-tabs .nav-link {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+        padding: 0.875rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .fertilizer-tab-content {
+        padding: 1.25rem;
+        min-height: 350px;
+    }
+    
+    .fertilizer-controls {
+        padding: 1rem;
+    }
+    
+    .fertilizer-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .catalog-selector {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-xl {
+        max-width: 100%;
+        margin: 0.5rem;
+    }
+    
+    .fertilizer-tabs .nav-link {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+        gap: 0.25rem;
+    }
+    
+    .fertilizer-tabs .nav-link i {
+        font-size: 0.9rem;
+    }
+    
+    .fertilizer-tab-content {
+        padding: 1rem;
+        border-radius: 15px;
+    }
+    
+    .catalog-banner {
+        padding: 0.875rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .fertilizer-tab-content h6 {
+        font-size: 0.95rem;
+    }
+    
+    .fertilizer-table {
+        font-size: 0.85rem;
+    }
+    
+    .fertilizer-table .action-buttons {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .fertilizer-tabs {
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .fertilizer-tabs .nav-link {
+        padding: 0.625rem 0.375rem;
+        font-size: 0.75rem;
+        margin-right: 0.125rem;
+    }
+    
+    .fertilizer-form .form-label {
+        font-size: 0.85rem;
+    }
+    
+    .fertilizer-form .form-control,
+    .fertilizer-form .form-select {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .fertilizer-tab-content {
+        padding: 0.875rem;
+        min-height: 300px;
+    }
+    
+    .fertilizer-controls {
+        padding: 0.875rem;
+    }
+    
+    .fertilizer-table .fertilizer-name,
+    .fertilizer-table .action-buttons .btn {
+        font-size: 0.8rem;
+    }
+}
+
+/* Animation for Tab Transitions */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Focus States for Accessibility */
+.fertilizer-tabs .nav-link:focus {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+
+.fertilizer-form .form-control:focus,
+.fertilizer-form .form-select:focus,
+.fertilizer-form .form-check-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* Table Column Adjustments for Fertilizer Display */
+.entity-table tbody td.field-number {
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.85rem;
+    text-align: right;
+}
+
+.entity-table tbody td.field-text {
+    max-width: 150px;
+}
+
+/* Custom Scrollbar for Modal */
+.fertilizer-tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.fertilizer-tab-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+.fertilizer-tab-content::-webkit-scrollbar-thumb {
+    background: rgba(52, 152, 219, 0.3);
+    border-radius: 3px;
+}
+
+.fertilizer-tab-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(52, 152, 219, 0.5);
+}

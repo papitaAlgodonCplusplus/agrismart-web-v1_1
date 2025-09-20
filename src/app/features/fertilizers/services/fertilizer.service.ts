@@ -321,12 +321,15 @@ export class FertilizerService {
   /**
    * Create new fertilizer (catalogId now required)
    */
-  create(data: FertilizerCreateRequest): Observable<Fertilizer> {
+  create(data: any): Observable<Fertilizer> {
     console.log("Creating fertilizer with data: ", data)
     if (!data.catalogId) {
       console.error('catalogId is required for creating fertilizer');
       throw new Error('catalogId is required for creating fertilizer');
     }
+
+    data.createdBy = 1;
+    data.updatedBy = 1;
 
     const payload = {
       ...data,
@@ -365,7 +368,7 @@ export class FertilizerService {
   /**
    * Update fertilizer
    */
-  update(id: number, data: FertilizerUpdateRequest): Observable<Fertilizer> {
+  update(data: FertilizerUpdateRequest): Observable<Fertilizer> {
     const payload = {
       ...data,
       ...(data.expirationDate && {
@@ -375,7 +378,7 @@ export class FertilizerService {
       })
     };
 
-    return this.apiService.put<Fertilizer>(`/Fertilizer/${id}`, payload);
+    return this.apiService.put<Fertilizer>(`/Fertilizer`, payload);
   }
 
   /**

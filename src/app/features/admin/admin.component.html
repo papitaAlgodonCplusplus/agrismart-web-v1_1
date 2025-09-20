@@ -1,4 +1,4 @@
-<!-- src/app/features/admin/admin.component.html -->
+<!-- Fixed admin.component.html - Resolving fertilizer table/modal overlap -->
 <div class="admin-container">
   <!-- Main Layout -->
   <div class="admin-layout">
@@ -7,15 +7,13 @@
       <div class="sidebar-header">
         <h3><i class="bi bi-list-ul"></i> Entidades</h3>
       </div>
-      
+
       <div class="entity-nav">
         <div class="entity-category">
           <h4>Gestión Principal</h4>
           <ul class="entity-list">
-            <li *ngFor="let entityConfig of getMainEntities(); trackBy: trackByEntityConfig" 
-                class="entity-item"
-                [class.active]="selectedEntity === entityConfig.name"
-                (click)="selectEntity(entityConfig.name)">
+            <li *ngFor="let entityConfig of getMainEntities(); trackBy: trackByEntityConfig" class="entity-item"
+              [class.active]="selectedEntity === entityConfig.name" (click)="selectEntity(entityConfig.name)">
               <i [class]="entityConfig.icon"></i>
               <span>{{ entityConfig.displayName }}</span>
               <div class="entity-badge" *ngIf="getEntityCount(entityConfig.name) > 0">
@@ -28,10 +26,8 @@
         <div class="entity-category">
           <h4>Configuración</h4>
           <ul class="entity-list">
-            <li *ngFor="let entityConfig of getConfigEntities(); trackBy: trackByEntityConfig" 
-                class="entity-item"
-                [class.active]="selectedEntity === entityConfig.name"
-                (click)="selectEntity(entityConfig.name)">
+            <li *ngFor="let entityConfig of getConfigEntities(); trackBy: trackByEntityConfig" class="entity-item"
+              [class.active]="selectedEntity === entityConfig.name" (click)="selectEntity(entityConfig.name)">
               <i [class]="entityConfig.icon"></i>
               <span>{{ entityConfig.displayName }}</span>
               <div class="entity-badge" *ngIf="getEntityCount(entityConfig.name) > 0">
@@ -44,10 +40,8 @@
         <div class="entity-category">
           <h4>Avanzado</h4>
           <ul class="entity-list">
-            <li *ngFor="let entityConfig of getAdvancedEntities(); trackBy: trackByEntityConfig" 
-                class="entity-item"
-                [class.active]="selectedEntity === entityConfig.name"
-                (click)="selectEntity(entityConfig.name)">
+            <li *ngFor="let entityConfig of getAdvancedEntities(); trackBy: trackByEntityConfig" class="entity-item"
+              [class.active]="selectedEntity === entityConfig.name" (click)="selectEntity(entityConfig.name)">
               <i [class]="entityConfig.icon"></i>
               <span>{{ entityConfig.displayName }}</span>
               <div class="entity-badge" *ngIf="getEntityCount(entityConfig.name) > 0">
@@ -57,14 +51,12 @@
           </ul>
         </div>
       </div>
-      
+
       <div class="sidebar-footer">
-        <button class="btn btn-outline-light btn-sm w-100 mb-2" 
-                (click)="goToDashboard()">
+        <button class="btn btn-outline-light btn-sm w-100 mb-2" (click)="goToDashboard()">
           <i class="bi bi-arrow-left"></i> Dashboard
         </button>
-        <button class="btn btn-outline-danger btn-sm w-100" 
-                (click)="logout()">
+        <button class="btn btn-outline-danger btn-sm w-100" (click)="logout()">
           <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
         </button>
       </div>
@@ -80,7 +72,7 @@
           </div>
           <h2>Bienvenido al Panel de Administración</h2>
           <p>Selecciona una entidad del menú lateral para comenzar a gestionar los datos del sistema.</p>
-          
+
           <div class="welcome-features">
             <div class="feature-item">
               <i class="bi bi-lightning-charge text-warning"></i>
@@ -121,22 +113,19 @@
               Gestiona {{ getCurrentEntityConfig()?.displayName?.toLowerCase() }} del sistema
             </p>
           </div>
-          
+
           <div class="entity-actions">
             <div class="search-box">
-              <input type="text" 
-                     class="form-control" 
-                     placeholder="Buscar..."
-                     [(ngModel)]="searchTerm"
-                     (ngModelChange)="applyFilters()">
+              <input type="text" class="form-control" placeholder="Buscar..." [(ngModel)]="searchTerm"
+                (ngModelChange)="applyFilters()">
               <i class="bi bi-search search-icon"></i>
             </div>
-            
+
             <button class="btn btn-primary" (click)="openCreateModal()">
               <i class="bi bi-plus-lg"></i>
               Agregar {{ getCurrentEntityConfig()?.displayName?.slice(0, -1) }}
             </button>
-            
+
             <button class="btn btn-outline-secondary" (click)="refreshData()">
               <i class="bi bi-arrow-clockwise"></i>
               Actualizar
@@ -148,109 +137,313 @@
         <div class="entity-filters" *ngIf="!isLoading">
           <div class="filter-group">
             <label>Estado:</label>
-            <select class="form-select form-select-sm" 
-                    [(ngModel)]="filterStatus" 
-                    (ngModelChange)="applyFilters()">
+            <select class="form-select form-select-sm" [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()">
               <option value="">Todos</option>
               <option value="active">Activos</option>
               <option value="inactive">Inactivos</option>
             </select>
           </div>
-          
+
           <div class="filter-group">
             <label>Ordenar por:</label>
-            <select class="form-select form-select-sm" 
-                    [(ngModel)]="sortField" 
-                    (ngModelChange)="applySorting()">
+            <select class="form-select form-select-sm" [(ngModel)]="sortField" (ngModelChange)="applySorting()">
               <option value="">Sin orden</option>
               <option value="id">ID</option>
-              <option *ngIf="getCurrentEntityConfig()?.nameField" 
-                      [value]="getCurrentEntityConfig()?.nameField">
-                {{ getCurrentEntityConfig()?.nameField === 'deviceId' ? 'ID Dispositivo' : 
-                   getCurrentEntityConfig()?.nameField === 'userEmail' ? 'Email' :
-                   getCurrentEntityConfig()?.nameField === 'sensorLabel' ? 'Etiqueta' :
-                   getCurrentEntityConfig()?.nameField === 'waterId' ? 'ID Agua' :
-                   getCurrentEntityConfig()?.nameField === 'key' ? 'Clave' : 'Nombre' }}
+              <option *ngIf="getCurrentEntityConfig()?.nameField" [value]="getCurrentEntityConfig()?.nameField">
+                {{ getCurrentEntityConfig()?.nameField === 'deviceId' ? 'ID Dispositivo' :
+                getCurrentEntityConfig()?.nameField === 'userEmail' ? 'Email' :
+                getCurrentEntityConfig()?.nameField === 'sensorLabel' ? 'Etiqueta' :
+                getCurrentEntityConfig()?.nameField === 'waterId' ? 'ID Agua' :
+                getCurrentEntityConfig()?.nameField === 'key' ? 'Clave' : 'Nombre' }}
               </option>
               <option value="active">Estado</option>
             </select>
           </div>
-          
+
           <div class="filter-group">
-            <button class="btn btn-outline-secondary btn-sm" 
-                    (click)="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'; applySorting()"
-                    [disabled]="!sortField">
-              <i class="bi" [class.bi-sort-alpha-down]="sortDirection === 'asc'" 
-                 [class.bi-sort-alpha-up]="sortDirection === 'desc'"></i>
+            <button class="btn btn-outline-secondary btn-sm"
+              (click)="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'; applySorting()"
+              [disabled]="!sortField">
+              <i class="bi" [class.bi-sort-alpha-down]="sortDirection === 'asc'"
+                [class.bi-sort-alpha-up]="sortDirection === 'desc'"></i>
             </button>
           </div>
-          
+
           <div class="filter-group">
-            <button class="btn btn-outline-warning btn-sm" 
-                    (click)="clearFilters()"
-                    [disabled]="!searchTerm && !filterStatus && !sortField">
+            <button class="btn btn-outline-warning btn-sm" (click)="clearFilters()"
+              [disabled]="!searchTerm && !filterStatus && !sortField">
               <i class="bi bi-x-circle"></i>
               Limpiar
             </button>
           </div>
-          
+
           <div class="filter-results">
-            Mostrando {{ filteredData.length }} de {{ entityData.length }} registros
+            Mostrando {{ filteredData?.length || 0 }} de {{ entityData?.length || 0 }} registros
           </div>
         </div>
 
         <!-- Alert Messages -->
-        <div class="alert alert-success alert-dismissible fade show" 
-             *ngIf="successMessage" 
-             role="alert">
+        <div class="alert alert-success alert-dismissible fade show" *ngIf="successMessage" role="alert">
           <i class="bi bi-check-circle"></i>
           {{ successMessage }}
           <button type="button" class="btn-close" (click)="clearMessages()"></button>
         </div>
 
-        <div class="alert alert-danger alert-dismissible fade show" 
-             *ngIf="errorMessage" 
-             role="alert">
+        <div class="alert alert-danger alert-dismissible fade show" *ngIf="errorMessage" role="alert">
           <i class="bi bi-exclamation-triangle"></i>
           {{ errorMessage }}
           <button type="button" class="btn-close" (click)="clearMessages()"></button>
         </div>
 
-        <!-- Data Table -->
-        <div class="entity-table-container" *ngIf="!isLoading">
+        <!-- FERTILIZER SPECIALIZED SECTION - Only shows for fertilizers -->
+        <div *ngIf="selectedEntity === 'fertilizer' && !isLoading" class="fertilizer-section">
+          <!-- Fertilizer Controls -->
+          <div class="fertilizer-controls mb-3">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <div class="catalog-selector">
+                  <label class="form-label">Catálogo:</label>
+                  <select class="form-select" [(ngModel)]="selectedCatalogId" (ngModelChange)="onCatalogChange()">
+                    <option value="">Todos los catálogos</option>
+                    <option *ngFor="let catalog of availableCatalogs" [value]="catalog.id">
+                      {{ catalog.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="fertilizer-actions">
+                  <button class="btn btn-outline-info btn-sm" (click)="exportFertilizerData()"
+                    [disabled]="!filteredData || filteredData.length === 0">
+                    <i class="bi bi-download"></i>
+                    Exportar CSV
+                  </button>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-outline-secondary" (click)="filterFertilizersByStatus('all')">
+                      Todos
+                    </button>
+                    <button class="btn btn-outline-success" (click)="filterFertilizersByStatus('good')">
+                      Buenos
+                    </button>
+                    <button class="btn btn-outline-warning" (click)="filterFertilizersByStatus('low-stock')">
+                      Stock Bajo
+                    </button>
+                    <button class="btn btn-outline-danger" (click)="filterFertilizersByStatus('expired')">
+                      Vencidos
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fertilizer Alerts -->
+          <div *ngIf="getFertilizerAlerts().length > 0" class="fertilizer-alerts mb-3">
+            <div *ngFor="let alert of getFertilizerAlerts()" class="alert"
+              [class.alert-warning]="alert.type === 'warning'" [class.alert-danger]="alert.type === 'danger'">
+              <i class="bi" [class.bi-exclamation-triangle]="alert.type === 'warning'"
+                [class.bi-x-circle]="alert.type === 'danger'"></i>
+              {{ alert.message }}
+            </div>
+          </div>
+
+          <!-- Enhanced Fertilizer Table -->
+          <div class="entity-table-container">
+            <div class="table-responsive">
+              <table class="table table-hover entity-table fertilizer-table">
+                <thead>
+                  <tr>
+                    <th (click)="sortByField('name')" class="sortable">
+                      Nombre
+                      <i class="bi bi-arrow-down-short sort-indicator"
+                        *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
+                      <i class="bi bi-arrow-up-short sort-indicator"
+                        *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
+                    </th>
+                    <th (click)="sortByField('brand')" class="sortable">
+                      Marca
+                      <i class="bi bi-arrow-down-short sort-indicator"
+                        *ngIf="sortField === 'brand' && sortDirection === 'asc'"></i>
+                      <i class="bi bi-arrow-up-short sort-indicator"
+                        *ngIf="sortField === 'brand' && sortDirection === 'desc'"></i>
+                    </th>
+                    <th (click)="sortByField('type')" class="sortable">
+                      Tipo
+                      <i class="bi bi-arrow-down-short sort-indicator"
+                        *ngIf="sortField === 'type' && sortDirection === 'asc'"></i>
+                      <i class="bi bi-arrow-up-short sort-indicator"
+                        *ngIf="sortField === 'type' && sortDirection === 'desc'"></i>
+                    </th>
+                    <th>NPK</th>
+                    <th (click)="sortByField('currentStock')" class="sortable">
+                      Stock Actual
+                      <i class="bi bi-arrow-down-short sort-indicator"
+                        *ngIf="sortField === 'currentStock' && sortDirection === 'asc'"></i>
+                      <i class="bi bi-arrow-up-short sort-indicator"
+                        *ngIf="sortField === 'currentStock' && sortDirection === 'desc'"></i>
+                    </th>
+                    <th (click)="sortByField('pricePerUnit')" class="sortable">
+                      Precio
+                      <i class="bi bi-arrow-down-short sort-indicator"
+                        *ngIf="sortField === 'pricePerUnit' && sortDirection === 'asc'"></i>
+                      <i class="bi bi-arrow-up-short sort-indicator"
+                        *ngIf="sortField === 'pricePerUnit' && sortDirection === 'desc'"></i>
+                    </th>
+                    <th>Estado</th>
+                    <th class="actions-column">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of filteredData; trackBy: trackByItem" class="entity-row fertilizer-row">
+
+                    <!-- Name with manufacturer -->
+                    <td class="fertilizer-name">
+                      <div class="name-info">
+                        <strong>{{ item.name || 'Sin nombre' }}</strong>
+                        <small *ngIf="item.manufacturer" class="text-muted d-block">
+                          {{ item.manufacturer }}
+                        </small>
+                      </div>
+                    </td>
+
+                    <!-- Brand -->
+                    <td>
+                      <span class="badge bg-light text-dark" *ngIf="item.brand">
+                        {{ item.brand }}
+                      </span>
+                      <span *ngIf="!item.brand" class="text-muted">-</span>
+                    </td>
+
+                    <!-- Type with liquid indicator -->
+                    <td>
+                      <span class="fertilizer-type">
+                        {{ item.type || '-' }}
+                        <i class="bi bi-droplet-fill text-info ms-1" *ngIf="item.isLiquid"
+                          title="Fertilizante líquido"></i>
+                      </span>
+                    </td>
+
+                    <!-- NPK Ratio -->
+                    <td class="npk-ratio">
+                      <span class="badge bg-primary" *ngIf="calculateNPKRatio(item) !== '-'">
+                        {{ calculateNPKRatio(item) }}
+                      </span>
+                      <span *ngIf="calculateNPKRatio(item) === '-'" class="text-muted">-</span>
+                    </td>
+
+                    <!-- Stock with warning indicators -->
+                    <td class="stock-info">
+                      <div class="stock-display" *ngIf="item.currentStock !== null">
+                        <span class="stock-value" [class.text-danger]="getFertilizerStatus(item) === 'low-stock'">
+                          {{ item.currentStock }}
+                        </span>
+                        <small class="text-muted">{{ item.stockUnit || 'unidades' }}</small>
+                        <i class="bi bi-exclamation-triangle text-warning ms-1"
+                          *ngIf="getFertilizerStatus(item) === 'low-stock'" title="Stock bajo"></i>
+                      </div>
+                      <span *ngIf="item.currentStock === null" class="text-muted">-</span>
+                    </td>
+
+                    <!-- Price -->
+                    <td class="price-info">
+                      <span *ngIf="item.pricePerUnit" class="price-value">
+                        ${{ item.pricePerUnit | number:'1.2-2' }}
+                      </span>
+                      <span *ngIf="!item.pricePerUnit" class="text-muted">-</span>
+                    </td>
+
+                    <!-- Status with colored indicators -->
+                    <td class="status-info">
+                      <span class="badge" [class]="'bg-' + (getFertilizerStatus(item) === 'good' ? 'success' : 
+                                      getFertilizerStatus(item) === 'low-stock' ? 'warning' :
+                                      getFertilizerStatus(item) === 'expiring-soon' ? 'warning' :
+                                      getFertilizerStatus(item) === 'expired' ? 'danger' : 'secondary')">
+                        <i class="bi" [class.bi-check-circle]="getFertilizerStatus(item) === 'good'"
+                          [class.bi-exclamation-triangle]="getFertilizerStatus(item) === 'low-stock' || getFertilizerStatus(item) === 'expiring-soon'"
+                          [class.bi-x-circle]="getFertilizerStatus(item) === 'expired'"
+                          [class.bi-pause-circle]="getFertilizerStatus(item) === 'inactive'"></i>
+                        {{ getFertilizerStatusLabel(getFertilizerStatus(item)) }}
+                      </span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="actions-column">
+                      <div class="action-buttons">
+                        <button class="btn btn-sm btn-outline-info" (click)="viewFertilizerDetails(item)"
+                          title="Ver detalles">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" (click)="editItem(item)" title="Editar">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" (click)="deleteItem(item)" title="Eliminar">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State for Fertilizers -->
+            <div *ngIf="!filteredData || filteredData.length === 0" class="empty-state">
+              <div class="empty-content">
+                <i class="bi bi-droplet display-1 text-muted"></i>
+                <h4>No se encontraron fertilizantes</h4>
+                <p *ngIf="searchTerm || filterStatus">
+                  Intenta ajustar los filtros de búsqueda o
+                  <button class="btn btn-link p-0" (click)="clearFilters()">limpiar filtros</button>
+                </p>
+                <p *ngIf="!searchTerm && !filterStatus && !selectedCatalogId">
+                  Selecciona un catálogo para ver los fertilizantes disponibles.
+                </p>
+                <p *ngIf="!searchTerm && !filterStatus && selectedCatalogId">
+                  No hay fertilizantes registrados en este catálogo.
+                </p>
+                <button class="btn btn-primary" (click)="openCreateModal()" [disabled]="!selectedCatalogId">
+                  <i class="bi bi-plus-lg"></i>
+                  Agregar Fertilizante
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GENERIC DATA TABLE - Only shows for non-fertilizer entities -->
+        <div *ngIf="selectedEntity !== 'fertilizer' && !isLoading" class="entity-table-container">
           <div class="table-responsive">
             <table class="table table-hover entity-table">
               <thead>
                 <tr>
-                  <th *ngFor="let field of getCurrentEntityConfig()?.fields?.slice(0, 6); trackBy: trackByField" 
-                      [class.sortable]="field.type !== 'boolean'"
-                      (click)="sortByField(field.key)">
+                  <th *ngFor="let field of getCurrentEntityConfig()?.fields?.slice(0, 6); trackBy: trackByField"
+                    [class.sortable]="field.type !== 'boolean'" (click)="sortByField(field.key)">
                     {{ field.label }}
-                    <i class="bi bi-arrow-down-short sort-indicator" 
-                       *ngIf="sortField === field.key && sortDirection === 'asc'"></i>
-                    <i class="bi bi-arrow-up-short sort-indicator" 
-                       *ngIf="sortField === field.key && sortDirection === 'desc'"></i>
+                    <i class="bi bi-arrow-down-short sort-indicator"
+                      *ngIf="sortField === field.key && sortDirection === 'asc'"></i>
+                    <i class="bi bi-arrow-up-short sort-indicator"
+                      *ngIf="sortField === field.key && sortDirection === 'desc'"></i>
                   </th>
                   <th class="actions-column">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let item of filteredData; trackBy: trackByItem" 
-                    class="entity-row">
-                  <td *ngFor="let field of getCurrentEntityConfig()?.fields?.slice(0, 6); trackBy: trackByField" 
-                      [class]="'field-' + field.type">
-                    
+                <tr *ngFor="let item of filteredData; trackBy: trackByItem" class="entity-row">
+                  <td *ngFor="let field of getCurrentEntityConfig()?.fields?.slice(0, 6); trackBy: trackByField"
+                    [class]="'field-' + field.type">
+
                     <!-- Text fields -->
                     <span *ngIf="field.type === 'text' || field.type === 'email' || field.type === 'textarea'"
-                          [title]="item[field.key]">
+                      [title]="item[field.key]">
                       {{ (item[field.key] | slice:0:30) + (item[field.key]?.length > 30 ? '...' : '') || '-' }}
                     </span>
-                    
+
                     <!-- Number fields -->
                     <span *ngIf="field.type === 'number'" class="number-value">
-                      {{ item[field.key] !== null && item[field.key] !== undefined ? (item[field.key] | number:'1.0-2') : '-' }}
+                      {{ item[field.key] !== null && item[field.key] !== undefined ? (item[field.key] | number:'1.0-2')
+                      : '-' }}
                     </span>
-                    
+
                     <!-- Date fields -->
                     <span *ngIf="field.type === 'date'" class="date-value">
                       {{ item[field.key] ? formatDate(item[field.key]) : '-' }}
@@ -260,36 +453,30 @@
                     <span *ngIf="field.type === 'datetime'" class="datetime-value">
                       {{ item[field.key] ? formatDateTime(item[field.key]) : '-' }}
                     </span>
-                    
+
                     <!-- Boolean fields -->
                     <span *ngIf="field.type === 'boolean'" class="boolean-value">
-                      <span class="badge" 
-                            [class.bg-success]="getBooleanValue(item, field.key)" 
-                            [class.bg-secondary]="!getBooleanValue(item, field.key)">
-                        <i class="bi" 
-                           [class.bi-check-lg]="getBooleanValue(item, field.key)" 
-                           [class.bi-x-lg]="!getBooleanValue(item, field.key)"></i>
+                      <span class="badge" [class.bg-success]="getBooleanValue(item, field.key)"
+                        [class.bg-secondary]="!getBooleanValue(item, field.key)">
+                        <i class="bi" [class.bi-check-lg]="getBooleanValue(item, field.key)"
+                          [class.bi-x-lg]="!getBooleanValue(item, field.key)"></i>
                         {{ getBooleanValue(item, field.key) ? 'Sí' : 'No' }}
                       </span>
                     </span>
-                    
+
                     <!-- Select fields -->
                     <span *ngIf="field.type === 'select'">
                       {{ getSelectLabel(field, item[field.key]) }}
                     </span>
                   </td>
-                  
+
                   <!-- Actions Column -->
                   <td class="actions-column">
                     <div class="action-buttons">
-                      <button class="btn btn-sm btn-outline-warning" 
-                              (click)="editItem(item)"
-                              title="Editar">
+                      <button class="btn btn-sm btn-outline-warning" (click)="editItem(item)" title="Editar">
                         <i class="bi bi-pencil"></i>
                       </button>
-                      <button class="btn btn-sm btn-outline-danger" 
-                              (click)="deleteItem(item)"
-                              title="Eliminar">
+                      <button class="btn btn-sm btn-outline-danger" (click)="deleteItem(item)" title="Eliminar">
                         <i class="bi bi-trash"></i>
                       </button>
                     </div>
@@ -299,13 +486,13 @@
             </table>
           </div>
 
-          <!-- Empty State -->
-          <div *ngIf="filteredData.length === 0" class="empty-state">
+          <!-- Empty State for Generic Entities -->
+          <div *ngIf="!filteredData || filteredData.length === 0" class="empty-state">
             <div class="empty-content">
               <i class="bi bi-inbox display-1 text-muted"></i>
               <h4>No se encontraron registros</h4>
               <p *ngIf="searchTerm || filterStatus">
-                Intenta ajustar los filtros de búsqueda o 
+                Intenta ajustar los filtros de búsqueda o
                 <button class="btn btn-link p-0" (click)="clearFilters()">limpiar filtros</button>
               </p>
               <p *ngIf="!searchTerm && !filterStatus">
@@ -322,111 +509,563 @@
     </div>
   </div>
 
-  <!-- Modal for Create/Edit -->
-  <div class="modal fade" 
-       [class.show]="showModal" 
-       [style.display]="showModal ? 'block' : 'none'"
-       tabindex="-1" 
-       role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
+  <!-- FERTILIZER DETAILS MODAL - Separate from main modal -->
+  <div class="modal fade" [class.show]="showDetailsModal" [style.display]="showDetailsModal ? 'block' : 'none'"
+    tabindex="-1" style="z-index: 1055;">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-droplet-fill text-primary"></i>
+            Detalles del Fertilizante
+          </h5>
+          <button type="button" class="btn-close" (click)="closeDetailsModal()"></button>
+        </div>
+
+        <div class="modal-body" *ngIf="selectedFertilizer">
+          <div class="row">
+            <!-- Basic Information -->
+            <div class="col-md-6">
+              <h6 class="text-primary mb-3">
+                <i class="bi bi-info-circle"></i> Información Básica
+              </h6>
+              <dl class="row">
+                <dt class="col-sm-4">Nombre:</dt>
+                <dd class="col-sm-8">{{ selectedFertilizer.name || '-' }}</dd>
+
+                <dt class="col-sm-4">Marca:</dt>
+                <dd class="col-sm-8">{{ selectedFertilizer.brand || '-' }}</dd>
+
+                <dt class="col-sm-4">Tipo:</dt>
+                <dd class="col-sm-8">{{ selectedFertilizer.type || '-' }}</dd>
+
+                <dt class="col-sm-4">Formulación:</dt>
+                <dd class="col-sm-8">{{ selectedFertilizer.formulation || '-' }}</dd>
+              </dl>
+            </div>
+
+            <!-- NPK Analysis -->
+            <div class="col-md-6">
+              <h6 class="text-success mb-3">
+                <i class="bi bi-graph-up"></i> Análisis NPK
+              </h6>
+              <dl class="row">
+                <dt class="col-sm-4">Nitrógeno:</dt>
+                <dd class="col-sm-8">{{ selectedFertilizer.nitrogenPercentage || 0 }}%</dd>
+
+                <dt class="col-sm-4">Fósforo:</dt>
+                <dd class="col-sm-8">{{ selectedFertilizer.phosphorusPercentage || 0 }}%</dd>
+
+                <dt class="col-sm-4">Potasio:</dt>
+                <dd class="col-sm-8">{{ selectedFertilizer.potassiumPercentage || 0 }}%</dd>
+
+                <dt class="col-sm-4">Ratio NPK:</dt>
+                <dd class="col-sm-8">
+                  <span class="badge bg-primary">{{ calculateNPKRatio(selectedFertilizer) }}</span>
+                </dd>
+              </dl>
+            </div>
+          </div>
+
+          <!-- Stock and Pricing -->
+          <div class="row mt-3">
+            <div class="col-12">
+              <h6 class="text-warning mb-3">
+                <i class="bi bi-box"></i> Stock y Precios
+              </h6>
+              <div class="row">
+                <div class="col-md-3">
+                  <strong>Stock Actual:</strong><br>
+                  {{ getFertilizerDisplayValue(selectedFertilizer, 'currentStock') }}
+                </div>
+                <div class="col-md-3">
+                  <strong>Stock Mínimo:</strong><br>
+                  {{ selectedFertilizer.minimumStock || 0 }} {{ selectedFertilizer.stockUnit || '' }}
+                </div>
+                <div class="col-md-3">
+                  <strong>Precio:</strong><br>
+                  {{ getFertilizerDisplayValue(selectedFertilizer, 'pricePerUnit') }}
+                </div>
+                <div class="col-md-3">
+                  <strong>Proveedor:</strong><br>
+                  {{ selectedFertilizer.supplier || '-' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Instructions (if available) -->
+          <div class="row mt-3"
+            *ngIf="selectedFertilizer.storageInstructions || selectedFertilizer.applicationInstructions">
+            <div class="col-12">
+              <h6 class="text-info mb-3">
+                <i class="bi bi-journal-text"></i> Instrucciones
+              </h6>
+              <div class="row">
+                <div class="col-md-6" *ngIf="selectedFertilizer.storageInstructions">
+                  <strong>Almacenamiento:</strong>
+                  <p class="small">{{ selectedFertilizer.storageInstructions }}</p>
+                </div>
+                <div class="col-md-6" *ngIf="selectedFertilizer.applicationInstructions">
+                  <strong>Aplicación:</strong>
+                  <p class="small">{{ selectedFertilizer.applicationInstructions }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">
+            Cerrar
+          </button>
+          <button type="button" class="btn btn-warning" (click)="editFertilizerFromDetails()">
+            <i class="bi bi-pencil"></i>
+            Editar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details Modal Backdrop -->
+  <div *ngIf="showDetailsModal" class="modal-backdrop fade show" style="z-index: 1054;"></div>
+
+  <!-- MAIN CREATE/EDIT MODAL - Higher z-index than details modal -->
+  <div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1"
+    role="dialog" style="z-index: 1060;">
+    <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">
             <i [class]="getCurrentEntityConfig()?.icon"></i>
             {{ isEditing ? 'Editar' : 'Crear' }} {{ getCurrentEntityConfig()?.displayName?.slice(0, -1) }}
           </h5>
-          <button type="button" 
-                  class="btn-close" 
-                  (click)="closeModal()"></button>
+          <button type="button" class="btn-close" (click)="closeModal()"></button>
         </div>
-        
-        <div class="modal-body">
-          <div class="row g-3" *ngIf="getCurrentEntityConfig()">
+
+        <div class="modal-body" *ngIf="getCurrentEntityConfig()">
+          <!-- Catalog Selection Banner for Fertilizers -->
+          <div *ngIf="selectedEntity === 'fertilizer'" class="catalog-banner mb-4">
+            <div class="catalog-info">
+              <i class="bi bi-folder text-primary"></i>
+              <span>Catálogo seleccionado:
+                <strong>{{ getSelectedCatalogName() }}</strong>
+              </span>
+            </div>
+          </div>
+
+          <!-- Regular Form for Non-Fertilizer Entities -->
+          <div *ngIf="selectedEntity !== 'fertilizer'" class="row g-3">
             <div *ngFor="let field of getCurrentEntityConfig()?.fields; trackBy: trackByField"
-                 [class]="getFieldColumnClass(field)">
+              [class]="getFieldColumnClass(field)">
               <label class="form-label">
                 {{ field.label }}
                 <span class="text-danger" *ngIf="field.required">*</span>
               </label>
-              
+
               <!-- Text Input -->
-              <input *ngIf="field.type === 'text' || field.type === 'email'" 
-                     [type]="field.type === 'email' ? 'email' : 'text'"
-                     class="form-control"
-                     [(ngModel)]="currentItem[field.key]"
-                     [placeholder]="field.label"
-                     >
-              
+              <input *ngIf="field.type === 'text' || field.type === 'email'"
+                [type]="field.type === 'email' ? 'email' : 'text'" class="form-control"
+                [(ngModel)]="currentItem[field.key]" [placeholder]="field.label">
+
               <!-- Number Input -->
-              <input *ngIf="field.type === 'number'" 
-                     type="number" 
-                     class="form-control"
-                     [(ngModel)]="currentItem[field.key]"
-                     [placeholder]="field.label"
-                     >
-              
+              <input *ngIf="field.type === 'number'" type="number" class="form-control"
+                [(ngModel)]="currentItem[field.key]" [placeholder]="field.label" step="0.01">
+
               <!-- Date Input -->
-              <input *ngIf="field.type === 'date'" 
-                     type="date" 
-                     class="form-control"
-                     [(ngModel)]="currentItem[field.key]"
-                     >
+              <input *ngIf="field.type === 'date'" type="date" class="form-control"
+                [(ngModel)]="currentItem[field.key]">
 
               <!-- DateTime Input -->
-              <input *ngIf="field.type === 'datetime'" 
-                     type="datetime-local" 
-                     class="form-control"
-                     [(ngModel)]="currentItem[field.key]"
-                     >
-              
+              <input *ngIf="field.type === 'datetime'" type="datetime-local" class="form-control"
+                [(ngModel)]="currentItem[field.key]">
+
               <!-- Textarea -->
-              <textarea *ngIf="field.type === 'textarea'" 
-                        class="form-control"
-                        [(ngModel)]="currentItem[field.key]"
-                        [placeholder]="field.label"
-                        
-                        rows="3"></textarea>
-              
+              <textarea *ngIf="field.type === 'textarea'" class="form-control" [(ngModel)]="currentItem[field.key]"
+                [placeholder]="field.label" rows="3"></textarea>
+
               <!-- Select -->
-              <select *ngIf="field.type === 'select'" 
-                      class="form-select"
-                      [(ngModel)]="currentItem[field.key]"
-                      >
+              <select *ngIf="field.type === 'select'" class="form-select" [(ngModel)]="currentItem[field.key]">
                 <option value="">Seleccionar...</option>
-                <option *ngFor="let option of field.options; trackBy: trackByOption" 
-                        [value]="option.value">
+                <option *ngFor="let option of field.options; trackBy: trackByOption" [value]="option.value">
                   {{ option.label }}
                 </option>
               </select>
-              
+
               <!-- Boolean -->
               <div *ngIf="field.type === 'boolean'" class="form-check form-switch">
-                <input class="form-check-input" 
-                       type="checkbox" 
-                       [(ngModel)]="currentItem[field.key]"
-                       [id]="'switch-' + field.key">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="currentItem[field.key]"
+                  [id]="'switch-' + field.key">
                 <label class="form-check-label" [for]="'switch-' + field.key">
                   {{ currentItem[field.key] ? 'Activo' : 'Inactivo' }}
                 </label>
               </div>
             </div>
           </div>
+
+          <!-- Enhanced Tabbed Form for Fertilizers -->
+          <div *ngIf="selectedEntity === 'fertilizer'" class="fertilizer-form">
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs fertilizer-tabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic"
+                  type="button" role="tab">
+                  <i class="bi bi-info-circle"></i>
+                  Información Básica
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="composition-tab" data-bs-toggle="tab" data-bs-target="#composition"
+                  type="button" role="tab">
+                  <i class="bi bi-graph-up"></i>
+                  Composición NPK
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="stock-tab" data-bs-toggle="tab" data-bs-target="#stock" type="button"
+                  role="tab">
+                  <i class="bi bi-box"></i>
+                  Stock y Precios
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="chemistry-tab" data-bs-toggle="tab" data-bs-target="#chemistry"
+                  type="button" role="tab">
+                  <i class="bi bi-flask"></i>
+                  Análisis Químico
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="instructions-tab" data-bs-toggle="tab" data-bs-target="#instructions"
+                  type="button" role="tab">
+                  <i class="bi bi-journal-text"></i>
+                  Instrucciones
+                </button>
+              </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content fertilizer-tab-content">
+              <!-- Basic Information Tab -->
+              <div class="tab-pane fade show active" id="basic" role="tabpanel">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Catálogo <span class="text-danger">*</span></label>
+                    <select class="form-select" [(ngModel)]="currentItem.catalogId" required>
+                      <option value="">Seleccionar catálogo...</option>
+                      <option *ngFor="let catalog of availableCatalogs" [value]="catalog.id">
+                        {{ catalog.name }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" [(ngModel)]="currentItem.name"
+                      placeholder="Nombre del fertilizante" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Fabricante</label>
+                    <input type="text" class="form-control" [(ngModel)]="currentItem.manufacturer"
+                      placeholder="Nombre del fabricante">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Marca</label>
+                    <input type="text" class="form-control" [(ngModel)]="currentItem.brand"
+                      placeholder="Marca comercial">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                    <select class="form-select" [(ngModel)]="currentItem.type" required>
+                      <option value="">Seleccionar tipo...</option>
+                      <option value="Organic">Orgánico</option>
+                      <option value="Inorganic">Inorgánico</option>
+                      <option value="Liquid">Líquido</option>
+                      <option value="Solid">Sólido</option>
+                      <option value="Foliar">Foliar</option>
+                      <option value="Granulated">Granulado</option>
+                      <option value="Powder">Polvo</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Formulación</label>
+                    <input type="text" class="form-control" [(ngModel)]="currentItem.formulation"
+                      placeholder="Ej: 15-15-15, NPK completo">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Concentración</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.concentration"
+                      placeholder="Concentración" step="0.01">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Unidad de Concentración</label>
+                    <select class="form-select" [(ngModel)]="currentItem.concentrationUnit">
+                      <option value="">Seleccionar unidad...</option>
+                      <option value="%">Porcentaje (%)</option>
+                      <option value="g/L">Gramos por Litro (g/L)</option>
+                      <option value="mg/L">Miligramos por Litro (mg/L)</option>
+                      <option value="ppm">Partes por Millón (ppm)</option>
+                      <option value="kg/ha">Kilogramos por Hectárea (kg/ha)</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Método de Aplicación</label>
+                    <select class="form-select" [(ngModel)]="currentItem.applicationMethod">
+                      <option value="">Seleccionar método...</option>
+                      <option value="Riego">Riego</option>
+                      <option value="Foliar">Foliar</option>
+                      <option value="Suelo">Suelo</option>
+                      <option value="Fertirrigacion">Fertirrigación</option>
+                      <option value="Incorporacion">Incorporación</option>
+                      <option value="Aspersion">Aspersión</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Descripción</label>
+                    <textarea class="form-control" [(ngModel)]="currentItem.description"
+                      placeholder="Descripción detallada del fertilizante" rows="3"></textarea>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" [(ngModel)]="currentItem.isLiquid" id="isLiquid">
+                      <label class="form-check-label" for="isLiquid">
+                        Es un fertilizante líquido
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" [(ngModel)]="currentItem.active" id="active">
+                      <label class="form-check-label" for="active">
+                        Producto activo
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- NPK Composition Tab -->
+              <div class="tab-pane fade" id="composition" role="tabpanel">
+                <div class="row g-3">
+                  <div class="col-12">
+                    <div class="alert alert-info">
+                      <i class="bi bi-info-circle"></i>
+                      <strong>Composición NPK:</strong> Ingresa los porcentajes de los nutrientes principales.
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Nitrógeno (N) %</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.nitrogenPercentage"
+                      placeholder="% Nitrógeno" step="0.01" min="0" max="100">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Fósforo (P) %</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.phosphorusPercentage"
+                      placeholder="% Fósforo" step="0.01" min="0" max="100">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Potasio (K) %</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.potassiumPercentage"
+                      placeholder="% Potasio" step="0.01" min="0" max="100">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Micronutrientes</label>
+                    <textarea class="form-control" [(ngModel)]="currentItem.micronutrients"
+                      placeholder="Lista de micronutrientes presentes (Fe, Mn, Zn, Cu, B, Mo, etc.)"
+                      rows="4"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Stock and Pricing Tab -->
+              <div class="tab-pane fade" id="stock" role="tabpanel">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Stock Actual</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.currentStock"
+                      placeholder="Cantidad actual" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Stock Mínimo</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.minimumStock"
+                      placeholder="Stock mínimo" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Unidad de Stock</label>
+                    <select class="form-select" [(ngModel)]="currentItem.stockUnit">
+                      <option value="">Seleccionar unidad...</option>
+                      <option value="kg">Kilogramos (kg)</option>
+                      <option value="L">Litros (L)</option>
+                      <option value="ton">Toneladas (ton)</option>
+                      <option value="sack">Sacos</option>
+                      <option value="bottle">Botellas</option>
+                      <option value="gallon">Galones</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Precio por Unidad</label>
+                    <div class="input-group">
+                      <span class="input-group-text">$</span>
+                      <input type="number" class="form-control" [(ngModel)]="currentItem.pricePerUnit"
+                        placeholder="Precio" step="0.01" min="0">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Fecha de Vencimiento</label>
+                    <input type="date" class="form-control" [(ngModel)]="currentItem.expirationDate">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Proveedor</label>
+                    <input type="text" class="form-control" [(ngModel)]="currentItem.supplier"
+                      placeholder="Nombre del proveedor">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chemical Analysis Tab -->
+              <div class="tab-pane fade" id="chemistry" role="tabpanel">
+                <div class="row g-3">
+                  <div class="col-12">
+                    <div class="alert alert-info">
+                      <i class="bi bi-flask"></i>
+                      <strong>Análisis Químico:</strong> Valores en ppm (partes por millón).
+                    </div>
+                  </div>
+
+                  <!-- Major Elements -->
+                  <div class="col-12">
+                    <h6 class="text-primary mb-3">
+                      <i class="bi bi-diagram-3"></i> Elementos Principales
+                    </h6>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Calcio (Ca) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.ca" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Potasio (K) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.k" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Magnesio (Mg) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.mg" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Sodio (Na) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.na" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Amonio (NH4) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.nh4" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Nitrógeno Total (N) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.n" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Sulfato (SO4) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.so4" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Azufre (S) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.s" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Cloro (Cl) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.cl" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Fosfato (H2PO4) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.h2po4" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Fósforo Total (P) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.p" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Bicarbonato (HCO3) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.hco3" step="0.01" min="0">
+                  </div>
+
+                  <!-- Micronutrients -->
+                  <div class="col-12 mt-4">
+                    <h6 class="text-success mb-3">
+                      <i class="bi bi-droplet-half"></i> Micronutrientes
+                    </h6>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Hierro (Fe) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.fe" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Manganeso (Mn) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.mn" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Zinc (Zn) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.zn" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Cobre (Cu) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.cu" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Boro (B) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.b" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Molibdeno (Mo) ppm</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.mo" step="0.01" min="0">
+                  </div>
+
+                  <!-- Solution Properties -->
+                  <div class="col-12 mt-4">
+                    <h6 class="text-warning mb-3">
+                      <i class="bi bi-speedometer"></i> Propiedades de la Solución
+                    </h6>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">TDS (Sólidos Disueltos Totales)</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.tds" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">EC (Conductividad Eléctrica)</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.ec" step="0.01" min="0">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">pH</label>
+                    <input type="number" class="form-control" [(ngModel)]="currentItem.ph" step="0.01" min="0" max="14">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Instructions Tab -->
+              <div class="tab-pane fade" id="instructions" role="tabpanel">
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label">Instrucciones de Almacenamiento</label>
+                    <textarea class="form-control" [(ngModel)]="currentItem.storageInstructions"
+                      placeholder="Condiciones de almacenamiento, temperatura, humedad, etc." rows="4"></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Instrucciones de Aplicación</label>
+                    <textarea class="form-control" [(ngModel)]="currentItem.applicationInstructions"
+                      placeholder="Dosis recomendadas, frecuencia de aplicación, precauciones, etc."
+                      rows="4"></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        
+
         <div class="modal-footer">
-          <button type="button" 
-                  class="btn btn-secondary" 
-                  (click)="closeModal()">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">
             Cancelar
           </button>
-          <button type="button" 
-                  class="btn btn-primary" 
-                  (click)="saveItem()"
-                  [disabled]="isLoading">
+          <button type="button" class="btn btn-primary" (click)="saveItem()" [disabled]="isLoading">
             <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
-            <i *ngIf="!isLoading" class="bi" 
-               [class.bi-plus-lg]="!isEditing" 
-               [class.bi-check-lg]="isEditing"></i>
+            <i *ngIf="!isLoading" class="bi" [class.bi-plus-lg]="!isEditing" [class.bi-check-lg]="isEditing"></i>
             {{ isEditing ? 'Actualizar' : 'Crear' }}
           </button>
         </div>
@@ -434,6 +1073,6 @@
     </div>
   </div>
 
-  <!-- Modal Backdrop -->
-  <div *ngIf="showModal" class="modal-backdrop fade show"></div>
+  <!-- Main Modal Backdrop -->
+  <div *ngIf="showModal" class="modal-backdrop fade show" style="z-index: 1059;"></div>
 </div>

@@ -217,13 +217,13 @@ export class FarmService {
   /**
    * Update farm - Backend: PUT /Farm
    */
-  update(id: number, data: FarmUpdateRequest): Observable<Farm> {
+  update(data: FarmUpdateRequest): Observable<Farm> {
     const token = localStorage.getItem('access_token');
     if (!token) {
       return throwError(() => new Error('Authentication required'));
     }
 
-    const payload = { ...data, id };
+    const payload = { ...data };
     const url = `${this.apiConfig.agronomicApiUrl}/Farm`;
     const headers = this.getAuthHeaders();
 

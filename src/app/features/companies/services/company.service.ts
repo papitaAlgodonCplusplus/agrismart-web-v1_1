@@ -125,7 +125,7 @@ export class CompanyService {
   /**
    * Update company - matches backend PUT /Company
    */
-  update(id: number, data: any): Observable<any> {
+  update(data: any): Observable<any> {
     const url = `${this.apiConfig.agronomicApiUrl}/Company`;
     const token = localStorage.getItem('access_token');
 
@@ -138,7 +138,7 @@ export class CompanyService {
     }
 
     // Include ID in the data payload
-    const payload = { ...data, id };
+    const payload = { ...data };
 
     return this.http.put<BackendResponse<any>>(url, payload, { headers })
       .pipe(

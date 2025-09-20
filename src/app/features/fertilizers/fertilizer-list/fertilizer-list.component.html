@@ -1,175 +1,437 @@
-<!-- fertilizer-list.component.html - Corrected version -->
+<!-- fertilizer-list.component.html - Part 1 -->
 <div class="container-fluid">
+  <!-- Page Header -->
   <div class="row mb-4">
     <div class="col-12">
-      <h2>Lista de Fertilizantes</h2>
-      <p class="text-muted">Gestión de fertilizantes y nutrientes para cultivos</p>
-      <hr>
+      <div class="page-header">
+        <h2 class="page-title">
+          <i class="bi bi-droplet-fill text-primary"></i>
+          Lista de Fertilizantes
+        </h2>
+        <p class="page-subtitle">Gestión completa de fertilizantes y nutrientes para cultivos</p>
+        <hr class="page-divider">
+      </div>
     </div>
   </div>
 
-  <!-- Filters and Actions -->
-  <div class="row mb-4">
-    <div class="col-lg-8">
-      <div class="row align-items-end">
-        <div class="col-md-2">
-          <label class="form-label">Solo Activos</label>
-          <div class="form-check">
-            <input 
-              type="checkbox" 
-              id="onlyActives"
-              class="form-check-input" 
-              [(ngModel)]="onlyActive"
-              (change)="loadFertilizers()">
-            <label class="form-check-label" for="onlyActives">
-              Mostrar solo activos
-            </label>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Tipo</label>
-          <select 
-            class="form-select"
-            [(ngModel)]="selectedType"
-            (change)="loadFertilizers()">
-            <option value="">Todos los tipos</option>
-            <option value="true">Líquido</option>
-            <option value="false">Sólido</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <button class="btn btn-primary" (click)="loadFertilizers()">
-            <i class="bi bi-search me-1"></i>Consultar
-          </button>
-        </div>
-        <div class="col-md-2">
-          <button class="btn btn-success" (click)="createNew()">
-            <i class="bi bi-plus me-1"></i>Nuevo
-          </button>
+  <!-- Alerts Section -->
+  <div class="row mb-3" *ngIf="alerts.length > 0">
+    <div class="col-12">
+      <div class="alerts-container">
+        <div *ngFor="let alert of alerts" 
+             class="alert" 
+             [class.alert-warning]="alert.type === 'warning'"
+             [class.alert-danger]="alert.type === 'danger'"
+             [class.alert-info]="alert.type === 'info'">
+          <i class="bi" 
+             [class.bi-exclamation-triangle]="alert.type === 'warning'"
+             [class.bi-x-circle]="alert.type === 'danger'"
+             [class.bi-info-circle]="alert.type === 'info'"></i>
+          {{ alert.message }}
+          <span class="alert-count">{{ alert.count }}</span>
         </div>
       </div>
     </div>
-    <div class="col-lg-4">
-      <div class="input-group">
-        <input 
-          type="text" 
-          class="form-control" 
-          placeholder="Buscar fertilizantes..."
-          [(ngModel)]="searchTerm"
-          (keyup.enter)="loadFertilizers()">
-        <button class="btn btn-outline-secondary" (click)="loadFertilizers()">
-          <i class="bi bi-search"></i>
+  </div>
+
+  <!-- Catalog Selection and Actions -->
+  <div class="row mb-4">
+    <div class="col-lg-6">
+      <div class="catalog-controls">
+        <label class="form-label fw-bold">Catálogo:</label>
+        <select class="form-select catalog-select" 
+                [(ngModel)]="selectedCatalogId" 
+                (ngModelChange)="onCatalogChange()">
+          <option [value]="null">Seleccionar catálogo...</option>
+          <option *ngFor="let catalog of availableCatalogs" 
+                  [value]="catalog.id">
+            {{ catalog.name }}
+          </option>
+        </select>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="action-buttons">
+        <button class="btn btn-success" 
+                (click)="createNew()"
+                [disabled]="!selectedCatalogId">
+          <i class="bi bi-plus-lg"></i>
+          Nuevo Fertilizante
         </button>
+        <button class="btn btn-outline-info" 
+                (click)="exportToCSV()"
+                [disabled]="filteredFertilizers.length === 0">
+          <i class="bi bi-download"></i>
+          Exportar CSV
+        </button>
+        <button class="btn btn-outline-secondary" 
+                (click)="toggleView()">
+          <i class="bi" [class.bi-table]="currentView === 'cards'" [class.bi-grid]="currentView === 'table'"></i>
+          {{ currentView === 'table' ? 'Vista Tarjetas' : 'Vista Tabla' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Filters -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="filter-panel">
+        <div class="row align-items-end">
+          <!-- Search -->
+          <div class="col-lg-3 col-md-4">
+            <label class="form-label">Buscar</label>
+            <div class="input-group">
+              <input type="text" 
+                     class="form-control" 
+                     placeholder="Nombre, marca, fabricante..."
+                     [(ngModel)]="filters.searchTerm"
+                     (ngModelChange)="onFilterChange()">
+              <button class="btn btn-outline-secondary" 
+                      (click)="onFilterChange()">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Type Filter -->
+          <div class="col-lg-2 col-md-3">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" 
+                    [(ngModel)]="filters.type"
+                    (ngModelChange)="onFilterChange()">
+              <option value="">Todos</option>
+              <option value="liquid">Líquidos</option>
+              <option value="solid">Sólidos</option>
+              <option value="Organic">Orgánicos</option>
+              <option value="Inorganic">Inorgánicos</option>
+              <option value="Foliar">Foliares</option>
+            </select>
+          </div>
+
+          <!-- Application Method Filter -->
+          <div class="col-lg-2 col-md-3">
+            <label class="form-label">Aplicación</label>
+            <select class="form-select" 
+                    [(ngModel)]="filters.applicationMethod"
+                    (ngModelChange)="onFilterChange()">
+              <option value="">Todos</option>
+              <option value="Riego">Riego</option>
+              <option value="Foliar">Foliar</option>
+              <option value="Suelo">Suelo</option>
+              <option value="Fertirrigacion">Fertirrigación</option>
+              <option value="Aspersion">Aspersión</option>
+            </select>
+          </div>
+
+          <!-- Status Filters -->
+          <div class="col-lg-2 col-md-3">
+            <label class="form-label">Estado</label>
+            <div class="btn-group-vertical d-grid" role="group">
+              <input type="checkbox" class="btn-check" id="onlyActive" 
+                     [(ngModel)]="filters.onlyActive" 
+                     (ngModelChange)="onFilterChange()">
+              <label class="btn btn-outline-primary btn-sm" for="onlyActive">Solo Activos</label>
+              
+              <input type="checkbox" class="btn-check" id="lowStock" 
+                     [(ngModel)]="filters.lowStock" 
+                     (ngModelChange)="onFilterChange()">
+              <label class="btn btn-outline-warning btn-sm" for="lowStock">Stock Bajo</label>
+            </div>
+          </div>
+
+          <!-- Expiring Filter -->
+          <div class="col-lg-2 col-md-3">
+            <label class="form-label">Vencimiento</label>
+            <select class="form-select" 
+                    [(ngModel)]="filters.expiringWithin"
+                    (ngModelChange)="onFilterChange()">
+              <option [value]="0">Todos</option>
+              <option [value]="7">Próximos 7 días</option>
+              <option [value]="30">Próximos 30 días</option>
+              <option [value]="90">Próximos 90 días</option>
+            </select>
+          </div>
+
+          <!-- Clear Filters -->
+          <div class="col-lg-1 col-md-2">
+            <button class="btn btn-outline-secondary w-100" 
+                    (click)="clearFilters()"
+                    title="Limpiar filtros">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Loading State -->
   <div class="row" *ngIf="isLoading">
-    <div class="col-12 text-center">
-      <div class="spinner-border" role="status">
-        <span class="visually-hidden">Cargando...</span>
+    <div class="col-12">
+      <div class="loading-container">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="loading-text">Cargando fertilizantes...</p>
       </div>
-      <p class="mt-2">Cargando fertilizantes...</p>
     </div>
   </div>
 
-  <!-- Fertilizers Table -->
-  <div class="row" *ngIf="!isLoading && (fertilizers$ | async) as fertilizers">
+  <!-- Main Content -->
+  <div class="row" *ngIf="!isLoading && selectedCatalogId">
     <div class="col-12">
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
-            <i class="bi bi-droplet me-2"></i>
-            Fertilizantes ({{ fertilizers.length }})
-          </h5>
+      
+      <!-- Statistics Cards -->
+      <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-6">
+          <div class="stat-card stat-primary">
+            <div class="stat-icon">
+              <i class="bi bi-droplet-fill"></i>
+            </div>
+            <div class="stat-content">
+              <h4>{{ getTotalCount() }}</h4>
+              <p>Total</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+          <div class="stat-card stat-info">
+            <div class="stat-icon">
+              <i class="bi bi-droplet"></i>
+            </div>
+            <div class="stat-content">
+              <h4>{{ getLiquidCount() }}</h4>
+              <p>Líquidos</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+          <div class="stat-card stat-secondary">
+            <div class="stat-icon">
+              <i class="bi bi-box"></i>
+            </div>
+            <div class="stat-content">
+              <h4>{{ getSolidCount() }}</h4>
+              <p>Sólidos</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+          <div class="stat-card stat-success">
+            <div class="stat-icon">
+              <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h4>{{ getActiveCount() }}</h4>
+              <p>Activos</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+          <div class="stat-card stat-warning">
+            <div class="stat-icon">
+              <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content">
+              <h4>{{ getLowStockCount() }}</h4>
+              <p>Stock Bajo</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+          <div class="stat-card stat-danger">
+            <div class="stat-icon">
+              <i class="bi bi-clock"></i>
+            </div>
+            <div class="stat-content">
+              <h4>{{ getExpiringCount() }}</h4>
+              <p>Por Vencer</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- fertilizer-list.component.html - Part 2 -->
+
+      <!-- Table View -->
+      <div class="card" *ngIf="currentView === 'table'">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="bi bi-table me-2"></i>
+              Fertilizantes ({{ filteredFertilizers.length }} de {{ getTotalCount() }})
+            </h5>
+            <div class="table-actions">
+              <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-secondary" 
+                        (click)="sortBy('name')"
+                        [class.active]="sortField === 'name'">
+                  Nombre
+                  <i class="bi" 
+                     [class.bi-arrow-down]="sortField === 'name' && sortDirection === 'asc'"
+                     [class.bi-arrow-up]="sortField === 'name' && sortDirection === 'desc'"></i>
+                </button>
+                <button class="btn btn-outline-secondary" 
+                        (click)="sortBy('type')"
+                        [class.active]="sortField === 'type'">
+                  Tipo
+                  <i class="bi" 
+                     [class.bi-arrow-down]="sortField === 'type' && sortDirection === 'asc'"
+                     [class.bi-arrow-up]="sortField === 'type' && sortDirection === 'desc'"></i>
+                </button>
+                <button class="btn btn-outline-secondary" 
+                        (click)="sortBy('currentStock')"
+                        [class.active]="sortField === 'currentStock'">
+                  Stock
+                  <i class="bi" 
+                     [class.bi-arrow-down]="sortField === 'currentStock' && sortDirection === 'asc'"
+                     [class.bi-arrow-up]="sortField === 'currentStock' && sortDirection === 'desc'"></i>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-striped table-hover mb-0">
+            <table class="table table-hover mb-0 fertilizer-table">
               <thead class="table-dark">
                 <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Fabricante</th>
-                  <th>Tipo</th>
-                  <th>Química</th>
+                  <th>Fertilizante</th>
+                  <th>Tipo & NPK</th>
+                  <th>Stock</th>
+                  <th>Precio</th>
                   <th>Estado</th>
-                  <th>Fechas</th>
+                  <th>Vencimiento</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let fertilizer of fertilizers; trackBy: trackByFn">
+                <tr *ngFor="let fertilizer of filteredFertilizers; trackBy: trackByFn"
+                    class="fertilizer-row">
+                  
+                  <!-- Fertilizer Info -->
                   <td>
-                    <span class="badge bg-secondary">{{ fertilizer?.id }}</span>
-                  </td>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <i class="bi bi-flask me-2" 
-                         [class.text-info]="fertilizer?.isLiquid"
-                         [class.text-secondary]="!fertilizer?.isLiquid"></i>
-                      <div>
-                        <strong>{{ fertilizer?.name }}</strong>
-                        <div class="text-muted small">ID Catálogo: {{ fertilizer?.catalogId }}</div>
+                    <div class="fertilizer-info">
+                      <div class="fertilizer-name">
+                        <strong>{{ getProperty(fertilizer, 'name') }}</strong>
+                        <span class="fertilizer-id">ID: {{ getProperty(fertilizer, 'id') }}</span>
+                      </div>
+                      <div class="fertilizer-details">
+                        <span class="brand" *ngIf="getProperty(fertilizer, 'brand')">
+                          {{ getProperty(fertilizer, 'brand') }}
+                        </span>
+                        <span class="manufacturer text-muted">
+                          {{ getProperty(fertilizer, 'manufacturer') || 'Sin fabricante' }}
+                        </span>
                       </div>
                     </div>
                   </td>
+
+                  <!-- Type & NPK -->
                   <td>
-                    <span class="text-muted">{{ fertilizer?.manufacturer || 'No especificado' }}</span>
+                    <div class="type-npk-info">
+                      <div class="fertilizer-type">
+                        <span class="badge" 
+                              [class.bg-info]="getProperty(fertilizer, 'isLiquid')"
+                              [class.bg-secondary]="!getProperty(fertilizer, 'isLiquid')">
+                          <i class="bi" 
+                             [class.bi-droplet]="getProperty(fertilizer, 'isLiquid')"
+                             [class.bi-box]="!getProperty(fertilizer, 'isLiquid')"></i>
+                          {{ getProperty(fertilizer, 'isLiquid') ? 'Líquido' : 'Sólido' }}
+                        </span>
+                        <span class="type-label" *ngIf="getProperty(fertilizer, 'type')">
+                          {{ getProperty(fertilizer, 'type') }}
+                        </span>
+                      </div>
+                      <div class="npk-ratio" *ngIf="calculateNPKRatio(fertilizer) !== '-'">
+                        <span class="badge bg-primary">NPK: {{ calculateNPKRatio(fertilizer) }}</span>
+                      </div>
+                    </div>
                   </td>
+
+                  <!-- Stock -->
                   <td>
-                    <span class="badge" [ngClass]="fertilizer?.isLiquid ? 'bg-info' : 'bg-secondary'">
-                      <i class="bi" [ngClass]="fertilizer?.isLiquid ? 'bi-droplet' : 'bi-box'"></i>
-                      {{ fertilizer?.isLiquid ? 'Líquido' : 'Sólido' }}
+                    <div class="stock-info">
+                      <div class="current-stock" 
+                           [class.text-danger]="isLowStock(fertilizer)">
+                        <strong>{{ formatStock(fertilizer) }}</strong>
+                        <i class="bi bi-exclamation-triangle text-warning" 
+                           *ngIf="isLowStock(fertilizer)"
+                           title="Stock bajo"></i>
+                      </div>
+                      <div class="minimum-stock text-muted small" 
+                           *ngIf="getProperty(fertilizer, 'minimumStock')">
+                        Mín: {{ getProperty(fertilizer, 'minimumStock') }} {{ getProperty(fertilizer, 'stockUnit') }}
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Price -->
+                  <td>
+                    <div class="price-info">
+                      <span class="price">{{ formatPrice(fertilizer) }}</span>
+                      <div class="supplier text-muted small" *ngIf="getProperty(fertilizer, 'supplier')">
+                        {{ getProperty(fertilizer, 'supplier') }}
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Status -->
+                  <td>
+                    <span class="badge" 
+                          [class]="getFertilizerStatusClass(getFertilizerStatus(fertilizer))">
+                      <i class="bi" 
+                         [class.bi-check-circle]="getFertilizerStatus(fertilizer) === 'good'"
+                         [class.bi-exclamation-triangle]="getFertilizerStatus(fertilizer) === 'low-stock' || getFertilizerStatus(fertilizer) === 'expiring-soon'"
+                         [class.bi-x-circle]="getFertilizerStatus(fertilizer) === 'expired'"
+                         [class.bi-pause-circle]="getFertilizerStatus(fertilizer) === 'inactive'"></i>
+                      {{ getFertilizerStatusLabel(getFertilizerStatus(fertilizer)) }}
                     </span>
                   </td>
+
+                  <!-- Expiration -->
                   <td>
-                    <div *ngIf="fertilizer?.chemistries && fertilizer?.chemistries?.length > 0; else noChemistry">
-                      <div *ngFor="let chemistry of fertilizer.chemistries" class="small">
-                        <div><strong>{{ chemistry.formula }}</strong></div>
-                        <div class="text-muted">Pureza: {{ chemistry.purity }}%</div>
-                        <div class="text-muted" *ngIf="chemistry.density > 0">Densidad: {{ chemistry.density }}</div>
-                        <div class="text-muted" *ngIf="chemistry.solubility20 > 0">Sol. 20°C: {{ chemistry.solubility20 }} g/L</div>
-                        <span class="badge bg-warning" *ngIf="chemistry.isPhAdjuster">pH Ajustador</span>
+                    <div class="expiration-info" *ngIf="getProperty(fertilizer, 'expirationDate'); else noExpiration">
+                      <div class="exp-date" 
+                           [class.text-warning]="isExpiringWithin(fertilizer, 30)"
+                           [class.text-danger]="isExpired(fertilizer)">
+                        {{ getProperty(fertilizer, 'expirationDate') | date:'shortDate' }}
+                      </div>
+                      <div class="exp-warning text-muted small" 
+                           *ngIf="isExpiringWithin(fertilizer, 30) && !isExpired(fertilizer)">
+                        Vence pronto
+                      </div>
+                      <div class="exp-expired text-danger small" 
+                           *ngIf="isExpired(fertilizer)">
+                        Vencido
                       </div>
                     </div>
-                    <ng-template #noChemistry>
-                      <span class="text-muted">Sin datos químicos</span>
+                    <ng-template #noExpiration>
+                      <span class="text-muted">Sin fecha</span>
                     </ng-template>
                   </td>
+
+                  <!-- Actions -->
                   <td>
-                    <span class="badge" [ngClass]="fertilizer?.active ? 'bg-success' : 'bg-danger'">
-                      <i class="bi" [ngClass]="fertilizer?.active ? 'bi-check-circle' : 'bi-x-circle'"></i>
-                      {{ fertilizer?.active ? 'Activo' : 'Inactivo' }}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="small">
-                      <div><strong>Creado:</strong></div>
-                      <div class="text-muted">{{ fertilizer?.dateCreated | date:'short' }}</div>
-                      <div class="text-muted">Por usuario: {{ fertilizer?.createdBy }}</div>
-                      <div *ngIf="fertilizer?.dateUpdated">
-                        <strong>Actualizado:</strong>
-                        <div class="text-muted">{{ fertilizer?.dateUpdated | date:'short' }}</div>
-                        <div class="text-muted">Por usuario: {{ fertilizer?.updatedBy }}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="btn-group" role="group">
-                      <button 
-                        type="button" 
-                        class="btn btn-sm btn-outline-primary"
-                        (click)="edit(fertilizer)"
-                        title="Editar">
+                    <div class="action-buttons">
+                      <button class="btn btn-sm btn-outline-info" 
+                              (click)="view(fertilizer)"
+                              title="Ver detalles">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-warning" 
+                              (click)="edit(fertilizer)"
+                              title="Editar">
                         <i class="bi bi-pencil"></i>
                       </button>
-                      <button 
-                        type="button" 
-                        class="btn btn-sm btn-outline-danger"
-                        (click)="delete(fertilizer)"
-                        title="Eliminar">
+                      <button class="btn btn-sm btn-outline-success" 
+                              (click)="duplicate(fertilizer)"
+                              title="Duplicar">
+                        <i class="bi bi-files"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger" 
+                              (click)="delete(fertilizer)"
+                              title="Eliminar">
                         <i class="bi bi-trash"></i>
                       </button>
                     </div>
@@ -177,191 +439,521 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
 
-            <!-- Empty State -->
-            <div class="text-center p-4" *ngIf="fertilizers.length === 0">
-              <i class="bi bi-flask display-4 text-muted"></i>
-              <h5 class="mt-3">No se encontraron fertilizantes</h5>
-              <p class="text-muted">
-                {{ getEmptyStateMessage() }}
-              </p>
-              <button class="btn btn-primary" (click)="createNew()">
-                <i class="bi bi-plus me-1"></i>
-                Registrar primer fertilizante
-              </button>
+      <!-- Cards View -->
+      <div class="row" *ngIf="currentView === 'cards'">
+        <div class="col-lg-4 col-md-6 mb-4" 
+             *ngFor="let fertilizer of filteredFertilizers; trackBy: trackByFn">
+          <div class="card fertilizer-card h-100" 
+               [class.border-warning]="isLowStock(fertilizer)"
+               [class.border-danger]="isExpired(fertilizer)">
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-start">
+                <h6 class="card-title mb-0">{{ getProperty(fertilizer, 'name') }}</h6>
+                <span class="badge" 
+                      [class]="getFertilizerStatusClass(getFertilizerStatus(fertilizer))">
+                  {{ getFertilizerStatusLabel(getFertilizerStatus(fertilizer)) }}
+                </span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="fertilizer-card-info">
+                <div class="info-row">
+                  <span class="label">Tipo:</span>
+                  <span class="value">
+                    <span class="badge" 
+                          [class.bg-info]="getProperty(fertilizer, 'isLiquid')"
+                          [class.bg-secondary]="!getProperty(fertilizer, 'isLiquid')">
+                      {{ getProperty(fertilizer, 'isLiquid') ? 'Líquido' : 'Sólido' }}
+                    </span>
+                    {{ getProperty(fertilizer, 'type') }}
+                  </span>
+                </div>
+                <div class="info-row" *ngIf="calculateNPKRatio(fertilizer) !== '-'">
+                  <span class="label">NPK:</span>
+                  <span class="value">
+                    <span class="badge bg-primary">{{ calculateNPKRatio(fertilizer) }}</span>
+                  </span>
+                </div>
+                <div class="info-row" *ngIf="getProperty(fertilizer, 'brand')">
+                  <span class="label">Marca:</span>
+                  <span class="value">{{ getProperty(fertilizer, 'brand') }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">Stock:</span>
+                  <span class="value" [class.text-danger]="isLowStock(fertilizer)">
+                    {{ formatStock(fertilizer) }}
+                  </span>
+                </div>
+                <div class="info-row" *ngIf="getProperty(fertilizer, 'pricePerUnit')">
+                  <span class="label">Precio:</span>
+                  <span class="value">{{ formatPrice(fertilizer) }}</span>
+                </div>
+                <div class="info-row" *ngIf="getProperty(fertilizer, 'expirationDate')">
+                  <span class="label">Vencimiento:</span>
+                  <span class="value" 
+                        [class.text-warning]="isExpiringWithin(fertilizer, 30)"
+                        [class.text-danger]="isExpired(fertilizer)">
+                    {{ getProperty(fertilizer, 'expirationDate') | date:'shortDate' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="btn-group w-100" role="group">
+                <button class="btn btn-outline-info btn-sm" 
+                        (click)="view(fertilizer)">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-outline-warning btn-sm" 
+                        (click)="edit(fertilizer)">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-outline-success btn-sm" 
+                        (click)="duplicate(fertilizer)">
+                  <i class="bi bi-files"></i>
+                </button>
+                <button class="btn btn-outline-danger btn-sm" 
+                        (click)="delete(fertilizer)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="filteredFertilizers.length === 0">
+        <div class="empty-content">
+          <i class="bi bi-droplet display-1 text-muted"></i>
+          <h4>No se encontraron fertilizantes</h4>
+          <p class="text-muted">{{ getEmptyStateMessage() }}</p>
+          <button class="btn btn-primary" 
+                  (click)="createNew()"
+                  [disabled]="!selectedCatalogId">
+            <i class="bi bi-plus-lg"></i>
+            Agregar Fertilizante
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Success/Error Messages -->
-  <div class="row" *ngIf="successMessage">
+  <!-- No Catalog Selected -->
+  <div class="row" *ngIf="!isLoading && !selectedCatalogId">
     <div class="col-12">
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <div class="empty-state">
+        <div class="empty-content">
+          <i class="bi bi-folder display-1 text-muted"></i>
+          <h4>Selecciona un Catálogo</h4>
+          <p class="text-muted">
+            Para ver los fertilizantes, primero selecciona un catálogo de la lista desplegable.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- fertilizer-list.component.html - Part 3 (Modals and Messages) -->
+
+  <!-- Success/Error Messages -->
+  <div class="row" *ngIf="successMessage || errorMessage">
+    <div class="col-12">
+      <div class="alert alert-success alert-dismissible fade show" 
+           *ngIf="successMessage" role="alert">
         <i class="bi bi-check-circle me-2"></i>
         {{ successMessage }}
         <button type="button" class="btn-close" (click)="clearMessages()"></button>
       </div>
-    </div>
-  </div>
 
-  <div class="row" *ngIf="errorMessage">
-    <div class="col-12">
-      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <div class="alert alert-danger alert-dismissible fade show" 
+           *ngIf="errorMessage" role="alert">
         <i class="bi bi-exclamation-triangle me-2"></i>
         {{ errorMessage }}
         <button type="button" class="btn-close" (click)="clearMessages()"></button>
       </div>
     </div>
   </div>
-
-  <!-- Statistics Cards -->
-  <div class="row mt-4" *ngIf="(fertilizers$ | async) as fertilizers">
-    <div class="col-md-3">
-      <div class="card text-white bg-primary">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h4>{{ fertilizers.length }}</h4>
-              <p class="mb-0">Total Fertilizantes</p>
-            </div>
-            <i class="bi bi-flask display-6"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-white bg-info">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h4>{{ getLiquidCount(fertilizers) }}</h4>
-              <p class="mb-0">Líquidos</p>
-            </div>
-            <i class="bi bi-droplet display-6"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-white bg-secondary">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h4>{{ fertilizers.length - getLiquidCount(fertilizers) }}</h4>
-              <p class="mb-0">Sólidos</p>
-            </div>
-            <i class="bi bi-box display-6"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-white bg-success">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <div>
-              <h4>{{ getActiveCount(fertilizers) }}</h4>
-              <p class="mb-0">Activos</p>
-            </div>
-            <i class="bi bi-check-circle display-6"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Create Fertilizer Modal -->
-<div class="modal fade" [class.show]="showCreateModal" [style.display]="showCreateModal ? 'block' : 'none'" 
-     tabindex="-1" role="dialog" aria-labelledby="createModalLabel" 
-     [attr.aria-hidden]="!showCreateModal" *ngIf="showCreateModal">
-  <div class="modal-dialog modal-lg" role="document">
+<div class="modal fade" 
+     [class.show]="showCreateModal" 
+     [style.display]="showCreateModal ? 'block' : 'none'" 
+     tabindex="-1" 
+     role="dialog">
+  <div class="modal-dialog modal-xl" role="document">
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
-        <h5 class="modal-title" id="createModalLabel">
+        <h5 class="modal-title">
           <i class="bi bi-plus-circle me-2"></i>
           Crear Nuevo Fertilizante
         </h5>
-        <button type="button" class="btn-close btn-close-white" 
-                (click)="closeCreateModal()" 
-                aria-label="Close"></button>
+        <button type="button" 
+                class="btn-close btn-close-white" 
+                (click)="closeCreateModal()"></button>
       </div>
       
       <form [formGroup]="createForm" (ngSubmit)="onSubmitCreate()">
         <div class="modal-body">
-          <div class="row">
-            <!-- Name Field -->
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label for="name" class="form-label">
-                  Nombre <span class="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  class="form-control"
-                  [class.is-invalid]="isFieldInvalid('name')"
-                  formControlName="name"
-                  placeholder="Ej: Urea 46%"
-                  autocomplete="off">
-                <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
-                  {{ getFieldError('name') }}
-                </div>
-              </div>
-            </div>
-
-            <!-- Manufacturer Field -->
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label for="manufacturer" class="form-label">
-                  Fabricante <span class="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="manufacturer"
-                  class="form-control"
-                  [class.is-invalid]="isFieldInvalid('manufacturer')"
-                  formControlName="manufacturer"
-                  placeholder="Ej: Yara International"
-                  autocomplete="off">
-                <div class="invalid-feedback" *ngIf="isFieldInvalid('manufacturer')">
-                  {{ getFieldError('manufacturer') }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <!-- Is Liquid Field -->
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label class="form-label">Tipo de Fertilizante</label>
-                <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="isLiquid"
-                    formControlName="isLiquid">
-                  <label class="form-check-label" for="isLiquid">
-                    <i class="bi bi-droplet me-1"></i>
-                    Es fertilizante líquido
+          <!-- Basic Information Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-info-circle text-primary"></i>
+              Información Básica
+            </h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="catalogId" class="form-label">
+                    Catálogo <span class="text-danger">*</span>
                   </label>
+                  <select id="catalogId"
+                          class="form-select"
+                          [class.is-invalid]="isFieldInvalid('catalogId')"
+                          formControlName="catalogId">
+                    <option value="">Seleccionar catálogo...</option>
+                    <option *ngFor="let catalog of availableCatalogs" 
+                            [value]="catalog.id">
+                      {{ catalog.name }}
+                    </option>
+                  </select>
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('catalogId')">
+                    {{ getFieldError('catalogId') }}
+                  </div>
                 </div>
-                <small class="form-text text-muted">
-                  Marque si el fertilizante es en forma líquida
-                </small>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="name" class="form-label">
+                    Nombre <span class="text-danger">*</span>
+                  </label>
+                  <input type="text"
+                         id="name"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('name')"
+                         formControlName="name"
+                         placeholder="Ej: Urea 46%">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
+                    {{ getFieldError('name') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="manufacturer" class="form-label">
+                    Fabricante <span class="text-danger">*</span>
+                  </label>
+                  <input type="text"
+                         id="manufacturer"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('manufacturer')"
+                         formControlName="manufacturer"
+                         placeholder="Ej: Yara International">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('manufacturer')">
+                    {{ getFieldError('manufacturer') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="brand" class="form-label">Marca</label>
+                  <input type="text"
+                         id="brand"
+                         class="form-control"
+                         formControlName="brand"
+                         placeholder="Marca comercial">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="type" class="form-label">
+                    Tipo <span class="text-danger">*</span>
+                  </label>
+                  <select id="type"
+                          class="form-select"
+                          [class.is-invalid]="isFieldInvalid('type')"
+                          formControlName="type">
+                    <option value="">Seleccionar tipo...</option>
+                    <option value="Organic">Orgánico</option>
+                    <option value="Inorganic">Inorgánico</option>
+                    <option value="Liquid">Líquido</option>
+                    <option value="Solid">Sólido</option>
+                    <option value="Foliar">Foliar</option>
+                    <option value="Granulated">Granulado</option>
+                    <option value="Powder">Polvo</option>
+                  </select>
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('type')">
+                    {{ getFieldError('type') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="isLiquid"
+                           formControlName="isLiquid">
+                    <label class="form-check-label" for="isLiquid">
+                      <i class="bi bi-droplet me-1"></i>
+                      Es fertilizante líquido
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="mb-3">
+                  <label for="description" class="form-label">Descripción</label>
+                  <textarea id="description"
+                            class="form-control"
+                            formControlName="description"
+                            rows="3"
+                            placeholder="Descripción detallada del fertilizante"></textarea>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Help Text -->
-          <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>
-            <strong>Nota:</strong> Después de crear el fertilizante, podrá agregar información detallada 
-            como composición NPK, concentraciones, instrucciones de aplicación y datos de inventario.
+          <!-- NPK Composition Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-graph-up text-success"></i>
+              Composición NPK
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="nitrogenPercentage" class="form-label">Nitrógeno (N) %</label>
+                  <input type="number"
+                         id="nitrogenPercentage"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('nitrogenPercentage')"
+                         formControlName="nitrogenPercentage"
+                         placeholder="% Nitrógeno"
+                         min="0" max="100" step="0.01">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('nitrogenPercentage')">
+                    {{ getFieldError('nitrogenPercentage') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="phosphorusPercentage" class="form-label">Fósforo (P) %</label>
+                  <input type="number"
+                         id="phosphorusPercentage"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('phosphorusPercentage')"
+                         formControlName="phosphorusPercentage"
+                         placeholder="% Fósforo"
+                         min="0" max="100" step="0.01">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('phosphorusPercentage')">
+                    {{ getFieldError('phosphorusPercentage') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="potassiumPercentage" class="form-label">Potasio (K) %</label>
+                  <input type="number"
+                         id="potassiumPercentage"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('potassiumPercentage')"
+                         formControlName="potassiumPercentage"
+                         placeholder="% Potasio"
+                         min="0" max="100" step="0.01">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('potassiumPercentage')">
+                    {{ getFieldError('potassiumPercentage') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Concentration Section -->
+          <div class="form-section" *ngIf="createForm.get('isLiquid')?.value">
+            <h6 class="section-title">
+              <i class="bi bi-droplet text-info"></i>
+              Concentración
+            </h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="concentration" class="form-label">Concentración</label>
+                  <input type="text"
+                         id="concentration"
+                         class="form-control"
+                         formControlName="concentration"
+                         placeholder="Ej: 20-20-20">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="concentrationUnit" class="form-label">Unidad de Concentración</label>
+                  <select id="concentrationUnit"
+                          class="form-select"
+                          formControlName="concentrationUnit">
+                    <option value="">Seleccionar unidad...</option>
+                    <option value="ppm">PPM</option>
+                    <option value="percentage">Porcentaje (%)</option>
+                    <option value="g/L">g/L</option>
+                    <option value="mg/L">mg/L</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Application Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-spray-can text-warning"></i>
+              Aplicación
+            </h6>
+            <div class="row">
+              <div class="col-md-12">
+                <div class="mb-3">
+                  <label for="applicationMethod" class="form-label">Método de Aplicación</label>
+                  <select id="applicationMethod"
+                          class="form-select"
+                          formControlName="applicationMethod">
+                    <option value="">Seleccionar método...</option>
+                    <option value="Riego">Riego</option>
+                    <option value="Foliar">Foliar</option>
+                    <option value="Suelo">Aplicación al suelo</option>
+                    <option value="Fertirrigacion">Fertirrigación</option>
+                    <option value="Aspersion">Aspersión</option>
+                    <option value="Granulado">Granulado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stock & Pricing Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-boxes text-primary"></i>
+              Inventario y Precios
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="currentStock" class="form-label">Stock Actual</label>
+                  <input type="number"
+                         id="currentStock"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('currentStock')"
+                         formControlName="currentStock"
+                         placeholder="Cantidad actual"
+                         min="0" step="0.01">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('currentStock')">
+                    {{ getFieldError('currentStock') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="minimumStock" class="form-label">Stock Mínimo</label>
+                  <input type="number"
+                         id="minimumStock"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('minimumStock')"
+                         formControlName="minimumStock"
+                         placeholder="Stock mínimo"
+                         min="0" step="0.01">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('minimumStock')">
+                    {{ getFieldError('minimumStock') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="stockUnit" class="form-label">Unidad de Medida</label>
+                  <select id="stockUnit"
+                          class="form-select"
+                          formControlName="stockUnit">
+                    <option value="">Seleccionar unidad...</option>
+                    <option value="kg">Kilogramos (kg)</option>
+                    <option value="L">Litros (L)</option>
+                    <option value="g">Gramos (g)</option>
+                    <option value="mL">Mililitros (mL)</option>
+                    <option value="ton">Toneladas (ton)</option>
+                    <option value="units">Unidades</option>
+                    <option value="bags">Sacos</option>
+                    <option value="boxes">Cajas</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="pricePerUnit" class="form-label">Precio por Unidad</label>
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number"
+                           id="pricePerUnit"
+                           class="form-control"
+                           [class.is-invalid]="isFieldInvalid('pricePerUnit')"
+                           formControlName="pricePerUnit"
+                           placeholder="0.00"
+                           min="0" step="0.01">
+                  </div>
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('pricePerUnit')">
+                    {{ getFieldError('pricePerUnit') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="supplier" class="form-label">Proveedor</label>
+                  <input type="text"
+                         id="supplier"
+                         class="form-control"
+                         formControlName="supplier"
+                         placeholder="Nombre del proveedor">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="expirationDate" class="form-label">Fecha de Vencimiento</label>
+                  <input type="date"
+                         id="expirationDate"
+                         class="form-control"
+                         formControlName="expirationDate">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="active"
+                           formControlName="active">
+                    <label class="form-check-label" for="active">
+                      <i class="bi bi-check-circle me-1"></i>
+                      Fertilizante activo
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -376,14 +968,9 @@
           <button type="submit" 
                   class="btn btn-success"
                   [disabled]="createForm.invalid || isCreating">
-            <span *ngIf="isCreating">
-              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-              Creando...
-            </span>
-            <span *ngIf="!isCreating">
-              <i class="bi bi-check-circle me-1"></i>
-              Crear Fertilizante
-            </span>
+            <span *ngIf="isCreating" class="spinner-border spinner-border-sm me-2"></span>
+            <i class="bi bi-check-circle me-1" *ngIf="!isCreating"></i>
+            {{ isCreating ? 'Creando...' : 'Crear Fertilizante' }}
           </button>
         </div>
       </form>
@@ -391,5 +978,220 @@
   </div>
 </div>
 
+<!-- Details Modal -->
+<div class="modal fade" 
+     [class.show]="showDetailsModal" 
+     [style.display]="showDetailsModal ? 'block' : 'none'" 
+     tabindex="-1" 
+     role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-eye me-2"></i>
+          Detalles del Fertilizante
+        </h5>
+        <button type="button" 
+                class="btn-close btn-close-white" 
+                (click)="closeDetailsModal()"></button>
+      </div>
+      
+      <div class="modal-body" *ngIf="selectedFertilizer">
+        <div class="fertilizer-details">
+          <!-- Header Info -->
+          <div class="detail-header">
+            <div class="row">
+              <div class="col-md-8">
+                <h4 class="fertilizer-name">{{ getProperty(selectedFertilizer, 'name') }}</h4>
+                <p class="fertilizer-id text-muted">ID: {{ getProperty(selectedFertilizer, 'id') }}</p>
+              </div>
+              <div class="col-md-4 text-end">
+                <span class="badge fs-6" 
+                      [class]="getFertilizerStatusClass(getFertilizerStatus(selectedFertilizer))">
+                  {{ getFertilizerStatusLabel(getFertilizerStatus(selectedFertilizer)) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detail Sections -->
+          <div class="detail-section">
+            <h6 class="section-title">
+              <i class="bi bi-info-circle text-primary"></i>
+              Información General
+            </h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label>Fabricante:</label>
+                  <span>{{ getProperty(selectedFertilizer, 'manufacturer') || 'No especificado' }}</span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label>Marca:</label>
+                  <span>{{ getProperty(selectedFertilizer, 'brand') || 'No especificada' }}</span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label>Tipo:</label>
+                  <span>
+                    <span class="badge me-2" 
+                          [class.bg-info]="getProperty(selectedFertilizer, 'isLiquid')"
+                          [class.bg-secondary]="!getProperty(selectedFertilizer, 'isLiquid')">
+                      {{ getProperty(selectedFertilizer, 'isLiquid') ? 'Líquido' : 'Sólido' }}
+                    </span>
+                    {{ getProperty(selectedFertilizer, 'type') || 'No especificado' }}
+                  </span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label>Método de Aplicación:</label>
+                  <span>{{ getProperty(selectedFertilizer, 'applicationMethod') || 'No especificado' }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="row" *ngIf="getProperty(selectedFertilizer, 'description')">
+              <div class="col-12">
+                <div class="detail-item">
+                  <label>Descripción:</label>
+                  <span>{{ getProperty(selectedFertilizer, 'description') }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NPK Composition -->
+          <div class="detail-section" *ngIf="calculateNPKRatio(selectedFertilizer) !== '-'">
+            <h6 class="section-title">
+              <i class="bi bi-graph-up text-success"></i>
+              Composición NPK
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="npk-item nitrogen">
+                  <div class="npk-label">Nitrógeno (N)</div>
+                  <div class="npk-value">{{ getProperty(selectedFertilizer, 'nitrogenPercentage') || 0 }}%</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="npk-item phosphorus">
+                  <div class="npk-label">Fósforo (P)</div>
+                  <div class="npk-value">{{ getProperty(selectedFertilizer, 'phosphorusPercentage') || 0 }}%</div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="npk-item potassium">
+                  <div class="npk-label">Potasio (K)</div>
+                  <div class="npk-value">{{ getProperty(selectedFertilizer, 'potassiumPercentage') || 0 }}%</div>
+                </div>
+              </div>
+            </div>
+            <div class="npk-ratio-display">
+              <span class="badge bg-primary fs-6">NPK: {{ calculateNPKRatio(selectedFertilizer) }}</span>
+            </div>
+          </div>
+
+          <!-- Stock Information -->
+          <div class="detail-section">
+            <h6 class="section-title">
+              <i class="bi bi-boxes text-warning"></i>
+              Inventario
+            </h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="stock-item">
+                  <div class="stock-label">Stock Actual</div>
+                  <div class="stock-value" 
+                       [class.text-danger]="isLowStock(selectedFertilizer)">
+                    {{ formatStock(selectedFertilizer) }}
+                    <i class="bi bi-exclamation-triangle text-warning ms-1" 
+                       *ngIf="isLowStock(selectedFertilizer)" 
+                       title="Stock bajo"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="stock-item">
+                  <div class="stock-label">Stock Mínimo</div>
+                  <div class="stock-value">
+                    {{ getProperty(selectedFertilizer, 'minimumStock') || 'No definido' }}
+                    {{ getProperty(selectedFertilizer, 'stockUnit') }}
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="stock-item">
+                  <div class="stock-label">Precio por Unidad</div>
+                  <div class="stock-value">{{ formatPrice(selectedFertilizer) }}</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="stock-item">
+                  <div class="stock-label">Proveedor</div>
+                  <div class="stock-value">{{ getProperty(selectedFertilizer, 'supplier') || 'No especificado' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expiration Information -->
+          <div class="detail-section" *ngIf="getProperty(selectedFertilizer, 'expirationDate')">
+            <h6 class="section-title">
+              <i class="bi bi-calendar text-danger"></i>
+              Vencimiento
+            </h6>
+            <div class="expiration-info">
+              <div class="exp-date" 
+                   [class.text-warning]="isExpiringWithin(selectedFertilizer, 30)"
+                   [class.text-danger]="isExpired(selectedFertilizer)">
+                <strong>{{ getProperty(selectedFertilizer, 'expirationDate') | date:'fullDate' }}</strong>
+              </div>
+              <div class="exp-status">
+                <span *ngIf="isExpired(selectedFertilizer)" class="badge bg-danger">
+                  <i class="bi bi-x-circle"></i> Vencido
+                </span>
+                <span *ngIf="isExpiringWithin(selectedFertilizer, 30) && !isExpired(selectedFertilizer)" class="badge bg-warning">
+                  <i class="bi bi-exclamation-triangle"></i> Vence pronto
+                </span>
+                <span *ngIf="!isExpiringWithin(selectedFertilizer, 30) && !isExpired(selectedFertilizer)" class="badge bg-success">
+                  <i class="bi bi-check-circle"></i> Vigente
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" 
+                class="btn btn-outline-warning" 
+                (click)="edit(selectedFertilizer!)">
+          <i class="bi bi-pencil me-1"></i>
+          Editar
+        </button>
+        <button type="button" 
+                class="btn btn-outline-success" 
+                (click)="duplicate(selectedFertilizer)">
+          <i class="bi bi-files me-1"></i>
+          Duplicar
+        </button>
+        <button type="button" 
+                class="btn btn-secondary" 
+                (click)="closeDetailsModal()">
+          <i class="bi bi-x-circle me-1"></i>
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Backdrop -->
-<div class="modal-backdrop fade" [class.show]="showCreateModal" *ngIf="showCreateModal"></div>
+<div class="modal-backdrop fade" 
+     [class.show]="showCreateModal || showDetailsModal" 
+     *ngIf="showCreateModal || showDetailsModal"
+     (click)="showCreateModal ? closeCreateModal() : closeDetailsModal()">
+</div>

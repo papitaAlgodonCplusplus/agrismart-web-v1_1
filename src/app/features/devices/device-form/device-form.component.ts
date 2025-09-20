@@ -388,7 +388,7 @@ export class DeviceFormComponent implements OnInit {
       const deviceData = this.deviceForm.value;
 
       const operation = this.isEditMode
-        ? this.deviceService.update(this.deviceId!, deviceData)
+        ? this.deviceService.update(deviceData)
         : this.deviceService.create(deviceData);
 
       operation.subscribe({

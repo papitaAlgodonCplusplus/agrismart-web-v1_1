@@ -279,7 +279,7 @@ export class FarmFormComponent implements OnInit {
       };
 
       const operation = this.isEditMode
-        ? this.farmService.update(this.farmId!, farmData)
+        ? this.farmService.update(farmData)
         : this.farmService.create(farmData);
 
       operation.subscribe({

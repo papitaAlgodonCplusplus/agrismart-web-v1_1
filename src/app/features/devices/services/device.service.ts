@@ -246,13 +246,13 @@ export class DeviceService {
   /**
    * Update device - Backend: PUT /Device
    */
-  update(id: number, data: DeviceUpdateRequest): Observable<Device> {
+  update( data: DeviceUpdateRequest): Observable<Device> {
     const token = localStorage.getItem('access_token');
     if (!token) {
       return throwError(() => new Error('Authentication required'));
     }
 
-    const payload = { ...data, id };
+    const payload = { ...data  };
     const url = `${this.apiConfig.agronomicApiUrl}/Device`;
     const headers = this.getAuthHeaders();
 

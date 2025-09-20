@@ -133,8 +133,8 @@ export class LicenseService {
   /**
    * Update license
    */
-  update(id: number, data: Partial<License>): Observable<License> {
-    const url = this.apiConfig.getAgronomicUrl(`${this.baseUrl}/${id}`);
+  update( data: Partial<License>): Observable<License> {
+    const url = this.apiConfig.getAgronomicUrl(`${this.baseUrl}`);
     const headers = this.getAuthHeaders();
 
     return this.http.put<BackendResponse<License>>(url, data, { headers })

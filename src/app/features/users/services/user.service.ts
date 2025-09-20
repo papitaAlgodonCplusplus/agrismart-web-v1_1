@@ -137,8 +137,8 @@ export class UserService {
   /**
    * Update user
    */
-  update(id: number, data: Partial<User>): Observable<User> {
-    const url = this.apiConfig.getAgronomicUrl(`${this.baseUrl}/${id}`);
+  update(  data: Partial<User>): Observable<User> {
+    const url = this.apiConfig.getAgronomicUrl(`${this.baseUrl}`);
     const headers = this.getAuthHeaders();
 
     return this.http.put<BackendResponse<User>>(url, data, { headers })

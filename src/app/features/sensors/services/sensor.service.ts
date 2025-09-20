@@ -139,8 +139,8 @@ export class SensorService {
   /**
    * Update sensor
    */
-  update(id: number, data: Partial<Sensor>): Observable<Sensor> {
-    const url = this.apiConfig.getAgronomicUrl(`${this.baseUrl}/${id}`);
+  update(  data: Partial<Sensor>): Observable<Sensor> {
+    const url = this.apiConfig.getAgronomicUrl(`${this.baseUrl}`);
     const headers = this.getAuthHeaders();
 
     return this.http.put<BackendResponse<Sensor>>(url, data, { headers })

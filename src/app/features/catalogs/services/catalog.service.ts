@@ -48,8 +48,8 @@ export interface Catalog {
         return this.apiService.post<Catalog>('/Catalog', data);
     }
 
-    update(id: number, data: Partial<Catalog>): Observable<Catalog> {
-        return this.apiService.put<Catalog>(`/Catalog/${id}`, data);
+    update( data: Partial<Catalog>): Observable<Catalog> {
+        return this.apiService.put<Catalog>(`/Catalog`, data);
     }
 
     delete(id: number): Observable<void> {
