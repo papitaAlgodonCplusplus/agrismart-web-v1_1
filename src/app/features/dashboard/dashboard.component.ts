@@ -161,20 +161,6 @@ export class DashboardComponent implements OnInit {
     this.recentActivities = activities;
   }
 
-  // Helper methods for template
-  getCompanyGrowth(): number {
-    // Mock calculation - in real app, this would compare with previous period
-    return Math.floor(Math.random() * 20) + 5;
-  }
-
-  getFarmGrowth(): number {
-    return Math.floor(Math.random() * 15) + 3;
-  }
-
-  getCropGrowth(): number {
-    return Math.floor(Math.random() * 25) + 8;
-  }
-
   getDeviceEfficiency(): number {
     if (this.stats.totalDevices === 0) return 0;
     return Math.round((this.stats.activeDevices / this.stats.totalDevices) * 100);

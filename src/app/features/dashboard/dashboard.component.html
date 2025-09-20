@@ -25,9 +25,6 @@
               <h2 class="card-title mb-0 counter" [attr.data-count]="stats.totalCompanies">
                 {{ stats.totalCompanies }}
               </h2>
-              <small class="text-success">
-                <i class="bi bi-arrow-up"></i> {{ getCompanyGrowth() }}%
-              </small>
             </div>
             <div class="col-4 text-end">
               <div class="icon-shape bg-gradient-primary text-white rounded-circle">
@@ -47,9 +44,6 @@
             <div class="col-8">
               <h6 class="card-category text-uppercase text-muted mb-0">Fincas</h6>
               <h2 class="card-title mb-0 counter">{{ stats.totalFarms }}</h2>
-              <small class="text-success">
-                <i class="bi bi-arrow-up"></i> {{ getFarmGrowth() }}%
-              </small>
             </div>
             <div class="col-4 text-end">
               <div class="icon-shape bg-gradient-success text-white rounded-circle">
@@ -69,9 +63,6 @@
             <div class="col-8">
               <h6 class="card-category text-uppercase text-muted mb-0">Cultivos</h6>
               <h2 class="card-title mb-0 counter">{{ stats.totalCrops }}</h2>
-              <small class="text-success">
-                <i class="bi bi-arrow-up"></i> {{ getCropGrowth() }}%
-              </small>
             </div>
             <div class="col-4 text-end">
               <div class="icon-shape bg-gradient-warning text-white rounded-circle">
@@ -91,9 +82,6 @@
             <div class="col-8">
               <h6 class="card-category text-uppercase text-muted mb-0">Dispositivos</h6>
               <h2 class="card-title mb-0 counter">{{ stats.totalDevices }}</h2>
-              <small class="text-success">
-                <i class="bi bi-check-circle"></i> {{ getDeviceEfficiency() }}% activos
-              </small>
             </div>
             <div class="col-4 text-end">
               <div class="icon-shape bg-gradient-info text-white rounded-circle">

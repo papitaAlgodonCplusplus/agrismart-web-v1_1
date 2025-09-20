@@ -121,7 +121,7 @@
               <i class="bi bi-search search-icon"></i>
             </div>
 
-            <button class="btn btn-primary" (click)="openCreateModal()">
+            <button *ngIf="getCurrentEntityConfig()?.name !== 'user'" class="btn btn-primary" (click)="openCreateModal()">
               <i class="bi bi-plus-lg"></i>
               Agregar {{ getCurrentEntityConfig()?.displayName?.slice(0, -1) }}
             </button>
@@ -464,8 +464,18 @@
                       </span>
                     </span>
 
-                    <!-- Select fields -->
-                    <span *ngIf="field.type === 'select'">
+                    <!-- Select fields - Special handling for user roles -->
+                    <span *ngIf="field.type === 'select' && field.key === 'profileId'">
+                      <span class="badge" [class.bg-primary]="item[field.key] === 1"
+                        [class.bg-info]="item[field.key] === 2">
+                        <i class="bi" [class.bi-shield-fill]="item[field.key] === 1"
+                          [class.bi-person-fill]="item[field.key] === 2"></i>
+                        {{ getUserRoleLabel(item[field.key]) }}
+                      </span>
+                    </span>
+
+                    <!-- Regular select fields -->
+                    <span *ngIf="field.type === 'select' && field.key !== 'profileId'">
                       {{ getSelectLabel(field, item[field.key]) }}
                     </span>
                   </td>
@@ -685,8 +695,18 @@
               <textarea *ngIf="field.type === 'textarea'" class="form-control" [(ngModel)]="currentItem[field.key]"
                 [placeholder]="field.label" rows="3"></textarea>
 
-              <!-- Select -->
-              <select *ngIf="field.type === 'select'" class="form-select" [(ngModel)]="currentItem[field.key]">
+              <!-- Enhanced Select for User Roles -->
+              <select *ngIf="field.type === 'select' && field.key === 'profileId'" class="form-select"
+                [(ngModel)]="currentItem[field.key]">
+                <option value="">Seleccionar rol...</option>
+                <option *ngFor="let option of field.options; trackBy: trackByOption" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+
+              <!-- Regular Select for other fields -->
+              <select *ngIf="field.type === 'select' && field.key !== 'profileId'" class="form-select"
+                [(ngModel)]="currentItem[field.key]">
                 <option value="">Seleccionar...</option>
                 <option *ngFor="let option of field.options; trackBy: trackByOption" [value]="option.value">
                   {{ option.label }}

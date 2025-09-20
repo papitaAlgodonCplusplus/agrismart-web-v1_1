@@ -229,10 +229,16 @@ export class AdminComponent implements OnInit {
       nameField: 'userEmail',
       fields: [
         { key: 'userEmail', label: 'Email', type: 'email', required: true },
-        { key: 'clientId', label: 'ID Cliente', type: 'number', required: true },
-        { key: 'profileId', label: 'ID Perfil', type: 'number', required: true },
-        { key: 'userStatusId', label: 'ID Estado Usuario', type: 'number' },
-        { key: 'active', label: 'Activo', type: 'boolean' }
+        {
+          key: 'profileId',
+          label: 'Rol',
+          type: 'select',
+          required: true,
+          options: [
+            { value: 1, label: 'Admin' },
+            { value: 2, label: 'Client' }
+          ]
+        }
       ]
     },
     {
@@ -462,6 +468,7 @@ export class AdminComponent implements OnInit {
       users: this.userService.getAll().pipe(
         map(data => this.extractResponseData(data, 'user')),
         tap(data => console.log('Users extracted:', data)),
+        // Here each data.users i has userStatusId in it, this would be mapped to "Admin" or "Client" in html table
         catchError(error => {
           console.error('Users error:', error);
           return of([]);
@@ -1018,8 +1025,16 @@ export class AdminComponent implements OnInit {
         break;
       case 'user':
         if (this.isEditing) {
+          // Ensure profileId is set correctly before update
+          if (this.currentItem.profileId) {
+            this.currentItem.profileId = parseInt(this.currentItem.profileId.toString());
+          }
           await firstValueFrom(this.userService.update(this.currentItem));
         } else {
+          // Ensure profileId is set correctly before create
+          if (this.currentItem.profileId) {
+            this.currentItem.profileId = parseInt(this.currentItem.profileId.toString());
+          }
           await firstValueFrom(this.userService.create(this.currentItem));
         }
         break;
@@ -1434,6 +1449,8 @@ export class AdminComponent implements OnInit {
   openCreateModal(): void {
     if (this.selectedEntity === 'fertilizer') {
       this.initializeFertilizerForm();
+    } else if (this.selectedEntity === 'user') {
+      this.initializeUserForm();
     } else {
       this.currentItem = {};
     }
@@ -1918,5 +1935,25 @@ export class AdminComponent implements OnInit {
     }
   }
 
+  /**
+   * Get user role label from profileId
+   */
+  getUserRoleLabel(profileId: number): string {
+    const roleMap: { [key: number]: string } = {
+      1: 'Admin',
+      2: 'Client'
+    };
+    return roleMap[profileId] || 'Desconocido';
+  }
 
+  /**
+ * Initialize user form with proper defaults
+ */
+  private initializeUserForm(): void {
+    this.currentItem = {
+      userEmail: '',
+      profileId: 2, // Default to Client
+      active: true
+    };
+  }
 }
