@@ -338,7 +338,7 @@ export class CropFormComponent implements OnInit {
       const cropData = this.cropForm.value;
 
       const operation = this.isEditMode
-        ? this.cropService.update(this.cropId!, cropData)
+        ? this.cropService.update(cropData)
         : this.cropService.create(cropData);
 
       operation.subscribe({

@@ -2315,7 +2315,7 @@ export interface Fertilizer {
   name: string | undefined;
   brand?: string | undefined;
   description?: string | undefined;
-  type: string | undefined; // 'Organico', 'Inorganico', 'Liquido', 'Solido', 'Foliar'
+  type?: string | undefined; // 'Organico', 'Inorganico', 'Liquido', 'Solido', 'Foliar'
   formulation?: string | undefined;
   concentration?: number;
   concentrationUnit?: string | undefined;
@@ -2422,4 +2422,332 @@ export interface User {
   isActive: boolean;
   createdAt: Date;
   updatedAt?: Date;
+}
+
+// src/app/core/models/fertilizer.model.ts
+export interface Fertilizer {
+  // Existing properties
+  id: number;
+  catalogId: number;
+  name: string | undefined;
+  manufacturer?: string;
+  isLiquid: boolean;
+  active: boolean;
+  dateCreated?: Date;
+  dateUpdated?: Date;
+  createdBy?: number;
+  updatedBy?: number;
+
+  // NEW PROPERTIES ADDED
+
+  // Basic Information
+  brand?: string;
+  description?: string;
+  type?: string; // 'Organic', 'Inorganic', 'Liquid', 'Solid', 'Foliar'
+  formulation?: string;
+  concentration?: number;
+  concentrationUnit?: string;
+  applicationMethod?: string; // 'Irrigation', 'Foliar', 'Soil', 'Fertigation'
+
+  // NPK and Nutrient Percentages
+  nitrogenPercentage?: number;
+  phosphorusPercentage?: number;
+  potassiumPercentage?: number;
+  micronutrients?: string;
+
+  // Stock Management
+  currentStock?: number;
+  minimumStock?: number;
+  stockUnit?: string;
+  pricePerUnit?: number;
+  supplier?: string;
+
+  // Storage and Application
+  expirationDate?: Date;
+  storageInstructions?: string;
+  applicationInstructions?: string;
+
+  // Chemical Analysis Parameters
+  ca?: number;  // Calcium
+  k?: number;   // Potassium (additional analysis)
+  mg?: number;  // Magnesium
+  na?: number;  // Sodium
+  nh4?: number; // Ammonium
+  n?: number;   // Nitrogen (additional analysis)
+  so4?: number; // Sulfate
+  s?: number;   // Sulfur
+  cl?: number;  // Chloride
+  h2po4?: number; // Dihydrogen phosphate
+  p?: number;   // Phosphorus (additional analysis)
+  hco3?: number; // Bicarbonate
+
+  // Micronutrients Analysis
+  fe?: number;  // Iron
+  mn?: number;  // Manganese
+  zn?: number;  // Zinc
+  cu?: number;  // Copper
+  b?: number;   // Boron
+  mo?: number;  // Molybdenum
+
+  // Solution Properties
+  tds?: number; // Total Dissolved Solids
+  ec?: number;  // Electrical Conductivity
+  ph?: number;  // pH level
+
+  // Computed Properties (calculated on frontend)
+  isLowStock?: boolean;
+  isExpired?: boolean;
+  isExpiringSoon?: boolean;
+  totalNPK?: number;
+  npkRatio?: string;
+  stockValue?: number;
+}
+
+// Create/Update Request Interface
+export interface CreateFertilizerRequest {
+  // Required fields
+  catalogId: number;
+  name: string;
+  active: boolean;
+
+  // Optional existing fields
+  manufacturer?: string;
+  isLiquid: boolean;
+
+  // NEW OPTIONAL FIELDS
+
+  // Basic Information
+  brand?: string;
+  description?: string;
+  type?: string;
+  formulation?: string;
+  concentration?: number;
+  concentrationUnit?: string;
+  applicationMethod?: string;
+
+  // NPK and Nutrient Percentages
+  nitrogenPercentage?: number;
+  phosphorusPercentage?: number;
+  potassiumPercentage?: number;
+  micronutrients?: string;
+
+  // Stock Management
+  currentStock?: number;
+  minimumStock?: number;
+  stockUnit?: string;
+  pricePerUnit?: number;
+  supplier?: string;
+
+  // Storage and Application
+  expirationDate?: Date | string;
+  storageInstructions?: string;
+  applicationInstructions?: string;
+
+  // Chemical Analysis Parameters
+  ca?: number;
+  k?: number;
+  mg?: number;
+  na?: number;
+  nh4?: number;
+  n?: number;
+  so4?: number;
+  s?: number;
+  cl?: number;
+  h2po4?: number;
+  p?: number;
+  hco3?: number;
+
+  // Micronutrients Analysis
+  fe?: number;
+  mn?: number;
+  zn?: number;
+  cu?: number;
+  b?: number;
+  mo?: number;
+
+  // Solution Properties
+  tds?: number;
+  ec?: number;
+  ph?: number;
+}
+
+export interface UpdateFertilizerRequest extends CreateFertilizerRequest {
+  id: number;
+}
+
+// Response Interfaces
+export interface FertilizerResponse {
+  success: boolean;
+  exception?: string;
+  result: Fertilizer;
+}
+
+export interface FertilizersResponse {
+  success: boolean;
+  exception?: string;
+  result: {
+    fertilizers: Fertilizer[];
+  };
+}
+
+// Filter and Search Interfaces
+export interface FertilizerFilters {
+  catalogId?: number;
+  includeInactives?: boolean;
+  type?: string;
+  supplier?: string;
+  brand?: string;
+  lowStockOnly?: boolean;
+  expiringSoonOnly?: boolean;
+  searchTerm?: string;
+}
+
+// Fertilizer Statistics Interface
+export interface FertilizerStats {
+  totalFertilizers: number;
+  activeFertilizers: number;
+  lowStockCount: number;
+  expiredCount: number;
+  expiringSoonCount: number;
+  totalStockValue: number;
+  averageNitrogenContent: number;
+  averagePhosphorusContent: number;
+  averagePotassiumContent: number;
+}
+
+// Fertilizer Type Enums
+export enum FertilizerType {
+  ORGANIC = 'Organic',
+  INORGANIC = 'Inorganic',
+  LIQUID = 'Liquid',
+  SOLID = 'Solid',
+  FOLIAR = 'Foliar',
+  SLOW_RELEASE = 'Slow Release',
+  CONTROLLED_RELEASE = 'Controlled Release'
+}
+
+export enum ApplicationMethod {
+  IRRIGATION = 'Irrigation',
+  FOLIAR = 'Foliar',
+  SOIL = 'Soil',
+  FERTIGATION = 'Fertigation',
+  HYDROPONIC = 'Hydroponic',
+  BROADCAST = 'Broadcast',
+  BAND_APPLICATION = 'Band Application'
+}
+
+export enum StockUnit {
+  KG = 'kg',
+  LB = 'lb',
+  LITER = 'L',
+  GALLON = 'gal',
+  TON = 'ton',
+  BAG = 'bag',
+  BOTTLE = 'bottle'
+}
+
+export enum ConcentrationUnit {
+  PERCENTAGE = '%',
+  PPM = 'ppm',
+  MEQ_L = 'meq/L',
+  MG_L = 'mg/L',
+  G_L = 'g/L'
+}
+
+// Utility functions for Fertilizer calculations
+export class FertilizerUtils {
+  
+  static calculateNPKRatio(fertilizer: Fertilizer): string {
+    const n = fertilizer.nitrogenPercentage || 0;
+    const p = fertilizer.phosphorusPercentage || 0;
+    const k = fertilizer.potassiumPercentage || 0;
+    return `${n.toFixed(1)}-${p.toFixed(1)}-${k.toFixed(1)}`;
+  }
+
+  static calculateTotalNPK(fertilizer: Fertilizer): number {
+    const n = fertilizer.nitrogenPercentage || 0;
+    const p = fertilizer.phosphorusPercentage || 0;
+    const k = fertilizer.potassiumPercentage || 0;
+    return n + p + k;
+  }
+
+  static calculateStockValue(fertilizer: Fertilizer): number {
+    const stock = fertilizer.currentStock || 0;
+    const price = fertilizer.pricePerUnit || 0;
+    return stock * price;
+  }
+
+  static isLowStock(fertilizer: Fertilizer): boolean {
+    if (!fertilizer.currentStock || !fertilizer.minimumStock) {
+      return false;
+    }
+    return fertilizer.currentStock <= fertilizer.minimumStock;
+  }
+
+  static isExpired(fertilizer: Fertilizer): boolean {
+    if (!fertilizer.expirationDate) {
+      return false;
+    }
+    const expDate = new Date(fertilizer.expirationDate);
+    return expDate < new Date();
+  }
+
+  static isExpiringSoon(fertilizer: Fertilizer, daysAhead: number = 30): boolean {
+    if (!fertilizer.expirationDate) {
+      return false;
+    }
+    const expDate = new Date(fertilizer.expirationDate);
+    const today = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(today.getDate() + daysAhead);
+    
+    return expDate <= futureDate && expDate >= today;
+  }
+
+  static getStockStatus(fertilizer: Fertilizer): 'low' | 'normal' | 'high' | 'unknown' {
+    if (!fertilizer.currentStock || !fertilizer.minimumStock) {
+      return 'unknown';
+    }
+    
+    if (fertilizer.currentStock <= fertilizer.minimumStock) {
+      return 'low';
+    } else if (fertilizer.currentStock >= fertilizer.minimumStock * 2) {
+      return 'high';
+    }
+    return 'normal';
+  }
+
+  static formatChemicalComposition(fertilizer: Fertilizer): { [key: string]: number } {
+    const composition: { [key: string]: number } = {};
+    
+    // Add all chemical parameters that have values
+    const chemicals = {
+      'Ca': fertilizer.ca,
+      'K': fertilizer.k,
+      'Mg': fertilizer.mg,
+      'Na': fertilizer.na,
+      'NH4': fertilizer.nh4,
+      'N': fertilizer.n,
+      'SO4': fertilizer.so4,
+      'S': fertilizer.s,
+      'Cl': fertilizer.cl,
+      'H2PO4': fertilizer.h2po4,
+      'P': fertilizer.p,
+      'HCO3': fertilizer.hco3,
+      'Fe': fertilizer.fe,
+      'Mn': fertilizer.mn,
+      'Zn': fertilizer.zn,
+      'Cu': fertilizer.cu,
+      'B': fertilizer.b,
+      'Mo': fertilizer.mo
+    };
+
+    Object.entries(chemicals).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value > 0) {
+        composition[key] = value;
+      }
+    });
+
+    return composition;
+  }
 }

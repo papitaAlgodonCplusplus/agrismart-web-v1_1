@@ -120,13 +120,13 @@ export class DeviceService {
 
     // Handle legacy boolean parameter for backward compatibility
     if (onlyActive !== undefined) {
-      params = params.set('onlyActive', onlyActive.toString());
+      params = params.set('IncludeInactives', onlyActive.toString());
     }
 
     // Handle new filters object
     if (filters) {
       if (filters.onlyActive !== undefined) {
-        params = params.set('onlyActive', filters.onlyActive.toString());
+        params = params.set('IncludeInactives', filters.onlyActive.toString());
       }
       if (filters.searchTerm) {
         params = params.set('searchTerm', filters.searchTerm);

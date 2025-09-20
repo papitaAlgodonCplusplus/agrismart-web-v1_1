@@ -152,13 +152,13 @@ export class CropService {
 
     // Handle legacy boolean parameter for backward compatibility
     if (onlyActive !== undefined) {
-      params = params.set('onlyActive', onlyActive.toString());
+      params = params.set('IncludeInactives', onlyActive.toString());
     }
 
     // Handle new filters object
     if (filters) {
       if (filters.onlyActive !== undefined) {
-        params = params.set('onlyActive', filters.onlyActive.toString());
+        params = params.set('IncludeInactives', filters.onlyActive.toString());
       }
       if (filters.searchTerm) {
         params = params.set('searchTerm', filters.searchTerm);
@@ -262,12 +262,11 @@ export class CropService {
    * Update crop - Backend: PUT /Crop (if implemented)
    * Note: Your current backend may not have this endpoint
    */
-  update(id: number, data: CropUpdateRequest): Observable<Crop> {
-    const payload = { ...data, id };
+  update(data: CropUpdateRequest): Observable<Crop> {
     const url = `${this.apiConfig.agronomicApiUrl}/Crop`;
     const headers = this.getAuthHeaders();
 
-    return this.http.put<BackendResponse<Crop>>(url, payload, { headers })
+    return this.http.put<BackendResponse<Crop>>(url, data, { headers })
       .pipe(
         map(response => {
           

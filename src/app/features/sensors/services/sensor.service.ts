@@ -63,7 +63,7 @@ export class SensorService {
     let params = new HttpParams();
     if (filters) {
       if (filters.onlyActive !== undefined) {
-        params = params.set('onlyActive', filters.onlyActive.toString());
+        params = params.set('IncludeInactives', filters.onlyActive.toString());
       }
       if (filters.searchTerm) {
         params = params.set('searchTerm', filters.searchTerm);

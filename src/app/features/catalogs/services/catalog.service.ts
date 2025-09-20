@@ -27,7 +27,7 @@ export interface Catalog {
     }
 
     getAll(clientId: number = 0): Observable<Catalog[]> {
-        const params = new HttpParams().set('ClientId', clientId.toString());
+        let params = new HttpParams().set('ClientId', clientId.toString());
         console.log('Making request to: /Catalog with params:', params.toString());
 
         // Pass just the endpoint path, not the full URL

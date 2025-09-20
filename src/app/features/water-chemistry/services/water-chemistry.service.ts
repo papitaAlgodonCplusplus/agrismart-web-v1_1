@@ -73,10 +73,10 @@ export class WaterChemistryService {
   getAll(filters?: WaterChemistryFilters): Observable<any> {
     let params = new HttpParams();
 
-    // if (filters) {
-    //   if (filters.onlyActive !== undefined) {
-    //     params = params.set('onlyActive', filters.onlyActive.toString());
-    //   }
+    if (filters) {
+      if (filters.onlyActive !== undefined) {
+        params = params.set('IncludeInactives', filters.onlyActive.toString());
+      }
     //   if (filters.searchTerm) {
     //     params = params.set('searchTerm', filters.searchTerm);
     //   }
@@ -92,7 +92,7 @@ export class WaterChemistryService {
     //   if (filters.maxEc !== undefined) {
     //     params = params.set('maxEc', filters.maxEc.toString());
     //   }
-    // }
+    }
 
     return this.apiService.get<WaterChemistry[]>(this.baseUrl, params);
   }

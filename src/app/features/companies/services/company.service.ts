@@ -13,7 +13,7 @@ interface BackendResponse<T> {
 }
 
 export interface CompanyFilters {
-  onlyActive?: boolean;
+  IncludeInactives?: boolean;
   searchTerm?: string;
   hasActiveFarms?: boolean;
   location?: string;
@@ -30,30 +30,39 @@ export class CompanyService {
     private http: HttpClient
   ) { }
 
+  private getAuthHeaders(): { [header: string]: string } {
+    const token = localStorage.getItem('access_token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+  }
+
   /**
    * Get all companies - matches backend GET /Company endpoint
    */
-  getAll(onlyActive?: boolean, filters?: CompanyFilters): Observable<any[]> {
+  getAll(IncludeInactives?: boolean, filters?: CompanyFilters): Observable<any[]> {
     // Build query parameters if needed
     let params = new HttpParams();
 
-    if (onlyActive !== undefined) {
-      params = params.set('onlyActive', onlyActive.toString());
+    if (IncludeInactives !== undefined) {
+      params = params.set('IncludeInactives', IncludeInactives.toString());
     }
 
-    if (filters) {
-      Object.keys(filters).forEach(key => {
-        const value = (filters as any)[key];
-        if (value !== null && value !== undefined && value !== '') {
-          params = params.set(key, value.toString());
-        }
-      });
-    }
+    // if (filters) {
+    //   Object.keys(filters).forEach(key => {
+    //     const value = (filters as any)[key];
+    //     if (value !== null && value !== undefined && value !== '') {
+    //       params = params.set(key, value.toString());
+    //     }
+    //   });
+    // }
 
     // Call the actual backend endpoint: GET /Company
     const url = `${this.apiConfig.agronomicApiUrl}/Company`;
+    const headers = this.getAuthHeaders();
 
-    return this.http.get<BackendResponse<{ companies: any[] }>>(url, { params })
+    return this.http.get<BackendResponse<{ companies: any[] }>>(url, { params, headers })
       .pipe(
         map(response => {
           console.log('CompanyService raw response:', response);

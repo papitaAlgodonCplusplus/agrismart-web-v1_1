@@ -2,10 +2,12 @@
 using AgriSmart.Tools.Configuration;
 using AgriSmart.Tools.DataModels;
 using AgriSmart.Tools.Services.Responses;
+using AgriSmart.Application.Agronomic.Responses.Queries;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -332,7 +334,18 @@ namespace AgriSmart.Tools.Services
                     Response<GetAllFertilizersResponse> apiResponse = JsonSerializer.Deserialize<Response<GetAllFertilizersResponse>>(await response.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     if (apiResponse.Success)
                     {
-                        return apiResponse.Result.Fertilizers;
+                        return apiResponse.Result.Fertilizers.Select(dto => new FertilizerModel
+                        {
+                            Id = dto.Id,
+                            CatalogId = dto.CatalogId,
+                            Name = dto.Name,
+                            Manufacturer = dto.Manufacturer,
+                            IsLiquid = dto.IsLiquid,
+                            Active = dto.Active,
+                            DateCreated = dto.DateCreated ?? DateTime.MinValue,
+                            CreatedBy = dto.CreatedBy ?? 0,
+                            UpdateBy = dto.UpdatedBy ?? 0
+                        }).ToList();
                     }
                 }
 

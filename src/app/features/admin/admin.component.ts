@@ -156,11 +156,6 @@ export class AdminComponent implements OnInit {
       fields: [
         { key: 'name', label: 'Nombre', type: 'text', required: true },
         { key: 'description', label: 'Descripción', type: 'textarea' },
-        { key: 'address', label: 'Dirección', type: 'text' },
-        { key: 'phoneNumber', label: 'Teléfono', type: 'text' },
-        { key: 'email', label: 'Email', type: 'email' },
-        { key: 'website', label: 'Sitio Web', type: 'text' },
-        { key: 'taxId', label: 'ID Fiscal', type: 'text' },
         { key: 'active', label: 'Activo', type: 'boolean' }
       ]
     },
@@ -175,8 +170,6 @@ export class AdminComponent implements OnInit {
       fields: [
         { key: 'name', label: 'Nombre', type: 'text', required: true },
         { key: 'description', label: 'Descripción', type: 'textarea' },
-        { key: 'companyId', label: 'ID Compañía', type: 'number', required: true },
-        { key: 'timeZoneId', label: 'ID Zona Horaria', type: 'number' },
         { key: 'active', label: 'Activo', type: 'boolean' }
       ]
     },
@@ -205,7 +198,6 @@ export class AdminComponent implements OnInit {
       nameField: 'deviceId',
       fields: [
         { key: 'deviceId', label: 'ID Dispositivo', type: 'text', required: true },
-        { key: 'companyId', label: 'ID Compañía', type: 'number', required: true },
         { key: 'active', label: 'Activo', type: 'boolean' }
       ]
     },
@@ -431,7 +423,7 @@ export class AdminComponent implements OnInit {
 
     // Load basic entities first (excluding catalogs and fertilizers)
     forkJoin({
-      companies: this.companyService.getAll().pipe(
+      companies: this.companyService.getAll(true).pipe(
         map(data => this.extractResponseData(data, 'company')),
         tap(data => console.log('Companies extracted:', data)),
         catchError(error => {
@@ -439,7 +431,7 @@ export class AdminComponent implements OnInit {
           return of([]);
         })
       ),
-      farms: this.farmService.getAll().pipe(
+      farms: this.farmService.getAll(true).pipe(
         map(data => this.extractResponseData(data, 'farm')),
         tap(data => console.log('Farms extracted:', data)),
         catchError(error => {
@@ -447,7 +439,7 @@ export class AdminComponent implements OnInit {
           return of([]);
         })
       ),
-      crops: this.cropService.getAll().pipe(
+      crops: this.cropService.getAll(true).pipe(
         map(data => this.extractResponseData(data, 'crop')),
         tap(data => console.log('Crops extracted:', data)),
         catchError(error => {
@@ -455,7 +447,7 @@ export class AdminComponent implements OnInit {
           return of([]);
         })
       ),
-      devices: this.deviceService.getAll().pipe(
+      devices: this.deviceService.getAll(true).pipe(
         map(data => this.extractResponseData(data, 'device')),
         tap(data => console.log('Devices extracted:', data)),
         catchError(error => {
@@ -471,7 +463,7 @@ export class AdminComponent implements OnInit {
           return of([]);
         })
       ),
-      sensors: this.sensorService.getAll().pipe(
+      sensors: this.sensorService.getAll({"onlyActive": true}).pipe(
         map(data => this.extractResponseData(data, 'sensor')),
         tap(data => console.log('Sensors extracted:', data)),
         catchError(error => {
@@ -479,7 +471,7 @@ export class AdminComponent implements OnInit {
           return of([]);
         })
       ),
-      licenses: this.licenseService.getAll().pipe(
+      licenses: this.licenseService.getAll({"onlyActive": true}).pipe(
         map(data => this.extractResponseData(data, 'license')),
         tap(data => console.log('Licenses extracted:', data)),
         catchError(error => {
@@ -487,7 +479,7 @@ export class AdminComponent implements OnInit {
           return of([]);
         })
       ),
-      waterChemistry: this.waterChemistryService.getAll().pipe(
+      waterChemistry: this.waterChemistryService.getAll({"onlyActive": true}).pipe(
         map(data => this.extractResponseData(data, 'waterChemistry')),
         tap(data => console.log('Water Chemistry extracted:', data)),
         catchError(error => {
@@ -495,7 +487,7 @@ export class AdminComponent implements OnInit {
           return of([]);
         })
       ),
-      productionUnits: this.productionUnitService.getAll().pipe(
+      productionUnits: this.productionUnitService.getAll({"onlyActive": true}).pipe(
         map(data => this.extractResponseData(data, 'productionUnit')),
         tap(data => console.log('Production Units extracted:', data)),
         catchError(error => {
@@ -523,16 +515,15 @@ export class AdminComponent implements OnInit {
         }
 
         // Load catalogs for each client ID
-        const catalogRequests = clientIds.map(clientId => 
-          this.catalogService.getAll(clientId).pipe(
+        const catalogRequests =
+          this.catalogService.getAll().pipe(
             map(data => this.extractResponseData(data, 'catalog')),
-            tap(data => console.log(`Catalogs for client ${clientId}:`, data)),
+            tap(data => console.log(`Catalogs:`, data)),
             catchError(error => {
-              console.error(`Catalogs error for client ${clientId}:`, error);
+              console.error(`Catalogs error :`, error);
               return of([]);
             })
           )
-        );
 
         return forkJoin(catalogRequests).pipe(
           map(catalogArrays => {
@@ -623,23 +614,6 @@ export class AdminComponent implements OnInit {
   }
 
   /**
-   * Load fertilizers data with catalog handling
-   */
-  private loadFertilizersData() {
-    if (this.selectedCatalogId) {
-      return this.fertilizerService.getFertilizersWithCatalogId(this.selectedCatalogId).pipe(
-        map(data => this.extractResponseData(data, 'fertilizer')),
-        tap(data => console.log('Fertilizers extracted:', data))
-      );
-    } else {
-      return this.fertilizerService.getAll().pipe(
-        map(data => this.extractResponseData(data, 'fertilizer')),
-        tap(data => console.log('Fertilizers extracted:', data))
-      );
-    }
-  }
-
-  /**
    * Process admin statistics with better data handling
    */
   private processAdminStats(data: any): void {
@@ -681,28 +655,28 @@ export class AdminComponent implements OnInit {
     
     switch (entityName) {
       case 'company':
-        dataSource$ = this.companyService.getAll();
+        dataSource$ = this.companyService.getAll(true);
         break;
       case 'farm':
-        dataSource$ = this.farmService.getAll();
+        dataSource$ = this.farmService.getAll(true);
         break;
       case 'crop':
-        dataSource$ = this.cropService.getAll();
+        dataSource$ = this.cropService.getAll(true);
         break;
       case 'device':
-        dataSource$ = this.deviceService.getAll();
+        dataSource$ = this.deviceService.getAll(true);
         break;
       case 'user':
         dataSource$ = this.userService.getAll();
         break;
       case 'sensor':
-        dataSource$ = this.sensorService.getAll();
+        dataSource$ = this.sensorService.getAll({"onlyActive": true});
         break;
       case 'waterChemistry':
-        dataSource$ = this.waterChemistryService.getAll();
+        dataSource$ = this.waterChemistryService.getAll({"onlyActive": true});
         break;
       case 'license':
-        dataSource$ = this.licenseService.getAll();
+        dataSource$ = this.licenseService.getAll({"onlyActive": true});
         break;
       case 'catalog':
         // For catalogs, we need to load from all client IDs
@@ -1089,7 +1063,7 @@ export class AdminComponent implements OnInit {
         break;
       case 'crop':
         if (this.isEditing) {
-          await firstValueFrom(this.cropService.update(this.currentItem.id!, this.currentItem));
+          await firstValueFrom(this.cropService.update(this.currentItem));
         } else {
           await firstValueFrom(this.cropService.create(this.currentItem));
         }
