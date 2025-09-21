@@ -14,6 +14,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
                 cfg.AddProfile<CompanyMappingProfile>();
                 cfg.AddProfile<FarmMappingProfile>();
                 cfg.AddProfile<ProductionUnitMappingProfile>();
+                cfg.AddProfile<CropMappingProfile>();
                 cfg.AddProfile<CropProductionMappingProfile>();
                 cfg.AddProfile<CropProductionDeviceMappingProfile>();
                 cfg.AddProfile<CropPhaseMappingProfile>();

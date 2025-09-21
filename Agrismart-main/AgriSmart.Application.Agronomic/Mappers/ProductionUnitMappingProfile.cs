@@ -11,6 +11,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
         {
             CreateMap<ProductionUnit, CreateProductionUnitCommand>().ReverseMap();
             CreateMap<ProductionUnit, CreateProductionUnitResponse>().ReverseMap();
+            CreateMap<DeleteProductionUnitCommand, ProductionUnit>();
         }
     }
 }

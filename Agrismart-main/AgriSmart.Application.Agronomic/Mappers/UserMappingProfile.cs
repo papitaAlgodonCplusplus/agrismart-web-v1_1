@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<User, CreateUserResponse>().ReverseMap();
             CreateMap<User, UpdateUserCommand>().ReverseMap();
             CreateMap<User, UpdateUserResponse>().ReverseMap();
+            CreateMap<DeleteUserCommand, User>();
         }
     }
 }

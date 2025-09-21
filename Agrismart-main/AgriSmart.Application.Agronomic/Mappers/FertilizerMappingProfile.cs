@@ -11,6 +11,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
         {
             CreateMap<Fertilizer, CreateFertilizerCommand>().ReverseMap();
             CreateMap<Fertilizer, CreateFertilizerResponse>().ReverseMap();
+            CreateMap<DeleteFertilizerCommand, Fertilizer>();
         }
     }
 }

@@ -152,6 +152,27 @@ builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(CreateIrrigationEventHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(CreateIrrigationEngineeringDesignCommandHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(GetIrrigationEngineeringDesignsQueryHandler).Assembly);
+    // DELETE Command Handlers
+    cfg.RegisterServicesFromAssembly(typeof(DeleteAnalyticalEntityCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteCalculationSettingCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteCatalogCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteContainerCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteCropPhaseCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteCropPhaseOptimalCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteCropProductionCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteCropProductionIrrigationSectorCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteDropperCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteFertilizerCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteFertilizerChemistryCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteFertilizerInputCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteGrowingMediumCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteIrrigationEventCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteLicenseCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteMeasurementVariableCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteRelayModuleCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteSensorCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteWaterChemistryCommandHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteWaterCommandHandler).Assembly);
 });
 
 //Repositories
@@ -185,6 +206,7 @@ builder.Services.AddTransient<ICropProductionDeviceCommandRepository, CropProduc
 builder.Services.AddTransient<ICropProductionIrrigationSectorCommandRepository, CropProductionIrrigationSectorCommandRepository>();
 builder.Services.AddTransient<IProductionUnitTypeQueryRepository, ProductionUnitTypeQueryRepository>();
 builder.Services.AddTransient<ICropQueryRepository, CropQueryRepository>();
+builder.Services.AddTransient<ICropCommandRepository, CropCommandRepository>();
 builder.Services.AddTransient<IContainerQueryRepository, ContainerQueryRepository>();
 builder.Services.AddTransient<IContainerTypeQueryRepository, ContainerTypeQueryRepository>();
 builder.Services.AddTransient<IGrowingMediumQueryRepository, GrowingMediumQueryRepository>();

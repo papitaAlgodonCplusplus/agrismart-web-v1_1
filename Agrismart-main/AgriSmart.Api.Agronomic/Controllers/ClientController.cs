@@ -83,5 +83,25 @@ namespace AgriSmart.API.Agronomic.Controllers
 
             return BadRequest(response);
         }
+
+        /// <summary>
+        /// Delete a client (soft delete)
+        /// </summary>
+        /// <param name="Id">Client ID to delete</param>
+        /// <returns></returns>
+        [Authorize(Roles = "1")] //only super admin can use this resource
+        [HttpDelete("{Id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Response<DeleteClientResponse>>> Delete([FromRoute] int Id)
+        {
+            var command = new DeleteClientCommand { Id = Id };
+            var response = await _mediator.Send(command);
+
+            if (response.Success) return Ok(response);
+            if (response.Exception?.Contains("not found") == true) return NotFound(response);
+            return BadRequest(response);
+        }
     }
 }

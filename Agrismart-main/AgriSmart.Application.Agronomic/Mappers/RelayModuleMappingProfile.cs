@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<RelayModule, CreateRelayModuleResponse>().ReverseMap();
             CreateMap<RelayModule, UpdateRelayModuleCommand>().ReverseMap();
             CreateMap<RelayModule, UpdateRelayModuleResponse>().ReverseMap();
+            CreateMap<DeleteRelayModuleCommand, RelayModule>();
         }
     }
 }

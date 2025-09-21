@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<CropProduction, CreateCropProductionResponse>().ReverseMap();
             CreateMap<CropProduction, UpdateCropProductionCommand>().ReverseMap();
             CreateMap<CropProduction, UpdateCropProductionResponse>().ReverseMap();
+            CreateMap<DeleteCropProductionCommand, CropProduction>();
         }
     }
 }

@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<CalculationSetting, CreateCalculationSettingResponse>().ReverseMap();
             CreateMap<CalculationSetting, UpdateCalculationSettingCommand>().ReverseMap();
             CreateMap<CalculationSetting, UpdateCalculationSettingResponse>().ReverseMap();
+            CreateMap<DeleteCalculationSettingCommand, CalculationSetting>();
         }
     }
 }

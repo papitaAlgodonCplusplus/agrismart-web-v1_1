@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<Sensor, CreateSensorResponse>().ReverseMap();
             CreateMap<Sensor, UpdateSensorCommand>().ReverseMap();
             CreateMap<Sensor, UpdateSensorResponse>().ReverseMap();
+            CreateMap<DeleteSensorCommand, Sensor>();
         }
     }
 }

@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<Device, CreateDeviceResponse>().ReverseMap();
             CreateMap<Device, UpdateDeviceCommand>().ReverseMap();
             CreateMap<Device, UpdateDeviceResponse>().ReverseMap();
+            CreateMap<DeleteDeviceCommand, Device>();
         }
     }
 }

@@ -71,7 +71,7 @@ namespace AgriSmart.API.Agronomic.Controllers
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
@@ -85,6 +85,25 @@ namespace AgriSmart.API.Agronomic.Controllers
             if (response.Success)
                 return Ok(response);
 
+            return BadRequest(response);
+        }
+
+        /// <summary>
+        /// Delete a production unit (soft delete)
+        /// </summary>
+        /// <param name="Id">Production unit ID to delete</param>
+        /// <returns></returns>
+        [HttpDelete("{Id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Response<DeleteProductionUnitResponse>>> Delete([FromRoute] int Id)
+        {
+            var command = new DeleteProductionUnitCommand { Id = Id };
+            var response = await _mediator.Send(command);
+
+            if (response.Success) return Ok(response);
+            if (response.Exception?.Contains("not found") == true) return NotFound(response);
             return BadRequest(response);
         }
     }

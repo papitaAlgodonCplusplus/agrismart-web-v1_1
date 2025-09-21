@@ -14,6 +14,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<Company, UpdateCompanyCommand>().ReverseMap();
             CreateMap<Company, UpdateCompanyResponse>().ReverseMap();
             CreateMap<Company, GetCompanyByIdResponse>().ReverseMap();
+            CreateMap<DeleteCompanyCommand, Company>();
         }
     }
 }

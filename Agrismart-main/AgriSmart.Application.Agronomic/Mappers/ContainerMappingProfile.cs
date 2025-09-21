@@ -12,6 +12,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<Container, CreateContainerResponse>().ReverseMap();
             CreateMap<Container, UpdateContainerCommand>().ReverseMap();
             CreateMap<Container, UpdateContainerResponse>().ReverseMap();
+            CreateMap<DeleteContainerCommand, Container>();
         }
     }
 }

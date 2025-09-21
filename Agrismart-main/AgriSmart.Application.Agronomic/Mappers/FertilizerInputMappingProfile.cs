@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<FertilizerInput, CreateFertilizerInputResponse>().ReverseMap();
             CreateMap<FertilizerInput, UpdateFertilizerInputCommand>().ReverseMap();
             CreateMap<FertilizerInput, UpdateFertilizerInputResponse>().ReverseMap();
+            CreateMap<DeleteFertilizerInputCommand, FertilizerInput>();
         }
     }
 }

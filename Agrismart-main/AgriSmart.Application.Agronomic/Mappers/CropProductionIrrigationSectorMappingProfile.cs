@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<CropProductionIrrigationSector, CreateCropProductionIrrigationSectorResponse>().ReverseMap();
             CreateMap<CropProductionIrrigationSector, UpdateCropProductionIrrigationSectorCommand>().ReverseMap();
             CreateMap<CropProductionIrrigationSector, UpdateCropProductionIrrigationSectorResponse>().ReverseMap();
+            CreateMap<DeleteCropProductionIrrigationSectorCommand, CropProductionIrrigationSector>();
         }
     }
 }

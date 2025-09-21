@@ -12,6 +12,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<MeasurementVariable, CreateMeasurementVariableResponse>().ReverseMap();
             CreateMap<MeasurementVariable, UpdateMeasurementVariableCommand>().ReverseMap();
             CreateMap<MeasurementVariable, UpdateMeasurementVariablerResponse>().ReverseMap();
+            CreateMap<DeleteMeasurementVariableCommand, MeasurementVariable>();
         }
     }
 }

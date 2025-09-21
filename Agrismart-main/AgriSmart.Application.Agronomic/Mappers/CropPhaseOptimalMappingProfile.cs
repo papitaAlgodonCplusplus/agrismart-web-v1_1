@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<CropPhaseOptimal, CreateCropPhaseOptimalResponse>().ReverseMap();
             CreateMap<CropPhaseOptimal, UpdateCropPhaseOptimalCommand>().ReverseMap();
             CreateMap<CropPhaseOptimal, UpdateCropPhaseOptimalResponse>().ReverseMap();
+            CreateMap<DeleteCropPhaseOptimalCommand, CropPhaseOptimal>();
         }
     }
 }

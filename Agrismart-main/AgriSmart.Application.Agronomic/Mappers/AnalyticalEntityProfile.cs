@@ -11,6 +11,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
         {
             CreateMap<AnalyticalEntity, CreateAnaliticalEntityCommand>().ReverseMap();
             CreateMap<AnalyticalEntity, CreateAnalyticalEntityResponse>().ReverseMap();
+            CreateMap<DeleteAnalyticalEntityCommand, AnalyticalEntity>();
         }
     }
 }

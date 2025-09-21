@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<GrowingMedium, CreateGrowingMediumResponse>().ReverseMap();
             CreateMap<GrowingMedium, UpdateGrowingMediumCommand>().ReverseMap();
             CreateMap<GrowingMedium, UpdateGrowingMediumResponse>().ReverseMap();
+            CreateMap<DeleteGrowingMediumCommand, GrowingMedium>();
         }
     }
 }

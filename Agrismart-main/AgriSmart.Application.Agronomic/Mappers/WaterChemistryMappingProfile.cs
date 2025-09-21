@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<WaterChemistry, CreateWaterChemistryResponse>().ReverseMap();
             CreateMap<WaterChemistry, UpdateWaterChemistryCommand>().ReverseMap();
             CreateMap<WaterChemistry, UpdateWaterChemistryResponse>().ReverseMap();
+            CreateMap<DeleteWaterChemistryCommand, WaterChemistry>();
         }
     }
 }

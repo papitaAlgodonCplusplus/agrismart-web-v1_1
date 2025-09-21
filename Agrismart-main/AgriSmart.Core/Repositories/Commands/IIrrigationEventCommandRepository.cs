@@ -2,8 +2,7 @@
 
 namespace AgriSmart.Core.Repositories.Commands
 {
-    public interface IIrrigationEventCommandRepository 
+    public interface IIrrigationEventCommandRepository : IBaseCommandRepository<IrrigationEvent>
     {
-        Task<IrrigationEvent> CreateAsync(IrrigationEvent irrigationEvent);
     }
 }

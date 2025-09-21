@@ -11,6 +11,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
         {
             CreateMap<IrrigationEvent, CreateIrrigationEventCommand>().ReverseMap();
             CreateMap<IrrigationEvent, CreateIrrigationEventResponse>().ReverseMap();
+            CreateMap<DeleteIrrigationEventCommand, IrrigationEvent>();
         }
     }
 }

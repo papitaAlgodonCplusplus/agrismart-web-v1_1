@@ -12,6 +12,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<Catalog, CreateCatalogResponse>().ReverseMap();
             CreateMap<Catalog, UpdateCatalogCommand>().ReverseMap();
             CreateMap<Catalog, UpdateCatalogResponse>().ReverseMap();
+            CreateMap<DeleteCatalogCommand, Catalog>();
         }
     }
 }

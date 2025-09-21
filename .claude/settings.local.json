@@ -37,7 +37,17 @@
       "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Core\\Repositories\")",
       "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Core\\Repositories\\Commands\")",
       "Bash(netstat:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Responses\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Responses\\Commands\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Core\\Entities\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Validators\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Validators\\Commands\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Infrastructure\\Repositories\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Infrastructure\\Repositories\\Command\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Commands\" /B)",
+      "Bash(findstr:*)",
+      "Bash(del \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\fix_delete_mappings.py\")"
     ],
     "deny": [],
     "ask": []

@@ -163,7 +163,7 @@ namespace AgriSmart.API.Agronomic.Controllers
 
                 _logger.LogInformation("Sending command to mediator...");
                 var response = await _mediator.Send(command);
-                
+
                 _logger.LogInformation($"Mediator response received - Success: {response.Success}");
 
                 if (response.Success)
@@ -178,6 +178,44 @@ namespace AgriSmart.API.Agronomic.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception occurred in Put endpoint");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Delete a catalog (soft delete)
+        /// </summary>
+        /// <param name="Id">Catalog ID to delete</param>
+        /// <returns></returns>
+        [Authorize(Roles = "1")] //only super admin can use this resource
+        [HttpDelete("{Id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Response<DeleteCatalogResponse>>> Delete([FromRoute] int Id)
+        {
+            try
+            {
+                _logger.LogInformation("=== CATALOG DELETE REQUEST ===");
+                _logger.LogInformation($"Request URL: {Request.GetDisplayUrl()}");
+                _logger.LogInformation($"User: {User?.Identity?.Name ?? "Anonymous"}");
+                _logger.LogInformation($"User Roles: {string.Join(", ", User?.Claims?.Where(c => c.Type.Contains("role"))?.Select(c => c.Value) ?? new string[0])}");
+                _logger.LogInformation($"Catalog ID to delete: {Id}");
+
+                var command = new DeleteCatalogCommand { Id = Id };
+
+                _logger.LogInformation("Sending command to mediator...");
+                var response = await _mediator.Send(command);
+
+                _logger.LogInformation($"Mediator response received - Success: {response.Success}");
+
+                if (response.Success) return Ok(response);
+                if (response.Exception?.Contains("not found") == true) return NotFound(response);
+                return BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred in Delete endpoint");
                 throw;
             }
         }

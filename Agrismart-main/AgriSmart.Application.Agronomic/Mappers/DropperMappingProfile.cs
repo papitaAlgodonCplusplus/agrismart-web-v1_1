@@ -12,6 +12,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<Dropper, CreateDropperResponse>().ReverseMap();
             CreateMap<Dropper, UpdateDropperCommand>().ReverseMap();
             CreateMap<Dropper, UpdateDropperResponse>().ReverseMap();
+            CreateMap<DeleteDropperCommand, Dropper>();
         }
     }
 }

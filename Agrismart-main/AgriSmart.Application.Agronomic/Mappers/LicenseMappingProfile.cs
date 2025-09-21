@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<License, CreateLicenseResponse>().ReverseMap();
             CreateMap<License, UpdateLicenseCommand>().ReverseMap();
             CreateMap<License, UpdateLicenseResponse>().ReverseMap();
+            CreateMap<DeleteLicenseCommand, License>();
         }
     }
 }
