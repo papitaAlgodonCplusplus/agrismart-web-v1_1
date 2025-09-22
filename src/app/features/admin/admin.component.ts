@@ -109,6 +109,8 @@ export class AdminComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   rawData: any = {};
+  // Add this property to the AdminComponent class
+  availableCompanies: any[] = [];
 
   // Catalog management
   availableCatalogs: any[] = [];
@@ -170,6 +172,13 @@ export class AdminComponent implements OnInit {
       useService: true,
       nameField: 'name',
       fields: [
+        {
+          key: 'companyId',
+          label: 'Compañía',
+          type: 'select',
+          required: true,
+          options: [] // Will be populated dynamically
+        },
         { key: 'name', label: 'Nombre', type: 'text', required: true },
         { key: 'description', label: 'Descripción', type: 'textarea' },
         { key: 'active', label: 'Activo', type: 'boolean' }
@@ -214,8 +223,13 @@ export class AdminComponent implements OnInit {
       nameField: 'name',
       fields: [
         { key: 'name', label: 'Nombre', type: 'text', required: true },
-        { key: 'description', label: 'Descripción', type: 'textarea' },
-        { key: 'clientId', label: 'ID Cliente', type: 'number', required: true },
+        {
+          key: 'clientId',
+          label: 'Cliente',
+          type: 'select',
+          required: true,
+          options: [] // Will be populated dynamically
+        },
         { key: 'isActive', label: 'Activo', type: 'boolean' }
       ]
     },
@@ -302,7 +316,6 @@ export class AdminComponent implements OnInit {
       useService: true,
       nameField: 'waterId',
       fields: [
-        { key: 'waterId', label: 'ID del Agua', type: 'number', required: true },
         { key: 'ca', label: 'Calcio (Ca)', type: 'number' },
         { key: 'k', label: 'Potasio (K)', type: 'number' },
         { key: 'mg', label: 'Magnesio (Mg)', type: 'number' },
@@ -335,6 +348,7 @@ export class AdminComponent implements OnInit {
       ]
     }
   ];
+  availableUsers: any;
 
   ngOnInit(): void {
     this.updateFertilizerConfig();
@@ -424,6 +438,21 @@ export class AdminComponent implements OnInit {
     return [];
   }
 
+
+  // Add this new method to update farm company options
+  private updateFarmCompanyOptions(): void {
+    const farmConfig = this.entityConfigs.find(config => config.name === 'farm');
+    if (farmConfig) {
+      const companyField = farmConfig.fields.find(field => field.key === 'companyId');
+      if (companyField) {
+        companyField.options = this.availableCompanies.map(company => ({
+          value: company.id,
+          label: company.name || `Compañía ${company.id}`
+        }));
+      }
+    }
+  }
+
   /**
    * Load basic entities first, then load catalogs and fertilizers based on users
    */
@@ -435,7 +464,12 @@ export class AdminComponent implements OnInit {
     forkJoin({
       companies: this.companyService.getAll(true).pipe(
         map(data => this.extractResponseData(data, 'company')),
-        tap(data => console.log('Companies extracted:', data)),
+        tap(data => {
+          console.log('Companies extracted:', data);
+          // Store companies for farm dropdown
+          this.availableCompanies = data;
+          this.updateFarmCompanyOptions();
+        }),
         catchError(error => {
           console.error('Companies error:', error);
           return of([]);
@@ -467,7 +501,12 @@ export class AdminComponent implements OnInit {
       ),
       users: this.userService.getAll().pipe(
         map(data => this.extractResponseData(data, 'user')),
-        tap(data => console.log('Users extracted:', data)),
+        tap(data => {
+          console.log('Users extracted:', data);
+          // Store users for catalog dropdown
+          this.availableUsers = data;
+          this.updateCatalogUserOptions();
+        }),
         // Here each data.users i has userStatusId in it, this would be mapped to "Admin" or "Client" in html table
         catchError(error => {
           console.error('Users error:', error);
@@ -1003,6 +1042,9 @@ export class AdminComponent implements OnInit {
         }
         break;
       case 'farm':
+        if (this.currentItem.companyId) {
+          this.currentItem.companyId = parseInt(this.currentItem.companyId.toString());
+        }
         if (this.isEditing) {
           await firstValueFrom(this.farmService.update(this.currentItem));
         } else {
@@ -1011,6 +1053,7 @@ export class AdminComponent implements OnInit {
         break;
       case 'crop':
         if (this.isEditing) {
+          console.log("editing crop", this.currentItem)
           await firstValueFrom(this.cropService.update(this.currentItem));
         } else {
           await firstValueFrom(this.cropService.create(this.currentItem));
@@ -1060,6 +1103,10 @@ export class AdminComponent implements OnInit {
         }
         break;
       case 'catalog':
+        // Ensure clientId is properly converted to number
+        if (this.currentItem.clientId) {
+          this.currentItem.clientId = parseInt(this.currentItem.clientId.toString());
+        }
         if (this.isEditing) {
           await firstValueFrom(this.catalogService.update(this.currentItem));
         } else {
@@ -1449,8 +1496,12 @@ export class AdminComponent implements OnInit {
   openCreateModal(): void {
     if (this.selectedEntity === 'fertilizer') {
       this.initializeFertilizerForm();
+    } else if (this.selectedEntity === 'farm') {
+      this.initializeFarmForm();
     } else if (this.selectedEntity === 'user') {
       this.initializeUserForm();
+    } else if (this.selectedEntity === 'catalog') {
+      this.initializeCatalogForm();
     } else {
       this.currentItem = {};
     }
@@ -1956,4 +2007,48 @@ export class AdminComponent implements OnInit {
       active: true
     };
   }
+
+  // Add method to initialize farm form with proper defaults
+  private initializeFarmForm(): void {
+    this.currentItem = {
+      companyId: null,
+      name: '',
+      description: '',
+      active: true
+    };
+  }
+
+
+
+  // 4. Add method to update catalog user options
+  private updateCatalogUserOptions(): void {
+    const catalogConfig = this.entityConfigs.find(config => config.name === 'catalog');
+    if (catalogConfig) {
+      const userField = catalogConfig.fields.find(field => field.key === 'clientId');
+      if (userField) {
+        userField.options = this.availableUsers.map((user: any) => ({
+          value: user.id,
+          label: user.userEmail || `Usuario ${user.id}` // Use email as display name
+        }));
+      }
+    }
+  }
+
+
+  // 8. Add helper method to get user name by ID for display in tables
+  getUserNameById(userId: number): string {
+    const user = this.availableUsers.find((u: any) => u.id === userId);
+    return user ? (user.userEmail || `Usuario ${userId}`) : `Usuario ${userId}`;
+  }
+
+  // 5. Add method to initialize catalog form
+  private initializeCatalogForm(): void {
+    this.currentItem = {
+      name: '',
+      description: '',
+      clientId: null,
+      isActive: true
+    };
+  }
+
 }

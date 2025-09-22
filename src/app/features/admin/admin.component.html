@@ -121,7 +121,8 @@
               <i class="bi bi-search search-icon"></i>
             </div>
 
-            <button *ngIf="getCurrentEntityConfig()?.name !== 'user'" class="btn btn-primary" (click)="openCreateModal()">
+            <button *ngIf="getCurrentEntityConfig()?.name !== 'user'" class="btn btn-primary"
+              (click)="openCreateModal()">
               <i class="bi bi-plus-lg"></i>
               Agregar {{ getCurrentEntityConfig()?.displayName?.slice(0, -1) }}
             </button>
@@ -464,7 +465,16 @@
                       </span>
                     </span>
 
-                    <!-- Select fields - Special handling for user roles -->
+                    <!-- Enhanced Select for Catalog Client -->
+                    <span *ngIf="field.type === 'select' && field.key === 'clientId'" class="client-display">
+                      <span class="badge bg-info" *ngIf="item[field.key]">
+                        <i class="bi bi-person-fill"></i>
+                        {{ getUserNameById(item[field.key]) }}
+                      </span>
+                      <span *ngIf="!item[field.key]" class="text-muted">-</span>
+                    </span>
+
+                    <!-- Enhanced Select for User Profile (keep existing) -->
                     <span *ngIf="field.type === 'select' && field.key === 'profileId'">
                       <span class="badge" [class.bg-primary]="item[field.key] === 1"
                         [class.bg-info]="item[field.key] === 2">
@@ -474,8 +484,8 @@
                       </span>
                     </span>
 
-                    <!-- Regular select fields -->
-                    <span *ngIf="field.type === 'select' && field.key !== 'profileId'">
+                    <!-- Regular select fields (for other cases) -->
+                    <span *ngIf="field.type === 'select' && field.key !== 'profileId' && field.key !== 'clientId'">
                       {{ getSelectLabel(field, item[field.key]) }}
                     </span>
                   </td>
