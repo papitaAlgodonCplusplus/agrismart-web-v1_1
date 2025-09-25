@@ -16,6 +16,7 @@ import { CropService } from '../crops/services/crop.service';
 import { DeviceService } from '../devices/services/device.service';
 import { ProductionUnitService } from '../production-units/services/production-unit.service';
 import { UserService } from '../users/services/user.service';
+import { CropPhaseService } from '../crop-phases/services/crop-phase.service';
 import { SensorService } from '../sensors/services/sensor.service';
 import { FertilizerService } from '../fertilizers/services/fertilizer.service';
 import { WaterChemistryService } from '../water-chemistry/services/water-chemistry.service';
@@ -60,6 +61,7 @@ interface EntityField {
 interface AdminStats {
   totalCompanies: number;
   totalFarms: number;
+  totalCropPhases: number; // Add this line
   totalCrops: number;
   totalDevices: number;
   totalProductionUnits: number;
@@ -95,6 +97,7 @@ export class AdminComponent implements OnInit {
   private waterChemistryService = inject(WaterChemistryService);
   private licenseService = inject(LicenseService);
   private catalogService = inject(CatalogService);
+  private cropPhaseService = inject(CropPhaseService);
   showDetailsModal = false;
   selectedFertilizer: any;
 
@@ -114,6 +117,7 @@ export class AdminComponent implements OnInit {
 
   // Catalog management
   availableCatalogs: any[] = [];
+  availableCrops: any[] = [];
   selectedCatalogId: number | null = null;
   loadedUsers: Entity[] = []; // Store loaded users for catalog loading
 
@@ -143,6 +147,7 @@ export class AdminComponent implements OnInit {
     totalFertilizers: 0,
     totalWaterChemistry: 0,
     totalLicenses: 0,
+    totalCropPhases: 0,
     totalCatalogs: 0
   };
 
@@ -161,6 +166,64 @@ export class AdminComponent implements OnInit {
         { key: 'name', label: 'Nombre', type: 'text', required: true },
         { key: 'description', label: 'Descripción', type: 'textarea' },
         { key: 'active', label: 'Activo', type: 'boolean' }
+      ]
+    },
+    {
+      name: 'cropPhase',
+      endpoint: '/CropPhase',
+      displayName: 'Fases de Cultivo',
+      icon: 'bi bi-calendar-week',
+      category: 'advanced',
+      useService: true,
+      nameField: 'name',
+      requiresCatalog: true,
+      fields: [
+        {
+          key: 'catalogId',
+          label: 'Catálogo',
+          type: 'select',
+          required: true,
+          options: []
+        },
+        {
+          key: 'cropId',
+          label: 'Cultivo',
+          type: 'select',
+          required: true,
+          options: [] // Will be populated from availableCrops
+        },
+        {
+          key: 'name',
+          label: 'Nombre',
+          type: 'text',
+          required: true
+        },
+        {
+          key: 'description',
+          label: 'Descripción',
+          type: 'textarea'
+        },
+        {
+          key: 'sequence',
+          label: 'Secuencia',
+          type: 'number',
+          required: true
+        },
+        {
+          key: 'startingWeek',
+          label: 'Semana de Inicio',
+          type: 'number'
+        },
+        {
+          key: 'endingWeek',
+          label: 'Semana de Fin',
+          type: 'number'
+        },
+        {
+          key: 'active',
+          label: 'Activo',
+          type: 'boolean'
+        }
       ]
     },
     {
@@ -352,8 +415,21 @@ export class AdminComponent implements OnInit {
 
   ngOnInit(): void {
     this.updateFertilizerConfig();
-
+    this.initializeAllEntityOptions(); // Add this
+    this.updateCropPhaseCatalogOptions(); // <-- Add this line too for safety
     this.loadAdminData();
+  }
+
+
+  private initializeAllEntityOptions(): void {
+    // Initialize all select field options to empty arrays
+    this.entityConfigs.forEach(config => {
+      config.fields.forEach(field => {
+        if (field.type === 'select' && !field.options) {
+          field.options = [];
+        }
+      });
+    });
   }
 
   /**
@@ -403,6 +479,26 @@ export class AdminComponent implements OnInit {
         case 'license':
           console.log('License result response:', result);
           return result.licenses;
+        // In extractResponseData method, add this case:
+        case 'cropPhase':
+          // Handle direct array responses first
+          if (Array.isArray(response)) {
+            console.log('Direct array response:', response, entityName);
+            return response;
+          }
+
+          // Handle wrapped responses
+          if (response.result) {
+            return Array.isArray(response.result.cropPhases) ? response.result.cropPhases : [];
+          }
+
+          // Handle other formats
+          if (response.cropPhases) {
+            return Array.isArray(response.cropPhases) ? response.cropPhases : [];
+          }
+
+          return [];
+          break;
         case 'catalog':
           return Array.isArray(result.catalogs) ? result.catalogs : [];
         case 'fertilizer':
@@ -485,7 +581,14 @@ export class AdminComponent implements OnInit {
       ),
       crops: this.cropService.getAll(true).pipe(
         map(data => this.extractResponseData(data, 'crop')),
-        tap(data => console.log('Crops extracted:', data)),
+        // In loadAdminData method, add to crops tap operator:
+        tap(data => {
+          console.log('Crops extracted:', data);
+          // Store crops for crop phase dropdown
+          this.availableCrops = data;
+          this.updateFarmCompanyOptions();
+          this.updateCropPhaseCropOptions();
+        }),
         catchError(error => {
           console.error('Crops error:', error);
           return of([]);
@@ -496,6 +599,16 @@ export class AdminComponent implements OnInit {
         tap(data => console.log('Devices extracted:', data)),
         catchError(error => {
           console.error('Devices error:', error);
+          return of([]);
+        })
+      ),
+      cropPhases: this.cropPhaseService.getAll({ includeInactives: true }).pipe(
+        map(data => this.extractResponseData(data, 'cropPhase')),
+        tap(data => {
+          console.log('Crop Phases extracted:', data);
+        }),
+        catchError(error => {
+          console.error('Crop Phases error:', error);
           return of([]);
         })
       ),
@@ -586,6 +699,7 @@ export class AdminComponent implements OnInit {
             // Store catalogs
             this.availableCatalogs = allCatalogs;
             this.updateFertilizerCatalogOptions();
+            this.updateCropPhaseCatalogOptions(); // <-- Add this line
 
             // Set default catalog if available
             if (this.availableCatalogs.length > 0) {
@@ -677,7 +791,8 @@ export class AdminComponent implements OnInit {
       totalSensors: data.sensors?.length || 0,
       totalFertilizers: data.fertilizers?.length || 0,
       totalWaterChemistry: data.waterChemistry?.length || 0,
-      totalLicenses: data.licenses?.length || 0,
+      totalLicenses: data.licenses?.length || 0,// Add to the adminStats object
+      totalCropPhases: data.cropPhases?.length || 0,
       totalCatalogs: data.catalogs?.length || 0
     };
 
@@ -787,6 +902,7 @@ export class AdminComponent implements OnInit {
       'crop': 'crops',
       'device': 'devices',
       'user': 'users',
+      'cropPhase': 'cropPhases',
       'sensor': 'sensors',
       'waterChemistry': 'waterChemistry',
       'license': 'licenses',
@@ -851,7 +967,8 @@ export class AdminComponent implements OnInit {
       'waterChemistry': 'totalWaterChemistry',
       'license': 'totalLicenses',
       'catalog': 'totalCatalogs',
-      'fertilizer': 'totalFertilizers'
+      'fertilizer': 'totalFertilizers',
+      'cropPhase': 'totalCropPhases' // <- ADD THIS MISSING MAPPING
     };
 
     const statsKey = statsMapping[entityName];
@@ -859,10 +976,11 @@ export class AdminComponent implements OnInit {
   }
 
   /**
-   * Select entity and load its data
-   */
+ * Select entity and load its data - UPDATED
+ */
   selectEntity(entityName: string): void {
     this.selectedEntity = entityName;
+    this.currentItem = {};
     this.loadSelectedEntityData();
   }
 
@@ -1041,6 +1159,30 @@ export class AdminComponent implements OnInit {
           await firstValueFrom(this.companyService.create(this.currentItem));
         }
         break;
+      case 'cropPhase':
+        // Ensure numeric fields are properly converted
+        if (this.currentItem.cropId) {
+          this.currentItem.cropId = parseInt(this.currentItem.cropId.toString());
+        }
+        if (this.currentItem.catalogId) {
+          this.currentItem.catalogId = parseInt(this.currentItem.catalogId.toString());
+        }
+        if (this.currentItem.sequence) {
+          this.currentItem.sequence = parseInt(this.currentItem.sequence.toString());
+        }
+        if (this.currentItem.startingWeek) {
+          this.currentItem.startingWeek = parseInt(this.currentItem.startingWeek.toString());
+        }
+        if (this.currentItem.endingWeek) {
+          this.currentItem.endingWeek = parseInt(this.currentItem.endingWeek.toString());
+        }
+
+        if (this.isEditing) {
+          await firstValueFrom(this.cropPhaseService.update(this.currentItem));
+        } else {
+          await firstValueFrom(this.cropPhaseService.create(this.currentItem));
+        }
+        break;
       case 'farm':
         if (this.currentItem.companyId) {
           this.currentItem.companyId = parseInt(this.currentItem.companyId.toString());
@@ -1177,6 +1319,9 @@ export class AdminComponent implements OnInit {
         break;
       case 'farm':
         await firstValueFrom(this.farmService.delete(id));
+        break;
+      case 'cropPhase':
+        await firstValueFrom(this.cropPhaseService.delete(id));
         break;
       case 'crop':
         await firstValueFrom(this.cropService.delete(id));
@@ -1494,16 +1639,22 @@ export class AdminComponent implements OnInit {
    * Enhanced openCreateModal for fertilizers
    */
   openCreateModal(): void {
+    // Always initialize currentItem first
+    this.currentItem = {};
+
     if (this.selectedEntity === 'fertilizer') {
       this.initializeFertilizerForm();
     } else if (this.selectedEntity === 'farm') {
       this.initializeFarmForm();
+    } else if (this.selectedEntity === 'cropPhase') {
+      this.initializeCropPhaseForm();
     } else if (this.selectedEntity === 'user') {
       this.initializeUserForm();
     } else if (this.selectedEntity === 'catalog') {
       this.initializeCatalogForm();
     } else {
-      this.currentItem = {};
+      // For other entities, ensure basic structure exists
+      this.currentItem = { active: true };
     }
 
     this.isEditing = false;
@@ -1515,6 +1666,21 @@ export class AdminComponent implements OnInit {
       setTimeout(() => this.initializeTabs(), 100);
     }
   }
+
+  private updateCropPhaseCatalogOptions(): void {
+    const cropPhaseConfig = this.entityConfigs.find(config => config.name === 'cropPhase');
+    if (cropPhaseConfig) {
+      const catalogField = cropPhaseConfig.fields.find(field => field.key === 'catalogId');
+      if (catalogField) {
+        catalogField.options = this.availableCatalogs.map(catalog => ({
+          value: catalog.id,
+          label: catalog.name || `Catálogo ${catalog.id}`
+        }));
+        console.log('Updated crop phase catalog options:', catalogField.options); // Debug log
+      }
+    }
+  }
+
 
   /**
    * Enhanced editItem for fertilizers
@@ -2051,4 +2217,75 @@ export class AdminComponent implements OnInit {
     };
   }
 
+  /**
+ * Update crop phase crop options
+ */
+  private updateCropPhaseCropOptions(): void {
+    const cropPhaseConfig = this.entityConfigs.find(config => config.name === 'cropPhase');
+    if (cropPhaseConfig) {
+      const cropField = cropPhaseConfig.fields.find(field => field.key === 'cropId');
+      if (cropField) {
+        cropField.options = this.availableCrops.map(crop => ({
+          value: crop.id,
+          label: crop.name || `Cultivo ${crop.id}`
+        }));
+      }
+
+      const catalogField = cropPhaseConfig.fields.find(field => field.key === 'catalogId');
+      if (catalogField) {
+        catalogField.options = this.availableCatalogs.map(catalog => ({
+          value: catalog.id,
+          label: catalog.name || `Catálogo ${catalog.id}`
+        }));
+      }
+    }
+  }
+
+  /**
+   * Initialize crop phase form
+   */
+  private initializeCropPhaseForm(): void {
+    this.currentItem = {
+      cropId: null,
+      catalogId: this.selectedCatalogId ?? null,
+      name: '',
+      description: '',
+      sequence: null,
+      startingWeek: null,
+      endingWeek: null,
+      active: true
+    };
+  }
+
+  /**
+   * Get crop name by ID
+   */
+  getCropNameById(cropId: number): string {
+    const crop = this.availableCrops.find(c => c.id === cropId);
+    return crop ? (crop.name || `Cultivo ${cropId}`) : `Cultivo ${cropId}`;
+  }
+
+  /**
+   * Format week range for display
+   */
+  formatWeekRange(item: any): string {
+    if (!item.startingWeek && !item.endingWeek) return '-';
+    if (item.startingWeek && item.endingWeek) {
+      if (item.startingWeek === item.endingWeek) {
+        return `Semana ${item.startingWeek}`;
+      }
+      return `${item.startingWeek}-${item.endingWeek}`;
+    }
+    if (item.startingWeek) return `Desde ${item.startingWeek}`;
+    return `Hasta ${item.endingWeek}`;
+  }
+
+  /**
+   * Calculate phase duration
+   */
+  calculatePhaseDuration(item: any): string {
+    if (!item.startingWeek || !item.endingWeek) return '-';
+    const duration = item.endingWeek - item.startingWeek + 1;
+    return duration === 1 ? '1 semana' : `${duration} semanas`;
+  }
 }

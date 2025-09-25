@@ -231,6 +231,7 @@ export class AuthService {
 
   public isAdmin(): boolean {
     const user = this.currentUserSubject.value;
+    console.log("Checking for user: ", user);
     return user?.role === 'Admin' || user?.roleId === 1; // Assuming roleId 1 is Admin
   }
 

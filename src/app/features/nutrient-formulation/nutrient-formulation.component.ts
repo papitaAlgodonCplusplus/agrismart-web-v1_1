@@ -425,7 +425,7 @@ export class NutrientFormulationComponent implements OnInit {
             waterSourceId: [null, Validators.required],
             cropId: [null, Validators.required],
             cropPhaseId: [null],
-            volumeLiters: [1000, [Validators.required, Validators.min(1)]],
+            volumeLiters: [[Validators.required]],
             targetPh: [],
             targetEc: [],
             maxBudgetPerLiter: [100],
@@ -1275,6 +1275,7 @@ export class NutrientFormulationComponent implements OnInit {
                     solutionRequirements: solutionRequirements$
                 }).subscribe({
                     next: (data) => {
+                        console.log(" 🌞 full data: ", data)
                         this.waterSources = Array.isArray(data.waterSources.waterChemistries) ? data.waterSources.waterChemistries : [];
                         this.crops = Array.isArray(data.crops) ? data.crops : [];
                         this.cropPhases = Array.isArray(data.cropPhases) ? data.cropPhases : [];
@@ -1301,6 +1302,7 @@ export class NutrientFormulationComponent implements OnInit {
     private createRecipeFromForm(formValue: any, waterSource: WaterChemistry, crop: Crop, phase?: CropPhase): FormulationRecipe {
         const solutionReq = this.cropPhaseSolutionRequirements.find(req => req.phaseId === formValue.cropPhaseId);
         const recipeName = formValue.recipeName || `${crop.name}${phase ? ' - ' + phase.name : ''}`;
+        console.log("solutionReq: ", solutionReq)
         const targets = {
             nitrogen: solutionReq?.no3 || 200,
             phosphorus: solutionReq?.h2po4 || 50,

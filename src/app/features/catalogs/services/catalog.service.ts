@@ -66,22 +66,4 @@ export interface Catalog {
         }
         return this.getAll();
     }
-
-    /**
-     * Helper method to get current user - implement this based on your auth system
-     */
-    private getCurrentUser(): { clientId: number } | null {
-        // This is a placeholder - implement based on your authentication system
-        // You might get this from localStorage, a user service, or auth service
-        try {
-            const userData = localStorage.getItem('user_data');
-            if (userData) {
-                const user = JSON.parse(userData);
-                return { clientId: user.clientId };
-            }
-        } catch (error) {
-            console.error('Error getting current user:', error);
-        }
-        return null;
-    }
 }
