@@ -7,6 +7,6 @@
         public int MeasureType { get; set; }
         public int BaseMeasureUnitId {get; set;}
         public double ConvertionFactorToBase { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

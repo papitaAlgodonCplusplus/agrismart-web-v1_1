@@ -12,6 +12,6 @@ namespace AgriSmart.Core.Entities
         [NotMapped]
         public double FiveKpaHumidity { get; set; } = 10; // Not stored in database
 
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

@@ -23,7 +23,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             try
             {
                 return await _context.TimeZone
-                    .Where(record => record.Active)
+                    .Where(record => record.Active == true)
                     .AsNoTracking()
                     .ToListAsync();                    
             }

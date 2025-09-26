@@ -7,6 +7,34 @@ namespace AgriSmart.Infrastructure.Data
     public class AgriSmartContext : DbContext
     {
         public AgriSmartContext(DbContextOptions<AgriSmartContext> options) : base(options) { }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Configure CropPhaseSolutionRequirement decimal columns
+            var entity = modelBuilder.Entity<CropPhaseSolutionRequirement>();
+
+            entity.Property(e => e.EC).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.HCO3).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.NO3).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.H2PO4).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.SO4).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.Cl).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.NH4).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.K).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.Ca).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.Mg).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.Na).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.Fe).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.Mn).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.Zn).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.Cu).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.B).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.Mo).HasColumnType("decimal(18,6)");
+            entity.Property(e => e.pH).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Temperature).HasColumnType("decimal(18,2)");
+        }
         public DbSet<IrrigationEngineeringDesign> IrrigationEngineeringDesigns { get; set; }
 
         public DbSet<Client> Client { get; set; }

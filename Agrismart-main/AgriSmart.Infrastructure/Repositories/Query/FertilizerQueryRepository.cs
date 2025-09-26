@@ -31,7 +31,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && ((f.Active && !includeInactives) || includeInactives)
+                                    && (((f.Active == true) && !includeInactives) || includeInactives)
                               select new Fertilizer
                               {
                                   // Existing properties
@@ -40,7 +40,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Name = f.Name,
                                   Manufacturer = f.Manufacturer,
                                   IsLiquid = f.IsLiquid,
-                                  Active = f.Active,
+                                  Active = (f.Active ?? false),
                                   DateCreated = f.DateCreated,
                                   DateUpdated = f.DateUpdated,
                                   CreatedBy = f.CreatedBy,
@@ -129,7 +129,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Name = f.Name,
                                   Manufacturer = f.Manufacturer,
                                   IsLiquid = f.IsLiquid,
-                                  Active = f.Active,
+                                  Active = (f.Active ?? false),
                                   DateCreated = f.DateCreated,
                                   DateUpdated = f.DateUpdated,
                                   CreatedBy = f.CreatedBy,
@@ -215,7 +215,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && f.Active
+                                    && (f.Active == true)
                                     && f.CurrentStock.HasValue
                                     && f.MinimumStock.HasValue
                                     && f.CurrentStock <= f.MinimumStock
@@ -227,7 +227,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Name = f.Name,
                                   Manufacturer = f.Manufacturer,
                                   IsLiquid = f.IsLiquid,
-                                  Active = f.Active,
+                                  Active = (f.Active ?? false),
                                   DateCreated = f.DateCreated,
                                   DateUpdated = f.DateUpdated,
                                   CreatedBy = f.CreatedBy,
@@ -280,7 +280,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && f.Active
+                                    && (f.Active == true)
                                     && f.ExpirationDate.HasValue
                                     && f.ExpirationDate <= cutoffDate
                                     && f.ExpirationDate >= DateTime.UtcNow
@@ -288,7 +288,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               {
                                   // Include all properties
                                   Id = f.Id, CatalogId = f.CatalogId, Name = f.Name, Manufacturer = f.Manufacturer,
-                                  IsLiquid = f.IsLiquid, Active = f.Active, DateCreated = f.DateCreated, DateUpdated = f.DateUpdated,
+                                  IsLiquid = f.IsLiquid, Active = (f.Active ?? false), DateCreated = f.DateCreated, DateUpdated = f.DateUpdated,
                                   CreatedBy = f.CreatedBy, UpdatedBy = f.UpdatedBy, Brand = f.Brand, Description = f.Description,
                                   Type = f.Type, Formulation = f.Formulation, Concentration = f.Concentration,
                                   ConcentrationUnit = f.ConcentrationUnit, ApplicationMethod = f.ApplicationMethod,
@@ -324,13 +324,13 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && f.Active
+                                    && (f.Active == true)
                                     && f.Type == type
                               select new Fertilizer
                               {
                                   // Include all properties
                                   Id = f.Id, CatalogId = f.CatalogId, Name = f.Name, Manufacturer = f.Manufacturer,
-                                  IsLiquid = f.IsLiquid, Active = f.Active, DateCreated = f.DateCreated, DateUpdated = f.DateUpdated,
+                                  IsLiquid = f.IsLiquid, Active = (f.Active ?? false), DateCreated = f.DateCreated, DateUpdated = f.DateUpdated,
                                   CreatedBy = f.CreatedBy, UpdatedBy = f.UpdatedBy, Brand = f.Brand, Description = f.Description,
                                   Type = f.Type, Formulation = f.Formulation, Concentration = f.Concentration,
                                   ConcentrationUnit = f.ConcentrationUnit, ApplicationMethod = f.ApplicationMethod,
@@ -366,13 +366,13 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && f.Active
+                                    && (f.Active == true)
                                     && f.Supplier == supplier
                               select new Fertilizer
                               {
                                   // Include all properties
                                   Id = f.Id, CatalogId = f.CatalogId, Name = f.Name, Manufacturer = f.Manufacturer,
-                                  IsLiquid = f.IsLiquid, Active = f.Active, DateCreated = f.DateCreated, DateUpdated = f.DateUpdated,
+                                  IsLiquid = f.IsLiquid, Active = (f.Active ?? false), DateCreated = f.DateCreated, DateUpdated = f.DateUpdated,
                                   CreatedBy = f.CreatedBy, UpdatedBy = f.UpdatedBy, Brand = f.Brand, Description = f.Description,
                                   Type = f.Type, Formulation = f.Formulation, Concentration = f.Concentration,
                                   ConcentrationUnit = f.ConcentrationUnit, ApplicationMethod = f.ApplicationMethod,
@@ -410,7 +410,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && f.Active
+                                    && (f.Active == true)
                                     && (f.Name.ToLower().Contains(lowerSearchTerm) ||
                                         (f.Brand != null && f.Brand.ToLower().Contains(lowerSearchTerm)) ||
                                         (f.Description != null && f.Description.ToLower().Contains(lowerSearchTerm)) ||
@@ -419,7 +419,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               {
                                   // Include all properties
                                   Id = f.Id, CatalogId = f.CatalogId, Name = f.Name, Manufacturer = f.Manufacturer,
-                                  IsLiquid = f.IsLiquid, Active = f.Active, DateCreated = f.DateCreated, DateUpdated = f.DateUpdated,
+                                  IsLiquid = f.IsLiquid, Active = (f.Active ?? false), DateCreated = f.DateCreated, DateUpdated = f.DateUpdated,
                                   CreatedBy = f.CreatedBy, UpdatedBy = f.UpdatedBy, Brand = f.Brand, Description = f.Description,
                                   Type = f.Type, Formulation = f.Formulation, Concentration = f.Concentration,
                                   ConcentrationUnit = f.ConcentrationUnit, ApplicationMethod = f.ApplicationMethod,
@@ -457,14 +457,14 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && f.Active
+                                    && (f.Active == true)
                                     && f.ExpirationDate.HasValue
                                     && f.ExpirationDate < today
                               select new Fertilizer
                               {
                                   // Include all properties
                                   Id = f.Id, CatalogId = f.CatalogId, Name = f.Name, Manufacturer = f.Manufacturer,
-                                  IsLiquid = f.IsLiquid, Active = f.Active, DateCreated = f.DateCreated, DateUpdated = f.DateUpdated,
+                                  IsLiquid = f.IsLiquid, Active = (f.Active ?? false), DateCreated = f.DateCreated, DateUpdated = f.DateUpdated,
                                   CreatedBy = f.CreatedBy, UpdatedBy = f.UpdatedBy, Brand = f.Brand, Description = f.Description,
                                   Type = f.Type, Formulation = f.Formulation, Concentration = f.Concentration,
                                   ConcentrationUnit = f.ConcentrationUnit, ApplicationMethod = f.ApplicationMethod,

@@ -9,6 +9,6 @@
         public int? Sequence { get; set; }
         public int? StartingWeek { get; set; }
         public int? EndingWeek { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

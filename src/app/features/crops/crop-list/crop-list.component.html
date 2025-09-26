@@ -1,1 +1,457 @@
-<p>crop-list works!</p>
+<div class="crop-list-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="bi bi-flower3"></i>
+        Catálogo de Cultivos
+      </h1>
+      <p class="page-description">
+        Gestión de cultivos disponibles para producción hidropónica
+      </p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary" (click)="showCreateForm()" [disabled]="isLoading">
+        <i class="bi bi-plus-circle"></i>
+        Nuevo Cultivo
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" *ngIf="successMessage || errorMessage">
+    <div class="alert alert-success alert-dismissible" *ngIf="successMessage">
+      <i class="bi bi-check-circle"></i>
+      {{ successMessage }}
+      <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible" *ngIf="errorMessage">
+      <i class="bi bi-exclamation-triangle"></i>
+      {{ errorMessage }}
+      <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-primary">
+        <div class="stat-icon">
+          <i class="bi bi-flower3"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ getTotalCount() }}</h4>
+          <p>Total</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-success">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ getActiveCount() }}</h4>
+          <p>Activos</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-warning">
+        <div class="stat-icon">
+          <i class="bi bi-pause-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ getInactiveCount() }}</h4>
+          <p>Inactivos</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-info">
+        <div class="stat-icon">
+          <i class="bi bi-collection"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ cropTypes.length }}</h4>
+          <p>Tipos</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-card">
+    <div class="filters-header">
+      <h5><i class="bi bi-funnel"></i> Filtros</h5>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+        <i class="bi bi-arrow-clockwise"></i> Limpiar
+      </button>
+    </div>
+    <div class="filters-body">
+      <div class="row g-3">
+        <!-- Search -->
+        <div class="col-md-4">
+          <label for="searchTerm" class="form-label">Buscar</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="searchTerm" 
+                   [(ngModel)]="filters.searchTerm" 
+                   (ngModelChange)="onFiltersChange()"
+                   placeholder="Nombre, nombre científico...">
+          </div>
+        </div>
+
+        <!-- Type Filter -->
+        <div class="col-md-2">
+          <label for="typeFilter" class="form-label">Tipo</label>
+          <select class="form-select" id="typeFilter" 
+                  [(ngModel)]="filters.type" 
+                  (ngModelChange)="onFiltersChange()">
+            <option value="">Todos</option>
+            <option *ngFor="let type of cropTypes" [value]="type.value">{{ type.label }}</option>
+          </select>
+        </div>
+
+        <!-- Harvest Season Filter -->
+        <div class="col-md-3">
+          <label for="seasonFilter" class="form-label">Temporada</label>
+          <select class="form-select" id="seasonFilter" 
+                  [(ngModel)]="filters.harvestSeason" 
+                  (ngModelChange)="onFiltersChange()">
+            <option value="">Todas</option>
+            <option *ngFor="let season of harvestSeasons" [value]="season.value">{{ season.label }}</option>
+          </select>
+        </div>
+
+        <!-- Water Requirement Filter -->
+        <div class="col-md-2">
+          <label for="waterFilter" class="form-label">Agua</label>
+          <select class="form-select" id="waterFilter" 
+                  [(ngModel)]="filters.waterRequirement" 
+                  (ngModelChange)="onFiltersChange()">
+            <option value="">Todos</option>
+            <option *ngFor="let water of waterRequirements" [value]="water.value">{{ water.label }}</option>
+          </select>
+        </div>
+
+        <!-- Active Status -->
+        <div class="col-md-1">
+          <label class="form-label">Estado</label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="activeFilter" 
+                   [(ngModel)]="filters.onlyActive" 
+                   (ngModelChange)="onFiltersChange()">
+            <label class="form-check-label" for="activeFilter">
+              Solo activos
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="table-card">
+    <div class="table-header">
+      <h5>
+        <i class="bi bi-table"></i>
+        Lista de Cultivos
+        <span class="record-count">({{ getTotalCount() }} registros)</span>
+      </h5>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="text-center p-4" *ngIf="isLoading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2">Cargando cultivos...</p>
+    </div>
+
+    <!-- No Data -->
+    <div class="no-data" *ngIf="!isLoading && filteredCrops.length === 0">
+      <i class="bi bi-inbox"></i>
+      <p>No se encontraron cultivos</p>
+      <button type="button" class="btn btn-primary btn-sm" (click)="showCreateForm()">
+        <i class="bi bi-plus-circle"></i>
+        Crear primer cultivo
+      </button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive" *ngIf="!isLoading && filteredCrops.length > 0">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Nombre Científico</th>
+            <th>Tipo</th>
+            <th>Ciclo (días)</th>
+            <th>Temporada</th>
+            <th>Agua</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let crop of getPaginatedData(); trackBy: trackByIndex">
+            <td>
+              <div class="crop-name">
+                <strong>{{ crop.name }}</strong>
+                <small class="text-muted" *ngIf="crop.variety">{{ crop.variety }}</small>
+              </div>
+            </td>
+            <td>
+              <em class="text-muted">{{ crop.scientificName || 'N/A' }}</em>
+            </td>
+            <td>
+              <span class="badge bg-secondary">{{ formatCropType(crop.type || '') }}</span>
+            </td>
+            <td>
+              <span *ngIf="crop.growthCycleDays">{{ crop.growthCycleDays }}</span>
+              <span *ngIf="!crop.growthCycleDays" class="text-muted">N/A</span>
+            </td>
+            <td>{{ crop.harvestSeason || 'N/A' }}</td>
+            <td>
+              <span *ngIf="crop.waterRequirement" 
+                    class="badge"
+                    [class.bg-danger]="crop.waterRequirement === 'Muy Alto'"
+                    [class.bg-warning]="crop.waterRequirement === 'Alto'"
+                    [class.bg-info]="crop.waterRequirement === 'Medio'"
+                    [class.bg-success]="crop.waterRequirement === 'Bajo'">
+                {{ crop.waterRequirement }}
+              </span>
+              <span *ngIf="!crop.waterRequirement" class="text-muted">N/A</span>
+            </td>
+            <td>
+              <span class="badge" 
+                    [class.bg-success]="crop.isActive" 
+                    [class.bg-secondary]="!crop.isActive">
+                {{ crop.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" 
+                        (click)="showEditForm(crop)" 
+                        [disabled]="isLoading"
+                        title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button type="button" class="btn btn-sm" 
+                        [class.btn-outline-warning]="crop.isActive"
+                        [class.btn-outline-success]="!crop.isActive"
+                        (click)="toggleCropStatus(crop)" 
+                        [disabled]="isLoading"
+                        [title]="crop.isActive ? 'Desactivar' : 'Activar'">
+                  <i class="bi" [class.bi-pause-circle]="crop.isActive" [class.bi-play-circle]="!crop.isActive"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-1" 
+                        (click)="deleteCrop(crop)" 
+                        [disabled]="isLoading"
+                        title="Eliminar">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-wrapper" *ngIf="!isLoading && filteredCrops.length > pageSize">
+      <nav>
+        <ul class="pagination pagination-sm justify-content-center">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+          <li class="page-item" 
+              *ngFor="let page of [].constructor(getTotalPages()); let i = index" 
+              [class.active]="currentPage === i + 1">
+            <button class="page-link" (click)="goToPage(i + 1)">{{ i + 1 }}</button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === getTotalPages()">
+            <button class="page-link" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === getTotalPages()">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Form Modal -->
+<div class="form-overlay" *ngIf="isFormVisible" (click)="hideForm()">
+  <div class="form-panel" (click)="$event.stopPropagation()">
+    <div class="form-header">
+      <h5>
+        <i class="bi bi-flower3"></i>
+        {{ isEditMode ? 'Editar Cultivo' : 'Nuevo Cultivo' }}
+      </h5>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="hideForm()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="cropForm" (ngSubmit)="submitForm()" class="form-body">
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h6 class="form-section-title">Información Básica</h6>
+        <div class="row">
+          <div class="col-md-6">
+            <label for="name" class="form-label">Nombre *</label>
+            <input type="text" class="form-control" id="name" formControlName="name"
+                   [class.is-invalid]="getFieldError('name')" placeholder="Nombre del cultivo">
+            <div class="invalid-feedback">{{ getFieldError('name') }}</div>
+          </div>
+          <div class="col-md-6">
+            <label for="scientificName" class="form-label">Nombre Científico</label>
+            <input type="text" class="form-control" id="scientificName" formControlName="scientificName"
+                   [class.is-invalid]="getFieldError('scientificName')" placeholder="Nombre científico">
+            <div class="invalid-feedback">{{ getFieldError('scientificName') }}</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <label for="type" class="form-label">Tipo *</label>
+            <select class="form-select" id="type" formControlName="type"
+                    [class.is-invalid]="getFieldError('type')">
+              <option value="">Seleccionar tipo</option>
+              <option *ngFor="let type of cropTypes" [value]="type.value">{{ type.label }}</option>
+            </select>
+            <div class="invalid-feedback">{{ getFieldError('type') }}</div>
+          </div>
+          <div class="col-md-6">
+            <label for="variety" class="form-label">Variedad</label>
+            <input type="text" class="form-control" id="variety" formControlName="variety"
+                   [class.is-invalid]="getFieldError('variety')" placeholder="Variedad específica">
+            <div class="invalid-feedback">{{ getFieldError('variety') }}</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12">
+            <label for="description" class="form-label">Descripción</label>
+            <textarea class="form-control" id="description" formControlName="description" rows="3"
+                      [class.is-invalid]="getFieldError('description')" 
+                      placeholder="Descripción del cultivo"></textarea>
+            <div class="invalid-feedback">{{ getFieldError('description') }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Growth Information -->
+      <div class="form-section">
+        <h6 class="form-section-title">Información de Crecimiento</h6>
+        <div class="row">
+          <div class="col-md-4">
+            <label for="growthCycleDays" class="form-label">Ciclo de Crecimiento (días)</label>
+            <input type="number" class="form-control" id="growthCycleDays" formControlName="growthCycleDays"
+                   [class.is-invalid]="getFieldError('growthCycleDays')" placeholder="90" min="1" max="1000">
+            <div class="invalid-feedback">{{ getFieldError('growthCycleDays') }}</div>
+          </div>
+          <div class="col-md-4">
+            <label for="harvestSeason" class="form-label">Temporada de Cosecha</label>
+            <select class="form-select" id="harvestSeason" formControlName="harvestSeason"
+                    [class.is-invalid]="getFieldError('harvestSeason')">
+              <option value="">Seleccionar temporada</option>
+              <option *ngFor="let season of harvestSeasons" [value]="season.value">{{ season.label }}</option>
+            </select>
+            <div class="invalid-feedback">{{ getFieldError('harvestSeason') }}</div>
+          </div>
+          <div class="col-md-4">
+            <label for="waterRequirement" class="form-label">Requerimiento de Agua</label>
+            <select class="form-select" id="waterRequirement" formControlName="waterRequirement"
+                    [class.is-invalid]="getFieldError('waterRequirement')">
+              <option value="">Seleccionar nivel</option>
+              <option *ngFor="let water of waterRequirements" [value]="water.value">{{ water.label }}</option>
+            </select>
+            <div class="invalid-feedback">{{ getFieldError('waterRequirement') }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Temperature Requirements -->
+      <div class="form-section">
+        <h6 class="form-section-title">Requerimientos de Temperatura (°C)</h6>
+        <div class="row">
+          <div class="col-md-6">
+            <label for="optimalTemperatureMin" class="form-label">Temperatura Mínima Óptima</label>
+            <input type="number" class="form-control" id="optimalTemperatureMin" 
+                   formControlName="optimalTemperatureMin"
+                   [class.is-invalid]="getFieldError('optimalTemperatureMin')" 
+                   placeholder="18" min="-50" max="100" step="0.1">
+            <div class="invalid-feedback">{{ getFieldError('optimalTemperatureMin') }}</div>
+          </div>
+          <div class="col-md-6">
+            <label for="optimalTemperatureMax" class="form-label">Temperatura Máxima Óptima</label>
+            <input type="number" class="form-control" id="optimalTemperatureMax" 
+                   formControlName="optimalTemperatureMax"
+                   [class.is-invalid]="getFieldError('optimalTemperatureMax')" 
+                   placeholder="25" min="-50" max="100" step="0.1">
+            <div class="invalid-feedback">{{ getFieldError('optimalTemperatureMax') }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nutritional Requirements -->
+      <div class="form-section">
+        <h6 class="form-section-title">Requerimientos Nutricionales (ppm)</h6>
+        <div class="row">
+          <div class="col-md-4">
+            <label for="nitrogenRequirement" class="form-label">Nitrógeno (N)</label>
+            <input type="number" class="form-control" id="nitrogenRequirement" 
+                   formControlName="nitrogenRequirement"
+                   [class.is-invalid]="getFieldError('nitrogenRequirement')" 
+                   placeholder="200" min="0" max="1000" step="0.1">
+            <div class="invalid-feedback">{{ getFieldError('nitrogenRequirement') }}</div>
+          </div>
+          <div class="col-md-4">
+            <label for="phosphorusRequirement" class="form-label">Fósforo (P)</label>
+            <input type="number" class="form-control" id="phosphorusRequirement" 
+                   formControlName="phosphorusRequirement"
+                   [class.is-invalid]="getFieldError('phosphorusRequirement')" 
+                   placeholder="50" min="0" max="1000" step="0.1">
+            <div class="invalid-feedback">{{ getFieldError('phosphorusRequirement') }}</div>
+          </div>
+          <div class="col-md-4">
+            <label for="potassiumRequirement" class="form-label">Potasio (K)</label>
+            <input type="number" class="form-control" id="potassiumRequirement" 
+                   formControlName="potassiumRequirement"
+                   [class.is-invalid]="getFieldError('potassiumRequirement')" 
+                   placeholder="300" min="0" max="1000" step="0.1">
+            <div class="invalid-feedback">{{ getFieldError('potassiumRequirement') }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="form-section">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="isActive" formControlName="isActive">
+          <label class="form-check-label" for="isActive">
+            Cultivo activo
+          </label>
+        </div>
+      </div>
+    </form>
+
+    <div class="form-footer">
+      <button type="button" class="btn btn-secondary" (click)="hideForm()" [disabled]="isLoading">
+        <i class="bi bi-x-circle"></i>
+        Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" (click)="submitForm()" [disabled]="isLoading || cropForm.invalid">
+        <span class="spinner-border spinner-border-sm me-2" *ngIf="isLoading"></span>
+        <i class="bi bi-check-circle" *ngIf="!isLoading"></i>
+        {{ isEditMode ? 'Actualizar' : 'Crear' }} Cultivo
+      </button>
+    </div>
+  </div>
+</div>

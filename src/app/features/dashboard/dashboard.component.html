@@ -6,36 +6,14 @@
       <div class="welcome-card">
         <h1 class="display-6 mb-2">Dashboard - AgriSmart</h1>
         <p class="lead text-muted mb-0">
-          Bienvenido, <strong>{{ currentUser?.name || 'Usuario' }}</strong>
+          Bienvenido, <strong>{{ 'Usuario' }}</strong>
         </p>
-        <small class="text-muted">{{ currentDate | date:'fullDate':'':'es' }}</small>
       </div>
     </div>
   </div>
 
   <!-- Statistics Cards with Animations -->
   <div class="row mb-4" *ngIf="stats && !isLoading">
-    <!-- Companies Card -->
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="stats-card card-primary" [class.pulse]="isLoading">
-        <div class="card-body">
-          <div class="row align-items-center">
-            <div class="col-8">
-              <h6 class="card-category text-uppercase text-muted mb-0">Empresas</h6>
-              <h2 class="card-title mb-0 counter" [attr.data-count]="stats.totalCompanies">
-                {{ stats.totalCompanies }}
-              </h2>
-            </div>
-            <div class="col-4 text-end">
-              <div class="icon-shape bg-gradient-primary text-white rounded-circle">
-                <i class="bi bi-building fs-4"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Farms Card -->
     <div class="col-xl-3 col-md-6 mb-4">
       <div class="stats-card card-success">
@@ -107,49 +85,102 @@
         </div>
         <div class="card-body">
           <div class="row">
-            <!-- Add Company -->
-            <!-- <div class="col-md-3 col-6 mb-3">
-              <div class="action-item text-center card-hover" routerLink="/companies/new">
-                <div class="action-icon bg-gradient-primary text-white mb-2">
-                  <i class="bi bi-plus-lg"></i>
-                </div>
-                <h6 class="mb-1">Nueva Empresa</h6>
-                <small class="text-muted">Agregar empresa</small>
-              </div>
-            </div> -->
+            <!-- Management Section -->
+            <div class="col-12 mb-3">
+              <h6 class="text-muted text-uppercase small">Gestión Principal</h6>
+            </div>
 
-            <!-- Add Farm -->
-            <!-- <div class="col-md-3 col-6 mb-3">
-              <div class="action-item text-center card-hover" routerLink="/farms/new">
-                <div class="action-icon bg-gradient-success text-white mb-2">
-                  <i class="bi bi-geo-alt-fill"></i>
+            <!-- Farms Management -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToFarms()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-geo-alt-fill text-success"></i>
                 </div>
-                <h6 class="mb-1">Nueva Finca</h6>
-                <small class="text-muted">Registrar finca</small>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Fincas</h6>
+                  <p class="quick-action-description">Gestionar fincas y propiedades</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
               </div>
-            </div> -->
+            </div>
 
-            <!-- Add Crop -->
-            <!-- <div class="col-md-3 col-6 mb-3">
-              <div class="action-item text-center card-hover" routerLink="/crops/new">
-                <div class="action-icon bg-gradient-warning text-white mb-2">
-                  <i class="bi bi-flower1"></i>
+            <!-- Crops Management -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToCrops()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-flower1 text-warning"></i>
                 </div>
-                <h6 class="mb-1">Nuevo Cultivo</h6>
-                <small class="text-muted">Agregar cultivo</small>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Catálogo de Cultivos</h6>
+                  <p class="quick-action-description">Gestionar tipos de cultivos</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
               </div>
-            </div> -->
+            </div>
 
-            <!-- Add Device -->
-            <!-- <div class="col-md-3 col-6 mb-3">
-              <div class="action-item text-center card-hover" routerLink="/devices/new">
-                <div class="action-icon bg-gradient-info text-white mb-2">
-                  <i class="bi bi-cpu"></i>
+            <!-- Devices Management -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToDevices()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-cpu text-info"></i>
                 </div>
-                <h6 class="mb-1">Nuevo Dispositivo</h6>
-                <small class="text-muted">Conectar IoT</small>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Dispositivos</h6>
+                  <p class="quick-action-description">Gestionar dispositivos IoT</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
               </div>
-            </div> -->
+            </div>
+
+            <!-- Crop Production Section -->
+            <div class="col-12 mb-3 mt-3">
+              <h6 class="text-muted text-uppercase small">Producción de Cultivos</h6>
+            </div>
+
+            <!-- Crop Phases -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToCropPhases()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-diagram-3 text-success"></i>
+                </div>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Fases de Cultivo</h6>
+                  <p class="quick-action-description">Definir etapas de crecimiento</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Phase Requirements -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToPhaseRequirements()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-list-check text-warning"></i>
+                </div>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Requerimientos por Fase</h6>
+                  <p class="quick-action-description">Configurar necesidades por etapa</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </div>
+            </div>
+
+    
+            <!-- Technical Tools Section -->
+            <div class="col-12 mb-3 mt-3">
+              <h6 class="text-muted text-uppercase small">Herramientas Técnicas</h6>
+            </div>
+
             <!-- Nutrient Solution Formulation -->
             <div class="col-md-3 col-6 mb-3">
               <div class="quick-action-card" (click)="navigateToNutrientFormulation()">
@@ -158,7 +189,7 @@
                 </div>
                 <div class="quick-action-content">
                   <h6 class="quick-action-title">Formulación Nutritiva</h6>
-                  <p class="quick-action-description">Crear recetas de soluciones nutritivas optimizadas</p>
+                  <p class="quick-action-description">Crear recetas de soluciones nutritivas</p>
                 </div>
                 <div class="quick-action-arrow">
                   <i class="bi bi-arrow-right"></i>
@@ -230,6 +261,10 @@
               </div>
             </div>
 
+            <!-- Analytics Section -->
+            <div class="col-12 mb-3 mt-3">
+              <h6 class="text-muted text-uppercase small">Análisis y Reportes</h6>
+            </div>
 
             <!-- Shiny Dashboard -->
             <div class="col-md-3 col-6 mb-3">
@@ -268,77 +303,8 @@
               </div>
               <div class="timeline-content">
                 <div class="timeline-title fw-semibold">{{ activity.message }}</div>
-                <div class="timeline-time text-muted">{{ getRelativeTime(activity.time) }}</div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Additional Stats and Quick Overview -->
-  <div class="row mb-4" *ngIf="!isLoading">
-    <div class="col-md-8">
-      <div class="card">
-        <div class="card-header bg-white border-0">
-          <h5 class="mb-0">
-            <i class="bi bi-bar-chart me-2 text-success"></i>
-            Resumen del Sistema
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <h6 class="text-muted mb-3">Estado General</h6>
-              <div class="progress mb-3" style="height: 8px;">
-                <div class="progress-bar bg-success" [style.width.%]="getDeviceEfficiency()" role="progressbar">
-                </div>
-              </div>
-              <p class="mb-0">
-                <strong>{{ getDeviceEfficiency() }}%</strong> de dispositivos activos
-              </p>
-            </div>
-            <div class="col-md-6">
-              <h6 class="text-muted mb-3">Distribución</h6>
-              <div class="d-flex justify-content-between mb-2">
-                <span>Empresas:</span>
-                <strong>{{ stats.totalCompanies }}</strong>
-              </div>
-              <div class="d-flex justify-content-between">
-                <span>Cultivos por finca:</span>
-                <strong>{{ stats.totalFarms > 0 ? (stats.totalCrops / stats.totalFarms).toFixed(1) : 0 }}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-header bg-white border-0">
-          <h5 class="mb-0">
-            <i class="bi bi-info-circle me-2 text-primary"></i>
-            Información Rápida
-          </h5>
-        </div>
-        <div class="card-body quick-stat">
-          <div class="stat-item d-flex justify-content-between mb-3">
-            <span class="text-muted">Empresas más activas:</span>
-            <strong>{{ getMostActiveCompany() }}</strong>
-          </div>
-          <div class="stat-item d-flex justify-content-between mb-3">
-            <span class="text-muted">Cultivo popular:</span>
-            <strong>{{ getMostPopularCrop() }}</strong>
-          </div>
-          <div class="stat-item d-flex justify-content-between mb-3">
-            <span class="text-muted">Dispositivos online:</span>
-            <strong class="text-success">{{ getOnlineDevicesCount() }}</strong>
-          </div>
-          <div class="stat-item d-flex justify-content-between mb-3">
-            <span class="text-muted">Última actualización:</span>
-            <strong>{{ getLastUpdateTime() }}</strong>
           </div>
         </div>
       </div>

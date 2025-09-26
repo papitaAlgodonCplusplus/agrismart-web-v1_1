@@ -39,7 +39,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                       (GetSessionProfileId() == (int)Profiles.SuperUser) || (GetSessionProfileId() == (int)Profiles.Application)
                                   )
                                   && ((c.ClientId == clientId) || clientId == 0)
-                                  && ((c.Active && !includeInactives) || includeInactives)
+                                  && (((c.Active == true) && !includeInactives) || includeInactives)
                               group c by c.Id into cg
                               select new Company
                               {

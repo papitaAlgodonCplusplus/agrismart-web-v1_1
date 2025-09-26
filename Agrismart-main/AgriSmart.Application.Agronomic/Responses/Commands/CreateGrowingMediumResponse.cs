@@ -7,6 +7,6 @@
         public string? Name { get; set; }
         public double ContainerCapacityPercentage { get; set; }
         public double PermanentWiltingPoint { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

@@ -29,14 +29,14 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                         Id = record.Id,
                         CompanyId = record.CompanyId,
                         DeviceId = record.DeviceId,
-                        Active = record.Active,
+                        Active = (record.Active ?? false),
                         DateCreated = record.DateCreated,
                         DateUpdated = record.DateUpdated,
                         CreatedBy = record.CreatedBy,
                         UpdatedBy = record.UpdatedBy
                     })
                     .Where(record => (record.DeviceId == deviceId && deviceId != null)                       
-                        && record.Active)
+                        && (record.Active == true))
                     .AsNoTracking()
                     .FirstOrDefaultAsync();
             }
@@ -56,13 +56,13 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                         Id = record.Id,
                         CompanyId = record.CompanyId,
                         DeviceId = record.DeviceId,
-                        Active = record.Active,
+                        Active = (record.Active ?? false),
                         DateCreated = record.DateCreated,
                         DateUpdated = record.DateUpdated,
                         CreatedBy = record.CreatedBy,
                         UpdatedBy = record.UpdatedBy
                     })
-                    .Where(record => record.Active)
+                    .Where(record => record.Active == true)
                     .AsNoTracking()
                     .FirstOrDefaultAsync();
             }
@@ -87,7 +87,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               where
                                   (uf.UserId == GetSessionUserId() && GetSessionProfileId() == (int)Profiles.CompanyUser)
                                   && ((cp.Id == cropProductionId) || cropProductionId == 0)
-                                  && ((d.Active && !includeInactives) || includeInactives)
+                                  && (((d.Active == true) && !includeInactives) || includeInactives)
                               select d)
                               .Union(from d in _context.Device
                                      join c in _context.Company on d.CompanyId equals c.Id
@@ -98,7 +98,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                     && ((c.ClientId == clientId) || clientId == 0)
                                     && ((c.Id == companyId) || companyId == 0)
                                     && (cropProductionId == 0)
-                                    && ((d.Active && !includeInactives) || includeInactives)
+                                    && (((d.Active == true) && !includeInactives) || includeInactives)
                                     select d)
                                .Union(from d in _context.Device
                                       join c in _context.Company on d.CompanyId equals c.Id
@@ -112,7 +112,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                      && ((c.ClientId == clientId) || clientId == 0)
                                      && ((c.Id == companyId) || companyId == 0)
                                      && (cp.Id == cropProductionId)
-                                     && ((d.Active && !includeInactives) || includeInactives)
+                                     && (((d.Active == true) && !includeInactives) || includeInactives)
                                       select d)
                               .ToListAsync();
             }

@@ -7,6 +7,6 @@
         public string? Description { get; set; }
         public int TimeZoneId {  get; set; }
         //public DbGeography? Polygon { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

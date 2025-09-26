@@ -31,7 +31,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && ((gr.Active && !includeInactives) || includeInactives)
+                                    && (((gr.Active == true) && !includeInactives) || includeInactives)
                               select new Graph
                               {
                                   Id = gr.Id,
@@ -41,7 +41,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   SummaryTimeScale = gr.SummaryTimeScale,
                                   YAxisScaleType = gr.YAxisScaleType,
                                   Series = gr.Series,
-                                  Active = gr.Active,
+                                  Active = (gr.Active ?? false),
                                   CreatedBy = gr.CreatedBy,
                                   DateCreated = gr.DateCreated,
                                   UpdatedBy = gr.UpdatedBy,
@@ -75,7 +75,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   SummaryTimeScale = gr.SummaryTimeScale,
                                   YAxisScaleType = gr.YAxisScaleType,
                                   Series = gr.Series,
-                                  Active = gr.Active,
+                                  Active = (gr.Active ?? false),
                                   CreatedBy = gr.CreatedBy,
                                   DateCreated = gr.DateCreated,
                                   UpdatedBy = gr.UpdatedBy,

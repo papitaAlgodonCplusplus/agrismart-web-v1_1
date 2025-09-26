@@ -6,7 +6,6 @@ import { map, catchError } from 'rxjs/operators';
 import { ApiConfigService } from '../../../core/services/api-config.service';
 import { Crop } from '../../../core/models/models';
 
-
 interface CropPhase {
   id: number;
   cropId: number;

@@ -8,6 +8,6 @@ namespace AgriSmart.Core.Entities
         public string? ServiceId { get; set; }
         public string? Password { get; set; }
         public string? Name { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

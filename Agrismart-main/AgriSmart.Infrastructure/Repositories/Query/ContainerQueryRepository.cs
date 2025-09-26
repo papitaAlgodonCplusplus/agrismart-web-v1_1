@@ -31,7 +31,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && ((c.Active && !includeInactives) || includeInactives)
+                                    && (((c.Active == true) && !includeInactives) || includeInactives)
                               select new Container
                               {
                                   Id = c.Id,
@@ -43,7 +43,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Length = c.Length,
                                   LowerDiameter = c.LowerDiameter,
                                   UpperDiameter = c.UpperDiameter,
-                                  Active = c.Active,
+                                  Active = (c.Active ?? false),
                                   CreatedBy = c.CreatedBy,
                                   DateCreated = c.DateCreated,
                                   UpdatedBy = c.UpdatedBy,
@@ -79,7 +79,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Length = c.Length,
                                   LowerDiameter = c.LowerDiameter,
                                   UpperDiameter = c.UpperDiameter,
-                                  Active = c.Active,
+                                  Active = (c.Active ?? false),
                                   CreatedBy = c.CreatedBy,
                                   DateCreated = c.DateCreated,
                                   UpdatedBy = c.UpdatedBy,

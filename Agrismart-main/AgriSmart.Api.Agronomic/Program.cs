@@ -239,6 +239,7 @@ builder.Services.AddTransient<ICropProductionDeviceQueryRepository, CropProducti
 builder.Services.AddTransient<IWaterChemistryQueryRepository, WaterChemistryQueryRepository>();
 builder.Services.AddTransient<IWaterChemistryCommandRepository, WaterChemistryCommandRepository>();
 builder.Services.AddTransient<ICropPhaseSolutionRequirementQueryRepository, CropPhaseSolutionRequirementQueryRepository>();
+builder.Services.AddTransient<ICropPhaseSolutionRequirementCommandRepository, CropPhaseSolutionRequirementCommandRepository>();
 builder.Services.AddTransient<IMeasurementUnitQueryRepository, MeasurementUnitQueryRepository>();
 builder.Services.AddTransient<IInputPresentationQueryRepository, InputPresentationQueryRepository>();
 builder.Services.AddTransient<IInputPresentationCommandRepository, InputPresentationCommandRepository>();

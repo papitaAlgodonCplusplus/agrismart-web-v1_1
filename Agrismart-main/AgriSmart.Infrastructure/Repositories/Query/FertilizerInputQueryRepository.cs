@@ -33,7 +33,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
                                     && ((f.Id == fertilizerId) || fertilizerId == 0)
-                                    && ((fi.Active && !includeInactives) || includeInactives)
+                                    && (((fi.Active == true) && !includeInactives) || includeInactives)
                               select new FertilizerInput
                               {
                                   Id = fi.Id,
@@ -42,7 +42,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   FertilizerId = fi.FertilizerId,
                                   Name = fi.Name,
                                   Price = fi.Price,
-                                  Active = fi.Active,
+                                  Active = (fi.Active ?? false),
                                   CreatedBy = fi.CreatedBy,
                                   DateCreated = fi.DateCreated,
                                   UpdatedBy = fi.UpdatedBy,
@@ -76,7 +76,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   FertilizerId = fi.FertilizerId,
                                   Name = fi.Name,
                                   Price = fi.Price,
-                                  Active = fi.Active,
+                                  Active = (fi.Active ?? false),
                                   CreatedBy = fi.CreatedBy,
                                   DateCreated = fi.DateCreated,
                                   UpdatedBy = fi.UpdatedBy,

@@ -24,6 +24,6 @@
         public double EC { get; set; }
         public double pH { get; set; }
         public DateTime AnalysisDate { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

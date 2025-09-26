@@ -1,10 +1,9 @@
-// src/app/app.routes.ts
+// src/app/app.routes.ts (Updated)
 import { Routes } from '@angular/router';
 
 // Guards
 import { AuthGuard } from './core/guards/auth.guard';
 import { AdminGuard } from './core/guards/admin.guard';
-import { NutrientFormulationComponent } from './features/nutrient-formulation/nutrient-formulation.component';
 
 // Layout
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
@@ -12,7 +11,7 @@ import { MainLayoutComponent } from './layout/main-layout/main-layout.component'
 // Auth Components
 import { LoginComponent } from './features/auth/login/login.component';
 
-// Admin Component
+// Admin
 import { AdminComponent } from './features/admin/admin.component';
 
 // Feature Components
@@ -21,8 +20,13 @@ import { CompanyListComponent } from './features/companies/company-list/company-
 import { CompanyFormComponent } from './features/companies/company-form/company-form.component';
 import { FarmListComponent } from './features/farms/farm-list/farm-list.component';
 import { FarmFormComponent } from './features/farms/farm-form/farm-form.component';
+
+// NEW: Import the new components
 import { CropListComponent } from './features/crops/crop-list/crop-list.component';
 import { CropFormComponent } from './features/crops/crop-form/crop-form.component';
+import { CropPhaseComponent } from './features/crop-phases/crop-phase/crop-phase.component';
+import { PhaseRequirementsComponent } from './features/crop-phases/phase-requirements/phase-requirements.component';
+
 import { DeviceListComponent } from './features/devices/device-list/device-list.component';
 import { DeviceFormComponent } from './features/devices/device-form/device-form.component';
 
@@ -30,6 +34,8 @@ import { DeviceFormComponent } from './features/devices/device-form/device-form.
 import { ProductionUnitListComponent } from './features/production-units/production-unit-list/production-unit-list.component';
 import { CropProductionListComponent } from './features/crop-production/crop-production-list/crop-production-list.component';
 import { OnDemandIrrigationComponent } from './features/irrigation/on-demand-irrigation.component';
+import { NutrientFormulationComponent } from './features/nutrient-formulation/nutrient-formulation.component';
+
 // shiny-dashboard
 import { ShinyDashboardComponent } from './features/dashboard/shiny/shiny-dashboard.component';
 
@@ -82,24 +88,24 @@ export const routes: Routes = [
         data: { title: 'Dashboard' }
       },
 
-      // Companies Management
+      // Company Management
       {
         path: 'companies',
         component: CompanyListComponent,
-        data: { title: 'Compañías' }
+        data: { title: 'Empresas' }
       },
       {
         path: 'companies/new',
         component: CompanyFormComponent,
-        data: { title: 'Nueva Compañía' }
+        data: { title: 'Nueva Empresa' }
       },
       {
         path: 'companies/:id/edit',
         component: CompanyFormComponent,
-        data: { title: 'Editar Compañía' }
+        data: { title: 'Editar Empresa' }
       },
 
-      // Farms Management
+      // Farm Management
       {
         path: 'farms',
         component: FarmListComponent,
@@ -116,11 +122,11 @@ export const routes: Routes = [
         data: { title: 'Editar Finca' }
       },
 
-      // Crops Management
+      // NEW: Crop Management Routes
       {
         path: 'crops',
         component: CropListComponent,
-        data: { title: 'Cultivos' }
+        data: { title: 'Catálogo de Cultivos' }
       },
       {
         path: 'crops/new',
@@ -133,7 +139,21 @@ export const routes: Routes = [
         data: { title: 'Editar Cultivo' }
       },
 
-      // Devices Management
+      // NEW: Crop Phase Management Routes
+      {
+        path: 'crop-phases',
+        component: CropPhaseComponent,
+        data: { title: 'Fases de Cultivo' }
+      },
+
+      // NEW: Phase Requirements Management Routes
+      {
+        path: 'phase-requirements',
+        component: PhaseRequirementsComponent,
+        data: { title: 'Requerimientos Nutricionales por Fase' }
+      },
+
+      // Device Management
       {
         path: 'devices',
         component: DeviceListComponent,

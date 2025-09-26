@@ -50,7 +50,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             using (var scope = _scopeFactory.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<AgriSmartContext>();
-                return context.Device.Where(d => d.Active).ToList();
+                return context.Device.Where(d => d.Active == true).ToList();
             }
         }
         public List<Sensor> GetSensorsFromDatabase()
@@ -58,7 +58,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             using (var scope = _scopeFactory.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<AgriSmartContext>();
-                return context.Sensor.Where(s => s.Active).ToList();
+                return context.Sensor.Where(s => s.Active == true).ToList();
             }
         }
 

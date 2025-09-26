@@ -24,7 +24,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             {
                 return await (from mv in _context.MeasurementVariableStandard
                               where
-                                  ((mv.Active && !includeInactives) || includeInactives)
+                                  (((mv.Active == true) && !includeInactives) || includeInactives)
                               select mv).ToListAsync();
             }
             catch (Exception ex)

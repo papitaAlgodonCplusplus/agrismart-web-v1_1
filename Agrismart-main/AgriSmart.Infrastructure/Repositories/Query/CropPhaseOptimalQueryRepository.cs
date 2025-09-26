@@ -31,7 +31,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )                                    
                                     && ((cpo.CatalogId == catalogId) || catalogId == 0)
-                                    && ((cpo.Active && !includeInactives) || includeInactives)
+                                    && (((cpo.Active == true) && !includeInactives) || includeInactives)
                               select new CropPhaseOptimal
                               {
                                   Id = cpo.Id,
@@ -39,7 +39,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Name = cpo.Name,
                                   Description = cpo.Description,
                                   Value = cpo.Value,
-                                  Active = cpo.Active,
+                                  Active = (cpo.Active ?? false),
                                   CreatedBy = cpo.CreatedBy,
                                   DateCreated = cpo.DateCreated,
                                   UpdatedBy = cpo.UpdatedBy,
@@ -70,7 +70,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Name = cpo.Name,
                                   Description = cpo.Description,
                                   Value = cpo.Value,
-                                  Active = cpo.Active,
+                                  Active = (cpo.Active ?? false),
                                   CreatedBy = cpo.CreatedBy,
                                   DateCreated = cpo.DateCreated,
                                   UpdatedBy = cpo.UpdatedBy,

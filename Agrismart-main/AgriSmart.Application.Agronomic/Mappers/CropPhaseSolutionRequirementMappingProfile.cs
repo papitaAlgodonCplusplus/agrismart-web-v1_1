@@ -11,6 +11,11 @@ namespace AgriSmart.Application.Agronomic.Mappers
     {
         public CropPhaseSolutionRequirementMappingProfile() {
             CreateMap<CropPhaseSolutionRequirement, GetCropPhaseSolutionRequirementByIdPhaseResponse>().ReverseMap();
+            CreateMap<CreateCropPhaseSolutionRequirementCommand, CropPhaseSolutionRequirement>().ReverseMap();
+            CreateMap<UpdateCropPhaseSolutionRequirementCommand, CropPhaseSolutionRequirement>().ReverseMap();
+            CreateMap<CropPhaseSolutionRequirement, CreateCropPhaseSolutionRequirementResponse>().ReverseMap();
+            CreateMap<CropPhaseSolutionRequirement, UpdateCropPhaseSolutionRequirementResponse>().ReverseMap();
+            CreateMap<CropPhaseSolutionRequirement, DeleteCropPhaseSolutionRequirementResponse>().ReverseMap();
         }
     }
 }

@@ -31,7 +31,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (c.Id == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
-                                    && ((c.Active && !includeInactives) || includeInactives)
+                                    && (((c.Active == true) && !includeInactives) || includeInactives)
                               select c).ToListAsync();
             }
             catch (Exception ex)

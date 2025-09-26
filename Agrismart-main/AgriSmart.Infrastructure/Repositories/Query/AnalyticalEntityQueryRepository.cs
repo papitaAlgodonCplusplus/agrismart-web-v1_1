@@ -31,7 +31,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && ((gr.Active && !includeInactives) || includeInactives)
+                                    && (((gr.Active == true) && !includeInactives) || includeInactives)
                               select new AnalyticalEntity
                               {
                                   Id = gr.Id,
@@ -40,7 +40,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Description = gr.Description,
                                   Script = gr.Script,
                                   EntityType = gr.EntityType,
-                                  Active = gr.Active,
+                                  Active = (gr.Active ?? false),
                                   CreatedBy = gr.CreatedBy,
                                   DateCreated = gr.DateCreated,
                                   UpdatedBy = gr.UpdatedBy,
@@ -73,7 +73,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Description = gr.Description,
                                   Script = gr.Script,
                                   EntityType = gr.EntityType,
-                                  Active = gr.Active,
+                                  Active = (gr.Active ?? false),
                                   CreatedBy = gr.CreatedBy,
                                   DateCreated = gr.DateCreated,
                                   UpdatedBy = gr.UpdatedBy,

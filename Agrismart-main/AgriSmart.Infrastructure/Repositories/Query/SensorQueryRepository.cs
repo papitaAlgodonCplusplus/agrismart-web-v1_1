@@ -34,7 +34,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   )
                                   && ((d.CompanyId == companyId) || companyId == 0)
                                   && ((s.DeviceId == deviceId) || deviceId == 0)
-                                  && ((s.Active && !includeInactives) || includeInactives)
+                                  && (((s.Active == true) && !includeInactives) || includeInactives)
                               select new Sensor
                               {
                                   Id = s.Id,
@@ -43,7 +43,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Description = s.Description,
                                   MeasurementVariableId = s.MeasurementVariableId,
                                   NumberOfContainers = s.NumberOfContainers,
-                                  Active = s.Active,
+                                  Active = (s.Active ?? false),
                                   DateCreated = s.DateCreated,
                                   DateUpdated = s.DateUpdated,
                                   CreatedBy = s.CreatedBy,
@@ -89,7 +89,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   DeviceId = s.DeviceId,
                                   SensorLabel = s.SensorLabel,
                                   Description = s.Description,
-                                  Active = s.Active,
+                                  Active = (s.Active ?? false),
                                   DateCreated = s.DateCreated,
                                   DateUpdated = s.DateUpdated,
                                   CreatedBy = s.CreatedBy,

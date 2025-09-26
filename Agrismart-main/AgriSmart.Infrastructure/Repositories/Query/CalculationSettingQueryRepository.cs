@@ -31,14 +31,14 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )                                    
                                     && ((cs.CatalogId == catalogId) || catalogId == 0)
-                                    && ((cs.Active && !includeInactives) || includeInactives)
+                                    && (((cs.Active == true) && !includeInactives) || includeInactives)
                               select new CalculationSetting
                               {
                                   Id = cs.Id,
                                   CatalogId = cs.CatalogId,
                                   Name = cs.Name,
                                   Value = cs.Value,
-                                  Active = cs.Active,
+                                  Active = (cs.Active ?? false),
                                   CreatedBy = cs.CreatedBy,
                                   DateCreated = cs.DateCreated,
                                   UpdatedBy = cs.UpdatedBy,
@@ -68,7 +68,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   CatalogId = cs.CatalogId,
                                   Name = cs.Name,
                                   Value = cs.Value,
-                                  Active = cs.Active,
+                                  Active = (cs.Active ?? false),
                                   CreatedBy = cs.CreatedBy,
                                   DateCreated = cs.DateCreated,
                                   UpdatedBy = cs.UpdatedBy,

@@ -13,6 +13,9 @@ interface BackendResponse<T> {
 }
 
 export interface CropPhase {
+  criticalNotes: any;
+durationWeeks: any;
+temperatureRange: any;
     id: number;
     dateCreated?: Date;
     dateUpdated?: Date;
@@ -28,6 +31,38 @@ export interface CropPhase {
     startDate?: Date;
     endDate?: Date;
     active: boolean;
+}
+
+
+
+// Update the interface to match the API exactly:
+export interface CropPhaseSolutionRequirementApiRequest {
+  cropPhaseId: number;
+  phaseId: number;
+  ec: number;
+  hcO3: number;      // Note the capital O
+  nO3: number;       // Note the capital O
+  h2PO4: number;     // Note the capital PO
+  sO4: number;       // Note the capital O
+  cl: number;
+  nH4: number;       // Note the capital H
+  k: number;
+  ca: number;
+  mg: number;
+  na: number;
+  fe: number;
+  mn: number;
+  zn: number;
+  cu: number;
+  b: number;
+  mo: number;
+  pH: number;        // Note the capital H
+  temperature: number;
+  notes: string;
+  name: string;
+  description: string;
+  active: boolean;
+  createdBy: number;
 }
 
 export interface CropPhaseCreateRequest {
@@ -53,6 +88,8 @@ export interface CropPhaseUpdateRequest {
 }
 
 export interface CropPhaseFilters {
+    maxDuration: undefined;
+    minDuration: any;
     cropId?: number;
     catalogId?: number;
     includeInactives?: boolean;
@@ -75,7 +112,7 @@ export class CropPhaseService {
     ) { }
 
     // In crop-phase.service.ts, update the getAll method:
-    getAll(filters?: CropPhaseFilters): Observable<CropPhase[]> {
+    getAll(filters?: any): Observable<CropPhase[]> {
         let params = new HttpParams();
         const headers = this.getAuthHeaders();
 
@@ -220,7 +257,7 @@ export class CropPhaseService {
      * Get crop phases by crop ID
      */
     getByCropId(cropId: number, includeInactives: boolean = false): Observable<CropPhase[]> {
-        const filters: CropPhaseFilters = { cropId, includeInactives };
+        const filters = { cropId, includeInactives };
         return this.getAll(filters);
     }
 
@@ -228,7 +265,7 @@ export class CropPhaseService {
      * Get crop phases by catalog ID
      */
     getByCatalogId(catalogId: number, includeInactives: boolean = false): Observable<CropPhase[]> {
-        const filters: CropPhaseFilters = { catalogId, includeInactives };
+        const filters = { catalogId, includeInactives };
         return this.getAll(filters);
     }
 
@@ -236,7 +273,7 @@ export class CropPhaseService {
      * Get active crop phases only
      */
     getActive(): Observable<CropPhase[]> {
-        const filters: CropPhaseFilters = { onlyActive: true };
+        const filters = { onlyActive: true };
         return this.getAll(filters);
     }
 

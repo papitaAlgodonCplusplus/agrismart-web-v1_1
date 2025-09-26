@@ -31,7 +31,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && ((gm.Active && !includeInactives) || includeInactives)
+                                    && (((gm.Active == true) && !includeInactives) || includeInactives)
                               select new GrowingMedium
                               {
                                   Id = gm.Id,
@@ -39,7 +39,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Name = gm.Name,
                                   ContainerCapacityPercentage = gm.ContainerCapacityPercentage,
                                   PermanentWiltingPoint = gm.PermanentWiltingPoint,
-                                  Active = gm.Active,
+                                  Active = (gm.Active ?? false),
                                   DateCreated = gm.DateCreated,
                                   DateUpdated = gm.DateUpdated,
                                   CreatedBy = gm.CreatedBy,
@@ -72,7 +72,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Name = gm.Name,
                                   ContainerCapacityPercentage = gm.ContainerCapacityPercentage,
                                   PermanentWiltingPoint = gm.PermanentWiltingPoint,
-                                  Active = gm.Active,
+                                  Active = (gm.Active ?? false),
                                   DateCreated = gm.DateCreated,
                                   DateUpdated = gm.DateUpdated,
                                   CreatedBy = gm.CreatedBy,

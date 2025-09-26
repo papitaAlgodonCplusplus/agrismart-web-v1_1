@@ -22,7 +22,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             try
             {
                 return await (from put in _context.ProductionUnitType
-                              where ((put.Active && !includeInactives) || includeInactives)
+                              where (((put.Active == true) && !includeInactives) || includeInactives)
                               select put).ToListAsync();
             }
             catch (Exception ex)

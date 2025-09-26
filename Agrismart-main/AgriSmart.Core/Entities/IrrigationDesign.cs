@@ -65,7 +65,7 @@ namespace AgriSmart.Core.Entities
         public int? UpdatedBy { get; set; }
         
         [Required]
-        public bool Active { get; set; } = true;
+        public bool? Active { get; set; } = true;
         
         // Navigation properties
         [ForeignKey("CropProductionId")]

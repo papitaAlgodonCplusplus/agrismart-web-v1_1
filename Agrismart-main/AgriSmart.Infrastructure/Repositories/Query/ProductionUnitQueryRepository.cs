@@ -36,7 +36,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   )
                                   && ((f.CompanyId == companyId) || companyId == 0)
                                   && ((f.Id == farmId) || farmId == 0)
-                                  && ((pu.Active && !includeInactives) || includeInactives)
+                                  && (((pu.Active == true) && !includeInactives) || includeInactives)
                               group pu by pu.Id into pug
                               select new ProductionUnit
                               {

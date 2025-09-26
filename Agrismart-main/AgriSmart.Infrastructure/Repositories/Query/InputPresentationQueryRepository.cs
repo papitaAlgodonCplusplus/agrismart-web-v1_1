@@ -24,7 +24,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             {
                 return await _context.InputPresentation
                     .Where(record => (record.CatalogId == CatalogId || CatalogId == 0) &&
-                    ((record.Active && !includeInactives) || includeInactives))
+                    (((record.Active == true) && !includeInactives) || includeInactives))
                     .AsNoTracking()
                     .ToListAsync();                    
             }
@@ -54,7 +54,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   MeasurementUnitId = ip.MeasurementUnitId,
                                   Description = ip.Description,
                                   Quantity = ip.Quantity,
-                                  Active = ip.Active,
+                                  Active = (ip.Active ?? false),
                                   CreatedBy = ip.CreatedBy,
                                   DateCreated = ip.DateCreated,
                                   UpdatedBy = ip.UpdatedBy,

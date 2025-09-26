@@ -11,6 +11,6 @@
         public double Length { get; set; }
         public double LowerDiameter { get; set; }
         public double UpperDiameter { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

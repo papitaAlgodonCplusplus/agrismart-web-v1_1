@@ -11,6 +11,6 @@
         public string? Formula { get; set; }
         public int Valence { get; set; }
         public bool IsPhAdjuster { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

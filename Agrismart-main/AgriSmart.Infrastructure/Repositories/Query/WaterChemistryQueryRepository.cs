@@ -33,7 +33,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
                                     && ((w.Id == waterId) || waterId == 0)
-                                    && ((w.Active && !includeInactives) || includeInactives)
+                                    && (((w.Active == true) && !includeInactives) || includeInactives)
                               select new WaterChemistry
                               {
                                   Id = wc.Id,
@@ -58,7 +58,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   EC = wc.EC,
                                   pH = wc.pH,
                                   AnalysisDate = wc.AnalysisDate,
-                                  Active = wc.Active,
+                                  Active = (wc.Active ?? false),
                                   CreatedBy = wc.CreatedBy,
                                   DateCreated = wc.DateCreated,
                                   UpdatedBy = wc.UpdatedBy,

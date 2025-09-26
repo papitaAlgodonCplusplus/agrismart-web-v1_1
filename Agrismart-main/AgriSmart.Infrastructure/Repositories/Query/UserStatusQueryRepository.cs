@@ -25,7 +25,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             {
                 return await (from us in _context.UserStatus
                               where
-                                  ((us.Active && !includeInactives) || includeInactives)
+                                  (((us.Active == true) && !includeInactives) || includeInactives)
                               select us).ToListAsync();
             }
             catch (Exception ex)

@@ -10,6 +10,6 @@
         public int AllowedUsers { get; set; }
         public int AllowedProductionUnits { get; set; }
         public int AllowedCropProductions { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

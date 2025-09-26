@@ -1,173 +1,205 @@
-// src/app/features/dashboard/dashboard.component.ts
-import { Component, OnInit } from '@angular/core';
-import { AuthService } from '../../core/auth/auth.service';
-import { CompanyService } from '../companies/services/company.service';
-import { FarmService } from '../farms/services/farm.service';
-import { CropService } from '../crops/services/crop.service';
-import { DeviceService } from '../devices/services/device.service';
-import { forkJoin } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
-import { DatePipe, CommonModule } from '@angular/common';
+// src/app/features/dashboard/dashboard.component.ts (Updated)
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Observable, forkJoin, of, catchError } from 'rxjs';
 
-export interface DashboardStats {
-  totalCompanies: number;
+// Services
+import { AuthService } from '../../core/auth/auth.service';
+import { ApiService } from '../../core/services/api.service';
+
+interface DashboardStats {
   totalFarms: number;
-  totalCrops: number;
   totalDevices: number;
   activeDevices: number;
+  totalCrops: number;
+  activeCropProductions: number;
+  totalUsers: number;
+  alertsCount: number;
 }
 
-export interface RecentActivity {
+interface RecentActivity {
   icon: string;
+  id: number;
+  type: string;
   message: string;
-  time: Date;
-  type: 'success' | 'info' | 'warning' | 'primary';
+  timestamp: Date;
+  user?: string;
 }
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
+  imports: [CommonModule],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss'],
-  providers: [DatePipe],
-  imports: [DatePipe, CommonModule]
+  styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
-  currentUser: any;
   stats: DashboardStats = {
-    totalCompanies: 0,
     totalFarms: 0,
-    totalCrops: 0,
     totalDevices: 0,
-    activeDevices: 0
+    activeDevices: 0,
+    totalCrops: 0,
+    activeCropProductions: 0,
+    totalUsers: 0,
+    alertsCount: 0
   };
+
+  recentActivities: RecentActivity[] = [];
+  rawData: any = {
+    farms: [],
+    devices: [],
+    crops: [],
+    cropProductions: [],
+    users: []
+  };
+
   isLoading = true;
   errorMessage = '';
-  currentDate = new Date();
-  rawData: any = {};
-  recentActivities: RecentActivity[] = [];
 
   constructor(
-    private router: Router,
     private authService: AuthService,
-    private companyService: CompanyService,
-    private farmService: FarmService,
-    private cropService: CropService,
-    private deviceService: DeviceService
+    private apiService: ApiService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
-    this.loadUserData();
     this.loadDashboardStats();
-    this.generateInitialActivities();
-  }
-
-  private loadUserData(): void {
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-    });
   }
 
   private loadDashboardStats(): void {
     this.isLoading = true;
     this.errorMessage = '';
 
-    // Use forkJoin to load all data in parallel
+    // Load data from multiple endpoints
     forkJoin({
-      companies: this.companyService.getAll().pipe(
-        catchError(error => {
-          console.error('Companies error:', error);
-          return of([]);
-        })
-      ),
-      farms: this.farmService.getAll().pipe(
-        catchError(error => {
-          console.error('Farms error:', error);
-          return of([]);
-        })
-      ),
-      crops: this.cropService.getAll().pipe(
-        catchError(error => {
-          console.error('Crops error:', error);
-          return of([]);
-        })
-      ),
-      devices: this.deviceService.getAll().pipe(
-        catchError(error => {
-          console.error('Devices error:', error);
-          return of([]);
-        })
-      )
+      farms: this.apiService.get('/Farm').pipe(catchError(() => of([]))),
+      devices: this.apiService.get('/Device').pipe(catchError(() => of([]))),
+      crops: this.apiService.get('/Crop').pipe(catchError(() => of([]))),
+      cropProductions: this.apiService.get('/CropProduction').pipe(catchError(() => of([]))),
+      users: this.apiService.get('/User').pipe(catchError(() => of([])))
     }).subscribe({
       next: (data) => {
         this.rawData = data;
-        this.processStats(data);
+        this.calculateStats();
+        this.generateRecentActivities();
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Dashboard data loading error:', error);
-        this.errorMessage = 'Error al cargar los datos del dashboard. Por favor, inténtalo de nuevo.';
+        console.error('Error loading dashboard data:', error);
+        this.errorMessage = 'Error al cargar los datos del dashboard';
         this.isLoading = false;
+        this.cdr.markForCheck();
       }
     });
   }
 
-  private processStats(data: any): void {
+  private calculateStats(): void {
+    console.log("rawData: ", this.rawData);
+
+    // Extract arrays from nested structure
+    const farms = this.rawData.farms?.farms || [];
+    const devices = this.rawData.devices?.devices || [];
+    const crops = this.rawData.crops?.crops || [];
+    const cropProductions = this.rawData.cropProductions?.cropProductions || [];
+    const users = this.rawData.users?.users || [];
+
     this.stats = {
-      totalCompanies: data.companies?.length || 0,
-      totalFarms: data.farms?.length || 0,
-      totalCrops: data.crops?.length || 0,
-      totalDevices: data.devices?.length || 0,
-      activeDevices: data.devices.length || 0
+      totalFarms: farms.length,
+      totalDevices: devices.length,
+      activeDevices: devices.filter((d: any) => d.isActive || d.active).length,
+      totalCrops: crops.length,
+      activeCropProductions: cropProductions.filter((cp: any) => cp.isActive || cp.active).length,
+      totalUsers: users.length,
+      alertsCount: this.calculateAlerts(devices, cropProductions)
     };
   }
 
-  private generateInitialActivities(): void {
-    const activities: RecentActivity[] = [
+  private calculateAlerts(devices: any[], cropProductions: any[]): number {
+    let alerts = 0;
+
+    // If no parameters provided, extract from rawData (for backward compatibility)
+    if (!devices || !cropProductions || devices === undefined || cropProductions === undefined) {
+      devices = this.rawData.devices?.devices || [];
+      cropProductions = this.rawData.cropProductions?.cropProductions || [];
+    }
+
+    // Count offline devices as alerts
+    alerts += devices.filter((d: any) => !(d.isActive || d.active)).length;
+
+    // Count inactive crop productions as potential alerts
+    alerts += cropProductions.filter((cp: any) => !(cp.isActive || cp.active)).length;
+
+    return alerts;
+  }
+
+  private generateRecentActivities(): void {
+    this.recentActivities = [
       {
         icon: 'bi-check-circle',
-        message: 'Sistema de riego automático activado',
-        time: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
-        type: 'success'
+        id: 1,
+        type: 'success',
+        message: 'Sistema de riego activado automáticamente',
+        timestamp: new Date(Date.now() - 15 * 60 * 1000),
+        user: 'Sistema'
       },
       {
         icon: 'bi-thermometer-half',
-        message: 'Sensor de temperatura registra 24°C',
-        time: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
-        type: 'info'
+        id: 2,
+        type: 'info',
+        message: 'Nuevos datos de sensores recibidos',
+        timestamp: new Date(Date.now() - 45 * 60 * 1000),
+        user: 'Sensor IoT-001'
       },
       {
         icon: 'bi-droplet',
-        message: 'Nivel de humedad del suelo: 65%',
-        time: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-        type: 'primary'
-      },
-      {
-        icon: 'bi-exclamation-triangle',
-        message: 'Dispositivo IoT requiere mantenimiento',
-        time: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        type: 'warning'
+        id: 3,
+        type: 'warning',
+        message: 'Nivel de pH fuera del rango óptimo',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        user: 'Monitor Químico'
       },
       {
         icon: 'bi-gear',
-        message: 'Configuración de fertilización actualizada',
-        time: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-        type: 'info'
+        id: 4,
+        type: 'primary',
+        message: 'Nuevo cultivo agregado al catálogo',
+        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
+        user: this.authService.getCurrentUser()?.name || 'Usuario'
       }
     ];
-
-    this.recentActivities = activities;
   }
 
-  getDeviceEfficiency(): number {
-    if (this.stats.totalDevices === 0) return 0;
-    return Math.round((this.stats.activeDevices / this.stats.totalDevices) * 100);
+  // Getter methods for dashboard cards
+  getTotalFarms(): number {
+    return this.stats.totalFarms;
   }
 
-  getMostActiveCompany(): string {
-    return this.rawData.companies?.[0]?.name || 'N/A';
+  getActiveFarms(): number {
+    return this.rawData.farms?.filter((f: any) => f.isActive || f.active)?.length || 0;
+  }
+
+  getTotalDevices(): number {
+    return this.stats.totalDevices;
+  }
+
+  getTotalCrops(): number {
+    return this.stats.totalCrops;
+  }
+
+  getActiveCropProductions(): number {
+    return this.stats.activeCropProductions;
+  }
+
+  getAlertsCount(): number {
+    return this.stats.alertsCount;
+  }
+
+  // Additional utility methods
+  getTopFarm(): string {
+    return this.rawData.farms?.[0]?.name || 'N/A';
   }
 
   getMostPopularCrop(): string {
@@ -252,5 +284,56 @@ export class DashboardComponent implements OnInit {
    */
   navigateToIrrigationDesignRequirements(): void {
     this.router.navigate(['/irrigation-engineering-design']);
+  }
+
+  // NEW: Navigation methods for new components
+
+  /**
+   * Navigate to crop catalog management
+   */
+  navigateToCrops(): void {
+    this.router.navigate(['/crops']);
+  }
+
+  /**
+   * Navigate to crop phases management
+   */
+  navigateToCropPhases(): void {
+    this.router.navigate(['/crop-phases']);
+  }
+
+  /**
+   * Navigate to phase requirements management
+   */
+  navigateToPhaseRequirements(): void {
+    this.router.navigate(['/phase-requirements']);
+  }
+
+  /**
+   * Navigate to crop production management
+   */
+  navigateToCropProduction(): void {
+    this.router.navigate(['/crop-production']);
+  }
+
+  /**
+   * Navigate to farms management
+   */
+  navigateToFarms(): void {
+    this.router.navigate(['/farms']);
+  }
+
+  /**
+   * Navigate to devices management
+   */
+  navigateToDevices(): void {
+    this.router.navigate(['/devices']);
+  }
+
+  /**
+   * Navigate to production units management
+   */
+  navigateToProductionUnits(): void {
+    this.router.navigate(['/production-units']);
   }
 }

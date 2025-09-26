@@ -8,6 +8,6 @@
         public string? SummaryTimeScale { get; set; }
         public string? YAxisScaleType { get; set; }
         public string? Series { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

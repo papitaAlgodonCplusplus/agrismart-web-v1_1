@@ -39,7 +39,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   && ((f.CompanyId == companyId) || companyId == 0)
                                   && ((f.Id == farmId) || farmId == 0)
                                   && ((pu.Id == productionUnitId) || productionUnitId == 0)
-                                  && ((cp.Active && !includeInactives) || includeInactives)
+                                  && (((cp.Active == true) && !includeInactives) || includeInactives)
                               group cp by cp.Id into cpg
                               select new CropProduction
                               {

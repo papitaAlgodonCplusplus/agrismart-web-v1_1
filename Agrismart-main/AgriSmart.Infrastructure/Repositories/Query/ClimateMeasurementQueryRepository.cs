@@ -28,7 +28,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                         DeviceId = record.DeviceId,
                         SensorLabel = record.SensorLabel,
                         Description = record.Description,
-                        Active = record.Active,
+                        Active = (record.Active ?? false),
                         DateCreated = record.DateCreated,
                         DateUpdated = record.DateUpdated,
                         CreatedBy = record.CreatedBy,

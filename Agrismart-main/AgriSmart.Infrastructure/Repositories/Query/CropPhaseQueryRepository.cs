@@ -32,7 +32,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                     )                                    
                                     && ((cp.CropId == cropId) || cropId == 0)
                                     && ((cp.CatalogId == catalogId) || catalogId == 0)
-                                    && ((cp.Active && !includeInactives) || includeInactives)
+                                    && (((cp.Active == true) && !includeInactives) || includeInactives)
                               select new CropPhase
                               {
                                   Id = cp.Id,
@@ -43,7 +43,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Sequence = cp.Sequence,
                                   StartingWeek = cp.StartingWeek,
                                   EndingWeek = cp.EndingWeek,
-                                  Active = cp.Active,
+                                  Active = (cp.Active ?? false),
                                   CreatedBy = cp.CreatedBy,
                                   DateCreated = cp.DateCreated,
                                   UpdatedBy = cp.UpdatedBy,
@@ -77,7 +77,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Sequence = cp.Sequence,
                                   StartingWeek = cp.StartingWeek,
                                   EndingWeek = cp.EndingWeek,
-                                  Active = cp.Active,
+                                  Active = (cp.Active ?? false),
                                   CreatedBy = cp.CreatedBy,
                                   DateCreated = cp.DateCreated,
                                   UpdatedBy = cp.UpdatedBy,

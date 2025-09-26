@@ -10,6 +10,6 @@ namespace AgriSmart.Application.Agronomic.Responses.Commands
         public int ProfileId { get; set; }
         public string? Token { get; set; }
         public DateTime ValidTo { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

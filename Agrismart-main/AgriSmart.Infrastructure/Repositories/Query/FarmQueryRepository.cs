@@ -37,7 +37,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                  )
                                  && ((c.ClientId == clientId) || clientId == 0)
                                  && ((f.CompanyId == companyId) || companyId == 0)
-                                 && ((f.Active && !includeInactives) || includeInactives)
+                                 && (((f.Active == true) && !includeInactives) || includeInactives)
                                  && ((c.ClientId == (from u in _context.User where u.Id == userId select u).FirstOrDefault().ClientId) || userId == 0)
                               group f by f.Id into fg
                               select new Farm

@@ -34,7 +34,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                     )
                                     && ((f.Id == fertilizerId) || fertilizerId == 0)
                                     && ((f.Id == fertilizerId) || fertilizerId == 0)
-                                    && ((fc.Active && !includeInactives) || includeInactives)
+                                    && (((fc.Active == true) && !includeInactives) || includeInactives)
                               select new FertilizerChemistry
                               {
                                   Id = fc.Id,
@@ -46,7 +46,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Solubility40 = fc.Solubility40,
                                   Formula = fc.Formula,
                                   Valence = fc.Valence,
-                                  Active = fc.Active,
+                                  Active = (fc.Active ?? false),
                                   IsPhAdjuster = fc.IsPhAdjuster,
                                   CreatedBy = fc.CreatedBy,
                                   DateCreated = fc.DateCreated,
@@ -83,7 +83,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Solubility20 = fc.Solubility20,
                                   Solubility40 = fc.Solubility40,
                                   Formula = fc.Formula,
-                                  Active = fc.Active,
+                                  Active = (fc.Active ?? false),
                                   IsPhAdjuster = fc.IsPhAdjuster,
                                   CreatedBy = fc.CreatedBy,
                                   DateCreated = fc.DateCreated,

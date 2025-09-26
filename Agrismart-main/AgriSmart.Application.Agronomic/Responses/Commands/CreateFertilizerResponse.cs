@@ -10,7 +10,7 @@ namespace AgriSmart.Application.Agronomic.Responses.Commands
         public string Name { get; set; }
         public string? Manufacturer { get; set; }
         public bool IsLiquid { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
 
         // NEW PROPERTIES ADDED
 

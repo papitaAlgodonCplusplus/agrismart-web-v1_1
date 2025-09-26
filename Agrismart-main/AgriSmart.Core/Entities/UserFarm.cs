@@ -7,7 +7,7 @@ namespace AgriSmart.Core.Entities
     {
         public int UserId { get; set; }
         public int FarmId { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
         public DateTime? DateCreated { get; set; }
         public DateTime? DateUpdated { get; set; }
         public int? CreatedBy { get; set; }

@@ -47,7 +47,12 @@
       "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Infrastructure\\Repositories\\Command\")",
       "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Commands\" /B)",
       "Bash(findstr:*)",
-      "Bash(del \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\fix_delete_mappings.py\")"
+      "Bash(del \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\fix_delete_mappings.py\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Queries\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Responses\\Queries\")",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Handlers\\Queries\" /B)",
+      "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Validators\\Queries\")",
+      "Bash(del fix_nullable_bool.py)"
     ],
     "deny": [],
     "ask": []

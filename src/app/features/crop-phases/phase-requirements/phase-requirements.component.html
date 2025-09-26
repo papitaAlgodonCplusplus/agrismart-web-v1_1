@@ -1,0 +1,543 @@
+<div class="phase-requirements-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="bi bi-clipboard-data"></i>
+        Requerimientos Nutricionales por Fase
+      </h1>
+      <p class="page-description">
+        Configuración de nutrientes y micronutrientes específicos para cada fase de cultivo
+      </p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary" (click)="showCreateForm()" [disabled]="isLoading">
+        <i class="bi bi-plus-circle"></i>
+        Nuevo Requerimiento
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" *ngIf="successMessage || errorMessage">
+    <div class="alert alert-success alert-dismissible" *ngIf="successMessage">
+      <i class="bi bi-check-circle"></i>
+      {{ successMessage }}
+      <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible" *ngIf="errorMessage">
+      <i class="bi bi-exclamation-triangle"></i>
+      {{ errorMessage }}
+      <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-primary">
+        <div class="stat-icon">
+          <i class="bi bi-clipboard-data"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ getTotalCount() }}</h4>
+          <p>Total Requerimientos</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-success">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ getActiveCount() }}</h4>
+          <p>Activos</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-info">
+        <div class="stat-icon">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ getValidatedCount() }}</h4>
+          <p>Validados</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-warning">
+        <div class="stat-icon">
+          <i class="bi bi-diagram-3"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ availableCropPhases.length }}</h4>
+          <p>Fases Disponibles</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-card">
+    <div class="filters-header">
+      <h5><i class="bi bi-funnel"></i> Filtros</h5>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+        <i class="bi bi-arrow-clockwise"></i> Limpiar
+      </button>
+    </div>
+    <div class="filters-body">
+      <div class="row g-3">
+        <!-- Search -->
+        <div class="col-md-3">
+          <label for="searchTerm" class="form-label">Buscar</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="searchTerm" 
+                   [(ngModel)]="filters.searchTerm" 
+                   (ngModelChange)="onFiltersChange()"
+                   placeholder="Nombre, descripción...">
+          </div>
+        </div>
+
+        <!-- Crop Filter -->
+        <div class="col-md-3">
+          <label for="cropFilter" class="form-label">Cultivo</label>
+          <select class="form-select" id="cropFilter" 
+                  [(ngModel)]="filters.cropId" 
+                  (ngModelChange)="onCropChange()">
+            <option [ngValue]="undefined">Todos los cultivos</option>
+            <option *ngFor="let crop of availableCrops" [ngValue]="crop.id">{{ crop.name }}</option>
+          </select>
+        </div>
+
+        <!-- Crop Phase Filter -->
+        <div class="col-md-3">
+          <label for="phaseFilter" class="form-label">Fase</label>
+          <select class="form-select" id="phaseFilter" 
+                  [(ngModel)]="filters.cropPhaseId" 
+                  (ngModelChange)="onFiltersChange()">
+            <option [ngValue]="undefined">Todas las fases</option>
+            <option *ngFor="let phase of getFilteredCropPhases()" [ngValue]="phase.id">
+              {{ getCropName(phase.cropId) }} - {{ phase.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Status Filters -->
+        <div class="col-md-3">
+          <label class="form-label">Estado</label>
+          <div class="form-checks">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="activeFilter" 
+                     [(ngModel)]="filters.onlyActive" 
+                     (ngModelChange)="onFiltersChange()">
+              <label class="form-check-label" for="activeFilter">Solo activos</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="validatedFilter" 
+                     [(ngModel)]="filters.onlyValidated" 
+                     (ngModelChange)="onFiltersChange()">
+              <label class="form-check-label" for="validatedFilter">Solo validados</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="table-card">
+    <div class="table-header">
+      <h5>
+        <i class="bi bi-table"></i>
+        Lista de Requerimientos
+        <span class="record-count">({{ getTotalCount() }} registros)</span>
+      </h5>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="text-center p-4" *ngIf="isLoading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2">Cargando requerimientos...</p>
+    </div>
+
+    <!-- No Data -->
+    <div class="no-data" *ngIf="!isLoading && filteredRequirements.length === 0">
+      <i class="bi bi-inbox"></i>
+      <p>No se encontraron requerimientos nutricionales</p>
+      <button type="button" class="btn btn-primary btn-sm" (click)="showCreateForm()">
+        <i class="bi bi-plus-circle"></i>
+        Crear primer requerimiento
+      </button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive" *ngIf="!isLoading && filteredRequirements.length > 0">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Cultivo</th>
+            <th>Fase</th>
+            <th>NPK</th>
+            <th>EC</th>
+            <th>pH</th>
+            <th>Estado</th>
+            <th>Validado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let requirement of getPaginatedData(); trackBy: trackByIndex">
+            <td>
+              <div class="crop-info">
+                <strong>{{ getCropName(requirement.cropPhaseId) }}</strong>
+              </div>
+            </td>
+            <td>
+              <div class="phase-info">
+                <strong>{{ getCropPhaseName(requirement.cropPhaseId) }}</strong>
+                <small class="text-muted" *ngIf="requirement.name">{{ requirement.name }}</small>
+              </div>
+            </td>
+            <td>
+              <span class="badge bg-info">{{ getNPKRatio(requirement) }}</span>
+              <small class="d-block text-muted">{{ getTotalNutrients(requirement) }} ppm</small>
+            </td>
+            <td>
+              <span class="nutrient-value">{{ requirement.ec || 0 }}</span>
+              <small class="text-muted">dS/m</small>
+            </td>
+            <td>
+              <span class="nutrient-value">{{ requirement.ph || 0 }}</span>
+            </td>
+            <td>
+              <span class="badge" 
+                    [class.bg-success]="requirement.active" 
+                    [class.bg-secondary]="!requirement.active">
+                {{ requirement.active ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" 
+                    [class.bg-success]="requirement.isValidated" 
+                    [class.bg-warning]="!requirement.isValidated">
+                {{ requirement.isValidated ? 'Validado' : 'Pendiente' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" 
+                        (click)="showEditForm(requirement)" 
+                        [disabled]="isLoading"
+                        title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-success me-1" 
+                        (click)="validateRequirement(requirement)" 
+                        [disabled]="isLoading || requirement.isValidated"
+                        title="Validar">
+                  <i class="bi bi-shield-check"></i>
+                </button>
+                <button type="button" class="btn btn-sm" 
+                        [class.btn-outline-warning]="requirement.active"
+                        [class.btn-outline-success]="!requirement.active"
+                        (click)="toggleRequirementStatus(requirement)" 
+                        [disabled]="isLoading"
+                        [title]="requirement.active ? 'Desactivar' : 'Activar'">
+                  <i class="bi" [class.bi-pause-circle]="requirement.active" [class.bi-play-circle]="!requirement.active"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-1" 
+                        (click)="deleteRequirement(requirement)" 
+                        [disabled]="isLoading"
+                        title="Eliminar">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-wrapper" *ngIf="!isLoading && filteredRequirements.length > pageSize">
+      <nav>
+        <ul class="pagination pagination-sm justify-content-center">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+          <li class="page-item" 
+              *ngFor="let page of [].constructor(getTotalPages()); let i = index" 
+              [class.active]="currentPage === i + 1">
+            <button class="page-link" (click)="goToPage(i + 1)">{{ i + 1 }}</button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === getTotalPages()">
+            <button class="page-link" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === getTotalPages()">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Form Modal -->
+<div class="form-overlay" *ngIf="isFormVisible" (click)="hideForm()">
+  <div class="form-panel" (click)="$event.stopPropagation()">
+    <div class="form-header">
+      <h5>
+        <i class="bi bi-clipboard-data"></i>
+        {{ isEditMode ? 'Editar Requerimiento' : 'Nuevo Requerimiento' }}
+      </h5>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="hideForm()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="requirementForm" (ngSubmit)="submitForm()" class="form-body">
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h6 class="form-section-title">Información Básica</h6>
+        <div class="row">
+          <div class="col-md-6">
+            <label for="name" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="name" formControlName="name"
+                   [class.is-invalid]="getFieldError('name')" placeholder="Nombre del requerimiento">
+            <div class="invalid-feedback">{{ getFieldError('name') }}</div>
+          </div>
+          <div class="col-md-6">
+            <label for="cropPhaseId" class="form-label">Fase de Cultivo *</label>
+            <select class="form-select" id="cropPhaseId" formControlName="cropPhaseId"
+                    [class.is-invalid]="getFieldError('cropPhaseId')">
+              <option value="">Seleccionar fase</option>
+              <option *ngFor="let phase of availableCropPhases" [value]="phase.id">
+                {{ getCropName(phase.cropId) }} - {{ phase.name }}
+              </option>
+            </select>
+            <div class="invalid-feedback">{{ getFieldError('cropPhaseId') }}</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12">
+            <label for="description" class="form-label">Descripción</label>
+            <textarea class="form-control" id="description" formControlName="description" rows="3"
+                      [class.is-invalid]="getFieldError('description')" 
+                      placeholder="Descripción del requerimiento nutricional"></textarea>
+            <div class="invalid-feedback">{{ getFieldError('description') }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Macronutrients Section -->
+      <div class="form-section">
+        <div class="form-section-header" (click)="toggleMacronutrients()">
+          <h6 class="form-section-title">
+            <i class="bi bi-chevron-down" [class.rotated]="!showMacronutrients"></i>
+            Macronutrientes (ppm)
+          </h6>
+        </div>
+        
+        <div class="collapsible-content" [class.collapsed]="!showMacronutrients">
+          <div class="row">
+            <div class="col-md-3">
+              <label for="no3" class="form-label">Nitrato (NO₃⁻)</label>
+              <input type="number" class="form-control" id="no3" formControlName="no3"
+                     [class.is-invalid]="getFieldError('no3')" placeholder="0" step="0.1" min="0">
+              <div class="invalid-feedback">{{ getFieldError('no3') }}</div>
+            </div>
+            <div class="col-md-3">
+              <label for="nh4" class="form-label">Amonio (NH₄⁺)</label>
+              <input type="number" class="form-control" id="nh4" formControlName="nh4"
+                     [class.is-invalid]="getFieldError('nh4')" placeholder="0" step="0.1" min="0">
+              <div class="invalid-feedback">{{ getFieldError('nh4') }}</div>
+            </div>
+            <div class="col-md-3">
+              <label for="h2po4" class="form-label">Fosfato (H₂PO₄⁻)</label>
+              <input type="number" class="form-control" id="h2po4" formControlName="h2po4"
+                     [class.is-invalid]="getFieldError('h2po4')" placeholder="0" step="0.1" min="0">
+              <div class="invalid-feedback">{{ getFieldError('h2po4') }}</div>
+            </div>
+            <div class="col-md-3">
+              <label for="k" class="form-label">Potasio (K⁺)</label>
+              <input type="number" class="form-control" id="k" formControlName="k"
+                     [class.is-invalid]="getFieldError('k')" placeholder="0" step="0.1" min="0">
+              <div class="invalid-feedback">{{ getFieldError('k') }}</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-3">
+              <label for="ca" class="form-label">Calcio (Ca²⁺)</label>
+              <input type="number" class="form-control" id="ca" formControlName="ca"
+                     [class.is-invalid]="getFieldError('ca')" placeholder="0" step="0.1" min="0">
+              <div class="invalid-feedback">{{ getFieldError('ca') }}</div>
+            </div>
+            <div class="col-md-3">
+              <label for="mg" class="form-label">Magnesio (Mg²⁺)</label>
+              <input type="number" class="form-control" id="mg" formControlName="mg"
+                     [class.is-invalid]="getFieldError('mg')" placeholder="0" step="0.1" min="0">
+              <div class="invalid-feedback">{{ getFieldError('mg') }}</div>
+            </div>
+            <div class="col-md-3">
+              <label for="so4" class="form-label">Sulfato (SO₄²⁻)</label>
+              <input type="number" class="form-control" id="so4" formControlName="so4"
+                     [class.is-invalid]="getFieldError('so4')" placeholder="0" step="0.1" min="0">
+              <div class="invalid-feedback">{{ getFieldError('so4') }}</div>
+            </div>
+            <div class="col-md-3">
+              <label for="cl" class="form-label">Cloruro (Cl⁻)</label>
+              <input type="number" class="form-control" id="cl" formControlName="cl"
+                     [class.is-invalid]="getFieldError('cl')" placeholder="0" step="0.1" min="0">
+              <div class="invalid-feedback">{{ getFieldError('cl') }}</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <label for="na" class="form-label">Sodio (Na⁺)</label>
+              <input type="number" class="form-control" id="na" formControlName="na"
+                     [class.is-invalid]="getFieldError('na')" placeholder="0" step="0.1" min="0">
+              <div class="invalid-feedback">{{ getFieldError('na') }}</div>
+            </div>
+            <div class="col-md-4">
+              <label for="hco3" class="form-label">Bicarbonato (HCO₃⁻)</label>
+              <input type="number" class="form-control" id="hco3" formControlName="hco3"
+                     [class.is-invalid]="getFieldError('hco3')" placeholder="0" step="0.1" min="0">
+              <div class="invalid-feedback">{{ getFieldError('hco3') }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Micronutrients Section -->
+      <div class="form-section">
+        <div class="form-section-header" (click)="toggleMicronutrients()">
+          <h6 class="form-section-title">
+            <i class="bi bi-chevron-down" [class.rotated]="!showMicronutrients"></i>
+            Micronutrientes (ppm)
+          </h6>
+        </div>
+        
+        <div class="collapsible-content" [class.collapsed]="!showMicronutrients">
+          <div class="row">
+            <div class="col-md-2">
+              <label for="fe" class="form-label">Hierro (Fe)</label>
+              <input type="number" class="form-control" id="fe" formControlName="fe"
+                     [class.is-invalid]="getFieldError('fe')" placeholder="0" step="0.01" min="0">
+              <div class="invalid-feedback">{{ getFieldError('fe') }}</div>
+            </div>
+            <div class="col-md-2">
+              <label for="mn" class="form-label">Manganeso (Mn)</label>
+              <input type="number" class="form-control" id="mn" formControlName="mn"
+                     [class.is-invalid]="getFieldError('mn')" placeholder="0" step="0.01" min="0">
+              <div class="invalid-feedback">{{ getFieldError('mn') }}</div>
+            </div>
+            <div class="col-md-2">
+              <label for="zn" class="form-label">Zinc (Zn)</label>
+              <input type="number" class="form-control" id="zn" formControlName="zn"
+                     [class.is-invalid]="getFieldError('zn')" placeholder="0" step="0.01" min="0">
+              <div class="invalid-feedback">{{ getFieldError('zn') }}</div>
+            </div>
+            <div class="col-md-2">
+              <label for="cu" class="form-label">Cobre (Cu)</label>
+              <input type="number" class="form-control" id="cu" formControlName="cu"
+                     [class.is-invalid]="getFieldError('cu')" placeholder="0" step="0.01" min="0">
+              <div class="invalid-feedback">{{ getFieldError('cu') }}</div>
+            </div>
+            <div class="col-md-2">
+              <label for="b" class="form-label">Boro (B)</label>
+              <input type="number" class="form-control" id="b" formControlName="b"
+                     [class.is-invalid]="getFieldError('b')" placeholder="0" step="0.01" min="0">
+              <div class="invalid-feedback">{{ getFieldError('b') }}</div>
+            </div>
+            <div class="col-md-2">
+              <label for="mo" class="form-label">Molibdeno (Mo)</label>
+              <input type="number" class="form-control" id="mo" formControlName="mo"
+                     [class.is-invalid]="getFieldError('mo')" placeholder="0" step="0.001" min="0">
+              <div class="invalid-feedback">{{ getFieldError('mo') }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Solution Properties Section -->
+      <div class="form-section">
+        <div class="form-section-header" (click)="toggleSolutionProperties()">
+          <h6 class="form-section-title">
+            <i class="bi bi-chevron-down" [class.rotated]="!showSolutionProperties"></i>
+            Propiedades de la Solución
+          </h6>
+        </div>
+        
+        <div class="collapsible-content" [class.collapsed]="!showSolutionProperties">
+          <div class="row">
+            <div class="col-md-4">
+              <label for="ec" class="form-label">Conductividad Eléctrica (EC)</label>
+              <input type="number" class="form-control" id="ec" formControlName="ec"
+                     [class.is-invalid]="getFieldError('ec')" placeholder="1.2" step="0.1" min="0" max="10">
+              <div class="invalid-feedback">{{ getFieldError('ec') }}</div>
+              <small class="form-text text-muted">dS/m</small>
+            </div>
+            <div class="col-md-4">
+              <label for="ph" class="form-label">pH</label>
+              <input type="number" class="form-control" id="ph" formControlName="ph"
+                     [class.is-invalid]="getFieldError('ph')" placeholder="6.5" step="0.1" min="3" max="9">
+              <div class="invalid-feedback">{{ getFieldError('ph') }}</div>
+            </div>
+            <div class="col-md-4">
+              <label for="temperature" class="form-label">Temperatura Óptima</label>
+              <input type="number" class="form-control" id="temperature" formControlName="temperature"
+                     [class.is-invalid]="getFieldError('temperature')" placeholder="22" step="0.1" min="10" max="35">
+              <div class="invalid-feedback">{{ getFieldError('temperature') }}</div>
+              <small class="form-text text-muted">°C</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes Section -->
+      <div class="form-section">
+        <div class="row">
+          <div class="col-12">
+            <label for="notes" class="form-label">Notas</label>
+            <textarea class="form-control" id="notes" formControlName="notes" rows="3"
+                      [class.is-invalid]="getFieldError('notes')" 
+                      placeholder="Notas adicionales sobre este requerimiento"></textarea>
+            <div class="invalid-feedback">{{ getFieldError('notes') }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="form-section">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="active" formControlName="active">
+          <label class="form-check-label" for="active">
+            Requerimiento activo
+          </label>
+        </div>
+      </div>
+    </form>
+
+    <div class="form-footer">
+      <button type="button" class="btn btn-secondary" (click)="hideForm()" [disabled]="isLoading">
+        <i class="bi bi-x-circle"></i>
+        Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" (click)="submitForm()" [disabled]="isLoading || requirementForm.invalid">
+        <span class="spinner-border spinner-border-sm me-2" *ngIf="isLoading"></span>
+        <i class="bi bi-check-circle" *ngIf="!isLoading"></i>
+        {{ isEditMode ? 'Actualizar' : 'Crear' }} Requerimiento
+      </button>
+    </div>
+  </div>
+</div>

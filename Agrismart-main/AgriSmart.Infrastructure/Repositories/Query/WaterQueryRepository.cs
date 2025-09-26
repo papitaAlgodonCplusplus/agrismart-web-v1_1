@@ -31,13 +31,13 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
-                                    && ((f.Active && !includeInactives) || includeInactives)
+                                    && (((f.Active == true) && !includeInactives) || includeInactives)
                               select new Water
                               {
                                   Id = f.Id,
                                   CatalogId = f.CatalogId,
                                   Name = f.Name,
-                                  Active = f.Active,
+                                  Active = (f.Active ?? false),
                                   DateCreated = f.DateCreated,
                                   DateUpdated = f.DateUpdated,
                                   CreatedBy = f.CreatedBy,
@@ -67,7 +67,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   Id = f.Id,
                                   CatalogId = f.CatalogId,
                                   Name = f.Name,
-                                  Active = f.Active,
+                                  Active = (f.Active ?? false),
                                   DateCreated = f.DateCreated,
                                   DateUpdated = f.DateUpdated,
                                   CreatedBy = f.CreatedBy,

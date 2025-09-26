@@ -23,6 +23,6 @@
         public double Longitude { get; set; }
         public double DepletionPercentage { get; set; }
         public double DrainThreshold { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }

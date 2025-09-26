@@ -21,7 +21,7 @@ namespace AgriSmart.Core.Entities
         
         public bool IsLiquid { get; set; }
         
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
 
         // NEW PROPERTIES ADDED
 

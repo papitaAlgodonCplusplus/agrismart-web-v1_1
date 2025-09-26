@@ -8,6 +8,6 @@
         public string? Description { get; set; }
         public string? Script { get; set; }
         public int EntityType { get; set; }
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
     }
 }
