@@ -1267,11 +1267,12 @@ export class FertilizerService {
 
     return this.http.get<BackendResponse<any>>(url, { params, headers }).pipe(
       map(response => {
-        if (response) {
-
+        // If backend returns { success: false, result: null }, treat as no data, not error
+        if (response && response.result !== undefined && response.result !== null) {
           return response.result;
         }
-        throw new Error(`Get crop phase solution requirement failed: ${response}`);
+        // If result is null, just return null (don't throw)
+        return null;
       }),
       catchError(error => {
         console.error('CropService.getCropPhaseSolutionRequirement error:', error);
