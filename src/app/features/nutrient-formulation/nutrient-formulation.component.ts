@@ -355,7 +355,7 @@ export class NutrientFormulationComponent implements OnInit {
     public readonly FERTILIZER_INPUT_ENDPOINT = '/FertilizerInput';
     public readonly ANALYTICAL_ENTITY_ENDPOINT = '/AnalyticalEntity';
     waterSources: WaterChemistry[] = [];
-    fertilizers: Fertilizer[] = [];
+    fertilizers: any[] = [];
     fertilizerChemistries: FertilizerChemistry[] = [];
     crops: Crop[] = [];
     cropPhases: CropPhase[] = [];
@@ -395,6 +395,7 @@ export class NutrientFormulationComponent implements OnInit {
         public fb: FormBuilder,
         public http: HttpClient,
         public router: Router,
+        private fixedFormulationService: RealDataSimpleFormulationService,
         public authService: AuthService,
         public waterChemistryService: WaterChemistryService,
         public fertilizerService: FertilizerService,
@@ -430,6 +431,7 @@ export class NutrientFormulationComponent implements OnInit {
         this.loadSavedRecipes();
         this.loadInitialData();
         this.loadFormData();
+        this.debugFertilizerProperties();
         this.loadRealCropPhaseRequirements(); // Add this line
         setTimeout(() => {
             this.debugCropPhaseRequirements();
@@ -615,19 +617,7 @@ export class NutrientFormulationComponent implements OnInit {
             maxBudgetPerLiter: Number(formValue.maxBudgetPerLiter) || 100
         };
     }
-    public calculateWithRealDataFixed(
-        formValue: any,
-        waterSource: WaterChemistry,
-        crop: Crop,
-        phase?: CropPhase
-    ): void {
-        this.currentRecipe = this.createRecipeFromForm(formValue, waterSource, crop, phase);
-        this.currentRecipe.fertilizers = this.calculateEnhancedFertilizerMixFixed(this.currentRecipe);
-        this.formulationResults = this.generateEnhancedFormulationResults(this.currentRecipe, waterSource);
-        this.saveRecipe();
-        this.isLoading = false;
-        this.Message = `Formulación calculada exitosamente. Fertilizantes seleccionados: ${this.currentRecipe.fertilizers.length}`;
-    }
+   
     public calculateEnhancedFertilizerMixFixed(recipe: FormulationRecipe): RecipeFertilizer[] {
         const selectedFertilizers: RecipeFertilizer[] = [];
         const availableFertilizers = this.fertilizers.filter(f => f.isActive);
@@ -2495,7 +2485,7 @@ export class NutrientFormulationComponent implements OnInit {
         }
 
         // Create request with real data
-        const request: SimpleFormulationRequest = {
+        const request = {
             cropId: formValue.cropId,
             cropPhaseId: formValue.cropPhaseId,
             volumeLiters: formValue.volumeLiters,
@@ -2541,20 +2531,15 @@ export class NutrientFormulationComponent implements OnInit {
             return null;
         }
 
-        console.log('Looking for cropPhaseId:', phaseId);
-        console.log('Available requirements:', this.cropPhaseSolutionRequirements);
-
         // Try multiple possible matching strategies since the data structure might vary
         let realRequirement = this.cropPhaseSolutionRequirements.find(r =>
             r.cropPhaseId === phaseId || r.phaseId === phaseId || r.id === phaseId
         );
 
         if (!realRequirement) {
-            console.warn(`No real requirements found for cropPhaseId: ${phaseId}`);
             return null;
         }
 
-        console.log(`Found requirements for cropPhaseId: ${phaseId}`, realRequirement);
 
         // Validate that the requirement has actual nutrient data
         // Check both lowercase and uppercase property names
@@ -2615,35 +2600,6 @@ export class NutrientFormulationComponent implements OnInit {
             ph: req.ph || 'N/A',
             ec: req.ec || 'N/A'
         };
-    }
-
-    /**
-     * Get REAL fertilizers with compositions from database ONLY
-     * Returns only fertilizers that have actual composition data - NO FALLBACKS
-     */
-    public getRealFertilizersWithCompositions(): any[] {
-        if (!this.fertilizers || this.fertilizers.length === 0) {
-            // console.warn('No fertilizers loaded from database');
-            return [];
-        }
-
-        const realFertilizers = this.fertilizers.filter(fertilizer => {
-            // Must be active
-            if (!fertilizer.isActive) return false;
-
-            // Must have real composition data from database
-            const hasRealComposition = this.hasRealCompositionData(fertilizer);
-
-            if (!hasRealComposition) {
-                // console.warn(`Fertilizer ${fertilizer.name} excluded - no real composition data`);
-            }
-
-            return hasRealComposition;
-        });
-
-        // console.log(`Found ${realFertilizers.length} fertilizers with real composition data out of ${this.fertilizers.length} total`);
-
-        return realFertilizers;
     }
 
     /**
@@ -3004,5 +2960,350 @@ export class NutrientFormulationComponent implements OnInit {
             console.log(`Has requirements: ${hasReq}`);
             console.log('Requirement data:', reqData);
         }
+    }
+
+
+
+    /**
+     * Replace the calculateWithRealDataFixed method with this improved version
+     */
+    calculateWithRealDataFixed(formValue: any, selectedWaterSource: any, selectedCrop: any, selectedPhase: any): void {
+        console.log('=== STARTING REAL DATA CALCULATION ===');
+        console.log('Form value:', formValue);
+        console.log('Selected water source:', selectedWaterSource);
+        console.log('Selected crop:', selectedCrop);
+        console.log('Selected phase:', selectedPhase);
+
+        this.isLoading = true;
+        this.errorMessage = '';
+        this.successMessage = '';
+
+        try {
+            // Get real requirements for the selected crop phase
+            const realRequirement = this.getRealCropPhaseRequirements(formValue.cropPhaseId);
+
+            if (!realRequirement) {
+                this.errorMessage = `No se encontraron requerimientos nutricionales reales para la fase seleccionada (ID: ${formValue.cropPhaseId})`;
+                this.isLoading = false;
+                return;
+            }
+
+            console.log('Real requirement found:', realRequirement);
+
+            // Get real fertilizers with compositions
+            const realFertilizers = this.getRealFertilizersWithCompositions();
+
+            if (realFertilizers.length === 0) {
+                this.errorMessage = 'No se encontraron fertilizantes con composiciones reales en la base de datos';
+                this.isLoading = false;
+                return;
+            }
+
+            console.log(`Found ${realFertilizers.length} valid fertilizers with compositions`);
+
+            // Prepare formulation request
+            const formRequest = {
+                recipeName: formValue.recipeName || `Formulación ${new Date().toLocaleDateString()}`,
+                volumeLiters: formValue.volumeLiters,
+                cropId: formValue.cropId,
+                cropPhaseId: formValue.cropPhaseId,
+                waterSourceId: formValue.waterSourceId,
+                targetPh: formValue.targetPh,
+                targetEc: formValue.targetEc
+            };
+
+            console.log('Formulation request:', formRequest);
+
+            // Use the FIXED service to calculate formulation
+            this.fixedFormulationService.calculateSimpleFormulation(
+                formRequest,
+                realRequirement,
+                realFertilizers
+            ).subscribe({
+                next: (result) => {
+                    console.log('=== FORMULATION SUCCESS ===');
+                    console.log('Result:', result);
+
+                    this.simpleFormulationResult = result;
+                    this.successMessage = 'Formulación calculada exitosamente usando datos reales de la base de datos';
+                    this.isLoading = false;
+
+                    // Log nutrient achievement summary
+                    const balance = result.nutrientBalance;
+                    console.log('Nutrient Achievement Summary:');
+                    console.log(`N: ${balance.nitrogen.achieved.toFixed(1)}/${balance.nitrogen.target} ppm (${(balance.nitrogen.ratio * 100).toFixed(1)}%)`);
+                    console.log(`P: ${balance.phosphorus.achieved.toFixed(1)}/${balance.phosphorus.target} ppm (${(balance.phosphorus.ratio * 100).toFixed(1)}%)`);
+                    console.log(`K: ${balance.potassium.achieved.toFixed(1)}/${balance.potassium.target} ppm (${(balance.potassium.ratio * 100).toFixed(1)}%)`);
+                },
+                error: (error) => {
+                    console.error('=== FORMULATION ERROR ===');
+                    console.error(error);
+                    this.errorMessage = `Error en el cálculo de formulación: ${error.message || error}`;
+                    this.isLoading = false;
+                }
+            });
+
+        } catch (error) {
+            console.error('Unexpected error in calculateWithRealDataFixed:', error);
+            this.errorMessage = `Error inesperado: ${error}`;
+            this.isLoading = false;
+        }
+    }
+
+    /**
+     * Enhanced method to get real fertilizers with better composition detection
+     */
+    public getRealFertilizersWithCompositions(): any[] {
+        if (!this.fertilizers || this.fertilizers.length === 0) {
+            console.warn('No fertilizers loaded from database');
+            return [];
+        }
+
+        const realFertilizers = this.fertilizers.filter(fertilizer => {
+            // Must be active
+            if (!fertilizer.isActive) {
+                console.log(`Fertilizer ${fertilizer.name} - excluded: not active`);
+                return false;
+            }
+
+            // Must have real composition data from database
+            const hasRealComposition = this.hasEnhancedCompositionData(fertilizer);
+
+            if (!hasRealComposition) {
+                console.log(`Fertilizer ${fertilizer.name} - excluded: no real composition data`);
+                console.log('Available fields:', Object.keys(fertilizer));
+            } else {
+                console.log(`Fertilizer ${fertilizer.name} - included: has composition data`);
+            }
+
+            return hasRealComposition;
+        });
+
+        console.log(`Found ${realFertilizers.length} fertilizers with real composition data out of ${this.fertilizers.length} total`);
+
+        // Log composition details for debugging
+        realFertilizers.forEach(f => {
+            console.log(`${f.name} composition details:`, {
+                composition: f.composition,
+                percentages: {
+                    N: f.nitrogenPercentage,
+                    P: f.phosphorusPercentage,
+                    K: f.potassiumPercentage
+                },
+                chemical: {
+                    N: f.n || f.N,
+                    P: f.p || f.P,
+                    K: f.k || f.K
+                }
+            });
+        });
+
+        return realFertilizers;
+    }
+
+    /**
+     * Enhanced composition detection method
+     */
+    public hasEnhancedCompositionData(fertilizer: any): boolean {
+        // Strategy 1: Check composition object from database
+        if (fertilizer.composition) {
+            const comp = fertilizer.composition;
+            if ((comp.nitrogen && comp.nitrogen > 0) ||
+                (comp.phosphorus && comp.phosphorus > 0) ||
+                (comp.potassium && comp.potassium > 0)) {
+                return true;
+            }
+        }
+
+        // Strategy 2: Check percentage fields from database
+        if ((fertilizer.nitrogenPercentage && fertilizer.nitrogenPercentage > 0) ||
+            (fertilizer.phosphorusPercentage && fertilizer.phosphorusPercentage > 0) ||
+            (fertilizer.potassiumPercentage && fertilizer.potassiumPercentage > 0)) {
+            return true;
+        }
+
+        // Strategy 3: Check direct chemical analysis fields
+        if ((fertilizer.n && fertilizer.n > 0) || (fertilizer.N && fertilizer.N > 0) ||
+            (fertilizer.p && fertilizer.p > 0) || (fertilizer.P && fertilizer.P > 0) ||
+            (fertilizer.k && fertilizer.k > 0) || (fertilizer.K && fertilizer.K > 0) ||
+            (fertilizer.h2po4 && fertilizer.h2po4 > 0) || (fertilizer.H2PO4 && fertilizer.H2PO4 > 0)) {
+            return true;
+        }
+
+        // Strategy 4: Check if name/description contains NPK ratios
+        const npkPattern = /(\d+)-(\d+)-(\d+)/;
+        if ((fertilizer.name && npkPattern.test(fertilizer.name)) ||
+            (fertilizer.description && npkPattern.test(fertilizer.description))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Enhanced requirement display with better data extraction
+     */
+    public getEnhancedRequirementDisplayData(cropPhaseId: number | string): any | null {
+        const req = this.getRealCropPhaseRequirements(cropPhaseId);
+        if (!req) return null;
+
+        const displayData = {
+            nitrogen: (req.no3 || 0) + (req.nh4 || 0),
+            phosphorus: req.h2po4 || req.H2PO4 || 0,
+            potassium: req.k || req.K || 0,
+            calcium: req.ca || req.Ca || 0,
+            magnesium: req.mg || req.Mg || 0,
+            sulfur: req.so4 || req.SO4 || 0,
+            iron: req.fe || req.Fe || 0,
+            ph: req.ph || req.pH || 'N/A',
+            ec: req.ec || req.EC || 'N/A'
+        };
+
+        console.log('Enhanced requirement display data:', displayData);
+        return displayData;
+    }
+
+    /**
+     * Debugging helper to log all available fertilizer properties
+     */
+    public debugFertilizerProperties(): void {
+        if (!this.fertilizers || this.fertilizers.length === 0) return;
+
+        console.log('=== FERTILIZER PROPERTIES DEBUG ===');
+        this.fertilizers.slice(0, 3).forEach((fertilizer, index) => {
+            console.log(`\nFertilizer ${index + 1}: ${fertilizer.name}`);
+            console.log('All properties:', Object.keys(fertilizer).sort());
+
+            // Check for any property that might contain composition data
+            const compositionProps = Object.keys(fertilizer).filter(key =>
+                key.toLowerCase().includes('nitrogen') ||
+                key.toLowerCase().includes('phosphorus') ||
+                key.toLowerCase().includes('potassium') ||
+                key.toLowerCase().includes('percentage') ||
+                key.toLowerCase().includes('composition') ||
+                key === 'n' || key === 'N' ||
+                key === 'p' || key === 'P' ||
+                key === 'k' || key === 'K' ||
+                key === 'npk' || key === 'NPK'
+            );
+
+            console.log('Potential composition properties:', compositionProps);
+            compositionProps.forEach(prop => {
+                console.log(`  ${prop}: ${fertilizer[prop]}`);
+            });
+        });
+    }
+
+
+    /**
+     * Enhanced validation method for simple formulation availability
+     */
+    isEnhancedSimpleFormulationAvailable(): boolean {
+        // Check if we have crop phase requirements loaded
+        const hasRequirements = this.cropPhaseSolutionRequirements &&
+            this.cropPhaseSolutionRequirements.length > 0;
+
+        // Check if we have fertilizers with compositions loaded
+        const validFertilizers = this.getRealFertilizersWithCompositions();
+        const hasFertilizers = validFertilizers.length > 0;
+
+        // Check if we have water sources loaded
+        const hasWaterSources = this.waterSources && this.waterSources.length > 0;
+
+        // Check if we have crops loaded
+        const hasCrops = this.crops && this.crops.length > 0;
+
+        const isAvailable = hasRequirements && hasFertilizers && hasWaterSources && hasCrops;
+
+        console.log('Simple Formulation Availability Check:', {
+            hasRequirements: hasRequirements,
+            requirementsCount: this.cropPhaseSolutionRequirements?.length || 0,
+            hasFertilizers: hasFertilizers,
+            fertilizersCount: validFertilizers.length,
+            hasWaterSources: hasWaterSources,
+            waterSourcesCount: this.waterSources?.length || 0,
+            hasCrops: hasCrops,
+            cropsCount: this.crops?.length || 0,
+            isAvailable: isAvailable
+        });
+
+        return isAvailable;
+    }
+
+    /**
+     * Method to display detailed formulation results with better formatting
+     */
+    getDetailedFormulationSummary(): string {
+        if (!this.simpleFormulationResult) return '';
+
+        const result = this.simpleFormulationResult;
+        const balance = result.nutrientBalance;
+
+        const formatRatio = (ratio: number): string => {
+            const percentage = ratio * 100;
+            if (percentage >= 90) return `${percentage.toFixed(0)}% ✅`;
+            if (percentage >= 70) return `${percentage.toFixed(0)}% ⚠️`;
+            return `${percentage.toFixed(0)}% ❌`;
+        };
+
+        return [
+            `Nitrógeno: ${balance.nitrogen.achieved.toFixed(1)}/${balance.nitrogen.target} ppm (${formatRatio(balance.nitrogen.ratio)})`,
+            `Fósforo: ${balance.phosphorus.achieved.toFixed(1)}/${balance.phosphorus.target} ppm (${formatRatio(balance.phosphorus.ratio)})`,
+            `Potasio: ${balance.potassium.achieved.toFixed(1)}/${balance.potassium.target} ppm (${formatRatio(balance.potassium.ratio)})`,
+            `Fertilizantes: ${result.fertilizers.length}`,
+            `Costo total: ₡${result.totalCost.toFixed(2)}`
+        ].join(' | ');
+    }
+
+    /**
+     * Get color class for nutrient achievement status
+     */
+    getNutrientAchievementColor(nutrient: 'nitrogen' | 'phosphorus' | 'potassium'): string {
+        if (!this.simpleFormulationResult) return 'text-muted';
+
+        const ratio = this.simpleFormulationResult.nutrientBalance[nutrient].ratio;
+
+        if (ratio >= 0.9) return 'text-success'; // Green for 90%+ achievement
+        if (ratio >= 0.7) return 'text-warning'; // Yellow for 70-89% achievement
+        return 'text-danger'; // Red for <70% achievement
+    }
+
+    /**
+     * Check if formulation meets minimum quality standards
+     */
+    isFormulationAcceptable(): boolean {
+        if (!this.simpleFormulationResult) return false;
+
+        const balance = this.simpleFormulationResult.nutrientBalance;
+
+        // Require at least 70% achievement for primary nutrients
+        return balance.nitrogen.ratio >= 0.7 &&
+            balance.phosphorus.ratio >= 0.7 &&
+            balance.potassium.ratio >= 0.7;
+    }
+
+    /**
+     * Generate recommendation text for improving formulation
+     */
+    getFormulationRecommendations(): string[] {
+        if (!this.simpleFormulationResult) return [];
+
+        const recommendations: string[] = [];
+        const balance = this.simpleFormulationResult.nutrientBalance;
+
+        if (balance.nitrogen.ratio < 0.7) {
+            recommendations.push('Considerar fertilizantes con mayor contenido de nitrógeno');
+        }
+        if (balance.phosphorus.ratio < 0.7) {
+            recommendations.push('Considerar fertilizantes con mayor contenido de fósforo');
+        }
+        if (balance.potassium.ratio < 0.7) {
+            recommendations.push('Considerar fertilizantes con mayor contenido de potasio');
+        }
+        if (this.simpleFormulationResult.fertilizers.length > 4) {
+            recommendations.push('Simplificar formulación usando menos fertilizantes');
+        }
+
+        return recommendations;
     }
 }

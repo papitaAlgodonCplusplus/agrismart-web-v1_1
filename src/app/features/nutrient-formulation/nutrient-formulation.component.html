@@ -232,161 +232,154 @@
                 </div>
               </div>
 
-              <!-- Results Section -->
-              <div class="card mt-4" *ngIf="simpleFormulationResult">
+              <!-- Enhanced Simple Formulation Results Section -->
+              <div *ngIf="simpleFormulationResult" class="card mt-4">
                 <div class="card-header">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                      <i class="bi bi-clipboard-data me-2"></i>
-                      Resultados con Datos
-                      <span class="badge bg-success ms-2">Base de Datos</span>
-                    </h5>
-                    <div class="btn-group">
-                      <button class="btn btn-success btn-sm" (click)="saveSimpleFormulation()">
-                        <i class="bi bi-bookmark-plus me-1"></i>
-                        Guardar Receta
-                      </button>
-                      <button class="btn btn-outline-primary btn-sm" (click)="exportSimpleFormulation()">
-                        <i class="bi bi-download me-1"></i>
-                        Exportar
-                      </button>
-                    </div>
-                  </div>
+                  <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Formulación Simple - Resultados Mejorados
+                    <span *ngIf="isFormulationAcceptable()" class="badge bg-success ms-2">ACEPTABLE</span>
+                    <span *ngIf="!isFormulationAcceptable()" class="badge bg-warning ms-2">REQUIERE MEJORAS</span>
+                  </h5>
                 </div>
+
                 <div class="card-body">
-
-                  <!-- Recipe Summary -->
+                  <!-- Summary Stats -->
                   <div class="row mb-4">
-                    <div class="col-md-8">
-                      <h6 class="text-muted">{{ simpleFormulationResult.recipeName }}</h6>
-                      <p class="mb-1">
-                        <strong>Cultivo:</strong> {{ getCropName(simpleFormulationResult.cropId) }}
-                        <span *ngIf="simpleFormulationResult.cropPhaseId"> - {{
-                          getCropPhaseName(simpleFormulationResult.cropPhaseId) }}</span>
-                      </p>
-                      <p class="mb-1">
-                        <strong>Volumen:</strong> {{ simpleFormulationResult.volumeLiters }}L
-                      </p>
-                      <p class="mb-1">
-                        <strong>pH Objetivo:</strong> {{ simpleFormulationResult.targetPh }} |
-                        <strong>EC Objetivo:</strong> {{ simpleFormulationResult.targetEc }} mS/cm
-                      </p>
-                      <p class="mb-0">
-                        <strong>Fertilizantes:</strong> {{ getSimpleFertilizerCount() }} productos
-                        <span class="badge bg-info ms-2">Composiciones</span>
-                      </p>
+                    <div class="col-md-3">
+                      <div class="text-center">
+                        <h6 class="text-muted">Volumen</h6>
+                        <h4>{{ simpleFormulationResult.volumeLiters }}L</h4>
+                      </div>
                     </div>
-                    <div class="col-md-4">
-                      <div class="cost-summary">
-                        <h6 class="mb-2">Costo Total</h6>
-                        <h4 class="text-primary mb-0">₡{{ simpleFormulationResult.totalCost.toFixed(2) }}</h4>
-                        <small class="text-muted">
-                          ₡{{ (simpleFormulationResult.totalCost / simpleFormulationResult.volumeLiters).toFixed(3)
-                          }}/litro
-                        </small>
+                    <div class="col-md-3">
+                      <div class="text-center">
+                        <h6 class="text-muted">Fertilizantes</h6>
+                        <h4>{{ simpleFormulationResult.fertilizers.length }}</h4>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="text-center">
+                        <h6 class="text-muted">Costo Total</h6>
+                        <h4>₡{{ simpleFormulationResult.totalCost.toFixed(2) }}</h4>
+                        <small class="text-muted">₡{{ (simpleFormulationResult.totalCost /
+                          simpleFormulationResult.volumeLiters).toFixed(4) }}/litro</small>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="text-center">
+                        <h6 class="text-muted">pH / EC Objetivo</h6>
+                        <h4>{{ simpleFormulationResult.targetPh }} / {{ simpleFormulationResult.targetEc }}</h4>
                       </div>
                     </div>
                   </div>
 
-                  <!-- Nutrient Balance -->
+                  <!-- Enhanced Nutrient Balance -->
                   <div class="row mb-4">
                     <div class="col-12">
-                      <h6 class="mb-3">
-                        Balance Nutricional
-                        <span class="badge bg-success ms-2">Calculado con Datos</span>
-                      </h6>
-                      <div class="row g-3">
-                        <div class="col-md-4">
-                          <div class="card bg-light">
-                            <div class="card-body text-center py-2">
-                              <h6 class="card-title mb-1" [class]="getNutrientBalanceColor('nitrogen')">
-                                Nitrógeno (N)
-                              </h6>
-                              <p class="mb-1">
-                                <strong>{{ simpleFormulationResult.nutrientBalance.nitrogen.achieved.toFixed(0)
-                                  }}</strong> ppm
-                              </p>
-                              <small class="text-muted">
-                                Objetivo: {{ simpleFormulationResult.nutrientBalance.nitrogen.target.toFixed(0) }} ppm
-                                ({{ (simpleFormulationResult.nutrientBalance.nitrogen.ratio * 100).toFixed(0) }}%)
-                              </small>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="card bg-light">
-                            <div class="card-body text-center py-2">
-                              <h6 class="card-title mb-1" [class]="getNutrientBalanceColor('phosphorus')">
-                                Fósforo (P)
-                              </h6>
-                              <p class="mb-1">
-                                <strong>{{ simpleFormulationResult.nutrientBalance.phosphorus.achieved.toFixed(0)
-                                  }}</strong> ppm
-                              </p>
-                              <small class="text-muted">
-                                Objetivo: {{ simpleFormulationResult.nutrientBalance.phosphorus.target.toFixed(0) }} ppm
-                                ({{ (simpleFormulationResult.nutrientBalance.phosphorus.ratio * 100).toFixed(0) }}%)
-                              </small>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="col-md-4">
-                          <div class="card bg-light">
-                            <div class="card-body text-center py-2">
-                              <h6 class="card-title mb-1" [class]="getNutrientBalanceColor('potassium')">
-                                Potasio (K)
-                              </h6>
-                              <p class="mb-1">
-                                <strong>{{ simpleFormulationResult.nutrientBalance.potassium.achieved.toFixed(0)
-                                  }}</strong> ppm
-                              </p>
-                              <small class="text-muted">
-                                Objetivo: {{ simpleFormulationResult.nutrientBalance.potassium.target.toFixed(0) }} ppm
-                                ({{ (simpleFormulationResult.nutrientBalance.potassium.ratio * 100).toFixed(0) }}%)
-                              </small>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Fertilizer Recommendations -->
-                  <div class="row mb-4">
-                    <div class="col-12">
-                      <h6 class="mb-3">
-                        Fertilizantes Recomendados
-                        <span class="badge bg-info ms-2">Datos de Composición</span>
-                      </h6>
+                      <h6><i class="fas fa-balance-scale me-2"></i>Balance Nutricional Detallado</h6>
                       <div class="table-responsive">
-                        <table class="table table-sm">
-                          <thead class="table-light">
+                        <table class="table table-striped">
+                          <thead>
                             <tr>
-                              <th>Fertilizante</th>
-                              <th>Concentración</th>
-                              <th>Cantidad Total</th>
-                              <th>N-P-K Aporte</th>
-                              <th>Costo</th>
+                              <th>Nutriente</th>
+                              <th>Objetivo (ppm)</th>
+                              <th>Logrado (ppm)</th>
+                              <th>Porcentaje</th>
+                              <th>Estado</th>
+                              <th>Progreso</th>
                             </tr>
                           </thead>
                           <tbody>
-                            <tr *ngFor="let fert of simpleFormulationResult.fertilizers">
-                              <td>
-                                {{ fert.fertilizerName }}
-                                <br><small class="text-success">
-                                  <i class="bi bi-check-circle me-1"></i>Composición real
-                                </small>
+                            <tr>
+                              <td><strong>Nitrógeno (N)</strong></td>
+                              <td>{{ simpleFormulationResult.nutrientBalance.nitrogen.target.toFixed(1) }}</td>
+                              <td [class]="getNutrientAchievementColor('nitrogen')">
+                                {{ simpleFormulationResult.nutrientBalance.nitrogen.achieved.toFixed(1) }}
                               </td>
-                              <td>{{ fert.concentration.toFixed(2) }} g/L</td>
-                              <td>{{ fert.totalGrams.toFixed(1) }} g</td>
-                              <td>
-                                <small>
-                                  N: {{ fert.nutrientContribution.nitrogen.toFixed(0) }} |
-                                  P: {{ fert.nutrientContribution.phosphorus.toFixed(0) }} |
-                                  K: {{ fert.nutrientContribution.potassium.toFixed(0) }}
-                                </small>
+                              <td [class]="getNutrientAchievementColor('nitrogen')">
+                                {{ (simpleFormulationResult.nutrientBalance.nitrogen.ratio * 100).toFixed(1) }}%
                               </td>
-                              <td>₡{{ fert.cost.toFixed(2) }}</td>
+                              <td>
+                                <span *ngIf="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.9"
+                                  class="badge bg-success">Excelente</span>
+                                <span
+                                  *ngIf="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.9"
+                                  class="badge bg-warning">Aceptable</span>
+                                <span *ngIf="simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.7"
+                                  class="badge bg-danger">Insuficiente</span>
+                              </td>
+                              <td>
+                                <div class="progress" style="height: 20px;">
+                                  <div class="progress-bar"
+                                    [class.bg-success]="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.9"
+                                    [class.bg-warning]="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.9"
+                                    [class.bg-danger]="simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.7"
+                                    [style.width.%]="Math.min(simpleFormulationResult.nutrientBalance.nitrogen.ratio * 100, 100)">
+                                    {{ (simpleFormulationResult.nutrientBalance.nitrogen.ratio * 100).toFixed(0) }}%
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td><strong>Fósforo (P)</strong></td>
+                              <td>{{ simpleFormulationResult.nutrientBalance.phosphorus.target.toFixed(1) }}</td>
+                              <td [class]="getNutrientAchievementColor('phosphorus')">
+                                {{ simpleFormulationResult.nutrientBalance.phosphorus.achieved.toFixed(1) }}
+                              </td>
+                              <td [class]="getNutrientAchievementColor('phosphorus')">
+                                {{ (simpleFormulationResult.nutrientBalance.phosphorus.ratio * 100).toFixed(1) }}%
+                              </td>
+                              <td>
+                                <span *ngIf="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.9"
+                                  class="badge bg-success">Excelente</span>
+                                <span
+                                  *ngIf="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.9"
+                                  class="badge bg-warning">Aceptable</span>
+                                <span *ngIf="simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.7"
+                                  class="badge bg-danger">Insuficiente</span>
+                              </td>
+                              <td>
+                                <div class="progress" style="height: 20px;">
+                                  <div class="progress-bar"
+                                    [class.bg-success]="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.9"
+                                    [class.bg-warning]="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.9"
+                                    [class.bg-danger]="simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.7"
+                                    [style.width.%]="Math.min(simpleFormulationResult.nutrientBalance.phosphorus.ratio * 100, 100)">
+                                    {{ (simpleFormulationResult.nutrientBalance.phosphorus.ratio * 100).toFixed(0) }}%
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td><strong>Potasio (K)</strong></td>
+                              <td>{{ simpleFormulationResult.nutrientBalance.potassium.target.toFixed(1) }}</td>
+                              <td [class]="getNutrientAchievementColor('potassium')">
+                                {{ simpleFormulationResult.nutrientBalance.potassium.achieved.toFixed(1) }}
+                              </td>
+                              <td [class]="getNutrientAchievementColor('potassium')">
+                                {{ (simpleFormulationResult.nutrientBalance.potassium.ratio * 100).toFixed(1) }}%
+                              </td>
+                              <td>
+                                <span *ngIf="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.9"
+                                  class="badge bg-success">Excelente</span>
+                                <span
+                                  *ngIf="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.potassium.ratio < 0.9"
+                                  class="badge bg-warning">Aceptable</span>
+                                <span *ngIf="simpleFormulationResult.nutrientBalance.potassium.ratio < 0.7"
+                                  class="badge bg-danger">Insuficiente</span>
+                              </td>
+                              <td>
+                                <div class="progress" style="height: 20px;">
+                                  <div class="progress-bar"
+                                    [class.bg-success]="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.9"
+                                    [class.bg-warning]="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.potassium.ratio < 0.9"
+                                    [class.bg-danger]="simpleFormulationResult.nutrientBalance.potassium.ratio < 0.7"
+                                    [style.width.%]="Math.min(simpleFormulationResult.nutrientBalance.potassium.ratio * 100, 100)">
+                                    {{ (simpleFormulationResult.nutrientBalance.potassium.ratio * 100).toFixed(0) }}%
+                                  </div>
+                                </div>
+                              </td>
                             </tr>
                           </tbody>
                         </table>
@@ -394,34 +387,121 @@
                     </div>
                   </div>
 
-                  <!-- Instructions -->
-                  <div class="row mb-4" *ngIf="simpleFormulationResult.instructions.length > 0">
+                  <!-- Enhanced Fertilizer Recommendations -->
+                  <div class="row mb-4">
                     <div class="col-12">
-                      <h6 class="mb-3">Instrucciones de Preparación</h6>
-                      <div class="alert alert-info">
-                        <ol class="mb-0">
-                          <li *ngFor="let instruction of simpleFormulationResult.instructions">
-                            {{ instruction }}
-                          </li>
-                        </ol>
+                      <h6><i class="fas fa-seedling me-2"></i>Fertilizantes Recomendados (Datos Reales)</h6>
+                      <div class="table-responsive">
+                        <table class="table table-hover">
+                          <thead class="table-dark">
+                            <tr>
+                              <th>Fertilizante</th>
+                              <th>Concentración</th>
+                              <th>Cantidad Total</th>
+                              <th>Aporte N-P-K (ppm)</th>
+                              <th>Costo</th>
+                              <th>Composición Real</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr *ngFor="let fertilizer of simpleFormulationResult.fertilizers; let i = index">
+                              <td>
+                                <strong>{{ fertilizer.fertilizerName }}</strong>
+                                <br>
+                                <small class="text-muted">Posición {{ i + 1 }}</small>
+                              </td>
+                              <td>
+                                <span class="badge bg-primary">{{ fertilizer.concentration.toFixed(2) }} g/L</span>
+                              </td>
+                              <td>
+                                <span class="badge bg-info">{{ fertilizer.totalAmount.toFixed(1) }} g</span>
+                              </td>
+                              <td>
+                                <div class="d-flex flex-column">
+                                  <small><strong>N:</strong> {{ fertilizer.npkContribution.nitrogen.toFixed(1) }}
+                                    ppm</small>
+                                  <small><strong>P:</strong> {{ fertilizer.npkContribution.phosphorus.toFixed(1) }}
+                                    ppm</small>
+                                  <small><strong>K:</strong> {{ fertilizer.npkContribution.potassium.toFixed(1) }}
+                                    ppm</small>
+                                </div>
+                              </td>
+                              <td>
+                                <span class="badge bg-success">₡{{ fertilizer.cost.toFixed(2) }}</span>
+                              </td>
+                              <td>
+                                <div *ngIf="fertilizer.realComposition" class="small">
+                                  <div><strong>N:</strong> {{ fertilizer.realComposition.nitrogen }}%</div>
+                                  <div><strong>P:</strong> {{ fertilizer.realComposition.phosphorus }}%</div>
+                                  <div><strong>K:</strong> {{ fertilizer.realComposition.potassium }}%</div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
 
-                  <!-- Warnings -->
-                  <div class="row" *ngIf="hasSimpleWarnings()">
-                    <div class="col-12">
-                      <h6 class="mb-3">Advertencias y Recomendaciones</h6>
-                      <div class="alert alert-warning">
-                        <ul class="mb-0">
-                          <li *ngFor="let warning of simpleFormulationResult.warnings">
-                            {{ warning }}
-                          </li>
-                        </ul>
+                  <!-- Enhanced Instructions -->
+                  <div class="row mb-4">
+                    <div class="col-md-6">
+                      <h6><i class="fas fa-tasks me-2"></i>Instrucciones de Preparación</h6>
+                      <div class="card">
+                        <div class="card-body">
+                          <ol class="mb-0">
+                            <li
+                              *ngFor="let instruction of simpleFormulationResult.instructions.slice(3); let i = index">
+                              {{ instruction }}
+                            </li>
+                          </ol>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-md-6">
+                      <h6><i class="fas fa-exclamation-triangle me-2"></i>Advertencias y Recomendaciones</h6>
+                      <div class="card">
+                        <div class="card-body">
+                          <div *ngIf="simpleFormulationResult.warnings.length > 0" class="mb-3">
+                            <h6 class="text-warning">Advertencias:</h6>
+                            <ul class="list-unstyled">
+                              <li *ngFor="let warning of simpleFormulationResult.warnings" class="text-warning">
+                                {{ warning }}
+                              </li>
+                            </ul>
+                          </div>
+
+                          <div *ngIf="getFormulationRecommendations().length > 0">
+                            <h6 class="text-info">Recomendaciones de Mejora:</h6>
+                            <ul class="list-unstyled">
+                              <li *ngFor="let recommendation of getFormulationRecommendations()" class="text-info">
+                                <i class="fas fa-lightbulb me-1"></i>{{ recommendation }}
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
+                  <!-- Quality Score -->
+                  <div class="row">
+                    <div class="col-12">
+                      <div class="card" [class.border-success]="isFormulationAcceptable()"
+                        [class.border-warning]="!isFormulationAcceptable()">
+                        <div class="card-body text-center">
+                          <h5 *ngIf="isFormulationAcceptable()" class="text-success">
+                            <i class="fas fa-check-circle me-2"></i>Formulación Aceptable
+                          </h5>
+                          <h5 *ngIf="!isFormulationAcceptable()" class="text-warning">
+                            <i class="fas fa-exclamation-circle me-2"></i>Formulación Requiere Ajustes
+                          </h5>
+                          <p class="mb-0">{{ getDetailedFormulationSummary() }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 

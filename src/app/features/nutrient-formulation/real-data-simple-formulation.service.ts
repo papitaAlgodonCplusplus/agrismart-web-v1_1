@@ -1,44 +1,29 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
 
 export interface SimpleFormulationRequest {
+  recipeName: string;
+  volumeLiters: number;
   cropId: number;
   cropPhaseId: number;
-  volumeLiters: number;
-  waterSourceId?: number;
+  waterSourceId: number;
   targetPh?: number;
   targetEc?: number;
 }
 
-export interface SimpleFormulationResult {
-  recipeName: string;
-  cropId: number;
-  cropPhaseId: number;
-  volumeLiters: number;
-  targetPh: number;
-  targetEc: number;
-  fertilizers: FertilizerRecommendation[];
-  totalCost: number;
-  nutrientBalance: NutrientBalance;
-  instructions: string[];
-  warnings: string[];
-}
-
 export interface FertilizerRecommendation {
-  fertilizerId: number;
+totalGrams: any;
+nutrientContribution: any;
   fertilizerName: string;
-  concentration: number; // grams per liter
-  totalGrams: number; // total grams for volume
+  concentration: number; // g/L
+  totalAmount: number; // grams for total volume
   cost: number;
-  nutrientContribution: {
+  npkContribution: {
     nitrogen: number;
     phosphorus: number;
     potassium: number;
-    calcium?: number;
-    magnesium?: number;
-    sulfur?: number;
   };
+  realComposition?: any; // Store actual composition used
 }
 
 export interface NutrientBalance {
@@ -50,6 +35,20 @@ export interface NutrientBalance {
   sulfur?: { target: number; achieved: number; ratio: number };
 }
 
+export interface SimpleFormulationResult {
+  recipeName: string;
+  cropId: number;
+  cropPhaseId: number;
+  volumeLiters: number;
+  targetPh: number;
+  targetEc: number;
+  fertilizers: any[];
+  totalCost: number;
+  nutrientBalance: NutrientBalance;
+  instructions: string[];
+  warnings: string[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -58,34 +57,41 @@ export class RealDataSimpleFormulationService {
   constructor() {}
 
   /**
-   * Calculate simple formulation using ONLY real data from CropPhaseSolutionRequirement
-   * and actual fertilizer compositions from the database
+   * Calculate simple formulation using ONLY real data from database
    */
   calculateSimpleFormulation(
-    request: SimpleFormulationRequest,
-    realRequirements: any, // Must come from CropPhaseSolutionRequirement API
-    realFertilizers: any[] // Must come from Fertilizer API with real compositions
+    request: any,
+    realRequirements: any,
+    realFertilizers: any[]
   ): Observable<SimpleFormulationResult> {
     
-    // Validate that we have real requirements data
+    console.log('=== STARTING FORMULATION CALCULATION ===');
+    console.log('Requirements:', realRequirements);
+    console.log('Fertilizers:', realFertilizers);
+
+    // Validate inputs
     if (!realRequirements || !this.isValidRequirement(realRequirements)) {
-      return throwError(() => new Error('Se requieren datos reales de requerimientos nutricionales de la base de datos'));
+      const error = 'Se requieren datos reales de requerimientos nutricionales de la base de datos';
+      console.error(error);
+      return throwError(() => new Error(error));
     }
 
-    // Validate that we have real fertilizers with compositions
+    // Filter and validate fertilizers
     const validFertilizers = realFertilizers.filter(f => this.isValidFertilizer(f));
+    console.log(`Valid fertilizers: ${validFertilizers.length} out of ${realFertilizers.length}`);
+    
     if (validFertilizers.length === 0) {
-      return throwError(() => new Error('Se requieren fertilizantes con composiciones reales de la base de datos'));
+      const error = 'Se requieren fertilizantes con composiciones reales de la base de datos';
+      console.error(error);
+      return throwError(() => new Error(error));
     }
 
     try {
-      // Calculate using real data only
-      const formulation = this.calculateWithRealData(
-        request,
-        realRequirements,
-        validFertilizers
-      );
-
+      const formulation = this.calculateWithRealData(request, realRequirements, validFertilizers);
+      console.log('=== FORMULATION RESULT ===');
+      console.log('Total fertilizers recommended:', formulation.fertilizers.length);
+      console.log('Nutrient balance:', formulation.nutrientBalance);
+      
       return of(formulation);
       
     } catch (error) {
@@ -95,42 +101,125 @@ export class RealDataSimpleFormulationService {
   }
 
   /**
-   * Validate that requirement data is real (from database)
+   * Validate requirement data from database
    */
   private isValidRequirement(req: any): boolean {
-    return req && 
+    const isValid = req && 
            req.cropPhaseId &&
            (req.no3 > 0 || req.nh4 > 0 || req.h2po4 > 0 || req.k > 0) &&
            typeof req.no3 === 'number' &&
            typeof req.h2po4 === 'number' &&
            typeof req.k === 'number';
+    
+    console.log('Requirement validation:', isValid, req);
+    return isValid;
   }
 
   /**
-   * Validate that fertilizer data is real (from database with composition)
+   * Validate fertilizer has real composition data
    */
   private isValidFertilizer(fert: any): boolean {
-    if (!fert || !fert.isActive) return false;
+    if (!fert || !fert.isActive) {
+      console.log(`Fertilizer ${fert?.name || 'unknown'} - not active`);
+      return false;
+    }
     
-    // Check if has real composition data
-    const hasComposition = fert.composition && (
-      (fert.composition.nitrogen > 0) ||
-      (fert.composition.phosphorus > 0) ||
-      (fert.composition.potassium > 0)
-    );
-
-    // Or has percentage data
-    const hasPercentages = (
-      (fert.nitrogenPercentage > 0) ||
-      (fert.phosphorusPercentage > 0) ||
-      (fert.potassiumPercentage > 0)
-    );
-
-    return hasComposition || hasPercentages;
+    // Extract composition to validate
+    const composition = this.extractRealComposition(fert);
+    const isValid = composition !== null;
+    
+    console.log(`Fertilizer ${fert.name} - valid: ${isValid}`, composition);
+    return isValid;
   }
 
   /**
-   * Calculate formulation using ONLY real database data
+   * Extract real composition with comprehensive fallback logic
+   */
+  private extractRealComposition(fertilizer: any): any {
+    console.log(`\n--- Extracting composition for: ${fertilizer.name} ---`);
+    console.log('Full fertilizer object:', fertilizer);
+
+    let composition = null;
+
+    // Strategy 1: Try composition object first
+    if (fertilizer.composition) {
+      const comp = fertilizer.composition;
+      console.log('Found composition object:', comp);
+      
+      if ((comp.nitrogen && comp.nitrogen > 0) ||
+          (comp.phosphorus && comp.phosphorus > 0) ||
+          (comp.potassium && comp.potassium > 0)) {
+        composition = {
+          nitrogen: comp.nitrogen || 0,
+          phosphorus: comp.phosphorus || 0,
+          potassium: comp.potassium || 0,
+          calcium: comp.calcium || 0,
+          magnesium: comp.magnesium || 0,
+          sulfur: comp.sulfur || 0
+        };
+        console.log('Using composition object:', composition);
+        return composition;
+      }
+    }
+
+    // Strategy 2: Try percentage fields
+    if ((fertilizer.nitrogenPercentage && fertilizer.nitrogenPercentage > 0) ||
+        (fertilizer.phosphorusPercentage && fertilizer.phosphorusPercentage > 0) ||
+        (fertilizer.potassiumPercentage && fertilizer.potassiumPercentage > 0)) {
+      
+      composition = {
+        nitrogen: fertilizer.nitrogenPercentage || 0,
+        phosphorus: fertilizer.phosphorusPercentage || 0,
+        potassium: fertilizer.potassiumPercentage || 0,
+        calcium: fertilizer.calciumPercentage || 0,
+        magnesium: fertilizer.magnesiumPercentage || 0,
+        sulfur: fertilizer.sulfurPercentage || 0
+      };
+      console.log('Using percentage fields:', composition);
+      return composition;
+    }
+
+    // Strategy 3: Try direct chemical analysis fields from database
+    const chemicalFields = {
+      nitrogen: fertilizer.n || fertilizer.N || 0,
+      phosphorus: fertilizer.p || fertilizer.P || (fertilizer.h2po4 || fertilizer.H2PO4 || 0) * 0.32, // Convert H2PO4 to P
+      potassium: fertilizer.k || fertilizer.K || 0,
+      calcium: fertilizer.ca || fertilizer.Ca || 0,
+      magnesium: fertilizer.mg || fertilizer.Mg || 0,
+      sulfur: fertilizer.s || fertilizer.S || (fertilizer.so4 || fertilizer.SO4 || 0) * 0.33 // Convert SO4 to S
+    };
+
+    if (chemicalFields.nitrogen > 0 || chemicalFields.phosphorus > 0 || chemicalFields.potassium > 0) {
+      composition = chemicalFields;
+      console.log('Using chemical analysis fields:', composition);
+      return composition;
+    }
+
+    // Strategy 4: Try to parse from name/description if it contains NPK ratios
+    const npkPattern = /(\d+)-(\d+)-(\d+)/;
+    const nameMatch = fertilizer.name?.match(npkPattern);
+    const descMatch = fertilizer.description?.match(npkPattern);
+    
+    if (nameMatch || descMatch) {
+      const match = nameMatch || descMatch;
+      composition = {
+        nitrogen: parseFloat(match[1]) || 0,
+        phosphorus: parseFloat(match[2]) || 0,
+        potassium: parseFloat(match[3]) || 0,
+        calcium: 0,
+        magnesium: 0,
+        sulfur: 0
+      };
+      console.log('Using NPK pattern from name/description:', composition);
+      return composition;
+    }
+
+    console.log('No valid composition found');
+    return null;
+  }
+
+  /**
+   * Calculate formulation using real database data
    */
   private calculateWithRealData(
     request: SimpleFormulationRequest,
@@ -138,7 +227,9 @@ export class RealDataSimpleFormulationService {
     fertilizers: any[]
   ): SimpleFormulationResult {
 
-    // Extract real nutrient targets from database
+    console.log('\n=== CALCULATING WITH REAL DATA ===');
+
+    // Extract nutrient targets from requirements
     const targets = {
       nitrogen: (requirements.no3 || 0) + (requirements.nh4 || 0),
       phosphorus: requirements.h2po4 || 0,
@@ -148,86 +239,116 @@ export class RealDataSimpleFormulationService {
       sulfur: requirements.so4 || 0
     };
 
-    // Score fertilizers based on real data
+    console.log('Nutrient targets:', targets);
+
+    // Score and sort fertilizers
     const scoredFertilizers = fertilizers
-      .map(f => ({
-        ...f,
-        realComposition: this.extractRealComposition(f),
-        score: this.calculateRealScore(f, targets)
-      }))
+      .map(f => {
+        const realComposition = this.extractRealComposition(f);
+        const score = realComposition ? this.calculateFertilizerScore(realComposition, targets, { nitrogen: 0, phosphorus: 0, potassium: 0 }) : 0;
+        
+        return {
+          ...f,
+          realComposition,
+          score
+        };
+      })
       .filter(f => f.realComposition && f.score > 0)
       .sort((a, b) => b.score - a.score);
+
+    console.log('Scored fertilizers:', scoredFertilizers.map(f => ({ name: f.name, score: f.score, composition: f.realComposition })));
 
     if (scoredFertilizers.length === 0) {
       throw new Error('No hay fertilizantes válidos con composiciones reales');
     }
 
-    // Calculate recommendations using real compositions
-    const recommendations: FertilizerRecommendation[] = [];
+    // Calculate recommendations
+    const recommendations: any[] = [];
     const achieved = { nitrogen: 0, phosphorus: 0, potassium: 0, calcium: 0, magnesium: 0, sulfur: 0 };
-    
     let totalCost = 0;
-    let iteration = 0;
-    const maxIterations = 5; // Limit to prevent infinite loops
+    
+    // Iterative fertilizer selection
+    const maxIterations = Math.min(5, scoredFertilizers.length);
+    
+    for (let i = 0; i < maxIterations; i++) {
+      // Find best fertilizer for current gaps
+      const currentGaps = {
+        nitrogen: Math.max(0, targets.nitrogen - achieved.nitrogen),
+        phosphorus: Math.max(0, targets.phosphorus - achieved.phosphorus),
+        potassium: Math.max(0, targets.potassium - achieved.potassium)
+      };
 
-    // Select fertilizers to meet real targets
-    while (iteration < maxIterations && this.hasSignificantGap(achieved, targets)) {
-      
-      const bestFertilizer = this.selectBestFertilizerForRealGap(
-        scoredFertilizers,
-        achieved,
-        targets,
-        recommendations
-      );
+      console.log(`\nIteration ${i + 1}, current gaps:`, currentGaps);
 
-      if (!bestFertilizer) break;
-
-      // Calculate real concentration needed
-      const concentration = this.calculateRealConcentration(
-        bestFertilizer,
-        achieved,
-        targets
-      );
-
-      if (concentration > 0) {
-        const totalGrams = concentration * request.volumeLiters;
-        const cost = (totalGrams / 1000) * (bestFertilizer.pricePerUnit || 0);
-
-        // Calculate real nutrient contribution
-        const contribution = this.calculateRealNutrientContribution(
-          bestFertilizer.realComposition,
-          concentration
-        );
-
-        recommendations.push({
-          fertilizerId: bestFertilizer.id,
-          fertilizerName: bestFertilizer.name,
-          concentration,
-          totalGrams,
-          cost,
-          nutrientContribution: contribution
-        });
-
-        // Update achieved nutrients with real contributions
-        achieved.nitrogen += contribution.nitrogen;
-        achieved.phosphorus += contribution.phosphorus;
-        achieved.potassium += contribution.potassium;
-        achieved.calcium += contribution.calcium || 0;
-        achieved.magnesium += contribution.magnesium || 0;
-        achieved.sulfur += contribution.sulfur || 0;
-
-        totalCost += cost;
+      if (currentGaps.nitrogen <= 1 && currentGaps.phosphorus <= 1 && currentGaps.potassium <= 1) {
+        console.log('Targets achieved, stopping iteration');
+        break;
       }
 
-      iteration++;
+      // Re-score fertilizers based on current gaps
+      const bestFertilizer = scoredFertilizers
+        .filter(f => !recommendations.find(r => r.fertilizerName === f.name)) // Don't reuse fertilizers
+        .map(f => ({
+          ...f,
+          currentScore: this.calculateFertilizerScore(f.realComposition, targets, achieved)
+        }))
+        .sort((a, b) => b.currentScore - a.currentScore)[0];
+
+      if (!bestFertilizer || bestFertilizer.currentScore <= 0) {
+        console.log('No more beneficial fertilizers found');
+        break;
+      }
+
+      console.log(`Selected fertilizer: ${bestFertilizer.name} (score: ${bestFertilizer.currentScore})`);
+
+      // Calculate optimal concentration for this fertilizer
+      const concentration = this.calculateOptimalConcentration(bestFertilizer.realComposition, currentGaps);
+      
+      if (concentration <= 0) {
+        console.log('Calculated concentration is zero, skipping');
+        continue;
+      }
+
+      console.log(`Calculated concentration: ${concentration} g/L`);
+
+      // Calculate nutrient contributions
+      const contributions = this.calculateNutrientContribution(bestFertilizer.realComposition, concentration);
+      console.log('Nutrient contributions:', contributions);
+
+      // Calculate costs
+      const totalAmount = concentration * request.volumeLiters;
+      const cost = totalAmount * (bestFertilizer.pricePerUnit || 0.001); // Fallback price if missing
+
+      // Create recommendation
+      const recommendation = {
+        fertilizerName: bestFertilizer.name,
+        concentration: concentration,
+        totalAmount: totalAmount,
+        cost: cost,
+        npkContribution: {
+          nitrogen: contributions.nitrogen,
+          phosphorus: contributions.phosphorus,
+          potassium: contributions.potassium
+        },
+        realComposition: bestFertilizer.realComposition
+      };
+
+      recommendations.push(recommendation);
+
+      // Update achieved nutrients
+      achieved.nitrogen += contributions.nitrogen;
+      achieved.phosphorus += contributions.phosphorus;
+      achieved.potassium += contributions.potassium;
+      achieved.calcium += contributions.calcium || 0;
+      achieved.magnesium += contributions.magnesium || 0;
+      achieved.sulfur += contributions.sulfur || 0;
+
+      totalCost += cost;
+
+      console.log('Updated achieved nutrients:', achieved);
     }
 
-    // Validate we have viable recommendations
-    if (recommendations.length === 0) {
-      throw new Error('No se pudo generar una formulación viable con los datos reales disponibles');
-    }
-
-    // Build nutrient balance from real calculations
+    // Build final nutrient balance
     const nutrientBalance: NutrientBalance = {
       nitrogen: {
         target: targets.nitrogen,
@@ -246,6 +367,7 @@ export class RealDataSimpleFormulationService {
       }
     };
 
+    // Add optional nutrients if they have targets
     if (targets.calcium > 0) {
       nutrientBalance.calcium = {
         target: targets.calcium,
@@ -262,9 +384,9 @@ export class RealDataSimpleFormulationService {
       };
     }
 
-    // Generate real instructions and warnings
-    const instructions = this.generateRealInstructions(recommendations, request.volumeLiters);
-    const warnings = this.generateRealWarnings(nutrientBalance, recommendations);
+    // Generate instructions and warnings
+    const instructions = this.generateInstructions(recommendations, request.volumeLiters);
+    const warnings = this.generateWarnings(nutrientBalance, recommendations);
 
     return {
       recipeName: `Formulación ${new Date().toLocaleDateString()}`,
@@ -282,180 +404,94 @@ export class RealDataSimpleFormulationService {
   }
 
   /**
-   * Extract real composition from fertilizer database record
+   * Calculate fertilizer score based on how well it addresses current nutrient gaps
    */
-  private extractRealComposition(fertilizer: any): any {
-    // Try composition object first
-    if (fertilizer.composition) {
-      const comp = fertilizer.composition;
-      if (comp.nitrogen > 0 || comp.phosphorus > 0 || comp.potassium > 0) {
-        return comp;
-      }
-    }
-
-    // Try percentage fields
-    if (fertilizer.nitrogenPercentage > 0 || fertilizer.phosphorusPercentage > 0 || fertilizer.potassiumPercentage > 0) {
-      return {
-        nitrogen: fertilizer.nitrogenPercentage || 0,
-        phosphorus: fertilizer.phosphorusPercentage || 0,
-        potassium: fertilizer.potassiumPercentage || 0,
-        calcium: fertilizer.calciumPercentage || 0,
-        magnesium: fertilizer.magnesiumPercentage || 0,
-        sulfur: fertilizer.sulfurPercentage || 0
-      };
-    }
-
-    return null; // No real composition data available
-  }
-
-  /**
-   * Calculate score based on real composition and targets
-   */
-  private calculateRealScore(fertilizer: any, targets: any): number {
-    const comp = this.extractRealComposition(fertilizer);
-    if (!comp) return 0;
+  private calculateFertilizerScore(composition: any, targets: any, achieved: any): number {
+    const gaps = {
+      nitrogen: Math.max(0, targets.nitrogen - achieved.nitrogen),
+      phosphorus: Math.max(0, targets.phosphorus - achieved.phosphorus),
+      potassium: Math.max(0, targets.potassium - achieved.potassium)
+    };
 
     let score = 0;
 
-    // Score based on nutrient match to real targets
-    if (targets.nitrogen > 0 && comp.nitrogen > 0) {
-      score += Math.min(40, (comp.nitrogen / 30) * 40);
+    // Score based on ability to fill gaps efficiently
+    if (gaps.nitrogen > 0 && composition.nitrogen > 0) {
+      score += Math.min(gaps.nitrogen, composition.nitrogen * 3); // Weight nitrogen highly
     }
-    if (targets.phosphorus > 0 && comp.phosphorus > 0) {
-      score += Math.min(25, (comp.phosphorus / 20) * 25);
+    if (gaps.phosphorus > 0 && composition.phosphorus > 0) {
+      score += Math.min(gaps.phosphorus, composition.phosphorus * 3); // Weight phosphorus highly
     }
-    if (targets.potassium > 0 && comp.potassium > 0) {
-      score += Math.min(25, (comp.potassium / 40) * 25);
+    if (gaps.potassium > 0 && composition.potassium > 0) {
+      score += Math.min(gaps.potassium, composition.potassium * 2); // Weight potassium moderately
     }
 
-    // Cost efficiency (only if real price available)
-    if (fertilizer.pricePerUnit && fertilizer.pricePerUnit > 0) {
-      const costFactor = Math.max(0, 10 - fertilizer.pricePerUnit);
-      score += costFactor;
+    // Bonus for balanced fertilizers that address multiple gaps
+    const addressedNutrients = [
+      gaps.nitrogen > 0 && composition.nitrogen > 0,
+      gaps.phosphorus > 0 && composition.phosphorus > 0,
+      gaps.potassium > 0 && composition.potassium > 0
+    ].filter(Boolean).length;
+
+    if (addressedNutrients > 1) {
+      score *= 1.2; // 20% bonus for multi-nutrient fertilizers
     }
 
     return score;
   }
 
   /**
-   * Check if there are significant gaps using real targets
+   * Calculate optimal concentration to address nutrient gaps without over-fertilization
    */
-  private hasSignificantGap(achieved: any, targets: any): boolean {
-    const nitrogenGap = Math.max(0, targets.nitrogen - achieved.nitrogen);
-    const phosphorusGap = Math.max(0, targets.phosphorus - achieved.phosphorus);
-    const potassiumGap = Math.max(0, targets.potassium - achieved.potassium);
-    
-    return nitrogenGap > 10 || phosphorusGap > 5 || potassiumGap > 10;
-  }
-
-  /**
-   * Select best fertilizer for current real gaps
-   */
-  private selectBestFertilizerForRealGap(
-    fertilizers: any[],
-    achieved: any,
-    targets: any,
-    alreadyUsed: FertilizerRecommendation[]
-  ): any {
-
-    const usedIds = new Set(alreadyUsed.map(r => r.fertilizerId));
-    const availableFertilizers = fertilizers.filter(f => !usedIds.has(f.id));
-
-    if (availableFertilizers.length === 0) {
-      return null; // No more fertilizers available
-    }
-
-    // Calculate gap-filling potential using real compositions
-    let bestFertilizer: any = null;
-    let bestGapScore = -1;
-
-    for (const fertilizer of availableFertilizers) {
-      const gapScore = this.calculateRealGapFillingScore(fertilizer, achieved, targets);
-      if (gapScore > bestGapScore) {
-        bestGapScore = gapScore;
-        bestFertilizer = fertilizer;
-      }
-    }
-
-    return bestFertilizer;
-  }
-
-  /**
-   * Calculate gap filling score using real composition
-   */
-  private calculateRealGapFillingScore(fertilizer: any, achieved: any, targets: any): number {
-    const comp = fertilizer.realComposition;
-    if (!comp) return 0;
-
-    let score = 0;
-
-    const nitrogenGap = Math.max(0, targets.nitrogen - achieved.nitrogen);
-    const phosphorusGap = Math.max(0, targets.phosphorus - achieved.phosphorus);
-    const potassiumGap = Math.max(0, targets.potassium - achieved.potassium);
-
-    if (nitrogenGap > 0 && comp.nitrogen > 0) {
-      score += Math.min(nitrogenGap, comp.nitrogen * 2);
-    }
-    if (phosphorusGap > 0 && comp.phosphorus > 0) {
-      score += Math.min(phosphorusGap, comp.phosphorus * 2);
-    }
-    if (potassiumGap > 0 && comp.potassium > 0) {
-      score += Math.min(potassiumGap, comp.potassium * 2);
-    }
-
-    return score;
-  }
-
-  /**
-   * Calculate concentration using real composition and targets
-   */
-  private calculateRealConcentration(fertilizer: any, achieved: any, targets: any): number {
-    const comp = fertilizer.realComposition;
-    if (!comp) return 0;
-    
+  private calculateOptimalConcentration(composition: any, gaps: any): number {
     const concentrations: number[] = [];
 
-    // Calculate needed concentrations for each nutrient using real gaps
-    const nitrogenGap = Math.max(0, targets.nitrogen - achieved.nitrogen);
-    if (nitrogenGap > 0 && comp.nitrogen > 0) {
-      const neededConc = nitrogenGap / (comp.nitrogen * 10); // Convert % to ppm contribution
+    // Calculate needed concentration for each nutrient
+    if (gaps.nitrogen > 0 && composition.nitrogen > 0) {
+      // Convert percentage to ppm: 1% = 10,000 ppm at 1g/L
+      const neededConc = gaps.nitrogen / (composition.nitrogen * 100); // composition is in %, convert to decimal
       concentrations.push(neededConc);
     }
 
-    const phosphorusGap = Math.max(0, targets.phosphorus - achieved.phosphorus);
-    if (phosphorusGap > 0 && comp.phosphorus > 0) {
-      const neededConc = phosphorusGap / (comp.phosphorus * 10);
+    if (gaps.phosphorus > 0 && composition.phosphorus > 0) {
+      const neededConc = gaps.phosphorus / (composition.phosphorus * 100);
       concentrations.push(neededConc);
     }
 
-    const potassiumGap = Math.max(0, targets.potassium - achieved.potassium);
-    if (potassiumGap > 0 && comp.potassium > 0) {
-      const neededConc = potassiumGap / (comp.potassium * 10);
+    if (gaps.potassium > 0 && composition.potassium > 0) {
+      const neededConc = gaps.potassium / (composition.potassium * 100);
       concentrations.push(neededConc);
     }
 
-    // Use minimum to avoid over-fertilization
-    return concentrations.length > 0 ? Math.min(...concentrations, 50) : 0; // Cap at 50g/L
+    // Use minimum to avoid over-fertilization, but ensure reasonable concentration
+    let optimalConc = concentrations.length > 0 ? Math.min(...concentrations) : 0;
+    
+    // Apply practical limits
+    optimalConc = Math.max(0.1, Math.min(optimalConc, 50)); // Between 0.1 and 50 g/L
+    
+    return optimalConc;
   }
 
   /**
-   * Calculate real nutrient contribution from composition and concentration
+   * Calculate actual nutrient contribution from composition and concentration
    */
-  private calculateRealNutrientContribution(composition: any, concentration: number): any {
+  private calculateNutrientContribution(composition: any, concentration: number): any {
+    // concentration is in g/L, composition percentages need to be converted to decimal
+    // 1% at 1g/L = 100 ppm
     return {
-      nitrogen: (concentration * composition.nitrogen * 10) / 1000, // Convert to ppm
-      phosphorus: (concentration * composition.phosphorus * 10) / 1000,
-      potassium: (concentration * composition.potassium * 10) / 1000,
-      calcium: composition.calcium ? (concentration * composition.calcium * 10) / 1000 : 0,
-      magnesium: composition.magnesium ? (concentration * composition.magnesium * 10) / 1000 : 0,
-      sulfur: composition.sulfur ? (concentration * composition.sulfur * 10) / 1000 : 0
+      nitrogen: (concentration * composition.nitrogen * 100) / 10, // Convert to ppm, then to practical units
+      phosphorus: (concentration * composition.phosphorus * 100) / 10,
+      potassium: (concentration * composition.potassium * 100) / 10,
+      calcium: composition.calcium ? (concentration * composition.calcium * 100) / 10 : 0,
+      magnesium: composition.magnesium ? (concentration * composition.magnesium * 100) / 10 : 0,
+      sulfur: composition.sulfur ? (concentration * composition.sulfur * 100) / 10 : 0
     };
   }
 
   /**
-   * Generate instructions based on real recommendations
+   * Generate preparation instructions
    */
-  private generateRealInstructions(recommendations: FertilizerRecommendation[], volumeLiters: number): string[] {
+  private generateInstructions(recommendations: FertilizerRecommendation[], volumeLiters: number): string[] {
     const instructions: string[] = [
       `Preparación para ${volumeLiters}L de solución nutritiva:`,
       '',
@@ -464,52 +500,56 @@ export class RealDataSimpleFormulationService {
 
     recommendations.forEach((rec, index) => {
       instructions.push(
-        `${index + 1}. ${rec.fertilizerName}: ${rec.totalGrams.toFixed(1)}g (${rec.concentration.toFixed(2)}g/L)`
+        `${index + 1}. ${rec.fertilizerName}: ${rec.totalAmount.toFixed(1)}g (${rec.concentration.toFixed(2)}g/L)`
       );
     });
 
-    instructions.push(
-      '',
-      'Procedimiento:',
-      '• Disolver cada fertilizante completamente antes del siguiente',
-      '• Verificar pH y EC finales',
-      '• Ajustar si es necesario'
-    );
+    instructions.push('');
+    instructions.push('Procedimiento:');
+    instructions.push('• Disolver cada fertilizante completamente antes del siguiente');
+    instructions.push('• Verificar pH y EC finales');
+    instructions.push('• Ajustar si es necesario');
 
     return instructions;
   }
 
   /**
-   * Generate warnings based on real nutrient balance
+   * Generate warnings based on formulation results
    */
-  private generateRealWarnings(balance: NutrientBalance, recommendations: FertilizerRecommendation[]): string[] {
+  private generateWarnings(nutrientBalance: NutrientBalance, recommendations: FertilizerRecommendation[]): string[] {
     const warnings: string[] = [];
 
-    // Check real nutrient ratios
-    if (balance.nitrogen.ratio < 0.85) {
+    // Check nutrient achievement
+    if (nutrientBalance.nitrogen.ratio < 0.8) {
       warnings.push('⚠️ Nitrógeno por debajo del objetivo');
     }
-    if (balance.nitrogen.ratio > 1.15) {
-      warnings.push('⚠️ Exceso de nitrógeno');
-    }
-
-    if (balance.phosphorus.ratio < 0.85) {
+    if (nutrientBalance.phosphorus.ratio < 0.8) {
       warnings.push('⚠️ Fósforo por debajo del objetivo');
     }
-    if (balance.phosphorus.ratio > 1.15) {
-      warnings.push('⚠️ Exceso de fósforo');
-    }
-
-    if (balance.potassium.ratio < 0.85) {
+    if (nutrientBalance.potassium.ratio < 0.8) {
       warnings.push('⚠️ Potasio por debajo del objetivo');
     }
-    if (balance.potassium.ratio > 1.15) {
-      warnings.push('⚠️ Exceso de potasio');
+
+    // Check over-fertilization
+    if (nutrientBalance.nitrogen.ratio > 1.2) {
+      warnings.push('⚠️ Exceso de nitrógeno - reducir concentraciones');
+    }
+    if (nutrientBalance.phosphorus.ratio > 1.2) {
+      warnings.push('⚠️ Exceso de fósforo - reducir concentraciones');
+    }
+    if (nutrientBalance.potassium.ratio > 1.2) {
+      warnings.push('⚠️ Exceso de potasio - reducir concentraciones');
     }
 
-    // Check if too many fertilizers needed
+    // Check fertilizer count
     if (recommendations.length > 4) {
       warnings.push('⚠️ Formulación requiere muchos fertilizantes');
+    }
+
+    // Check for very low concentrations
+    const lowConcFertilizers = recommendations.filter(r => r.concentration < 0.5);
+    if (lowConcFertilizers.length > 0) {
+      warnings.push('⚠️ Algunas concentraciones son muy bajas - verificar efectividad');
     }
 
     return warnings;
