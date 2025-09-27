@@ -46,28 +46,6 @@
       </div>
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
-      <div class="stat-card stat-success">
-        <div class="stat-icon">
-          <i class="bi bi-check-circle"></i>
-        </div>
-        <div class="stat-content">
-          <h4>{{ getActiveCount() }}</h4>
-          <p>Activos</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
-      <div class="stat-card stat-warning">
-        <div class="stat-icon">
-          <i class="bi bi-pause-circle"></i>
-        </div>
-        <div class="stat-content">
-          <h4>{{ getInactiveCount() }}</h4>
-          <p>Inactivos</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
       <div class="stat-card stat-info">
         <div class="stat-icon">
           <i class="bi bi-collection"></i>
@@ -91,52 +69,19 @@
     <div class="filters-body">
       <div class="row g-3">
         <!-- Search -->
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label for="searchTerm" class="form-label">Buscar</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="text" class="form-control" id="searchTerm" 
                    [(ngModel)]="filters.searchTerm" 
                    (ngModelChange)="onFiltersChange()"
-                   placeholder="Nombre, nombre científico...">
+                   placeholder="Nombre o descripción...">
           </div>
         </div>
 
-        <!-- Type Filter -->
-        <div class="col-md-2">
-          <label for="typeFilter" class="form-label">Tipo</label>
-          <select class="form-select" id="typeFilter" 
-                  [(ngModel)]="filters.type" 
-                  (ngModelChange)="onFiltersChange()">
-            <option value="">Todos</option>
-            <option *ngFor="let type of cropTypes" [value]="type.value">{{ type.label }}</option>
-          </select>
-        </div>
-
-        <!-- Harvest Season Filter -->
-        <div class="col-md-3">
-          <label for="seasonFilter" class="form-label">Temporada</label>
-          <select class="form-select" id="seasonFilter" 
-                  [(ngModel)]="filters.harvestSeason" 
-                  (ngModelChange)="onFiltersChange()">
-            <option value="">Todas</option>
-            <option *ngFor="let season of harvestSeasons" [value]="season.value">{{ season.label }}</option>
-          </select>
-        </div>
-
-        <!-- Water Requirement Filter -->
-        <div class="col-md-2">
-          <label for="waterFilter" class="form-label">Agua</label>
-          <select class="form-select" id="waterFilter" 
-                  [(ngModel)]="filters.waterRequirement" 
-                  (ngModelChange)="onFiltersChange()">
-            <option value="">Todos</option>
-            <option *ngFor="let water of waterRequirements" [value]="water.value">{{ water.label }}</option>
-          </select>
-        </div>
-
         <!-- Active Status -->
-        <div class="col-md-1">
+        <div class="col-md-6">
           <label class="form-label">Estado</label>
           <div class="form-check">
             <input class="form-check-input" type="checkbox" id="activeFilter" 
@@ -184,12 +129,12 @@
       <table class="table table-hover">
         <thead>
           <tr>
+            <th>ID</th>
             <th>Nombre</th>
-            <th>Nombre Científico</th>
-            <th>Tipo</th>
-            <th>Ciclo (días)</th>
-            <th>Temporada</th>
-            <th>Agua</th>
+            <th>Descripción</th>
+            <th>Temperatura Base (°C)</th>
+            <th>Fecha Creación</th>
+            <th>Creado Por</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
@@ -197,38 +142,33 @@
         <tbody>
           <tr *ngFor="let crop of getPaginatedData(); trackBy: trackByIndex">
             <td>
+              <span class="badge bg-light text-dark">{{ crop.id }}</span>
+            </td>
+            <td>
               <div class="crop-name">
                 <strong>{{ crop.name }}</strong>
-                <small class="text-muted" *ngIf="crop.variety">{{ crop.variety }}</small>
               </div>
             </td>
             <td>
-              <em class="text-muted">{{ crop.scientificName || 'N/A' }}</em>
+              <span *ngIf="crop.description" class="text-muted">{{ crop.description }}</span>
+              <span *ngIf="!crop.description" class="text-muted fst-italic">Sin descripción</span>
             </td>
             <td>
-              <span class="badge bg-secondary">{{ formatCropType(crop.type || '') }}</span>
+              <span class="badge bg-info">{{ crop.cropBaseTemperature }}°C</span>
             </td>
             <td>
-              <span *ngIf="crop.growthCycleDays">{{ crop.growthCycleDays }}</span>
-              <span *ngIf="!crop.growthCycleDays" class="text-muted">N/A</span>
+              <small class="text-muted">
+                {{ crop.dateCreated | date:'short' }}
+              </small>
             </td>
-            <td>{{ crop.harvestSeason || 'N/A' }}</td>
             <td>
-              <span *ngIf="crop.waterRequirement" 
-                    class="badge"
-                    [class.bg-danger]="crop.waterRequirement === 'Muy Alto'"
-                    [class.bg-warning]="crop.waterRequirement === 'Alto'"
-                    [class.bg-info]="crop.waterRequirement === 'Medio'"
-                    [class.bg-success]="crop.waterRequirement === 'Bajo'">
-                {{ crop.waterRequirement }}
-              </span>
-              <span *ngIf="!crop.waterRequirement" class="text-muted">N/A</span>
+              <span class="badge bg-secondary">Usuario {{ crop.createdBy }}</span>
             </td>
             <td>
               <span class="badge" 
-                    [class.bg-success]="crop.isActive" 
-                    [class.bg-secondary]="!crop.isActive">
-                {{ crop.isActive ? 'Activo' : 'Inactivo' }}
+                    [class.bg-success]="crop.active" 
+                    [class.bg-secondary]="!crop.active">
+                {{ crop.active ? 'Activo' : 'Inactivo' }}
               </span>
             </td>
             <td>
@@ -238,14 +178,6 @@
                         [disabled]="isLoading"
                         title="Editar">
                   <i class="bi bi-pencil"></i>
-                </button>
-                <button type="button" class="btn btn-sm" 
-                        [class.btn-outline-warning]="crop.isActive"
-                        [class.btn-outline-success]="!crop.isActive"
-                        (click)="toggleCropStatus(crop)" 
-                        [disabled]="isLoading"
-                        [title]="crop.isActive ? 'Desactivar' : 'Activar'">
-                  <i class="bi" [class.bi-pause-circle]="crop.isActive" [class.bi-play-circle]="!crop.isActive"></i>
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-danger ms-1" 
                         (click)="deleteCrop(crop)" 
@@ -303,40 +235,16 @@
       <div class="form-section">
         <h6 class="form-section-title">Información Básica</h6>
         <div class="row">
-          <div class="col-md-6">
+          <div class="col-md-12 mb-3">
             <label for="name" class="form-label">Nombre *</label>
             <input type="text" class="form-control" id="name" formControlName="name"
                    [class.is-invalid]="getFieldError('name')" placeholder="Nombre del cultivo">
             <div class="invalid-feedback">{{ getFieldError('name') }}</div>
           </div>
-          <div class="col-md-6">
-            <label for="scientificName" class="form-label">Nombre Científico</label>
-            <input type="text" class="form-control" id="scientificName" formControlName="scientificName"
-                   [class.is-invalid]="getFieldError('scientificName')" placeholder="Nombre científico">
-            <div class="invalid-feedback">{{ getFieldError('scientificName') }}</div>
-          </div>
         </div>
 
         <div class="row">
-          <div class="col-md-6">
-            <label for="type" class="form-label">Tipo *</label>
-            <select class="form-select" id="type" formControlName="type"
-                    [class.is-invalid]="getFieldError('type')">
-              <option value="">Seleccionar tipo</option>
-              <option *ngFor="let type of cropTypes" [value]="type.value">{{ type.label }}</option>
-            </select>
-            <div class="invalid-feedback">{{ getFieldError('type') }}</div>
-          </div>
-          <div class="col-md-6">
-            <label for="variety" class="form-label">Variedad</label>
-            <input type="text" class="form-control" id="variety" formControlName="variety"
-                   [class.is-invalid]="getFieldError('variety')" placeholder="Variedad específica">
-            <div class="invalid-feedback">{{ getFieldError('variety') }}</div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-12">
+          <div class="col-md-12 mb-3">
             <label for="description" class="form-label">Descripción</label>
             <textarea class="form-control" id="description" formControlName="description" rows="3"
                       [class.is-invalid]="getFieldError('description')" 
@@ -344,100 +252,25 @@
             <div class="invalid-feedback">{{ getFieldError('description') }}</div>
           </div>
         </div>
-      </div>
 
-      <!-- Growth Information -->
-      <div class="form-section">
-        <h6 class="form-section-title">Información de Crecimiento</h6>
         <div class="row">
-          <div class="col-md-4">
-            <label for="growthCycleDays" class="form-label">Ciclo de Crecimiento (días)</label>
-            <input type="number" class="form-control" id="growthCycleDays" formControlName="growthCycleDays"
-                   [class.is-invalid]="getFieldError('growthCycleDays')" placeholder="90" min="1" max="1000">
-            <div class="invalid-feedback">{{ getFieldError('growthCycleDays') }}</div>
+          <div class="col-md-6 mb-3">
+            <label for="cropBaseTemperature" class="form-label">Temperatura Base (°C) *</label>
+            <input type="number" class="form-control" id="cropBaseTemperature" 
+                   formControlName="cropBaseTemperature"
+                   [class.is-invalid]="getFieldError('cropBaseTemperature')" 
+                   placeholder="12" min="-50" max="100" step="0.1">
+            <div class="invalid-feedback">{{ getFieldError('cropBaseTemperature') }}</div>
+            <small class="form-text text-muted">Temperatura base necesaria para el crecimiento</small>
           </div>
-          <div class="col-md-4">
-            <label for="harvestSeason" class="form-label">Temporada de Cosecha</label>
-            <select class="form-select" id="harvestSeason" formControlName="harvestSeason"
-                    [class.is-invalid]="getFieldError('harvestSeason')">
-              <option value="">Seleccionar temporada</option>
-              <option *ngFor="let season of harvestSeasons" [value]="season.value">{{ season.label }}</option>
-            </select>
-            <div class="invalid-feedback">{{ getFieldError('harvestSeason') }}</div>
+          <div class="col-md-6 mb-3">
+            <div class="form-check mt-4">
+              <input class="form-check-input" type="checkbox" id="active" formControlName="active">
+              <label class="form-check-label" for="active">
+                Cultivo activo
+              </label>
+            </div>
           </div>
-          <div class="col-md-4">
-            <label for="waterRequirement" class="form-label">Requerimiento de Agua</label>
-            <select class="form-select" id="waterRequirement" formControlName="waterRequirement"
-                    [class.is-invalid]="getFieldError('waterRequirement')">
-              <option value="">Seleccionar nivel</option>
-              <option *ngFor="let water of waterRequirements" [value]="water.value">{{ water.label }}</option>
-            </select>
-            <div class="invalid-feedback">{{ getFieldError('waterRequirement') }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Temperature Requirements -->
-      <div class="form-section">
-        <h6 class="form-section-title">Requerimientos de Temperatura (°C)</h6>
-        <div class="row">
-          <div class="col-md-6">
-            <label for="optimalTemperatureMin" class="form-label">Temperatura Mínima Óptima</label>
-            <input type="number" class="form-control" id="optimalTemperatureMin" 
-                   formControlName="optimalTemperatureMin"
-                   [class.is-invalid]="getFieldError('optimalTemperatureMin')" 
-                   placeholder="18" min="-50" max="100" step="0.1">
-            <div class="invalid-feedback">{{ getFieldError('optimalTemperatureMin') }}</div>
-          </div>
-          <div class="col-md-6">
-            <label for="optimalTemperatureMax" class="form-label">Temperatura Máxima Óptima</label>
-            <input type="number" class="form-control" id="optimalTemperatureMax" 
-                   formControlName="optimalTemperatureMax"
-                   [class.is-invalid]="getFieldError('optimalTemperatureMax')" 
-                   placeholder="25" min="-50" max="100" step="0.1">
-            <div class="invalid-feedback">{{ getFieldError('optimalTemperatureMax') }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Nutritional Requirements -->
-      <div class="form-section">
-        <h6 class="form-section-title">Requerimientos Nutricionales (ppm)</h6>
-        <div class="row">
-          <div class="col-md-4">
-            <label for="nitrogenRequirement" class="form-label">Nitrógeno (N)</label>
-            <input type="number" class="form-control" id="nitrogenRequirement" 
-                   formControlName="nitrogenRequirement"
-                   [class.is-invalid]="getFieldError('nitrogenRequirement')" 
-                   placeholder="200" min="0" max="1000" step="0.1">
-            <div class="invalid-feedback">{{ getFieldError('nitrogenRequirement') }}</div>
-          </div>
-          <div class="col-md-4">
-            <label for="phosphorusRequirement" class="form-label">Fósforo (P)</label>
-            <input type="number" class="form-control" id="phosphorusRequirement" 
-                   formControlName="phosphorusRequirement"
-                   [class.is-invalid]="getFieldError('phosphorusRequirement')" 
-                   placeholder="50" min="0" max="1000" step="0.1">
-            <div class="invalid-feedback">{{ getFieldError('phosphorusRequirement') }}</div>
-          </div>
-          <div class="col-md-4">
-            <label for="potassiumRequirement" class="form-label">Potasio (K)</label>
-            <input type="number" class="form-control" id="potassiumRequirement" 
-                   formControlName="potassiumRequirement"
-                   [class.is-invalid]="getFieldError('potassiumRequirement')" 
-                   placeholder="300" min="0" max="1000" step="0.1">
-            <div class="invalid-feedback">{{ getFieldError('potassiumRequirement') }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Status -->
-      <div class="form-section">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="isActive" formControlName="isActive">
-          <label class="form-check-label" for="isActive">
-            Cultivo activo
-          </label>
         </div>
       </div>
     </form>
@@ -455,3 +288,243 @@
     </div>
   </div>
 </div>
+
+<style>
+.crop-list-container {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.page-title {
+  color: #198754;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.page-title i {
+  margin-right: 0.5rem;
+}
+
+.page-description {
+  color: #6c757d;
+  margin: 0.5rem 0 0 0;
+  font-size: 1.1rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-left: 4px solid;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-primary { border-left-color: #0d6efd; }
+.stat-success { border-left-color: #198754; }
+.stat-warning { border-left-color: #fd7e14; }
+.stat-info { border-left-color: #0dcaf0; }
+
+.stat-icon {
+  font-size: 2rem;
+  opacity: 0.8;
+}
+
+.stat-content h4 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.stat-content p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filters-card, .table-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 1.5rem;
+}
+
+.filters-header, .table-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filters-body {
+  padding: 1.5rem;
+}
+
+.no-data {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #6c757d;
+}
+
+.no-data i {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.record-count {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: normal;
+}
+
+.form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+.form-panel {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.form-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+}
+
+.form-body {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.form-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.form-section-title {
+  color: #198754;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 1.1rem;
+}
+
+.pagination-wrapper {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.crop-name strong {
+  color: #198754;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  color: #495057;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.btn {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+.btn-primary:hover {
+  background-color: #157347;
+  border-color: #146c43;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #198754;
+  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+.alert {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.badge {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .form-panel {
+    margin: 1rem;
+    width: calc(100% - 2rem);
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+</style>

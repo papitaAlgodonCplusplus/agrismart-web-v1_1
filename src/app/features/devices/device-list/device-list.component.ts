@@ -141,6 +141,7 @@ export class DeviceListComponent implements OnInit {
       })
     ).subscribe({
       next: (data) => {
+        console.log('Initial data loaded:', data);
         this.devices = data.devices;
         this.statistics = data.statistics;
         this.applyFilters();

@@ -1,4 +1,5 @@
-﻿using AgriSmart.Application.Agronomic.Commands;
+﻿
+using AgriSmart.Application.Agronomic.Commands;
 using AgriSmart.Application.Agronomic.Responses.Commands;
 using AgriSmart.Application.Agronomic.Validators.Commands;
 using AgriSmart.Core.Entities;
@@ -37,20 +38,37 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                 {
                     getResult.Name = command.Name;
                     getResult.Description = command.Description;
-                    getResult.TimeZoneId = command.TimeZoneId;                        
+                    getResult.TimeZoneId = command.TimeZoneId;
                     getResult.Active = command.Active;
+                    
+                    // UPDATE NEW PROPERTIES
+                    getResult.Location = command.Location;
+                    getResult.Address = command.Address;
+                    getResult.Area = command.Area;
+                    getResult.Latitude = command.Latitude;
+                    getResult.Longitude = command.Longitude;
+                    getResult.Climate = command.Climate;
+                    getResult.SoilType = command.SoilType;
                 }
 
                 Farm updateFarmResult = await _farmCommandRepository.UpdateAsync(getResult);
 
                 if (updateFarmResult != null)
                 {
-                    UpdateFarmResponse updateFarmResponse  = new UpdateFarmResponse()
+                    UpdateFarmResponse updateFarmResponse = new UpdateFarmResponse()
                     {
                         Id = updateFarmResult.Id,
+                        CompanyId = updateFarmResult.CompanyId,
                         Name = updateFarmResult.Name,
                         Description = updateFarmResult.Description,
                         TimeZoneId = updateFarmResult.TimeZoneId,
+                        Location = updateFarmResult.Location,
+                        Address = updateFarmResult.Address,
+                        Area = updateFarmResult.Area,
+                        Latitude = updateFarmResult.Latitude,
+                        Longitude = updateFarmResult.Longitude,
+                        Climate = updateFarmResult.Climate,
+                        SoilType = updateFarmResult.SoilType,
                         Active = updateFarmResult.Active
                     };
 

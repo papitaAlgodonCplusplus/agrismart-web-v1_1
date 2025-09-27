@@ -1,11 +1,14 @@
-﻿using AgriSmart.Application.Agronomic.Commands;
+﻿
+// 6. Updated CreateFarmHandler
+// File: 
+
+using AgriSmart.Application.Agronomic.Commands;
 using AgriSmart.Application.Agronomic.Mappers;
-using AgriSmart.Application.Agronomic.Resources;
 using AgriSmart.Application.Agronomic.Responses.Commands;
 using AgriSmart.Application.Agronomic.Validators.Commands;
 using AgriSmart.Core.Entities;
+using AgriSmart.Core.Enums;
 using AgriSmart.Core.Repositories.Commands;
-using AgriSmart.Core.Repositories.Queries;
 using AgriSmart.Core.Responses;
 using MediatR;
 
@@ -15,17 +18,11 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
     {
         private readonly IFarmCommandRepository _farmCommandRepository;
         private readonly IUserFarmCommandRepository _userFarmCommandRepository;
-        private readonly IFarmQueryRepository _farmQueryRepository;
-        private readonly ILicenseQueryRepository _licenseQueryRepository;
-        private readonly ICompanyQueryRepository _companyQueryRepository;
 
-        public CreateFarmHandler(IFarmCommandRepository farmCommandRepository, IUserFarmCommandRepository userFarmCommandRepository, IFarmQueryRepository farmQueryRepository, ILicenseQueryRepository licenseQueryRepository, ICompanyQueryRepository companyQueryRepository)
+        public CreateFarmHandler(IFarmCommandRepository farmCommandRepository, IUserFarmCommandRepository userFarmCommandRepository)
         {
             _farmCommandRepository = farmCommandRepository;
             _userFarmCommandRepository = userFarmCommandRepository;
-            _farmQueryRepository = farmQueryRepository;
-            _licenseQueryRepository = licenseQueryRepository;
-            _companyQueryRepository = companyQueryRepository;
         }
 
         public async Task<Response<CreateFarmResponse>> Handle(CreateFarmCommand command, CancellationToken cancellationToken)
@@ -39,17 +36,25 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                         return new Response<CreateFarmResponse>(new Exception(errors.ToString()));
                 }
 
-                int activeCompanies = _farmQueryRepository.GetAllAsync(clientId: _companyQueryRepository.GetByIdAsync(command.CompanyId).Result.ClientId).Result.Count();
-                int licenseFarms = _licenseQueryRepository.GetAllAsync(_farmCommandRepository.GetSessionClientId()).Result.ToList().OrderByDescending(p => p.ExpirationDate).FirstOrDefault().AllowedFarms;
-
-                if (activeCompanies >= licenseFarms) return new Response<CreateFarmResponse>(new Exception("Max farms quantity reached"));
-
                 int sessionUserId = _farmCommandRepository.GetSessionUserId();
                 int sessionProfileId = _farmCommandRepository.GetSessionProfileId();
-                Farm newFarm = AgronomicMapper.Mapper.Map<Farm>(command);
-
-                newFarm.CreatedBy = sessionUserId;
-                newFarm.Active = true;
+                
+                Farm newFarm = new Farm()
+                {
+                    CompanyId = command.CompanyId,
+                    Name = command.Name,
+                    Description = command.Description,
+                    TimeZoneId = command.TimeZoneId,
+                    Location = command.Location,
+                    Address = command.Address,
+                    Area = command.Area,
+                    Latitude = command.Latitude,
+                    Longitude = command.Longitude,
+                    Climate = command.Climate,
+                    SoilType = command.SoilType,
+                    CreatedBy = sessionUserId,
+                    Active = true
+                };
 
                 var createFarmResult = await _farmCommandRepository.CreateAsync(newFarm);
 
@@ -57,10 +62,31 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                 {
                     if (sessionProfileId == (int)Profiles.CompanyUser)
                     {
-                        var createUserFarmResult = await _userFarmCommandRepository.CreateAsync(new UserFarm() { FarmId = createFarmResult.Id, UserId = sessionUserId, Active = true, CreatedBy = sessionUserId });
+                        var createUserFarmResult = await _userFarmCommandRepository.CreateAsync(new UserFarm() 
+                        { 
+                            FarmId = createFarmResult.Id, 
+                            UserId = sessionUserId, 
+                            Active = true, 
+                            CreatedBy = sessionUserId 
+                        });
                     }
                     
-                    CreateFarmResponse createFarmResponse = AgronomicMapper.Mapper.Map<CreateFarmResponse>(createFarmResult);
+                    CreateFarmResponse createFarmResponse = new CreateFarmResponse()
+                    {
+                        Id = createFarmResult.Id,
+                        CompanyId = createFarmResult.CompanyId,
+                        Name = createFarmResult.Name,
+                        Description = createFarmResult.Description,
+                        TimeZoneId = createFarmResult.TimeZoneId,
+                        Location = createFarmResult.Location,
+                        Address = createFarmResult.Address,
+                        Area = createFarmResult.Area,
+                        Latitude = createFarmResult.Latitude,
+                        Longitude = createFarmResult.Longitude,
+                        Climate = createFarmResult.Climate,
+                        SoilType = createFarmResult.SoilType,
+                        Active = createFarmResult.Active
+                    };
 
                     return new Response<CreateFarmResponse>(createFarmResponse);
                 }

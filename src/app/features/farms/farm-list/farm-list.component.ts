@@ -101,10 +101,8 @@ export class FarmListComponent implements OnInit {
       location: [''],
       address: [''],
       area: ['', [Validators.min(0)]],
-      coordinates: this.fb.group({
-        latitude: ['', [Validators.min(-90), Validators.max(90)]],
-        longitude: ['', [Validators.min(-180), Validators.max(180)]]
-      }),
+      latitude: ['', [Validators.min(-90), Validators.max(90)]],
+      longitude: ['', [Validators.min(-180), Validators.max(180)]],
       climate: [''],
       soilType: [''],
       isActive: [true]
@@ -121,7 +119,9 @@ export class FarmListComponent implements OnInit {
       location: apiResponse.location,
       address: apiResponse.address,
       area: apiResponse.area,
-      coordinates: apiResponse.coordinates,
+      latitude: apiResponse.latitude,
+      longitude: apiResponse.longitude,
+
       climate: apiResponse.climate,
       soilType: apiResponse.soilType,
       isActive: apiResponse.active !== undefined ? apiResponse.active : apiResponse.isActive, // Map 'active' to 'isActive'
@@ -172,14 +172,14 @@ export class FarmListComponent implements OnInit {
     ).subscribe({
       next: (data) => {
         console.log('Initial data loaded:', data);
-        
+
         // Map API responses to expected format
         this.availableCompanies = data.companies.map(company => this.mapApiResponseToCompany(company));
         this.farms = data.farms.map(farm => this.mapApiResponseToFarm(farm));
-        
+
         console.log('Mapped farms:', this.farms);
         console.log('Mapped companies:', this.availableCompanies);
-        
+
         this.applyFilters();
       },
       error: (error) => {
@@ -311,7 +311,7 @@ export class FarmListComponent implements OnInit {
     this.selectedFarm = farm;
     this.isEditMode = true;
     this.isFormVisible = true;
-    
+
     this.farmForm.patchValue({
       name: farm.name,
       description: farm.description || '',
@@ -319,10 +319,8 @@ export class FarmListComponent implements OnInit {
       location: farm.location || '',
       address: farm.address || '',
       area: farm.area || '',
-      coordinates: {
-        latitude: farm.coordinates?.latitude || '',
-        longitude: farm.coordinates?.longitude || ''
-      },
+      latitude: farm?.latitude || '',
+      longitude: farm?.longitude || '',
       climate: farm.climate || '',
       soilType: farm.soilType || '',
       isActive: farm.isActive
@@ -339,37 +337,40 @@ export class FarmListComponent implements OnInit {
 
   submitForm(): void {
     if (this.farmForm.valid) {
+      console.log('Form is valid, preparing to submit:', this.farmForm.value);
       const formValue = this.farmForm.value;
-      const farmData: FarmCreateRequest | FarmUpdateRequest = {
+      const farmData: any = {
         name: formValue.name,
         description: formValue.description,
         companyId: parseInt(formValue.companyId),
         location: formValue.location,
         address: formValue.address,
         area: formValue.area ? parseFloat(formValue.area) : undefined,
-        coordinates: (formValue.coordinates.latitude && formValue.coordinates.longitude) ? {
-          latitude: parseFloat(formValue.coordinates.latitude),
-          longitude: parseFloat(formValue.coordinates.longitude)
-        } : undefined,
+        latitude: parseFloat(formValue.latitude),
+        longitude: parseFloat(formValue.longitude),
         climate: formValue.climate,
         soilType: formValue.soilType,
         isActive: formValue.isActive
       };
 
+      console.log('Submitting form with data:', farmData);
+
       if (this.isEditMode && this.selectedFarm) {
-        this.updateFarm({ ...farmData, id: this.selectedFarm.id });
+        this.updateFarm(farmData);
       } else {
-        this.createFarm(farmData as FarmCreateRequest);
+        this.createFarm(farmData as any);
       }
     } else {
+      console.log('Form is invalid:', this.farmForm.errors);
       this.markFormGroupTouched();
     }
   }
 
-  createFarm(farmData: FarmCreateRequest): void {
+  createFarm(farmData: any): void {
     this.isLoading = true;
     this.clearMessages();
 
+    console.log('Creating farm with data:', farmData);
     this.farmService.create(farmData)
       .pipe(
         catchError(error => {

@@ -147,6 +147,7 @@ export class CropListComponent implements OnInit {
 
     this.cropService.getAll(this.filters.onlyActive, this.filters).subscribe({
       next: (crops) => {
+        console.log('Crops loaded:', crops);
         this.crops = crops;
         this.applyClientFilters();
         this.isLoading = false;

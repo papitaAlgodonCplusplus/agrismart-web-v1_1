@@ -494,9 +494,9 @@ export interface SystemValidation {
   };
 
   flowValidation: {
-flowBalance: number;
-flowVariation: number;
-adequateFlow: any;
+    flowBalance: number;
+    flowVariation: number;
+    adequateFlow: any;
     isValid: boolean;
     score: number;
     totalFlowBalance: number; // percentage deviation
@@ -572,9 +572,9 @@ adequateFlow: any;
 // =============================================================================
 
 export interface DesignOptimization {
-operationalCosts: any;
-paybackPeriod: any;
-optimizationSteps: any;
+  operationalCosts: any;
+  paybackPeriod: any;
+  optimizationSteps: any;
   energySavings: number;
   waterSavings: number;
   estimatedCost: number;
@@ -2170,10 +2170,8 @@ export interface Farm {
   location?: string | undefined;
   address?: string | undefined;
   area?: number; // hectares
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
+  latitude: number;
+  longitude: number;
   climate?: string | undefined;
   soilType?: string | undefined;
   isActive: boolean;
@@ -2183,6 +2181,10 @@ export interface Farm {
 
 // src/app/core/models/crop.model.ts
 export interface Crop {
+dateCreated: string|number|Date;
+createdBy: any;
+active: any;
+cropBaseTemperature: any;
   id: number;
   name: string;
   scientificName?: string | undefined;
@@ -2656,7 +2658,7 @@ export enum ConcentrationUnit {
 
 // Utility functions for Fertilizer calculations
 export class FertilizerUtils {
-  
+
   static calculateNPKRatio(fertilizer: Fertilizer): string {
     const n = fertilizer.nitrogenPercentage || 0;
     const p = fertilizer.phosphorusPercentage || 0;
@@ -2700,7 +2702,7 @@ export class FertilizerUtils {
     const today = new Date();
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + daysAhead);
-    
+
     return expDate <= futureDate && expDate >= today;
   }
 
@@ -2708,7 +2710,7 @@ export class FertilizerUtils {
     if (!fertilizer.currentStock || !fertilizer.minimumStock) {
       return 'unknown';
     }
-    
+
     if (fertilizer.currentStock <= fertilizer.minimumStock) {
       return 'low';
     } else if (fertilizer.currentStock >= fertilizer.minimumStock * 2) {
@@ -2719,7 +2721,7 @@ export class FertilizerUtils {
 
   static formatChemicalComposition(fertilizer: Fertilizer): { [key: string]: number } {
     const composition: { [key: string]: number } = {};
-    
+
     // Add all chemical parameters that have values
     const chemicals = {
       'Ca': fertilizer.ca,

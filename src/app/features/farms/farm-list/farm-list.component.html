@@ -57,17 +57,6 @@
       </div>
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
-      <div class="stat-card stat-warning">
-        <div class="stat-icon">
-          <i class="bi bi-pause-circle"></i>
-        </div>
-        <div class="stat-content">
-          <h4>{{ getInactiveCount() }}</h4>
-          <p>Inactivas</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
       <div class="stat-card stat-info">
         <div class="stat-icon">
           <i class="bi bi-rulers"></i>
@@ -95,11 +84,7 @@
         <div class="col-md-3 mb-3">
           <label class="form-label">Solo Activas</label>
           <div class="form-check form-switch">
-            <input 
-              type="checkbox" 
-              id="onlyActive"
-              class="form-check-input" 
-              [(ngModel)]="filters.onlyActive"
+            <input type="checkbox" id="onlyActive" class="form-check-input" [(ngModel)]="filters.onlyActive"
               (change)="onFilterChange()">
             <label class="form-check-label" for="onlyActive">
               Mostrar solo fincas activas
@@ -111,22 +96,14 @@
           <label class="form-label">Buscar</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input 
-              type="text" 
-              class="form-control" 
-              placeholder="Nombre, ubicación, empresa..."
-              [(ngModel)]="filters.searchTerm"
-              (input)="onFilterChange()">
+            <input type="text" class="form-control" placeholder="Nombre, ubicación, empresa..."
+              [(ngModel)]="filters.searchTerm" (input)="onFilterChange()">
           </div>
         </div>
 
         <div class="col-md-2 mb-3">
           <label class="form-label">Ubicación</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            placeholder="Ciudad, región..."
-            [(ngModel)]="filters.location"
+          <input type="text" class="form-control" placeholder="Ciudad, región..." [(ngModel)]="filters.location"
             (input)="onFilterChange()">
         </div>
 
@@ -154,23 +131,13 @@
       <div class="row">
         <div class="col-md-3 mb-3">
           <label class="form-label">Área Mínima (Ha)</label>
-          <input 
-            type="number" 
-            class="form-control" 
-            placeholder="0"
-            step="0.1"
-            [(ngModel)]="filters.minArea"
+          <input type="number" class="form-control" placeholder="0" step="0.1" [(ngModel)]="filters.minArea"
             (input)="onFilterChange()">
         </div>
 
         <div class="col-md-3 mb-3">
           <label class="form-label">Área Máxima (Ha)</label>
-          <input 
-            type="number" 
-            class="form-control" 
-            placeholder="1000"
-            step="0.1"
-            [(ngModel)]="filters.maxArea"
+          <input type="number" class="form-control" placeholder="1000" step="0.1" [(ngModel)]="filters.maxArea"
             (input)="onFilterChange()">
         </div>
 
@@ -254,9 +221,9 @@
                 <div *ngIf="farm.address" class="text-muted small">
                   {{ farm.address }}
                 </div>
-                <div *ngIf="farm.coordinates" class="coordinates small text-muted">
+                <div *ngIf="farm.latitude && farm.longitude" class="coordinates small text-muted">
                   <i class="bi bi-compass"></i>
-                  {{ farm.coordinates.latitude | number:'1.4-4' }}, {{ farm.coordinates.longitude | number:'1.4-4' }}
+                  {{ farm.latitude | number:'1.4-4' }}, {{ farm.longitude | number:'1.4-4' }}
                 </div>
               </div>
             </td>
@@ -285,12 +252,8 @@
 
             <!-- Status -->
             <td>
-              <span class="badge" 
-                    [class.bg-success]="farm.isActive"
-                    [class.bg-danger]="!farm.isActive">
-                <i class="bi" 
-                   [class.bi-check-circle]="farm.isActive"
-                   [class.bi-x-circle]="!farm.isActive"></i>
+              <span class="badge" [class.bg-success]="farm.isActive" [class.bg-danger]="!farm.isActive">
+                <i class="bi" [class.bi-check-circle]="farm.isActive" [class.bi-x-circle]="!farm.isActive"></i>
                 {{ farm.isActive ? 'Activa' : 'Inactiva' }}
               </span>
             </td>
@@ -298,28 +261,12 @@
             <!-- Actions -->
             <td>
               <div class="action-buttons">
-                <button class="btn btn-sm btn-outline-info" 
-                        (click)="viewDetails(farm)" 
-                        title="Ver detalles">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-warning" 
-                        (click)="showEditForm(farm)" 
-                        title="Editar">
+
+                <button class="btn btn-sm btn-outline-warning" (click)="showEditForm(farm)" title="Editar">
                   <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-sm" 
-                        [class.btn-outline-success]="!farm.isActive"
-                        [class.btn-outline-danger]="farm.isActive"
-                        (click)="toggleFarmStatus(farm)" 
-                        [title]="farm.isActive ? 'Desactivar' : 'Activar'">
-                  <i class="bi" 
-                     [class.bi-check-circle]="!farm.isActive"
-                     [class.bi-pause-circle]="farm.isActive"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" 
-                        (click)="deleteFarm(farm)" 
-                        title="Eliminar">
+
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteFarm(farm)" title="Eliminar">
                   <i class="bi bi-trash"></i>
                 </button>
               </div>
@@ -351,9 +298,8 @@
               <i class="bi bi-chevron-left"></i>
             </button>
           </li>
-          <li class="page-item" 
-              *ngFor="let page of [].constructor(getTotalPages()); let i = index"
-              [class.active]="i + 1 === currentPage">
+          <li class="page-item" *ngFor="let page of [].constructor(getTotalPages()); let i = index"
+            [class.active]="i + 1 === currentPage">
             <button class="page-link" (click)="goToPage(i + 1)">
               {{ i + 1 }}
             </button>
@@ -386,21 +332,14 @@
           <!-- Basic Information -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Nombre *</label>
-            <input 
-              type="text" 
-              class="form-control"
-              [class.is-invalid]="isFieldInvalid('name')"
-              formControlName="name"
+            <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('name')" formControlName="name"
               placeholder="Nombre de la finca">
             <div class="invalid-feedback">{{ getFieldError('name') }}</div>
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Empresa *</label>
-            <select 
-              class="form-select"
-              [class.is-invalid]="isFieldInvalid('companyId')"
-              formControlName="companyId">
+            <select class="form-select" [class.is-invalid]="isFieldInvalid('companyId')" formControlName="companyId">
               <option value="">Seleccionar empresa...</option>
               <option *ngFor="let company of availableCompanies" [value]="company.id">
                 {{ company.name }}
@@ -411,68 +350,39 @@
 
           <div class="col-12 mb-3">
             <label class="form-label">Descripción</label>
-            <textarea 
-              class="form-control" 
-              rows="3"
-              formControlName="description"
+            <textarea class="form-control" rows="3" formControlName="description"
               placeholder="Descripción de la finca"></textarea>
           </div>
 
           <!-- Location Information -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Ubicación</label>
-            <input 
-              type="text" 
-              class="form-control"
-              formControlName="location"
-              placeholder="Ciudad, región, país">
+            <input type="text" class="form-control" formControlName="location" placeholder="Ciudad, región, país">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Dirección</label>
-            <input 
-              type="text" 
-              class="form-control"
-              formControlName="address"
-              placeholder="Dirección completa">
+            <input type="text" class="form-control" formControlName="address" placeholder="Dirección completa">
           </div>
 
           <!-- Coordinates -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Latitud</label>
-            <input 
-              type="number" 
-              class="form-control"
-              formControlName="coordinates.latitude"
-              step="0.0001"
-              min="-90"
-              max="90"
-              placeholder="Ej: 10.0000">
+            <input type="number" class="form-control" formControlName="latitude" step="0.0001" min="-90"
+              max="90" placeholder="Ej: 10.0000">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Longitud</label>
-            <input 
-              type="number" 
-              class="form-control"
-              formControlName="coordinates.longitude"
-              step="0.0001"
-              min="-180"
-              max="180"
-              placeholder="Ej: -84.0000">
+            <input type="number" class="form-control" formControlName="longitude" step="0.0001" min="-180"
+              max="180" placeholder="Ej: -84.0000">
           </div>
 
           <!-- Physical Characteristics -->
           <div class="col-md-4 mb-3">
             <label class="form-label">Área (Hectáreas)</label>
-            <input 
-              type="number" 
-              class="form-control"
-              [class.is-invalid]="isFieldInvalid('area')"
-              formControlName="area"
-              step="0.1"
-              min="0"
-              placeholder="0.0">
+            <input type="number" class="form-control" [class.is-invalid]="isFieldInvalid('area')" formControlName="area"
+              step="0.1" min="0" placeholder="0.0">
             <div class="invalid-feedback">{{ getFieldError('area') }}</div>
           </div>
 
@@ -499,11 +409,7 @@
           <!-- Status -->
           <div class="col-12 mb-3">
             <div class="form-check form-switch">
-              <input 
-                type="checkbox" 
-                class="form-check-input" 
-                id="isActive"
-                formControlName="isActive">
+              <input type="checkbox" class="form-check-input" id="isActive" formControlName="isActive">
               <label class="form-check-label" for="isActive">
                 Finca activa
               </label>
