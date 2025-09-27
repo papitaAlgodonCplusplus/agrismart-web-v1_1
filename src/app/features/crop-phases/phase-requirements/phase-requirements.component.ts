@@ -74,7 +74,7 @@ export interface PhaseRequirementFilters {
 })
 export class PhaseRequirementsComponent implements OnInit {
   requirements: CropPhaseSolutionRequirement[] = [];
-  filteredRequirements: CropPhaseSolutionRequirement[] = [];
+  filteredRequirements: any[] = [];
   selectedRequirement: CropPhaseSolutionRequirement | null = null;
   requirementForm!: FormGroup;
 
@@ -128,6 +128,7 @@ export class PhaseRequirementsComponent implements OnInit {
   ngOnInit(): void {
     this.checkAuthentication();
     this.loadInitialData();
+    this.cdr.detectChanges();
   }
 
   private checkAuthentication(): void {
@@ -369,9 +370,15 @@ export class PhaseRequirementsComponent implements OnInit {
   }
 
   getCropName(cropPhaseId?: number): string {
-    if (!cropPhaseId) return 'N/A';
+    if (!cropPhaseId) { 
+      console.error('Invalid cropPhaseId:', cropPhaseId);
+      return 'N/A';
+    }
     const phase = this.availableCropPhases.find(p => p.id === cropPhaseId);
-    if (!phase) return 'N/A';
+    if (!phase) { 
+      console.error('Crop phase not found for id:', cropPhaseId);
+      return 'N/A';
+    }
     const crop = this.availableCrops.find(c => c.id === phase.cropId);
     return crop ? crop.name || 'N/A' : 'N/A';
   }
@@ -464,7 +471,7 @@ export class PhaseRequirementsComponent implements OnInit {
   }
 
   // Pagination
-  getPaginatedData(): CropPhaseSolutionRequirement[] {
+  getPaginatedData(): any {
     const startIndex = (this.currentPage - 1) * this.pageSize;
     const endIndex = startIndex + this.pageSize;
     return this.filteredRequirements.slice(startIndex, endIndex);
@@ -646,9 +653,7 @@ export class PhaseRequirementsComponent implements OnInit {
           }
 
           // Safely handle crops with proper validation
-          this.availableCrops = Array.isArray(data.crops)
-            ? data.crops.filter(c => c && c.isActive)
-            : [];
+          this.availableCrops = data.crops;
 
           // Safely handle crop phases with proper validation
           this.availableCropPhases = Array.isArray(data.cropPhases)

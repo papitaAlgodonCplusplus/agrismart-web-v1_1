@@ -1,1 +1,527 @@
-<p>farm-list works!</p>
+<div class="farm-list-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="bi bi-geo-alt"></i>
+        Gestión de Fincas
+      </h1>
+      <p class="page-description">
+        Administración y control de fincas para producción agrícola
+      </p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary" (click)="showCreateForm()" [disabled]="isLoading">
+        <i class="bi bi-plus-circle"></i>
+        Nueva Finca
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" *ngIf="successMessage || errorMessage">
+    <div class="alert alert-success alert-dismissible" *ngIf="successMessage">
+      <i class="bi bi-check-circle"></i>
+      {{ successMessage }}
+      <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible" *ngIf="errorMessage">
+      <i class="bi bi-exclamation-triangle"></i>
+      {{ errorMessage }}
+      <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-primary">
+        <div class="stat-icon">
+          <i class="bi bi-geo-alt"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ getTotalCount() }}</h4>
+          <p>Total</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-success">
+        <div class="stat-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ getActiveCount() }}</h4>
+          <p>Activas</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-warning">
+        <div class="stat-icon">
+          <i class="bi bi-pause-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ getInactiveCount() }}</h4>
+          <p>Inactivas</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+      <div class="stat-card stat-info">
+        <div class="stat-icon">
+          <i class="bi bi-rulers"></i>
+        </div>
+        <div class="stat-content">
+          <h4>{{ getTotalArea() | number:'1.1-1' }}</h4>
+          <p>Ha Totales</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-card">
+      <div class="filters-header">
+        <h5><i class="bi bi-funnel"></i> Filtros</h5>
+        <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
+          <i class="bi bi-x-circle"></i>
+          Limpiar
+        </button>
+      </div>
+
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Solo Activas</label>
+          <div class="form-check form-switch">
+            <input 
+              type="checkbox" 
+              id="onlyActive"
+              class="form-check-input" 
+              [(ngModel)]="filters.onlyActive"
+              (change)="onFilterChange()">
+            <label class="form-check-label" for="onlyActive">
+              Mostrar solo fincas activas
+            </label>
+          </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Buscar</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Nombre, ubicación, empresa..."
+              [(ngModel)]="filters.searchTerm"
+              (input)="onFilterChange()">
+          </div>
+        </div>
+
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Ubicación</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            placeholder="Ciudad, región..."
+            [(ngModel)]="filters.location"
+            (input)="onFilterChange()">
+        </div>
+
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Clima</label>
+          <select class="form-select" [(ngModel)]="filters.climate" (change)="onFilterChange()">
+            <option value="">Todos</option>
+            <option *ngFor="let climate of climateTypes" [value]="climate.value">
+              {{ climate.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Tipo de Suelo</label>
+          <select class="form-select" [(ngModel)]="filters.soilType" (change)="onFilterChange()">
+            <option value="">Todos</option>
+            <option *ngFor="let soil of soilTypes" [value]="soil.value">
+              {{ soil.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Área Mínima (Ha)</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            placeholder="0"
+            step="0.1"
+            [(ngModel)]="filters.minArea"
+            (input)="onFilterChange()">
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Área Máxima (Ha)</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            placeholder="1000"
+            step="0.1"
+            [(ngModel)]="filters.maxArea"
+            (input)="onFilterChange()">
+        </div>
+
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Empresa</label>
+          <select class="form-select" [(ngModel)]="filters.companyId" (change)="onFilterChange()">
+            <option [value]="null">Todas las empresas</option>
+            <option *ngFor="let company of availableCompanies" [value]="company.id">
+              {{ company.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div class="text-center my-4" *ngIf="isLoading && !isFormVisible">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2 text-muted">Cargando fincas...</p>
+  </div>
+
+  <!-- Farms Table -->
+  <div class="table-card" *ngIf="!isLoading || isFormVisible">
+    <div class="table-header">
+      <h5>
+        <i class="bi bi-table"></i>
+        Lista de Fincas ({{ getTotalCount() }} fincas)
+      </h5>
+      <div class="table-actions">
+        <span class="results-info">
+          Mostrando {{ getPaginatedData().length }} de {{ totalRecords }} resultados
+        </span>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Finca</th>
+            <th>Empresa</th>
+            <th>Ubicación</th>
+            <th>Área</th>
+            <th>Clima/Suelo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let farm of getPaginatedData(); trackBy: trackByIndex">
+            <!-- Farm Info -->
+            <td>
+              <div class="farm-info">
+                <div class="farm-name">
+                  <strong>{{ farm.name }}</strong>
+                  <span class="farm-id">ID: {{ farm.id }}</span>
+                </div>
+                <div class="farm-description" *ngIf="farm.description">
+                  <small class="text-muted">{{ farm.description }}</small>
+                </div>
+              </div>
+            </td>
+
+            <!-- Company -->
+            <td>
+              <div class="company-info">
+                <span class="company-name">{{ getCompanyName(farm.companyId) }}</span>
+              </div>
+            </td>
+
+            <!-- Location -->
+            <td>
+              <div class="location-info">
+                <div *ngIf="farm.location">
+                  <i class="bi bi-geo-alt text-muted"></i>
+                  {{ farm.location }}
+                </div>
+                <div *ngIf="farm.address" class="text-muted small">
+                  {{ farm.address }}
+                </div>
+                <div *ngIf="farm.coordinates" class="coordinates small text-muted">
+                  <i class="bi bi-compass"></i>
+                  {{ farm.coordinates.latitude | number:'1.4-4' }}, {{ farm.coordinates.longitude | number:'1.4-4' }}
+                </div>
+              </div>
+            </td>
+
+            <!-- Area -->
+            <td>
+              <div class="area-info">
+                <span class="area-value">{{ farm.area | number:'1.1-1' }}</span>
+                <small class="text-muted">Ha</small>
+              </div>
+            </td>
+
+            <!-- Climate/Soil -->
+            <td>
+              <div class="environment-info">
+                <div *ngIf="farm.climate" class="climate">
+                  <i class="bi bi-cloud-sun text-info"></i>
+                  {{ getClimateLabel(farm.climate) }}
+                </div>
+                <div *ngIf="farm.soilType" class="soil-type">
+                  <i class="bi bi-layers text-brown"></i>
+                  {{ getSoilTypeLabel(farm.soilType) }}
+                </div>
+              </div>
+            </td>
+
+            <!-- Status -->
+            <td>
+              <span class="badge" 
+                    [class.bg-success]="farm.isActive"
+                    [class.bg-danger]="!farm.isActive">
+                <i class="bi" 
+                   [class.bi-check-circle]="farm.isActive"
+                   [class.bi-x-circle]="!farm.isActive"></i>
+                {{ farm.isActive ? 'Activa' : 'Inactiva' }}
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="action-buttons">
+                <button class="btn btn-sm btn-outline-info" 
+                        (click)="viewDetails(farm)" 
+                        title="Ver detalles">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-warning" 
+                        (click)="showEditForm(farm)" 
+                        title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm" 
+                        [class.btn-outline-success]="!farm.isActive"
+                        [class.btn-outline-danger]="farm.isActive"
+                        (click)="toggleFarmStatus(farm)" 
+                        [title]="farm.isActive ? 'Desactivar' : 'Activar'">
+                  <i class="bi" 
+                     [class.bi-check-circle]="!farm.isActive"
+                     [class.bi-pause-circle]="farm.isActive"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" 
+                        (click)="deleteFarm(farm)" 
+                        title="Eliminar">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="filteredFarms.length === 0 && !isLoading">
+        <div class="empty-state-content">
+          <i class="bi bi-geo-alt display-4 text-muted mb-3"></i>
+          <h4>No se encontraron fincas</h4>
+          <p class="text-muted">No hay fincas que coincidan con los filtros aplicados.</p>
+          <button class="btn btn-primary" (click)="clearFilters()">
+            <i class="bi bi-funnel"></i>
+            Limpiar Filtros
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-wrapper" *ngIf="getTotalPages() > 1">
+      <nav>
+        <ul class="pagination pagination-sm justify-content-center">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="goToPage(currentPage - 1)">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+          <li class="page-item" 
+              *ngFor="let page of [].constructor(getTotalPages()); let i = index"
+              [class.active]="i + 1 === currentPage">
+            <button class="page-link" (click)="goToPage(i + 1)">
+              {{ i + 1 }}
+            </button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === getTotalPages()">
+            <button class="page-link" (click)="goToPage(currentPage + 1)">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Form Modal -->
+<div class="form-overlay" *ngIf="isFormVisible">
+  <div class="form-panel">
+    <div class="form-header">
+      <h5>
+        <i class="bi bi-geo-alt"></i>
+        {{ isEditMode ? 'Editar Finca' : 'Nueva Finca' }}
+      </h5>
+      <button type="button" class="btn-close" (click)="hideForm()"></button>
+    </div>
+
+    <form [formGroup]="farmForm" (ngSubmit)="submitForm()">
+      <div class="form-body">
+        <div class="row">
+          <!-- Basic Information -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Nombre *</label>
+            <input 
+              type="text" 
+              class="form-control"
+              [class.is-invalid]="isFieldInvalid('name')"
+              formControlName="name"
+              placeholder="Nombre de la finca">
+            <div class="invalid-feedback">{{ getFieldError('name') }}</div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Empresa *</label>
+            <select 
+              class="form-select"
+              [class.is-invalid]="isFieldInvalid('companyId')"
+              formControlName="companyId">
+              <option value="">Seleccionar empresa...</option>
+              <option *ngFor="let company of availableCompanies" [value]="company.id">
+                {{ company.name }}
+              </option>
+            </select>
+            <div class="invalid-feedback">{{ getFieldError('companyId') }}</div>
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label">Descripción</label>
+            <textarea 
+              class="form-control" 
+              rows="3"
+              formControlName="description"
+              placeholder="Descripción de la finca"></textarea>
+          </div>
+
+          <!-- Location Information -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Ubicación</label>
+            <input 
+              type="text" 
+              class="form-control"
+              formControlName="location"
+              placeholder="Ciudad, región, país">
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Dirección</label>
+            <input 
+              type="text" 
+              class="form-control"
+              formControlName="address"
+              placeholder="Dirección completa">
+          </div>
+
+          <!-- Coordinates -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Latitud</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="coordinates.latitude"
+              step="0.0001"
+              min="-90"
+              max="90"
+              placeholder="Ej: 10.0000">
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Longitud</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="coordinates.longitude"
+              step="0.0001"
+              min="-180"
+              max="180"
+              placeholder="Ej: -84.0000">
+          </div>
+
+          <!-- Physical Characteristics -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Área (Hectáreas)</label>
+            <input 
+              type="number" 
+              class="form-control"
+              [class.is-invalid]="isFieldInvalid('area')"
+              formControlName="area"
+              step="0.1"
+              min="0"
+              placeholder="0.0">
+            <div class="invalid-feedback">{{ getFieldError('area') }}</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Clima</label>
+            <select class="form-select" formControlName="climate">
+              <option value="">Seleccionar clima...</option>
+              <option *ngFor="let climate of climateTypes" [value]="climate.value">
+                {{ climate.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Tipo de Suelo</label>
+            <select class="form-select" formControlName="soilType">
+              <option value="">Seleccionar tipo de suelo...</option>
+              <option *ngFor="let soil of soilTypes" [value]="soil.value">
+                {{ soil.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Status -->
+          <div class="col-12 mb-3">
+            <div class="form-check form-switch">
+              <input 
+                type="checkbox" 
+                class="form-check-input" 
+                id="isActive"
+                formControlName="isActive">
+              <label class="form-check-label" for="isActive">
+                Finca activa
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn btn-secondary" (click)="hideForm()">
+          <i class="bi bi-x-circle"></i>
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="farmForm.invalid || isLoading">
+          <i class="bi bi-check-circle"></i>
+          {{ isEditMode ? 'Actualizar' : 'Crear' }} Finca
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

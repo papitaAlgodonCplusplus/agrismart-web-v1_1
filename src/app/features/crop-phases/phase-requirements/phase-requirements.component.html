@@ -56,17 +56,7 @@
         </div>
       </div>
     </div>
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
-      <div class="stat-card stat-info">
-        <div class="stat-icon">
-          <i class="bi bi-shield-check"></i>
-        </div>
-        <div class="stat-content">
-          <h4>{{ getValidatedCount() }}</h4>
-          <p>Validados</p>
-        </div>
-      </div>
-    </div>
+  
     <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
       <div class="stat-card stat-warning">
         <div class="stat-icon">
@@ -136,12 +126,6 @@
                      (ngModelChange)="onFiltersChange()">
               <label class="form-check-label" for="activeFilter">Solo activos</label>
             </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="validatedFilter" 
-                     [(ngModel)]="filters.onlyValidated" 
-                     (ngModelChange)="onFiltersChange()">
-              <label class="form-check-label" for="validatedFilter">Solo validados</label>
-            </div>
           </div>
         </div>
       </div>
@@ -187,7 +171,6 @@
             <th>EC</th>
             <th>pH</th>
             <th>Estado</th>
-            <th>Validado</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -213,7 +196,7 @@
               <small class="text-muted">dS/m</small>
             </td>
             <td>
-              <span class="nutrient-value">{{ requirement.ph || 0 }}</span>
+              <span class="nutrient-value">{{ requirement.pH || 0 }}</span>
             </td>
             <td>
               <span class="badge" 
@@ -223,33 +206,12 @@
               </span>
             </td>
             <td>
-              <span class="badge" 
-                    [class.bg-success]="requirement.isValidated" 
-                    [class.bg-warning]="!requirement.isValidated">
-                {{ requirement.isValidated ? 'Validado' : 'Pendiente' }}
-              </span>
-            </td>
-            <td>
               <div class="action-buttons">
                 <button type="button" class="btn btn-sm btn-outline-primary me-1" 
                         (click)="showEditForm(requirement)" 
                         [disabled]="isLoading"
                         title="Editar">
                   <i class="bi bi-pencil"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-success me-1" 
-                        (click)="validateRequirement(requirement)" 
-                        [disabled]="isLoading || requirement.isValidated"
-                        title="Validar">
-                  <i class="bi bi-shield-check"></i>
-                </button>
-                <button type="button" class="btn btn-sm" 
-                        [class.btn-outline-warning]="requirement.active"
-                        [class.btn-outline-success]="!requirement.active"
-                        (click)="toggleRequirementStatus(requirement)" 
-                        [disabled]="isLoading"
-                        [title]="requirement.active ? 'Desactivar' : 'Activar'">
-                  <i class="bi" [class.bi-pause-circle]="requirement.active" [class.bi-play-circle]="!requirement.active"></i>
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-danger ms-1" 
                         (click)="deleteRequirement(requirement)" 
