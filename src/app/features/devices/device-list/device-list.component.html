@@ -1,82 +1,82 @@
+<!-- src/app/features/devices/device-list/device-list.component.html -->
 <div class="device-list-container">
   <!-- Page Header -->
   <div class="page-header">
     <div class="header-content">
       <h1 class="page-title">
-        <i class="bi bi-router"></i>
-        Gestión de Dispositivos
+        <i class="fas fa-microchip"></i>
+        Gestión de Dispositivos IoT
       </h1>
       <p class="page-description">
-        Monitoreo y control de dispositivos IoT para agricultura inteligente
+        Administre dispositivos registrados y monitoree datos en tiempo real desde sensores IoT
       </p>
     </div>
     <div class="header-actions">
-      <button type="button" class="btn btn-primary" (click)="showCreateForm()" [disabled]="isLoading">
-        <i class="bi bi-plus-circle"></i>
+      <button class="btn btn-light" (click)="refreshData()" [disabled]="isLoading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+        Actualizar
+      </button>
+      <button class="btn btn-warning" (click)="showAddForm()">
+        <i class="fas fa-plus"></i>
         Nuevo Dispositivo
       </button>
     </div>
   </div>
 
-  <!-- Messages -->
-  <div class="messages" *ngIf="successMessage || errorMessage">
-    <div class="alert alert-success alert-dismissible" *ngIf="successMessage">
-      <i class="bi bi-check-circle"></i>
-      {{ successMessage }}
-      <button type="button" class="btn-close" (click)="successMessage = ''"></button>
-    </div>
-    <div class="alert alert-danger alert-dismissible" *ngIf="errorMessage">
-      <i class="bi bi-exclamation-triangle"></i>
-      {{ errorMessage }}
-      <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
-    </div>
-  </div>
-
   <!-- Statistics Cards -->
-  <div class="row mb-4">
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+  <div class="row mb-4" *ngIf="statistics">
+    <div class="col-md-3 mb-3">
       <div class="stat-card stat-primary">
         <div class="stat-icon">
-          <i class="bi bi-router"></i>
+          <i class="fas fa-microchip"></i>
         </div>
         <div class="stat-content">
-          <h4>{{ getTotalCount() }}</h4>
-          <p>Total</p>
+          <h4>{{ statistics.totalDevices }}</h4>
+          <p>Total Dispositivos</p>
         </div>
       </div>
     </div>
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+    <div class="col-md-3 mb-3">
       <div class="stat-card stat-success">
         <div class="stat-icon">
-          <i class="bi bi-wifi"></i>
+          <i class="fas fa-wifi"></i>
         </div>
         <div class="stat-content">
-          <h4>{{ getOnlineCount() }}</h4>
+          <h4>{{ statistics.onlineDevices }}</h4>
           <p>En Línea</p>
         </div>
       </div>
     </div>
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
-      <div class="stat-card stat-danger">
+    <div class="col-md-3 mb-3">
+      <div class="stat-card stat-warning">
         <div class="stat-icon">
-          <i class="bi bi-wifi-off"></i>
+          <i class="fas fa-exclamation-triangle"></i>
         </div>
         <div class="stat-content">
-          <h4>{{ getOfflineCount() }}</h4>
+          <h4>{{ statistics.offlineDevices }}</h4>
           <p>Desconectados</p>
         </div>
       </div>
     </div>
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
-      <div class="stat-card stat-warning">
+    <div class="col-md-3 mb-3">
+      <div class="stat-card stat-danger">
         <div class="stat-icon">
-          <i class="bi bi-battery-half"></i>
+          <i class="fas fa-battery-quarter"></i>
         </div>
         <div class="stat-content">
-          <h4>{{ getLowBatteryCount() }}</h4>
+          <h4>{{ statistics.lowBatteryDevices }}</h4>
           <p>Batería Baja</p>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div class="messages" *ngIf="error">
+    <div class="alert alert-danger">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ error }}
+      <button type="button" class="btn-close" (click)="error = null"></button>
     </div>
   </div>
 
@@ -84,151 +84,94 @@
   <div class="filters-section">
     <div class="filters-card">
       <div class="filters-header">
-        <h5><i class="bi bi-funnel"></i> Filtros</h5>
-        <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
-          <i class="bi bi-x-circle"></i>
+        <h5>
+          <i class="fas fa-filter"></i>
+          Filtros
+        </h5>
+        <button class="btn btn-outline-secondary btn-sm" (click)="clearFilters()">
+          <i class="fas fa-times"></i>
           Limpiar
         </button>
       </div>
-
       <div class="row">
-        <div class="col-md-3 mb-3">
-          <label class="form-label">Solo Activos</label>
-          <div class="form-check form-switch">
-            <input 
-              type="checkbox" 
-              id="onlyActive"
-              class="form-check-input" 
-              [(ngModel)]="filters.onlyActive"
-              (change)="onFilterChange()">
-            <label class="form-check-label" for="onlyActive">
-              Mostrar solo dispositivos activos
-            </label>
-          </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
+        <div class="col-md-4 mb-3">
           <label class="form-label">Buscar</label>
           <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input 
-              type="text" 
-              class="form-control" 
-              placeholder="Nombre, modelo, serie..."
-              [(ngModel)]="filters.searchTerm"
-              (input)="onFilterChange()">
+            <span class="input-group-text">
+              <i class="fas fa-search"></i>
+            </span>
+            <input type="text" class="form-control" placeholder="Nombre, tipo, serie..." [(ngModel)]="searchTerm"
+              (keyup.enter)="onSearch()">
           </div>
         </div>
-
         <div class="col-md-3 mb-3">
-          <label class="form-label">Tipo de Dispositivo</label>
-          <select class="form-select" [(ngModel)]="filters.deviceType" (change)="onFilterChange()">
+          <label class="form-label">Estado</label>
+          <select class="form-select" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
+            <option *ngFor="let status of statusOptions" [value]="status.value">
+              {{ status.label }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Tipo</label>
+          <select class="form-select" [(ngModel)]="typeFilter" (change)="onTypeFilterChange()">
             <option value="">Todos los tipos</option>
             <option *ngFor="let type of deviceTypes" [value]="type.value">
               {{ type.label }}
             </option>
           </select>
         </div>
-
-        <div class="col-md-3 mb-3">
-          <label class="form-label">Estado</label>
-          <select class="form-select" [(ngModel)]="filters.status" (change)="onFilterChange()">
-            <option value="">Todos los estados</option>
-            <option *ngFor="let status of deviceStatuses" [value]="status.value">
-              {{ status.label }}
-            </option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-md-3 mb-3">
-          <label class="form-label">Batería Mín. (%)</label>
-          <input 
-            type="number" 
-            class="form-control" 
-            placeholder="0"
-            min="0"
-            max="100"
-            [(ngModel)]="filters.batteryLevelMin"
-            (input)="onFilterChange()">
-        </div>
-
-        <div class="col-md-3 mb-3">
-          <label class="form-label">Batería Máx. (%)</label>
-          <input 
-            type="number" 
-            class="form-control" 
-            placeholder="100"
-            min="0"
-            max="100"
-            [(ngModel)]="filters.batteryLevelMax"
-            (input)="onFilterChange()">
-        </div>
-
-        <div class="col-md-3 mb-3">
-          <label class="form-label">Señal Mín. (dBm)</label>
-          <input 
-            type="number" 
-            class="form-control" 
-            placeholder="-120"
-            min="-120"
-            max="0"
-            [(ngModel)]="filters.signalStrengthMin"
-            (input)="onFilterChange()">
-        </div>
-
-        <div class="col-md-3 mb-3">
-          <label class="form-label">Visto hace (horas)</label>
-          <input 
-            type="number" 
-            class="form-control" 
-            placeholder="24"
-            min="1"
-            [(ngModel)]="filters.lastSeenWithin"
-            (input)="onFilterChange()">
+        <div class="col-md-2 mb-3">
+          <label class="form-label">&nbsp;</label>
+          <div class="d-grid">
+            <button class="btn btn-primary" (click)="onSearch()">
+              <i class="fas fa-search"></i>
+              Buscar
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Loading Indicator -->
-  <div class="text-center my-4" *ngIf="isLoading && !isFormVisible">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Cargando...</span>
-    </div>
-    <p class="mt-2 text-muted">Cargando dispositivos...</p>
-  </div>
-
-  <!-- Devices Table -->
-  <div class="table-card" *ngIf="!isLoading || isFormVisible">
+  <!-- Main Table -->
+  <div class="table-card">
     <div class="table-header">
       <h5>
-        <i class="bi bi-table"></i>
-        Lista de Dispositivos ({{ getTotalCount() }} dispositivos)
+        <i class="fas fa-list"></i>
+        Lista de Dispositivos
       </h5>
       <div class="table-actions">
         <span class="results-info">
-          Mostrando {{ getPaginatedData().length }} de {{ totalRecords }} resultados
+          Mostrando {{ filteredDevices.length }} de {{ totalItems }} dispositivos
         </span>
       </div>
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-hover mb-0">
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p>Cargando dispositivos...</p>
+    </div>
+
+    <!-- Table Content -->
+    <div class="table-responsive" *ngIf="!isLoading">
+      <table class="table table-hover">
         <thead>
           <tr>
             <th>Dispositivo</th>
             <th>Tipo</th>
             <th>Estado</th>
-            <th>Batería</th>
-            <th>Señal</th>
-            <th>Última Conexión</th>
+            <th>Datos en Tiempo Real</th>
+            <th>Última Lectura</th>
+            <th>Producciones</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let device of getPaginatedData(); trackBy: trackByIndex">
+          <tr *ngFor="let device of filteredDevices" [class.table-active]="device === selectedDevice">
             <!-- Device Info -->
             <td>
               <div class="device-info">
@@ -236,145 +179,140 @@
                   <strong>{{ device.name }}</strong>
                   <span class="device-id">ID: {{ device.id }}</span>
                 </div>
-                <div class="device-details">
-                  <div *ngIf="device.model || device.manufacturer" class="device-model">
-                    <span *ngIf="device.manufacturer">{{ getManufacturerLabel(device.manufacturer) }}</span>
-                    <span *ngIf="device.model">{{ device.model }}</span>
-                  </div>
-                  <div *ngIf="device.serialNumber" class="serial-number">
-                    <small class="text-muted">S/N: {{ device.serialNumber }}</small>
-                  </div>
+                <div class="device-details" *ngIf="device.description">
+                  <small class="text-muted">{{ device.description }}</small>
+                </div>
+                <div class="device-details" *ngIf="device.serialNumber">
+                  <small class="text-muted">S/N: {{ device.serialNumber }}</small>
                 </div>
               </div>
             </td>
 
             <!-- Device Type -->
             <td>
-              <div class="device-type">
-                <span class="badge bg-info">
-                  <i class="bi bi-cpu"></i>
-                  {{ getDeviceTypeLabel(device.deviceType || '') }}
-                </span>
+              <span class="badge bg-info">{{ getDeviceTypeLabel(device.deviceType) }}</span>
+              <div class="device-model" *ngIf="device.model">
+                <small class="text-muted">{{ device.model }}</small>
               </div>
             </td>
 
-            <!-- Status -->
+            <!-- Connection Status -->
             <td>
-              <span class="badge status-badge" 
-                    [class]="'bg-' + getStatusColor(device.status || '')">
-                <i class="bi status-icon" 
-                   [class.bi-wifi]="device.status === 'Online'"
-                   [class.bi-wifi-off]="device.status === 'Offline'"
-                   [class.bi-tools]="device.status === 'Maintenance'"
-                   [class.bi-exclamation-triangle]="device.status === 'Error'"></i>
-                {{ getStatusLabel(device.status || '') }}
+              <span class="status-badge" [class]="getStatusClass(device.connectionStatus)">
+                <i class="fas fa-circle"></i>
+                {{ getStatusLabel(device.connectionStatus) }}
               </span>
+              <div class="status-details">
+                <small class="text-muted" *ngIf="device.lastSeen">
+                  Visto: {{ formatDate(device.lastSeen) }}
+                </small>
+              </div>
             </td>
 
-            <!-- Battery -->
+            <!-- Real-time Data -->
             <td>
-              <div class="battery-info" *ngIf="device.batteryLevel !== undefined">
-                <div class="battery-container">
-                  <div class="battery-level" 
-                       [class]="'bg-' + getBatteryLevelColor(device.batteryLevel)"
-                       [style.width.%]="device.batteryLevel">
-                  </div>
+              <div class="sensor-readings" *ngIf="device.hasRealTimeData; else noData">
+                <div class="readings-summary">
+                  <span class="badge bg-success">{{ getSensorReadingsArray(device).length }} sensores</span>
                 </div>
-                <span class="battery-text">{{ device.batteryLevel }}%</span>
+                <div class="readings-details" *ngFor="let reading of getSensorReadingsArray(device).slice(0, 3)">
+                  <small class="text-muted">
+                    {{ reading.sensor }}:
+                    <strong>{{ reading.value !== null ? reading.value : reading.rawValue }}</strong>
+                  </small>
+                </div>
+                <div *ngIf="getSensorReadingsArray(device).length > 3" class="readings-more">
+                  <small class="text-muted">+{{ getSensorReadingsArray(device).length - 3 }} más...</small>
+                </div>
               </div>
-              <span *ngIf="device.batteryLevel === undefined" class="text-muted">-</span>
+              <ng-template #noData>
+                <span class="badge bg-secondary">Sin datos</span>
+              </ng-template>
             </td>
 
-            <!-- Signal Strength -->
+            <!-- Last Reading -->
             <td>
-              <div class="signal-info" *ngIf="device.signalStrength !== undefined">
-                <div class="signal-bars">
-                  <span *ngFor="let bar of [].constructor(4); let i = index" 
-                        class="signal-bar"
-                        [class.active]="i < getSignalStrengthBars(device.signalStrength)"
-                        [class]="'signal-' + getSignalStrengthColor(device.signalStrength)"></span>
+              <div class="last-reading" *ngIf="device.lastReading; else noReading">
+                <strong>{{ formatDate(device.lastReading) }}</strong>
+                <div class="reading-age">
+                  <small class="text-muted">
+                    Hace {{ getReadingAge(device.lastReading) }}
+                  </small>
                 </div>
-                <span class="signal-text">{{ device.signalStrength }} dBm</span>
               </div>
-              <span *ngIf="device.signalStrength === undefined" class="text-muted">-</span>
+              <ng-template #noReading>
+                <span class="text-muted">Nunca</span>
+              </ng-template>
             </td>
 
-            <!-- Last Seen -->
+            <!-- Crop Productions -->
             <td>
-              <div class="last-seen-info">
-                <span class="last-seen-time">{{ formatLastSeen(device.lastSeen) }}</span>
-                <div *ngIf="device.lastSeen" class="last-seen-date">
-                  <small class="text-muted">{{ device.lastSeen | date:'dd/MM/yyyy HH:mm' }}</small>
+              <div *ngIf="device.cropProductionIds.length > 0; else noProductions">
+                <span class="badge bg-primary">{{ device.cropProductionIds.length }} producciones</span>
+                <div class="production-list">
+                  <small class="text-muted" *ngFor="let cpId of device.cropProductionIds.slice(0, 2)">
+                    CP-{{ cpId }}
+                  </small>
+                  <small class="text-muted" *ngIf="device.cropProductionIds.length > 2">
+                    +{{ device.cropProductionIds.length - 2 }} más...
+                  </small>
                 </div>
               </div>
+              <ng-template #noProductions>
+                <span class="text-muted">No asignado</span>
+              </ng-template>
             </td>
 
             <!-- Actions -->
             <td>
-              <div class="action-buttons">
-                <button class="btn btn-sm btn-outline-info" 
-                        (click)="viewDetails(device)" 
-                        title="Ver detalles">
-                  <i class="bi bi-eye"></i>
+              <div class="action-buttons" style="display: flex !important; gap: 0.25rem; min-width: 120px;">
+                <button class="btn btn-sm btn-outline-primary" (click)="editDevice(device)" title="Editar dispositivo"
+                  style="display: inline-flex !important; align-items: center; justify-content: center; min-width: 32px; height: 32px;">
                 </button>
-                <button class="btn btn-sm btn-outline-warning" 
-                        (click)="showEditForm(device)" 
-                        title="Editar">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-sm" 
-                        [class.btn-outline-success]="!device.isActive"
-                        [class.btn-outline-danger]="device.isActive"
-                        (click)="toggleDeviceStatus(device)" 
-                        [title]="device.isActive ? 'Desactivar' : 'Activar'">
-                  <i class="bi" 
-                     [class.bi-check-circle]="!device.isActive"
-                     [class.bi-pause-circle]="device.isActive"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" 
-                        (click)="deleteDevice(device)" 
-                        title="Eliminar">
-                  <i class="bi bi-trash"></i>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteDevice(device)"
+                  title="Eliminar dispositivo"
+                  style="display: inline-flex !important; align-items: center; justify-content: center; min-width: 32px; height: 32px;">
                 </button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
 
-      <!-- Empty State -->
-      <div class="empty-state" *ngIf="filteredDevices.length === 0 && !isLoading">
-        <div class="empty-state-content">
-          <i class="bi bi-router display-4 text-muted mb-3"></i>
-          <h4>No se encontraron dispositivos</h4>
-          <p class="text-muted">No hay dispositivos que coincidan con los filtros aplicados.</p>
-          <button class="btn btn-primary" (click)="clearFilters()">
-            <i class="bi bi-funnel"></i>
-            Limpiar Filtros
-          </button>
-        </div>
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && filteredDevices.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-microchip"></i>
       </div>
+      <h5>No se encontraron dispositivos</h5>
+      <p class="text-muted">
+        {{ devices.length === 0 ? 'Agregue su primer dispositivo para comenzar' : 'Ajuste los filtros para ver más
+        resultados' }}
+      </p>
+      <button class="btn btn-primary" (click)="showAddForm()" *ngIf="devices.length === 0">
+        <i class="fas fa-plus"></i>
+        Agregar Dispositivo
+      </button>
     </div>
 
     <!-- Pagination -->
-    <div class="pagination-wrapper" *ngIf="getTotalPages() > 1">
-      <nav>
-        <ul class="pagination pagination-sm justify-content-center">
+    <div class="pagination-container" *ngIf="totalPages > 1">
+      <nav aria-label="Paginación de dispositivos">
+        <ul class="pagination justify-content-center">
           <li class="page-item" [class.disabled]="currentPage === 1">
-            <button class="page-link" (click)="goToPage(currentPage - 1)">
-              <i class="bi bi-chevron-left"></i>
+            <button class="page-link" (click)="previousPage()" [disabled]="currentPage === 1">
+              <i class="fas fa-chevron-left"></i>
+              Anterior
             </button>
           </li>
-          <li class="page-item" 
-              *ngFor="let page of [].constructor(getTotalPages()); let i = index"
-              [class.active]="i + 1 === currentPage">
-            <button class="page-link" (click)="goToPage(i + 1)">
-              {{ i + 1 }}
-            </button>
+          <li class="page-item" *ngFor="let page of pages" [class.active]="page === currentPage">
+            <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
           </li>
-          <li class="page-item" [class.disabled]="currentPage === getTotalPages()">
-            <button class="page-link" (click)="goToPage(currentPage + 1)">
-              <i class="bi bi-chevron-right"></i>
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <button class="page-link" (click)="nextPage()" [disabled]="currentPage === totalPages">
+              Siguiente
+              <i class="fas fa-chevron-right"></i>
             </button>
           </li>
         </ul>
@@ -383,12 +321,12 @@
   </div>
 </div>
 
-<!-- Create/Edit Form Modal -->
-<div class="form-overlay" *ngIf="isFormVisible">
-  <div class="form-panel">
+<!-- Device Form Modal -->
+<div class="form-overlay" *ngIf="showForm" (click)="hideForm()">
+  <div class="form-panel" (click)="$event.stopPropagation()">
     <div class="form-header">
       <h5>
-        <i class="bi bi-router"></i>
+        <i class="fas fa-microchip"></i>
         {{ isEditMode ? 'Editar Dispositivo' : 'Nuevo Dispositivo' }}
       </h5>
       <button type="button" class="btn-close" (click)="hideForm()"></button>
@@ -400,21 +338,14 @@
           <!-- Basic Information -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Nombre *</label>
-            <input 
-              type="text" 
-              class="form-control"
-              [class.is-invalid]="isFieldInvalid('name')"
-              formControlName="name"
+            <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('name')" formControlName="name"
               placeholder="Nombre del dispositivo">
             <div class="invalid-feedback">{{ getFieldError('name') }}</div>
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Tipo de Dispositivo *</label>
-            <select 
-              class="form-select"
-              [class.is-invalid]="isFieldInvalid('deviceType')"
-              formControlName="deviceType">
+            <select class="form-select" [class.is-invalid]="isFieldInvalid('deviceType')" formControlName="deviceType">
               <option value="">Seleccionar tipo...</option>
               <option *ngFor="let type of deviceTypes" [value]="type.value">
                 {{ type.label }}
@@ -425,30 +356,20 @@
 
           <div class="col-12 mb-3">
             <label class="form-label">Descripción</label>
-            <textarea 
-              class="form-control" 
-              rows="3"
-              formControlName="description"
+            <textarea class="form-control" rows="3" formControlName="description"
               placeholder="Descripción del dispositivo"></textarea>
           </div>
 
           <!-- Hardware Information -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Número de Serie</label>
-            <input 
-              type="text" 
-              class="form-control"
-              formControlName="serialNumber"
+            <input type="text" class="form-control" formControlName="serialNumber"
               placeholder="Número de serie del dispositivo">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Modelo</label>
-            <input 
-              type="text" 
-              class="form-control"
-              formControlName="model"
-              placeholder="Modelo del dispositivo">
+            <input type="text" class="form-control" formControlName="model" placeholder="Modelo del dispositivo">
           </div>
 
           <div class="col-md-6 mb-3">
@@ -463,84 +384,54 @@
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Versión de Firmware</label>
-            <input 
-              type="text" 
-              class="form-control"
-              formControlName="firmwareVersion"
-              placeholder="Ej: v1.2.3">
+            <input type="text" class="form-control" formControlName="firmwareVersion" placeholder="Ej: v1.2.3">
           </div>
 
           <!-- Network Information -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Dirección MAC</label>
-            <input 
-              type="text" 
-              class="form-control"
-              [class.is-invalid]="isFieldInvalid('macAddress')"
-              formControlName="macAddress"
-              placeholder="00:11:22:33:44:55">
-            <div class="invalid-feedback">{{ getFieldError('macAddress') }}</div>
+            <input type="text" class="form-control" formControlName="macAddress" placeholder="XX:XX:XX:XX:XX:XX">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Dirección IP</label>
-            <input 
-              type="text" 
-              class="form-control"
-              [class.is-invalid]="isFieldInvalid('ipAddress')"
-              formControlName="ipAddress"
-              placeholder="192.168.1.100">
-            <div class="invalid-feedback">{{ getFieldError('ipAddress') }}</div>
+            <input type="text" class="form-control" formControlName="ipAddress" placeholder="192.168.1.100">
           </div>
 
-          <!-- Status Information -->
+          <!-- Device Status -->
           <div class="col-md-4 mb-3">
             <label class="form-label">Nivel de Batería (%)</label>
-            <input 
-              type="number" 
-              class="form-control"
-              [class.is-invalid]="isFieldInvalid('batteryLevel')"
-              formControlName="batteryLevel"
-              min="0"
-              max="100"
-              placeholder="100">
+            <div class="input-group">
+              <input type="number" class="form-control" [class.is-invalid]="isFieldInvalid('batteryLevel')"
+                formControlName="batteryLevel" min="0" max="100">
+              <span class="input-group-text">%</span>
+            </div>
             <div class="invalid-feedback">{{ getFieldError('batteryLevel') }}</div>
           </div>
 
           <div class="col-md-4 mb-3">
-            <label class="form-label">Fuerza de Señal (dBm)</label>
-            <input 
-              type="number" 
-              class="form-control"
-              [class.is-invalid]="isFieldInvalid('signalStrength')"
-              formControlName="signalStrength"
-              min="-120"
-              max="0"
-              placeholder="-60">
+            <label class="form-label">Señal (dBm)</label>
+            <div class="input-group">
+              <input type="number" class="form-control" [class.is-invalid]="isFieldInvalid('signalStrength')"
+                formControlName="signalStrength" min="-120" max="0">
+              <span class="input-group-text">dBm</span>
+            </div>
             <div class="invalid-feedback">{{ getFieldError('signalStrength') }}</div>
           </div>
 
           <div class="col-md-4 mb-3">
-            <label class="form-label">Estado *</label>
-            <select 
-              class="form-select"
-              [class.is-invalid]="isFieldInvalid('status')"
-              formControlName="status">
-              <option *ngFor="let status of deviceStatuses" [value]="status.value">
-                {{ status.label }}
-              </option>
+            <label class="form-label">Estado</label>
+            <select class="form-select" formControlName="status">
+              <option value="Online">En línea</option>
+              <option value="Offline">Desconectado</option>
+              <option value="Maintenance">Mantenimiento</option>
+              <option value="Error">Error</option>
             </select>
-            <div class="invalid-feedback">{{ getFieldError('status') }}</div>
           </div>
 
-          <!-- Active Status -->
           <div class="col-12 mb-3">
-            <div class="form-check form-switch">
-              <input 
-                type="checkbox" 
-                class="form-check-input" 
-                id="isActive"
-                formControlName="isActive">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="isActive" formControlName="isActive">
               <label class="form-check-label" for="isActive">
                 Dispositivo activo
               </label>
@@ -551,12 +442,12 @@
 
       <div class="form-footer">
         <button type="button" class="btn btn-secondary" (click)="hideForm()">
-          <i class="bi bi-x-circle"></i>
+          <i class="fas fa-times"></i>
           Cancelar
         </button>
-        <button type="submit" class="btn btn-primary" [disabled]="deviceForm.invalid || isLoading">
-          <i class="bi bi-check-circle"></i>
-          {{ isEditMode ? 'Actualizar' : 'Crear' }} Dispositivo
+        <button type="submit" class="btn btn-primary" [disabled]="deviceForm.invalid">
+          <i class="fas fa-save"></i>
+          {{ isEditMode ? 'Actualizar' : 'Crear' }}
         </button>
       </div>
     </form>

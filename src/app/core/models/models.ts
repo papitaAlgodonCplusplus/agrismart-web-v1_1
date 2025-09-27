@@ -2206,6 +2206,9 @@ cropBaseTemperature: any;
 
 // src/app/core/models/device.model.ts
 export interface Device {
+  active: boolean;
+  dateUpdated: string | number | Date;
+  deviceId: string;
   id: number;
   name: string;
   description?: string | undefined;

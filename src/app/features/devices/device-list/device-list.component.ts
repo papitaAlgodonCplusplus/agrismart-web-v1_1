@@ -1,14 +1,61 @@
 // src/app/features/devices/device-list/device-list.component.ts
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Observable, catchError, tap, of, finalize, forkJoin } from 'rxjs';
+import { Observable, forkJoin, of, Subject, interval } from 'rxjs';
+import { catchError, tap, finalize, takeUntil, startWith, switchMap, map } from 'rxjs/operators';
 
 // Services
 import { DeviceService, DeviceFilters, DeviceCreateRequest, DeviceUpdateRequest, DeviceStatistics } from '../services/device.service';
+import { IrrigationSectorService } from '../../services/irrigation-sector.service';
 import { Device } from '../../../core/models/models';
 import { AuthService } from '../../../core/auth/auth.service';
+
+// Interfaces for enhanced device data
+interface DeviceReading {
+  value: number | null;
+  timestamp: string;
+  rawValue: string;
+  sensor: string;
+}
+
+interface EnhancedDevice extends Device {
+  isActive: boolean;
+  lastSeen?: Date;
+  lastReading?: Date;
+  sensorReadings: { [sensor: string]: DeviceReading };
+  connectionStatus: 'online' | 'warning' | 'offline' | 'inactive';
+  deviceType: string;
+  hasRealTimeData: boolean;
+  cropProductionIds: number[];
+}
+
+interface DeviceRawDataItem {
+  id: number;
+  recordDate: string;
+  clientId: string;
+  userId: string;
+  deviceId: string;
+  sensor: string;
+  payload: string;
+}
+
+interface IoTDeviceResponse {
+  id: number;
+  deviceId: string;
+  active: boolean;
+  companyId: number;
+  dateCreated: string;
+  dateUpdated?: string;
+}
+
+interface CropProductionDevice {
+  cropProductionId: number;
+  deviceId: number;
+  startDate: string;
+  active: boolean;
+}
 
 @Component({
   selector: 'app-device-list',
@@ -17,114 +64,147 @@ import { AuthService } from '../../../core/auth/auth.service';
   templateUrl: './device-list.component.html',
   styleUrls: ['./device-list.component.scss']
 })
-export class DeviceListComponent implements OnInit {
-  devices: Device[] = [];
-  filteredDevices: Device[] = [];
-  selectedDevice: Device | null = null;
-  deviceForm!: FormGroup;
-
-  // UI State
-  isLoading = false;
-  isFormVisible = false;
+export class DeviceListComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  
+  // Data properties
+  devices: EnhancedDevice[] = [];
+  filteredDevices: EnhancedDevice[] = [];
+  registeredDevices: Device[] = [];
+  iotDevices: IoTDeviceResponse[] = [];
+  rawData: DeviceRawDataItem[] = [];
+  cropProductionDevices: CropProductionDevice[] = [];
+  
+  // UI state
+  selectedDevice: EnhancedDevice | null = null;
+  isLoading = true;
+  error: string | null = null;
+  showForm = false;
   isEditMode = false;
-  currentPage = 1;
-  pageSize = 10;
-  totalRecords = 0;
-
+  autoRefresh = true;
+  
+  // Form
+  deviceForm!: FormGroup;
+  
   // Filters
-  filters: DeviceFilters = {
-    onlyActive: true,
-    searchTerm: '',
-    deviceType: '',
-    status: '',
-    batteryLevelMin: undefined,
-    batteryLevelMax: undefined,
-    signalStrengthMin: undefined,
-    signalStrengthMax: undefined,
-    lastSeenWithin: undefined
-  };
-
-  // Error handling
-  errorMessage = '';
-  successMessage = '';
-
+  filters: DeviceFilters = {};
+  searchTerm = '';
+  statusFilter = '';
+  typeFilter = '';
+  
   // Statistics
   statistics: DeviceStatistics | null = null;
-
-  // Device types
+  
+  // Pagination
+  currentPage = 1;
+  itemsPerPage = 10;
+  totalItems = 0;
+  
+  // Device types and options
   deviceTypes = [
-    { value: 'Sensor', label: 'Sensor' },
-    { value: 'Actuador', label: 'Actuador' },
-    { value: 'Controlador', label: 'Controlador' },
-    { value: 'Gateway', label: 'Gateway' },
-    { value: 'Cámara', label: 'Cámara' },
-    { value: 'Estación Meteorológica', label: 'Estación Meteorológica' },
-    { value: 'Medidor de Flujo', label: 'Medidor de Flujo' },
-    { value: 'Monitor de pH', label: 'Monitor de pH' },
-    { value: 'Otro', label: 'Otro' }
+    { value: 'flujo', label: 'Sensor de Flujo' },
+    { value: 'ph-suelo', label: 'Sensor de pH del Suelo' },
+    { value: 'estacion-metereologica', label: 'Estación Meteorológica' },
+    { value: 'presion', label: 'Sensor de Presión' },
+    { value: 'suelo', label: 'Sensor de Suelo' },
+    { value: 'otro', label: 'Otro' }
   ];
-
-  // Device statuses
-  deviceStatuses = [
-    { value: 'Online', label: 'En línea', color: 'success' },
-    { value: 'Offline', label: 'Desconectado', color: 'danger' },
-    { value: 'Maintenance', label: 'Mantenimiento', color: 'warning' },
-    { value: 'Error', label: 'Error', color: 'danger' }
-  ];
-
-  // Manufacturers
+  
   manufacturers = [
-    { value: 'AgriSmart', label: 'AgriSmart' },
-    { value: 'Bosch', label: 'Bosch' },
-    { value: 'Siemens', label: 'Siemens' },
     { value: 'Arduino', label: 'Arduino' },
     { value: 'Raspberry Pi', label: 'Raspberry Pi' },
-    { value: 'LoRaWAN', label: 'LoRaWAN' },
-    { value: 'Zigbee', label: 'Zigbee' },
-    { value: 'Otro', label: 'Otro' }
+    { value: 'AgriSmart', label: 'AgriSmart' },
+    { value: 'Adafruit', label: 'Adafruit' },
+    { value: 'SparkFun', label: 'SparkFun' },
+    { value: 'Custom', label: 'Personalizado' }
+  ];
+
+  statusOptions = [
+    { value: '', label: 'Todos los estados' },
+    { value: 'online', label: 'En línea' },
+    { value: 'warning', label: 'Advertencia' },
+    { value: 'offline', label: 'Desconectado' },
+    { value: 'inactive', label: 'Inactivo' }
   ];
 
   constructor(
     private deviceService: DeviceService,
-    private authService: AuthService,
-    private router: Router,
+    private irrigationService: IrrigationSectorService,
     private fb: FormBuilder,
+    private router: Router,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
     this.initializeForm();
   }
 
   ngOnInit(): void {
-    this.loadInitialData();
+    this.loadAllDeviceData();
+    this.setupAutoRefresh();
   }
 
-  initializeForm(): void {
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private initializeForm(): void {
     this.deviceForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
+      name: ['', [Validators.required, Validators.minLength(3)]],
       description: [''],
-      deviceType: ['', [Validators.required]],
+      deviceType: ['', Validators.required],
       serialNumber: [''],
       model: [''],
       manufacturer: [''],
       firmwareVersion: [''],
-      macAddress: ['', [Validators.pattern(/^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$/i)]],
-      ipAddress: ['', [Validators.pattern(/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/)]],
-      batteryLevel: ['', [Validators.min(0), Validators.max(100)]],
-      signalStrength: ['', [Validators.min(-120), Validators.max(0)]],
-      status: ['Offline', [Validators.required]],
+      macAddress: [''],
+      ipAddress: [''],
+      batteryLevel: [100, [Validators.min(0), Validators.max(100)]],
+      signalStrength: [-50, [Validators.min(-120), Validators.max(0)]],
+      status: ['Offline'],
       isActive: [true]
     });
   }
 
-  loadInitialData(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
+  private setupAutoRefresh(): void {
+    if (this.autoRefresh) {
+      interval(30000) // Refresh every 30 seconds
+        .pipe(
+          startWith(0),
+          switchMap(() => this.loadRealTimeData()),
+          takeUntil(this.destroy$)
+        )
+        .subscribe();
+    }
+  }
 
-    // Load devices and statistics in parallel
+  private loadAllDeviceData(): void {
+    this.isLoading = true;
+    this.error = null;
+
+    // Load all required data using the same pattern as shiny-dashboard
     forkJoin({
-      devices: this.deviceService.getAll(undefined, this.filters).pipe(
+      registeredDevices: this.deviceService.getAll().pipe(
         catchError(error => {
-          console.error('Error loading devices:', error);
+          console.error('Error loading registered devices:', error);
+          return of([]);
+        })
+      ),
+      iotDevices: this.irrigationService.getIoTDevices().pipe(
+        catchError(error => {
+          console.error('Error loading IoT devices:', error);
+          return of([]);
+        })
+      ),
+      rawData: this.irrigationService.getDeviceRawData().pipe(
+        catchError(error => {
+          console.error('Error loading raw data:', error);
+          return of([]);
+        })
+      ),
+      cropProductionDevices: this.irrigationService.getCropProductionDevices().pipe(
+        catchError(error => {
+          console.error('Error loading crop production devices:', error);
           return of([]);
         })
       ),
@@ -140,297 +220,399 @@ export class DeviceListComponent implements OnInit {
         this.cdr.detectChanges();
       })
     ).subscribe({
-      next: (data) => {
-        console.log('Initial data loaded:', data);
-        this.devices = data.devices;
-        this.statistics = data.statistics;
+      next: ({ registeredDevices, iotDevices, rawData, cropProductionDevices, statistics }) => {
+        console.log('Data loaded successfully: ', {
+          registeredDevices: registeredDevices?.length || 0,
+          iotDevices: iotDevices?.length || 0, 
+          rawData: rawData?.length || 0,
+          cropProductionDevices: cropProductionDevices?.length || 0
+        });
+        
+        this.registeredDevices = registeredDevices || [];
+        this.iotDevices = iotDevices || [];
+        this.rawData = rawData || [];
+        this.cropProductionDevices = cropProductionDevices || [];
+        this.statistics = statistics;
+
+        this.combineDeviceData();
         this.applyFilters();
       },
       error: (error) => {
-        this.errorMessage = 'Error al cargar los datos iniciales';
-        console.error('Error in loadInitialData:', error);
+        console.error('Error loading device data:', error);
+        this.error = 'Error al cargar los datos de los dispositivos';
       }
     });
   }
 
-  loadDevices(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
-
-    this.deviceService.getAll(undefined, this.filters)
-      .pipe(
-        catchError(error => {
-          this.errorMessage = 'Error al cargar los dispositivos';
-          console.error('Error loading devices:', error);
-          return of([]);
-        }),
-        finalize(() => {
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        })
+  private loadRealTimeData(): Observable<any> {
+    return forkJoin({
+      rawData: this.irrigationService.getDeviceRawData().pipe(
+        catchError(() => of([]))
+      ),
+      statistics: this.deviceService.getStatistics().pipe(
+        catchError(() => of(null))
       )
-      .subscribe(devices => {
-        this.devices = devices;
+    }).pipe(
+      tap(({ rawData, statistics }) => {
+        this.rawData = rawData || [];
+        this.statistics = statistics;
+        this.updateDeviceReadings();
         this.applyFilters();
-      });
+      })
+    );
   }
 
+  private combineDeviceData(): void {
+    const enhancedDevices: EnhancedDevice[] = [];
+
+    // Start with registered devices from DeviceService
+    this.registeredDevices.forEach(registeredDevice => {
+      // Find matching raw data - the registered device deviceId is contained in the raw data deviceId
+      // e.g., registered: 'flujo-02' matches raw: 'flujo-02-c7'
+      const deviceRawData = this.rawData.filter(rd => 
+        rd.deviceId.includes(registeredDevice.deviceId || '')
+      );
+      
+      // Find linked crop productions
+      const linkedToCropProductions = this.cropProductionDevices.filter(cpd => 
+        cpd.deviceId === registeredDevice.id && cpd.active
+      );
+
+      const sensorReadings = this.processDeviceReadings(deviceRawData);
+      const lastReading = this.getLastReadingDate(deviceRawData);
+      const hasRealTimeData = deviceRawData.length > 0;
+      const connectionStatus = this.determineConnectionStatus(lastReading, hasRealTimeData);
+
+      const enhancedDevice: EnhancedDevice = {
+        ...registeredDevice,
+        name: registeredDevice.name || registeredDevice.deviceId || `Device ${registeredDevice.id}`,
+        isActive: registeredDevice.active || false,
+        lastSeen: registeredDevice.dateUpdated ? new Date(registeredDevice.dateUpdated) : undefined,
+        lastReading,
+        sensorReadings,
+        connectionStatus,
+        deviceType: this.extractDeviceType(registeredDevice),
+        hasRealTimeData,
+        cropProductionIds: [...new Set(linkedToCropProductions.map(cp => cp.cropProductionId))] // Remove duplicates
+      };
+
+      enhancedDevices.push(enhancedDevice);
+    });
+
+    // Add IoT devices that aren't registered in the DeviceService (if iotDevices data is available)
+    if (this.iotDevices && Array.isArray(this.iotDevices)) {
+      this.iotDevices.forEach(iotDevice => {
+        const existsInRegistered = this.registeredDevices.some(rd => 
+          iotDevice.deviceId.includes(rd.deviceId || '')
+        );
+
+        if (!existsInRegistered) {
+          const deviceRawData = this.rawData.filter(rd => rd.deviceId === iotDevice.deviceId);
+          const sensorReadings = this.processDeviceReadings(deviceRawData);
+          const lastReading = this.getLastReadingDate(deviceRawData);
+          const hasRealTimeData = deviceRawData.length > 0;
+          const connectionStatus = this.determineConnectionStatus(lastReading, iotDevice.active);
+
+          const enhancedDevice: EnhancedDevice = {
+            id: iotDevice.id,
+            name: iotDevice.deviceId,
+            description: 'Dispositivo IoT no registrado',
+            deviceType: this.extractDeviceTypeFromId(iotDevice.deviceId),
+            serialNumber: '',
+            model: '',
+            manufacturer: '',
+            firmwareVersion: '',
+            macAddress: '',
+            ipAddress: '',
+            batteryLevel: 0,
+            signalStrength: 0,
+            status: iotDevice.active ? 'Online' : 'Offline',
+            isActive: iotDevice.active,
+            lastSeen: iotDevice.dateUpdated ? new Date(iotDevice.dateUpdated) : undefined,
+            lastReading,
+            sensorReadings,
+            connectionStatus,
+            hasRealTimeData,
+            cropProductionIds: [],
+            active: false,
+            dateUpdated: '',
+            deviceId: '',
+            createdAt: new Date()
+          };
+
+          enhancedDevices.push(enhancedDevice);
+        }
+      });
+    }
+
+    this.devices = enhancedDevices;
+    console.log('Enhanced devices created:', this.devices);
+  }
+
+  private processDeviceReadings(rawData: DeviceRawDataItem[]): { [sensor: string]: DeviceReading } {
+    const readings: { [sensor: string]: DeviceReading } = {};
+
+    // Group by sensor and get latest reading
+    const sensorGroups = rawData.reduce((acc, curr) => {
+      if (!acc[curr.sensor]) {
+        acc[curr.sensor] = [];
+      }
+      acc[curr.sensor].push(curr);
+      return acc;
+    }, {} as { [key: string]: DeviceRawDataItem[] });
+
+    Object.keys(sensorGroups).forEach(sensorName => {
+      const sensorData = sensorGroups[sensorName];
+      const latest = sensorData.sort((a, b) =>
+        new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
+      )[0];
+
+      if (latest) {
+        const numericValue = this.extractNumericValue(latest.payload);
+        readings[sensorName] = {
+          value: numericValue,
+          timestamp: latest.recordDate,
+          rawValue: latest.payload,
+          sensor: sensorName
+        };
+      }
+    });
+
+    return readings;
+  }
+
+  private extractNumericValue(payload: string): number | null {
+    if (!payload) return null;
+
+    // Handle special cases like in shiny-dashboard
+    if (payload.toLowerCase() === 'false') return 0;
+    if (payload.toLowerCase() === 'true') return 1;
+    if (payload.toLowerCase() === 'low') return 0;
+    if (payload.toLowerCase() === 'high') return 1;
+
+    const numericString = payload.replace(/[^\d.-]/g, '');
+    const numericValue = parseFloat(numericString);
+    return isNaN(numericValue) ? null : numericValue;
+  }
+
+  private extractDeviceType(device: Device): string {
+    // Use the actual deviceId from the registered device to determine type
+    const deviceId = device.deviceId || device.name || '';
+    if (deviceId.includes('flujo')) return 'flujo';
+    if (deviceId.includes('ph-suelo')) return 'ph-suelo';
+    if (deviceId.includes('estacion-metereologica')) return 'estacion-metereologica';
+    if (deviceId.includes('presion')) return 'presion';
+    if (deviceId.includes('suelo')) return 'suelo';
+    return 'otro';
+  }
+
+  private extractDeviceTypeFromId(deviceId: string): string {
+    if (deviceId.includes('flujo')) return 'flujo';
+    if (deviceId.includes('ph-suelo')) return 'ph-suelo';
+    if (deviceId.includes('estacion-metereologica')) return 'estacion-metereologica';
+    if (deviceId.includes('presion')) return 'presion';
+    if (deviceId.includes('suelo')) return 'suelo';
+    return 'otro';
+  }
+
+  private getLastReadingDate(rawData: DeviceRawDataItem[]): Date | undefined {
+    if (rawData.length === 0) return undefined;
+    const latest = rawData.sort((a, b) =>
+      new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
+    )[0];
+    return new Date(latest.recordDate);
+  }
+
+  private determineConnectionStatus(lastReading?: Date, hasData?: boolean): 'online' | 'warning' | 'offline' | 'inactive' {
+    if (!hasData) return 'inactive';
+    if (!lastReading) return 'offline';
+
+    const now = new Date();
+    const diffMinutes = (now.getTime() - lastReading.getTime()) / (1000 * 60);
+
+    if (diffMinutes > 30) return 'offline';
+    if (diffMinutes > 5) return 'warning';
+    return 'online';
+  }
+
+  private updateDeviceReadings(): void {
+    this.devices.forEach(device => {
+      // Match using the registered device ID contained in raw data deviceId
+      const deviceRawData = this.rawData.filter(rd => 
+        rd.deviceId.includes(device.deviceId || '') || 
+        rd.deviceId.includes(device.name || '')
+      );
+      device.sensorReadings = this.processDeviceReadings(deviceRawData);
+      device.lastReading = this.getLastReadingDate(deviceRawData);
+      device.hasRealTimeData = deviceRawData.length > 0;
+      device.connectionStatus = this.determineConnectionStatus(device.lastReading, device.hasRealTimeData);
+    });
+  }
+
+  // UI Methods
   applyFilters(): void {
     let filtered = [...this.devices];
 
-    // Search term filter
-    if (this.filters.searchTerm) {
-      const searchTerm = this.filters.searchTerm.toLowerCase();
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(device =>
-        device.name.toLowerCase().includes(searchTerm) ||
-        (device.serialNumber && device.serialNumber.toLowerCase().includes(searchTerm)) ||
-        (device.model && device.model.toLowerCase().includes(searchTerm)) ||
-        (device.manufacturer && device.manufacturer.toLowerCase().includes(searchTerm)) ||
-        (device.deviceType && device.deviceType.toLowerCase().includes(searchTerm))
+        device.name?.toLowerCase().includes(term) ||
+        device.description?.toLowerCase().includes(term) ||
+        device.deviceType?.toLowerCase().includes(term) ||
+        device.serialNumber?.toLowerCase().includes(term) ||
+        device.deviceId?.toLowerCase().includes(term)
       );
     }
 
-    // Device type filter
-    if (this.filters.deviceType) {
-      filtered = filtered.filter(device => device.deviceType === this.filters.deviceType);
+    if (this.statusFilter) {
+      filtered = filtered.filter(device => device.connectionStatus === this.statusFilter);
     }
 
-    // Status filter
-    if (this.filters.status) {
-      filtered = filtered.filter(device => device.status === this.filters.status);
+    if (this.typeFilter) {
+      filtered = filtered.filter(device => device.deviceType === this.typeFilter);
     }
 
-    // Battery level range filter
-    if (this.filters.batteryLevelMin !== undefined) {
-      filtered = filtered.filter(device => (device.batteryLevel || 0) >= this.filters.batteryLevelMin!);
-    }
-    if (this.filters.batteryLevelMax !== undefined) {
-      filtered = filtered.filter(device => (device.batteryLevel || 0) <= this.filters.batteryLevelMax!);
-    }
-
-    // Signal strength range filter
-    if (this.filters.signalStrengthMin !== undefined) {
-      filtered = filtered.filter(device => (device.signalStrength || -120) >= this.filters.signalStrengthMin!);
-    }
-    if (this.filters.signalStrengthMax !== undefined) {
-      filtered = filtered.filter(device => (device.signalStrength || -120) <= this.filters.signalStrengthMax!);
-    }
-
-    // Last seen filter (within hours)
-    if (this.filters.lastSeenWithin !== undefined) {
-      const cutoffTime = new Date();
-      cutoffTime.setHours(cutoffTime.getHours() - this.filters.lastSeenWithin);
-      filtered = filtered.filter(device => 
-        device.lastSeen && new Date(device.lastSeen) >= cutoffTime
-      );
-    }
-
-    // Active status filter
-    if (this.filters.onlyActive !== undefined) {
-      filtered = filtered.filter(device => device.isActive === this.filters.onlyActive);
-    }
-
-    this.filteredDevices = filtered;
-    this.totalRecords = filtered.length;
-    this.currentPage = 1;
+    this.totalItems = filtered.length;
+    
+    // Apply pagination
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.filteredDevices = filtered.slice(startIndex, endIndex);
   }
 
-  onFilterChange(): void {
+  onSearch(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  onStatusFilterChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  onTypeFilterChange(): void {
+    this.currentPage = 1;
     this.applyFilters();
   }
 
   clearFilters(): void {
-    this.filters = {
-      onlyActive: true,
-      searchTerm: '',
-      deviceType: '',
-      status: '',
-      batteryLevelMin: undefined,
-      batteryLevelMax: undefined,
-      signalStrengthMin: undefined,
-      signalStrengthMax: undefined,
-      lastSeenWithin: undefined
-    };
+    this.searchTerm = '';
+    this.statusFilter = '';
+    this.typeFilter = '';
+    this.currentPage = 1;
     this.applyFilters();
   }
 
-  // CRUD Operations
-  showCreateForm(): void {
-    this.selectedDevice = null;
-    this.isEditMode = false;
-    this.isFormVisible = true;
-    this.deviceForm.reset({
-      status: 'Offline',
-      isActive: true
-    });
-  }
-
-  showEditForm(device: Device): void {
-    this.selectedDevice = device;
-    this.isEditMode = true;
-    this.isFormVisible = true;
-    
-    this.deviceForm.patchValue({
-      name: device.name,
-      description: device.description || '',
-      deviceType: device.deviceType || '',
-      serialNumber: device.serialNumber || '',
-      model: device.model || '',
-      manufacturer: device.manufacturer || '',
-      firmwareVersion: device.firmwareVersion || '',
-      macAddress: device.macAddress || '',
-      ipAddress: device.ipAddress || '',
-      batteryLevel: device.batteryLevel || '',
-      signalStrength: device.signalStrength || '',
-      status: device.status || 'Offline',
-      isActive: device.isActive
-    });
-  }
-
-  hideForm(): void {
-    this.isFormVisible = false;
+  // Device operations
+  showAddForm(): void {
     this.selectedDevice = null;
     this.isEditMode = false;
     this.deviceForm.reset();
-    this.clearMessages();
+    this.deviceForm.patchValue({
+      status: 'Offline',
+      isActive: true,
+      batteryLevel: 100,
+      signalStrength: -50
+    });
+    this.showForm = true;
+  }
+
+  editDevice(device: EnhancedDevice): void {
+    this.selectedDevice = device;
+    this.isEditMode = true;
+    this.deviceForm.patchValue(device);
+    this.showForm = true;
+  }
+
+  hideForm(): void {
+    this.showForm = false;
+    this.selectedDevice = null;
+    this.deviceForm.reset();
   }
 
   submitForm(): void {
-    if (this.deviceForm.valid) {
-      const formValue = this.deviceForm.value;
-      const deviceData: DeviceCreateRequest | DeviceUpdateRequest = {
-        name: formValue.name,
-        description: formValue.description,
-        deviceType: formValue.deviceType,
-        serialNumber: formValue.serialNumber,
-        model: formValue.model,
-        manufacturer: formValue.manufacturer,
-        firmwareVersion: formValue.firmwareVersion,
-        macAddress: formValue.macAddress,
-        ipAddress: formValue.ipAddress,
-        batteryLevel: formValue.batteryLevel ? parseInt(formValue.batteryLevel) : undefined,
-        signalStrength: formValue.signalStrength ? parseInt(formValue.signalStrength) : undefined,
-        status: formValue.status,
-        isActive: formValue.isActive
-      };
-
-      if (this.isEditMode && this.selectedDevice) {
-        this.updateDevice({ ...deviceData, id: this.selectedDevice.id });
-      } else {
-        this.createDevice(deviceData as DeviceCreateRequest);
-      }
-    } else {
+    if (this.deviceForm.invalid) {
       this.markFormGroupTouched();
+      return;
+    }
+
+    const formData = this.deviceForm.value;
+
+    if (this.isEditMode && this.selectedDevice) {
+      this.updateDevice(formData);
+    } else {
+      this.createDevice(formData);
     }
   }
 
-  createDevice(deviceData: DeviceCreateRequest): void {
-    this.isLoading = true;
-    this.clearMessages();
-
-    this.deviceService.create(deviceData)
-      .pipe(
-        catchError(error => {
-          this.errorMessage = 'Error al crear el dispositivo';
-          console.error('Error creating device:', error);
-          return of(null);
-        }),
-        finalize(() => {
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        })
-      )
-      .subscribe(device => {
-        if (device) {
-          this.successMessage = 'Dispositivo creado exitosamente';
-          this.hideForm();
-          this.loadDevices();
-        }
-      });
+  private createDevice(data: DeviceCreateRequest): void {
+    this.deviceService.create(data).subscribe({
+      next: (device) => {
+        console.log('Device created:', device);
+        this.hideForm();
+        this.loadAllDeviceData();
+      },
+      error: (error) => {
+        console.error('Error creating device:', error);
+        this.error = 'Error al crear el dispositivo';
+      }
+    });
   }
 
-  updateDevice(deviceData: any): void {
-    this.isLoading = true;
-    this.clearMessages();
+  private updateDevice(data: DeviceUpdateRequest): void {
+    if (!this.selectedDevice) return;
 
-    this.deviceService.update(deviceData)
-      .pipe(
-        catchError(error => {
-          this.errorMessage = 'Error al actualizar el dispositivo';
-          console.error('Error updating device:', error);
-          return of(null);
-        }),
-        finalize(() => {
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        })
-      )
-      .subscribe(device => {
-        if (device) {
-          this.successMessage = 'Dispositivo actualizado exitosamente';
-          this.hideForm();
-          this.loadDevices();
-        }
-      });
+    const updateData = { ...data, id: this.selectedDevice.id };
+    this.deviceService.update(updateData).subscribe({
+      next: (device) => {
+        console.log('Device updated:', device);
+        this.hideForm();
+        this.loadAllDeviceData();
+      },
+      error: (error) => {
+        console.error('Error updating device:', error);
+        this.error = 'Error al actualizar el dispositivo';
+      }
+    });
   }
 
-  deleteDevice(device: Device): void {
-    if (confirm(`¿Está seguro que desea eliminar el dispositivo "${device.name}"?`)) {
-      this.isLoading = true;
-      this.clearMessages();
-
-      this.deviceService.delete(device.id)
-        .pipe(
-          catchError(error => {
-            this.errorMessage = 'Error al eliminar el dispositivo';
-            console.error('Error deleting device:', error);
-            return of(null);
-          }),
-          finalize(() => {
-            this.isLoading = false;
-            this.cdr.detectChanges();
-          })
-        )
-        .subscribe(result => {
-          if (result !== null) {
-            this.successMessage = 'Dispositivo eliminado exitosamente';
-            this.loadDevices();
-          }
-        });
+  deleteDevice(device: EnhancedDevice): void {
+    if (confirm(`¿Está seguro de que desea eliminar el dispositivo "${device.name}"?`)) {
+      this.deviceService.delete(device.id).subscribe({
+        next: () => {
+          console.log('Device deleted:', device.id);
+          this.loadAllDeviceData();
+        },
+        error: (error) => {
+          console.error('Error deleting device:', error);
+          this.error = 'Error al eliminar el dispositivo';
+        }
+      });
     }
   }
 
-  toggleDeviceStatus(device: Device): void {
-    this.isLoading = true;
-    this.clearMessages();
-
-    this.deviceService.toggleStatus(device.id, !device.isActive)
-      .pipe(
-        catchError(error => {
-          this.errorMessage = 'Error al cambiar el estado del dispositivo';
-          console.error('Error toggling device status:', error);
-          return of(null);
-        }),
-        finalize(() => {
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        })
-      )
-      .subscribe(updatedDevice => {
-        if (updatedDevice) {
-          this.successMessage = `Dispositivo ${updatedDevice.isActive ? 'activado' : 'desactivado'} exitosamente`;
-          this.loadDevices();
-        }
-      });
+  toggleDeviceStatus(device: EnhancedDevice): void {
+    this.deviceService.toggleStatus(device.id, !device.isActive).subscribe({
+      next: (updatedDevice) => {
+        console.log('Device status toggled:', updatedDevice);
+        this.loadAllDeviceData();
+      },
+      error: (error) => {
+        console.error('Error toggling device status:', error);
+        this.error = 'Error al cambiar el estado del dispositivo';
+      }
+    });
   }
 
-  // View methods
-  viewDetails(device: Device): void {
-    this.router.navigate(['/devices', device.id]);
+  refreshData(): void {
+    this.loadAllDeviceData();
   }
 
-  editDevice(device: Device): void {
-    this.router.navigate(['/devices', device.id, 'edit']);
+  toggleAutoRefresh(): void {
+    this.autoRefresh = !this.autoRefresh;
+    if (this.autoRefresh) {
+      this.setupAutoRefresh();
+    }
   }
 
   // Utility methods
@@ -441,136 +623,126 @@ export class DeviceListComponent implements OnInit {
     });
   }
 
-  private clearMessages(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
-  }
-
   isFieldInvalid(fieldName: string): boolean {
     const field = this.deviceForm.get(fieldName);
-    return !!(field && field.invalid && field.touched);
+    return !!(field && field.invalid && (field.dirty || field.touched));
   }
 
   getFieldError(fieldName: string): string {
     const field = this.deviceForm.get(fieldName);
-    if (field && field.errors && field.touched) {
+    if (field?.errors) {
       if (field.errors['required']) return `${fieldName} es requerido`;
       if (field.errors['minlength']) return `${fieldName} debe tener al menos ${field.errors['minlength'].requiredLength} caracteres`;
-      if (field.errors['min']) return `${fieldName} debe ser mayor a ${field.errors['min'].min}`;
-      if (field.errors['max']) return `${fieldName} debe ser menor a ${field.errors['max'].max}`;
-      if (field.errors['pattern']) {
-        if (fieldName === 'macAddress') return 'Formato de dirección MAC inválido (ej: 00:11:22:33:44:55)';
-        if (fieldName === 'ipAddress') return 'Formato de dirección IP inválido';
-      }
+      if (field.errors['min']) return `El valor mínimo es ${field.errors['min'].min}`;
+      if (field.errors['max']) return `El valor máximo es ${field.errors['max'].max}`;
     }
     return '';
   }
 
-  getDeviceTypeLabel(deviceType: string): string {
-    const type = this.deviceTypes.find(t => t.value === deviceType);
-    return type?.label || deviceType;
-  }
-
-  getStatusLabel(status: string): string {
-    const deviceStatus = this.deviceStatuses.find(s => s.value === status);
-    return deviceStatus?.label || status;
-  }
-
-  getStatusColor(status: string): string {
-    const deviceStatus = this.deviceStatuses.find(s => s.value === status);
-    return deviceStatus?.color || 'secondary';
-  }
-
-  getManufacturerLabel(manufacturer: string): string {
-    const mfg = this.manufacturers.find(m => m.value === manufacturer);
-    return mfg?.label || manufacturer;
-  }
-
-  getBatteryLevelColor(batteryLevel?: number): string {
-    if (!batteryLevel) return 'secondary';
-    if (batteryLevel > 60) return 'success';
-    if (batteryLevel > 30) return 'warning';
-    return 'danger';
-  }
-
-  getSignalStrengthColor(signalStrength?: number): string {
-    if (!signalStrength) return 'secondary';
-    if (signalStrength > -50) return 'success';
-    if (signalStrength > -80) return 'warning';
-    return 'danger';
-  }
-
-  getSignalStrengthBars(signalStrength?: number): number {
-    if (!signalStrength) return 0;
-    if (signalStrength > -50) return 4;
-    if (signalStrength > -60) return 3;
-    if (signalStrength > -80) return 2;
-    if (signalStrength > -100) return 1;
-    return 0;
-  }
-
-  formatLastSeen(lastSeen?: Date): string {
-    if (!lastSeen) return 'Nunca';
-    const now = new Date();
-    const lastSeenDate = new Date(lastSeen);
-    const diffMs = now.getTime() - lastSeenDate.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
-    if (diffHours > 0) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    if (diffMinutes > 0) return `Hace ${diffMinutes} min`;
-    return 'Ahora mismo';
-  }
-
-  // Pagination
-  getPaginatedData(): Device[] {
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    return this.filteredDevices.slice(startIndex, endIndex);
-  }
-
-  getTotalPages(): number {
-    return Math.ceil(this.totalRecords / this.pageSize);
-  }
-
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.getTotalPages()) {
-      this.currentPage = page;
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'online': return 'status-online';
+      case 'warning': return 'status-warning';
+      case 'offline': return 'status-offline';
+      case 'inactive': return 'status-inactive';
+      default: return 'status-unknown';
     }
   }
 
-  // Statistics
-  getTotalCount(): number {
-    return this.statistics?.totalDevices || this.filteredDevices.length;
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case 'online': return 'En línea';
+      case 'warning': return 'Advertencia';
+      case 'offline': return 'Desconectado';
+      case 'inactive': return 'Inactivo';
+      default: return 'Desconocido';
+    }
   }
 
-  getActiveCount(): number {
-    return this.statistics?.activeDevices || this.filteredDevices.filter(device => device.isActive).length;
+  getDeviceTypeLabel(type: string): string {
+    const deviceType = this.deviceTypes.find(dt => dt.value === type);
+    return deviceType?.label || type;
   }
 
-  getInactiveCount(): number {
-    return this.getTotalCount() - this.getActiveCount();
+  formatDate(date: Date): string {
+    return new Intl.DateTimeFormat('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
   }
 
-  getOnlineCount(): number {
-    return this.statistics?.onlineDevices || this.filteredDevices.filter(device => device.status === 'Online').length;
+  getReadingAge(date: Date): string {
+    const now = new Date();
+    const diffMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffMinutes < 1) return 'menos de 1 minuto';
+    if (diffMinutes < 60) return `${diffMinutes} minutos`;
+    
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours} horas`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} días`;
   }
 
-  getOfflineCount(): number {
-    return this.statistics?.offlineDevices || this.filteredDevices.filter(device => device.status === 'Offline').length;
+  getSensorReadingsArray(device: EnhancedDevice): DeviceReading[] {
+    return Object.values(device.sensorReadings);
   }
 
-  getLowBatteryCount(): number {
-    return this.statistics?.lowBatteryDevices || this.filteredDevices.filter(device => (device.batteryLevel || 0) < 20).length;
+  // Pagination
+  get totalPages(): number {
+    return Math.ceil(this.totalItems / this.itemsPerPage);
   }
 
-  getAverageBatteryLevel(): number {
-    return this.statistics?.averageBatteryLevel || 0;
+  get pages(): number[] {
+    const totalPages = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+    const range: number[] = [];
+    const rangeWithDots: (number | string)[] = [];
+
+    for (let i = Math.max(2, current - delta); i <= Math.min(totalPages - 1, current + delta); i++) {
+      range.push(i);
+    }
+
+    if (current - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (current + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots.filter(page => typeof page === 'number') as number[];
   }
 
-  trackByIndex(index: number, item: any): number {
-    return index;
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.applyFilters();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.applyFilters();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.applyFilters();
+    }
   }
 }
