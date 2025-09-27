@@ -151,6 +151,12 @@ interface DataSources {
     safety_system: string;
 }
 interface CropPhaseSolutionRequirement {
+    nO3: number;
+    nH4: number;
+    h2PO4: number;
+    sO4: number | undefined;
+    ph: any;
+    pH: any;
     cropPhaseId: number;
     id: number;
     phaseId: number;
@@ -424,7 +430,10 @@ export class NutrientFormulationComponent implements OnInit {
         this.loadSavedRecipes();
         this.loadInitialData();
         this.loadFormData();
-        // this.loadRealCropPhaseRequirements(); // Add this line
+        this.loadRealCropPhaseRequirements(); // Add this line
+        setTimeout(() => {
+            this.debugCropPhaseRequirements();
+        }, 2000);
     }
     public createForm(): FormGroup {
         return this.fb.group({
@@ -1172,17 +1181,6 @@ export class NutrientFormulationComponent implements OnInit {
             }
         });
     }
-    getFertilizerChemistries(): Observable<FertilizerChemistry[]> {
-        return this.apiService.get<FertilizerChemistry[]>('/FertilizerChemistry').pipe(
-            map(response => {
-                return Array.isArray(response) ? response : [];
-            }),
-            catchError(error => {
-                console.error('FertilizerService.getFertilizerChemistries error:', error);
-                return of([]);
-            })
-        );
-    }
     public calculateOptimizationScore(fertilizer: Fertilizer, requirements: any): number {
         if (!fertilizer.composition || !requirements) {
             return 0;
@@ -1287,7 +1285,6 @@ export class NutrientFormulationComponent implements OnInit {
                         this.crops = Array.isArray(data.crops) ? data.crops : [];
                         this.cropPhases = Array.isArray(data.cropPhases) ? data.cropPhases : [];
                         this.fertilizerChemistries = Array.isArray(data.fertilizerChemistries) ? data.fertilizerChemistries : [];
-                        this.cropPhaseSolutionRequirements = Array.isArray(data.solutionRequirements) ? data.solutionRequirements : [];
                         this.loadOptimizedFertilizers(firstCatalogId);
                         console.log('this.fertilizers:', this.fertilizers);
 
@@ -1646,10 +1643,11 @@ export class NutrientFormulationComponent implements OnInit {
                     });
                 });
                 console.log('Consolidated fertilizers from all crop phases:', Array.from(allFertilizers.values()));
-                this.fertilizers = this.transformFertilizersData({
+                const transformedFertilizers = this.transformFertilizersData({
                     fertilizers: Array.from(allFertilizers.values())
                 });
-                console.log('Consolidated optimized fertilizers:', this.fertilizers);
+                console.log('Consolidated optimized fertilizers:', transformedFertilizers);
+                this.fertilizers = transformedFertilizers;
                 this.isLoading = false;
             },
             error: (error) => {
@@ -1672,7 +1670,9 @@ export class NutrientFormulationComponent implements OnInit {
                     console.warn('Unexpected basic fertilizers response format:', response);
                     fertilizers = [];
                 }
-                this.fertilizers = this.transformFertilizersData({ fertilizers });
+                const allFertilizers = this.transformFertilizersData({ fertilizers });
+                console.log('Loaded basic fertilizers:', allFertilizers);
+                this.fertilizers = allFertilizers;
                 this.isLoading = false;
             },
             error: (error) => {
@@ -2528,27 +2528,93 @@ export class NutrientFormulationComponent implements OnInit {
      * Get REAL crop phase requirements from database ONLY
      * Returns null if no real data exists - NO FALLBACKS
      */
-    public getRealCropPhaseRequirements(cropPhaseId: number): any | null {
-        // Only return data that exists in cropPhaseSolutionRequirements from API
-        const realRequirement = this.cropPhaseSolutionRequirements.find(r => r.cropPhaseId === cropPhaseId);
-
-        if (!realRequirement) {
-            console.warn(`No real requirements found for cropPhaseId: ${cropPhaseId}`);
+    public getRealCropPhaseRequirements(cropPhaseId: number | string): any | null {
+        if (!cropPhaseId || (!this.cropPhaseSolutionRequirements || this.cropPhaseSolutionRequirements.length === 0)) {
             return null;
         }
 
+        // Convert to number if string
+        const phaseId = typeof cropPhaseId === 'string' ? parseInt(cropPhaseId, 10) : cropPhaseId;
+
+        if (isNaN(phaseId)) {
+            console.warn('Invalid cropPhaseId provided:', cropPhaseId);
+            return null;
+        }
+
+        console.log('Looking for cropPhaseId:', phaseId);
+        console.log('Available requirements:', this.cropPhaseSolutionRequirements);
+
+        // Try multiple possible matching strategies since the data structure might vary
+        let realRequirement = this.cropPhaseSolutionRequirements.find(r =>
+            r.cropPhaseId === phaseId || r.phaseId === phaseId || r.id === phaseId
+        );
+
+        if (!realRequirement) {
+            console.warn(`No real requirements found for cropPhaseId: ${phaseId}`);
+            return null;
+        }
+
+        console.log(`Found requirements for cropPhaseId: ${phaseId}`, realRequirement);
+
         // Validate that the requirement has actual nutrient data
+        // Check both lowercase and uppercase property names
         const hasRealNutrients = (realRequirement.no3 && realRequirement.no3 > 0) ||
+            (realRequirement.nO3 && realRequirement.nO3 > 0) ||
             (realRequirement.nh4 && realRequirement.nh4 > 0) ||
+            (realRequirement.nH4 && realRequirement.nH4 > 0) ||
             (realRequirement.h2po4 && realRequirement.h2po4 > 0) ||
+            (realRequirement.h2PO4 && realRequirement.h2PO4 > 0) ||
             (realRequirement.k && realRequirement.k > 0);
 
         if (!hasRealNutrients) {
-            console.warn(`Requirements found but no real nutrient data for cropPhaseId: ${cropPhaseId}`);
+            console.warn(`Requirements found but no real nutrient data for cropPhaseId: ${phaseId}`, realRequirement);
             return null;
         }
 
-        return realRequirement;
+        // Normalize the property names to match what your code expects
+        const normalizedRequirement = {
+            ...realRequirement,
+            no3: realRequirement.no3 || realRequirement.nO3 || 0,
+            nh4: realRequirement.nh4 || realRequirement.nH4 || 0,
+            h2po4: realRequirement.h2po4 || realRequirement.h2PO4 || 0,
+            k: realRequirement.k || 0,
+            ca: realRequirement.ca || 0,
+            mg: realRequirement.mg || 0,
+            so4: realRequirement.so4 || realRequirement.sO4 || 0,
+            fe: realRequirement.fe || 0,
+            ph: realRequirement.ph || realRequirement.pH || null,
+            ec: realRequirement.ec || null
+        };
+
+        console.log('Normalized requirement:', normalizedRequirement);
+        return normalizedRequirement;
+    }
+
+    /**
+     * Helper method for template - more reliable than calling getRealCropPhaseRequirements directly
+     */
+    public hasRealRequirementsForPhase(cropPhaseId: number | string): boolean {
+        return this.getRealCropPhaseRequirements(cropPhaseId) !== null;
+    }
+
+    /**
+     * Get display data for a crop phase requirement
+     */
+    public getRequirementDisplayData(cropPhaseId: number | string): any | null {
+        const req = this.getRealCropPhaseRequirements(cropPhaseId);
+        if (!req) return null;
+
+        return {
+            nitrogen: (req.no3 || 0) + (req.nh4 || 0),
+            phosphorus: req.h2po4 || 0,
+            potassium: req.k || 0,
+            calcium: req.ca || 0,
+            magnesium: req.mg || 0,
+            sulfur: req.so4 || 0,
+            iron: req.fe || 0,
+            ph: req.ph || 'N/A',
+            ec: req.ec || 'N/A'
+        };
     }
 
     /**
@@ -2613,18 +2679,7 @@ export class NutrientFormulationComponent implements OnInit {
         this.apiService.get<any>('/CropPhaseSolutionRequirement').subscribe({
             next: (response) => {
                 console.log('CropPhaseSolutionRequirement API response:', response);
-                // Handle response structure from your API
-                if (Array.isArray(response)) {
-                    this.cropPhaseSolutionRequirements = response;
-                } else if (response && response.result && Array.isArray(response.result)) {
-                    this.cropPhaseSolutionRequirements = response.result;
-                } else if (response && response.cropPhaseSolutionRequirements && Array.isArray(response.cropPhaseSolutionRequirements)) {
-                    this.cropPhaseSolutionRequirements = response.cropPhaseSolutionRequirements;
-                } else {
-                    console.warn('Unexpected response format from CropPhaseSolutionRequirement API:', response);
-                    this.cropPhaseSolutionRequirements = [];
-                }
-
+                this.cropPhaseSolutionRequirements = response.cropPhaseRequirements
                 console.log(`Loaded ${this.cropPhaseSolutionRequirements.length} real crop phase requirements`);
             },
             error: (error) => {
@@ -2901,5 +2956,53 @@ export class NutrientFormulationComponent implements OnInit {
             instructions: recipe.instructions || [],
             warnings: recipe.warnings || []
         };
+    }
+
+
+
+
+
+
+
+    /**
+ * Debug method - call this in your component after data loads to see what's happening
+ */
+    public debugCropPhaseRequirements(): void {
+        console.log('=== CROP PHASE REQUIREMENTS DEBUG ===');
+        console.log('Total requirements loaded:', this.cropPhaseSolutionRequirements?.length || 0);
+
+        if (this.cropPhaseSolutionRequirements && this.cropPhaseSolutionRequirements.length > 0) {
+            console.log('All requirements:');
+            this.cropPhaseSolutionRequirements.forEach((req, index) => {
+                console.log(`${index + 1}. ID: ${req.id}, CropPhaseId: ${req.cropPhaseId}, PhaseId: ${req.phaseId}`);
+                console.log(`   Name: ${req.cropPhaseId}`);
+                console.log(`   Nutrients: N(NO3): ${req.nO3 || req.no3}, N(NH4): ${req.nH4 || req.nh4}, P: ${req.h2PO4 || req.h2po4}, K: ${req.k}`);
+            });
+        }
+
+        console.log('\nCrop Phases:');
+        if (this.cropPhases && this.cropPhases.length > 0) {
+            this.cropPhases.forEach((phase, index) => {
+                const hasReq = this.hasRealRequirementsForPhase(phase.id);
+                console.log(`${index + 1}. ID: ${phase.id}, Name: ${phase.name}, Has Requirements: ${hasReq}`);
+            });
+        }
+
+        console.log('=== END DEBUG ===');
+    }
+
+    /**
+     * Call this method when the form value changes to see real-time what's happening
+     */
+    public debugFormValue(): void {
+        const cropPhaseId = this.formulationForm.get('cropPhaseId')?.value;
+        console.log(`Current form cropPhaseId: ${cropPhaseId} (type: ${typeof cropPhaseId})`);
+
+        if (cropPhaseId) {
+            const hasReq = this.hasRealRequirementsForPhase(cropPhaseId);
+            const reqData = this.getRealCropPhaseRequirements(cropPhaseId);
+            console.log(`Has requirements: ${hasReq}`);
+            console.log('Requirement data:', reqData);
+        }
     }
 }

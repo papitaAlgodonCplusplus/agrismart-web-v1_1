@@ -294,13 +294,13 @@ export class FertilizerService {
           }
         }
 
-        for (const fertilizer of fertilizers) {
-          this.apiService.get<any>('/FertilizerChemistry', new HttpParams().set('FertilizerId', fertilizer.id.toString())).subscribe(chemistries => {
-            if (chemistries.fertilizerChemistries && chemistries.fertilizerChemistries.length > 0) {
-              fertilizer.chemistries = chemistries.fertilizerChemistries;
-            }
-          });
-        }
+        // for (const fertilizer of fertilizers) {
+        //   this.apiService.get<any>('/FertilizerChemistry', new HttpParams().set('FertilizerId', fertilizer.id.toString())).subscribe(chemistries => {
+        //     if (chemistries.fertilizerChemistries && chemistries.fertilizerChemistries.length > 0) {
+        //       fertilizer.chemistries = chemistries.fertilizerChemistries;
+        //     }
+        //   });
+        // }
 
         return fertilizers || []; // Return empty array as fallback
       }),
@@ -1203,22 +1203,6 @@ export class FertilizerService {
     return nMet && pMet && kMet;
   }
 
-  /**
-   * Get fertilizers suitable for pH adjustment
-   */
-  getPhAdjusters(): Observable<EnhancedFertilizer[]> {
-    return this.getEnhancedFertilizers().pipe(
-      map(fertilizers => fertilizers.filter(f =>
-        f.chemistry?.isPhAdjuster ||
-        (typeof f.name === 'string' && (
-          f.name.toLowerCase().includes('ácido') ||
-          f.name.toLowerCase().includes('acid') ||
-          f.name.toLowerCase().includes('cal') ||
-          f.name.toLowerCase().includes('lime')
-        ))
-      ))
-    );
-  }
 
   /**
    * Estimate pH effect of fertilizer mix
@@ -1255,31 +1239,59 @@ export class FertilizerService {
 
     return Math.round(totalEc * 100) / 100; // Round to 2 decimals
   }
+  // In your fertilizer.service.ts, modify the getCropPhaseSolutionRequirement method:
 
   /**
-     * Get crop phase solution requirement data
+   * Get crop phase solution requirement data - FIXED VERSION
    */
   private getCropPhaseSolutionRequirement(phaseId: number): Observable<any> {
+    // FIX: Always include BOTH required parameters
+    const params = new HttpParams()
+      .set('PhaseId', phaseId.toString())
+      .set('IncludeInactives', 'true'); // ← This was missing and causing 400 errors!
 
-    const params = new HttpParams().set('PhaseId', phaseId.toString());
-    const url = `${this.apiConfig.agronomicApiUrl}/CropPhaseSolutionRequirement/GetByPhaseId`;
+    const url = `${this.apiConfig.agronomicApiUrl}/CropPhaseSolutionRequirement`;
     const headers = this.getAuthHeaders();
 
     return this.http.get<BackendResponse<any>>(url, { params, headers }).pipe(
       map(response => {
-        // If backend returns { success: false, result: null }, treat as no data, not error
-        if (response && response.result !== undefined && response.result !== null) {
+        // If backend returns success: false, treat as null (don't throw)
+        if (response && response.success === false) {
+          console.warn(`Backend returned success: false for PhaseId=${phaseId}:`, response);
+          return null;
+        }
+        if (response && response.success && response.result !== undefined && response.result !== null) {
           return response.result;
         }
         // If result is null, just return null (don't throw)
         return null;
       }),
       catchError(error => {
-        console.error('CropService.getCropPhaseSolutionRequirement error:', error);
+        // Try to extract backend error message if present
+        let backendMessage = '';
+        if (error && error.error && typeof error.error === 'object') {
+          if (error.error.exception) {
+            backendMessage = error.error.exception;
+          } else if (error.error.message) {
+            backendMessage = error.error.message;
+          }
+        }
+        if(backendMessage === 'Object returned is null') {
+          return of(null);
+        }
+        console.error(`❌ CropPhaseSolutionRequirement API error for PhaseId=${phaseId}:`, error);
+        if (backendMessage) {
+          console.error(`Backend error message: ${backendMessage}`);
+        }
+        // Check if it's a validation error (400)
+        if (error.status === 400) {
+          console.error('💡 Hint: Make sure both PhaseId and IncludeInactives parameters are provided');
+        }
         return of(null);
       })
     );
   }
+
   /**
    * Enhanced method that combines CropPhaseSolutionRequirement data with fertilizer selection
    */

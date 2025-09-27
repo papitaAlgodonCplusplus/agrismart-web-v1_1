@@ -62,21 +62,14 @@
     <div class="tab-pane fade show active" id="simple-formulation" role="tabpanel" aria-labelledby="simple-tab">
       <div class="tab-container">
 
-        <!-- Data Validation Alert -->
+        <!-- Loading Data Spinner -->
         <div class="row mb-3" *ngIf="!isSimpleFormulationAvailable()">
-          <div class="col-12">
-            <div class="alert alert-warning" role="alert">
-              <i class="bi bi-exclamation-triangle me-2"></i>
-              <strong>Formulación Simple no disponible:</strong>
-              {{ getSimpleFormulationValidationMessage() }}
-              <hr>
-              <small class="mb-0">
-                <strong>Requerido:</strong>
-                <ul class="mb-0 mt-2">
-                  <li>Datos en tabla <code>CropPhaseSolutionRequirement</code></li>
-                  <li>Fertilizantes activos con composiciones NPK en base de datos</li>
-                </ul>
-              </small>
+          <div class="col-12 text-center">
+            <div class="spinner-border text-primary mb-2" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <div>
+              <strong>Cargando datos, espere...</strong>
             </div>
           </div>
         </div>
@@ -180,28 +173,43 @@
                               <i class="bi bi-database me-1"></i>
                               Datos de Base de Datos
                             </h6>
+
+                            <!-- Use the more reliable helper method -->
                             <div class="row"
-                              *ngIf="getRealCropPhaseRequirements(formulationForm.get('cropPhaseId')?.value) as req">
-                              <div class="col-md-3">
-                                <small><strong>N:</strong> {{ (req.no3 || 0) + (req.nh4 || 0) }} ppm</small>
-                              </div>
-                              <div class="col-md-3">
-                                <small><strong>P:</strong> {{ req.h2po4 || 0 }} ppm</small>
-                              </div>
-                              <div class="col-md-3">
-                                <small><strong>K:</strong> {{ req.k || 0 }} ppm</small>
-                              </div>
-                              <div class="col-md-3">
-                                <small><strong>pH:</strong> {{ req.ph || 'N/A' }} | <strong>EC:</strong> {{ req.ec ||
-                                  'N/A' }}</small>
-                              </div>
+                              *ngIf="hasRealRequirementsForPhase(formulationForm.get('cropPhaseId')?.value); else noDataTemplate">
+                              <ng-container
+                                *ngIf="getRequirementDisplayData(formulationForm.get('cropPhaseId')?.value) as displayData">
+                                <div class="col-md-3">
+                                  <small><strong>N:</strong> {{ displayData.nitrogen }} ppm</small>
+                                </div>
+                                <div class="col-md-3">
+                                  <small><strong>P:</strong> {{ displayData.phosphorus }} ppm</small>
+                                </div>
+                                <div class="col-md-3">
+                                  <small><strong>K:</strong> {{ displayData.potassium }} ppm</small>
+                                </div>
+                                <div class="col-md-3">
+                                  <small><strong>pH:</strong> {{ displayData.ph }} | <strong>EC:</strong> {{
+                                    displayData.ec }}</small>
+                                </div>
+                                <div class="col-12 mt-2">
+                                  <small class="text-success">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Datos encontrados: Ca: {{ displayData.calcium }}, Mg: {{ displayData.magnesium }},
+                                    SO4: {{ displayData.sulfur }}, Fe: {{ displayData.iron }}
+                                  </small>
+                                </div>
+                              </ng-container>
                             </div>
-                            <div *ngIf="!getRealCropPhaseRequirements(formulationForm.get('cropPhaseId')?.value)">
+
+                            <ng-template #noDataTemplate>
                               <small class="text-warning">
                                 <i class="bi bi-exclamation-triangle me-1"></i>
-                                No hay datos para esta fase en la base de datos
+                                No hay datos para esta fase en la base de datos para {{
+                                getCropPhaseName(formulationForm.get('cropPhaseId')?.value) }} con id {{
+                                formulationForm.get('cropPhaseId')?.value }}.
                               </small>
-                            </div>
+                            </ng-template>
                           </div>
                         </div>
                       </div>
@@ -508,7 +516,7 @@
                     <div class="list-group-item py-2" *ngFor="let phase of cropPhases">
                       <div class="d-flex justify-content-between align-items-center">
                         <div>
-                          <small><strong>{{ phase.name }}</strong></small>
+                          <small><strong>{{ phase.cropName }} - {{ phase.name }}</strong></small>
                           <br>
                           <small class="text-muted">{{ phase.description }}</small>
                         </div>
@@ -566,63 +574,7 @@
 
             </div>
           </div>
-
         </div>
-
-        <!-- No Real Data Available -->
-        <div class="row" *ngIf="!isSimpleFormulationAvailable()">
-          <div class="col-12">
-            <div class="text-center text-muted py-5">
-              <i class="bi bi-database-x display-1 mb-3"></i>
-              <h4>Formulación Simple Requiere Datos</h4>
-              <p class="mb-4">
-                Para usar la formulación simple necesitas datos en la base de datos.
-                <br>
-                No se utilizan valores predeterminados ni datos simulados.
-              </p>
-
-              <div class="row justify-content-center">
-                <div class="col-md-8">
-                  <div class="card">
-                    <div class="card-header">
-                      <h6 class="mb-0">Requisitos de Datos</h6>
-                    </div>
-                    <div class="card-body text-start">
-                      <div class="row">
-                        <div class="col-md-6">
-                          <h6 class="text-primary">Requerimientos Nutricionales</h6>
-                          <ul class="small">
-                            <li>Tabla: <code>CropPhaseSolutionRequirement</code></li>
-                            <li>Campos: <code>no3, nh4, h2po4, k</code></li>
-                            <li>Valores > 0 para nutrientes principales</li>
-                            <li>Asociados a fases de cultivo activas</li>
-                          </ul>
-                        </div>
-                        <div class="col-md-6">
-                          <h6 class="text-primary">Fertilizantes</h6>
-                          <ul class="small">
-                            <li>Tabla: <code>Fertilizer</code></li>
-                            <li>Campo: <code>isActive = true</code></li>
-                            <li>Composición NPK real en base de datos</li>
-                            <li>Precios por unidad (opcional)</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="mt-4">
-                <button class="btn btn-outline-primary" (click)="loadInitialData()">
-                  <i class="bi bi-arrow-clockwise me-1"></i>
-                  Recargar Datos
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
