@@ -222,7 +222,7 @@ class SwaggerAPIClient:
             async with self.session.get(url, params=params, headers=self.headers, timeout=15) as response:
                 if response.status == 200:
                     data = await response.json()
-                    requirements = data.get('result', {}).get('cropPhaseSolutionRequirement')
+                    requirements = data.get('result', {}).get('cropPhaseRequirements')
                     
                     if requirements:
                         print(f"[SUCCESS] Found crop requirements")
@@ -255,8 +255,8 @@ class SwaggerAPIClient:
         
         url = f"{self.base_url}/WaterChemistry"
         params = {
-            'WaterId': water_id,
-            'CatalogId': catalog_id
+            'WaterId': water_id
+            # ,'CatalogId': catalog_id
         }
 
         try:

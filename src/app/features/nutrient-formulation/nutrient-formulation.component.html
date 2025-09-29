@@ -725,7 +725,7 @@
                           <label for="water_id" class="form-label">Fuente de Agua *</label>
                           <select class="form-select" id="water_id" formControlName="water_id">
                             <option value="">Seleccione fuente de agua</option>
-                            <option *ngFor="let source of waterSources" [value]="source.id">
+                            <option *ngFor="let source of waterSources" [value]="source.waterId">
                               {{ source.name || 'Fuente ' + source.id }}
                             </option>
                           </select>
