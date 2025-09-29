@@ -5,6 +5,7 @@ Real API calls, authentication, and data mapping
 """
 
 import aiohttp
+import logging
 import asyncio
 from typing import Dict, List, Optional, Any
 from models import Fertilizer, FertilizerComposition, FertilizerChemistry
