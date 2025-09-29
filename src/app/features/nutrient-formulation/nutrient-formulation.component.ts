@@ -1971,7 +1971,7 @@ export class NutrientFormulationComponent implements OnInit {
         formData.user_id = this.authService.getCurrentUser()['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid'] || 1;
 
         // Build the API URL with query parameters
-        const apiUrl = 'https://fertilizer-calculator-api.onrender.com/swagger-integrated-calculation';
+        const apiUrl = 'https://agrismart-web-v1-1-gafq.onrender.com/swagger-integrated-calculation';
 
         let params = new HttpParams()
             .set('user_id', formData.user_id.toString())

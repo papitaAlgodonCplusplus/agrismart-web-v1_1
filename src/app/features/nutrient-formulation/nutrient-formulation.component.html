@@ -57,608 +57,1103 @@
       </div>
     </div>
 
-    <!-- Tab Content -->
+    <!-- Tab Content Container -->
+    <div class="tab-content" id="formulationTabsContent">
 
-    <div class="tab-pane fade show active" id="simple-formulation" role="tabpanel" aria-labelledby="simple-tab">
-      <div class="tab-container">
+      <!-- Simple Formulation Tab -->
+      <div class="tab-pane fade show active" id="simple-formulation" role="tabpanel" aria-labelledby="simple-tab">
+        <div class="tab-container">
 
-        <!-- Loading Data Spinner -->
-        <div class="row mb-3" *ngIf="!isSimpleFormulationAvailable()">
-          <div class="col-12 text-center">
-            <div class="spinner-border text-primary mb-2" role="status">
-              <span class="visually-hidden">Cargando...</span>
+          <!-- Loading Data Spinner -->
+          <div class="row mb-3" *ngIf="!isSimpleFormulationAvailable()">
+            <div class="col-12 text-center">
+              <div class="spinner-border text-primary mb-2" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+              <div>
+                <strong>Cargando datos, espere...</strong>
+              </div>
             </div>
-            <div>
-              <strong>Cargando datos, espere...</strong>
+          </div>
+
+          <!-- Main Content - Only show when real data is available -->
+          <div class="row h-100" *ngIf="isSimpleFormulationAvailable()">
+
+            <!-- Left Panel - Formulation Setup -->
+            <div class="col-lg-8">
+              <div class="content-scroll">
+
+                <!-- Real Data Status -->
+                <div class="alert alert-success mb-3" role="alert">
+                  <i class="bi bi-check-circle me-2"></i>
+                  <strong>Datos cargados:</strong>
+                  {{ cropPhaseSolutionRequirements.length }} requerimientos nutricionales,
+                  {{ getRealFertilizersWithCompositions().length }} fertilizantes con composiciones
+                </div>
+
+                <!-- Configuration Card -->
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="card-title mb-0">
+                      <i class="bi bi-gear me-2"></i>
+                      Configuración de Formulación Simple (Datos)
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <form [formGroup]="formulationForm" (ngSubmit)="calculateSimpleFormulation()">
+
+                      <!-- Basic Parameters -->
+                      <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                          <label for="recipeName" class="form-label">Nombre de la Receta</label>
+                          <input type="text" class="form-control" id="recipeName" formControlName="recipeName"
+                            placeholder="Mi receta nutritiva">
+                        </div>
+                        <div class="col-md-6">
+                          <label for="volumeLiters" class="form-label">Volumen (Litros) *</label>
+                          <input type="number" class="form-control" id="volumeLiters" formControlName="volumeLiters"
+                            min="1" max="10000" step="1" placeholder="1000">
+                        </div>
+                      </div>
+
+                      <!-- Crop Selection -->
+                      <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                          <label for="cropId" class="form-label">Cultivo *</label>
+                          <select class="form-select" id="cropId" formControlName="cropId" (change)="onCropChange()">
+                            <option value="">Seleccione un cultivo</option>
+                            <option *ngFor="let crop of crops" [value]="crop.id">
+                              {{ crop.name }}
+                            </option>
+                          </select>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="cropPhaseId" class="form-label">Fase del Cultivo *</label>
+                          <select class="form-select" id="cropPhaseId" formControlName="cropPhaseId">
+                            <option value="">Seleccione una fase</option>
+                            <option *ngFor="let phase of getFilteredCropPhases()" [value]="phase.id"
+                              [disabled]="!getRealCropPhaseRequirements(phase.id)">
+                              {{ phase.name }} - {{ phase.description }}
+                              <span *ngIf="!getRealCropPhaseRequirements(phase.id)"> (Sin datos)</span>
+                            </option>
+                          </select>
+                          <small class="form-text text-muted">
+                            Solo se muestran fases con requerimientos nutricionales guardados
+                          </small>
+                        </div>
+                      </div>
+
+                      <!-- Water Source and Parameters -->
+                      <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                          <label for="waterSourceId" class="form-label">Fuente de Agua</label>
+                          <select class="form-select" id="waterSourceId" formControlName="waterSourceId">
+                            <option value="">Agua estándar</option>
+                            <option *ngFor="let source of waterSources" [value]="source.id">
+                              {{ source.name || 'Fuente ' + source.id }}
+                            </option>
+                          </select>
+                        </div>
+                        <div class="col-md-4">
+                          <label for="targetPh" class="form-label">pH Objetivo</label>
+                          <input type="number" class="form-control" id="targetPh" formControlName="targetPh" min="4.0"
+                            max="8.0" step="0.1" placeholder="6.5">
+                        </div>
+                        <div class="col-md-4">
+                          <label for="targetEc" class="form-label">EC Objetivo (mS/cm)</label>
+                          <input type="number" class="form-control" id="targetEc" formControlName="targetEc" min="0.5"
+                            max="5.0" step="0.1" placeholder="2.0">
+                        </div>
+                      </div>
+
+                      <!-- Real Data Preview -->
+                      <div class="row g-3 mb-4" *ngIf="formulationForm.get('cropPhaseId')?.value">
+                        <div class="col-12">
+                          <div class="card bg-light">
+                            <div class="card-body py-2">
+                              <h6 class="card-title mb-2">
+                                <i class="bi bi-database me-1"></i>
+                                Datos Obtenidos
+                              </h6>
+
+                              <!-- Use the more reliable helper method -->
+                              <div class="row"
+                                *ngIf="hasRealRequirementsForPhase(formulationForm.get('cropPhaseId')?.value); else noDataTemplate">
+                                <ng-container
+                                  *ngIf="getRequirementDisplayData(formulationForm.get('cropPhaseId')?.value) as displayData">
+                                  <div class="col-md-3">
+                                    <small><strong>N:</strong> {{ displayData.nitrogen }} ppm</small>
+                                  </div>
+                                  <div class="col-md-3">
+                                    <small><strong>P:</strong> {{ displayData.phosphorus }} ppm</small>
+                                  </div>
+                                  <div class="col-md-3">
+                                    <small><strong>K:</strong> {{ displayData.potassium }} ppm</small>
+                                  </div>
+                                  <div class="col-md-3">
+                                    <small><strong>pH:</strong> {{ displayData.ph }} | <strong>EC:</strong> {{
+                                      displayData.ec }}</small>
+                                  </div>
+                                  <div class="col-12 mt-2">
+                                    <small class="text-success">
+                                      <i class="bi bi-check-circle me-1"></i>
+                                      Datos encontrados: Ca: {{ displayData.calcium }}, Mg: {{ displayData.magnesium }},
+                                      SO4: {{ displayData.sulfur }}, Fe: {{ displayData.iron }}
+                                    </small>
+                                  </div>
+                                </ng-container>
+                              </div>
+
+                              <ng-template #noDataTemplate>
+                                <small class="text-warning">
+                                  <i class="bi bi-exclamation-triangle me-1"></i>
+                                  No hay datos para esta fase para {{
+                                  getCropPhaseName(formulationForm.get('cropPhaseId')?.value) }} con id {{
+                                  formulationForm.get('cropPhaseId')?.value }}.
+                                </small>
+                              </ng-template>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Action Buttons -->
+                      <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary"
+                          [disabled]="formulationForm.invalid || isCalculatingSimple || !getRealCropPhaseRequirements(formulationForm.get('cropPhaseId')?.value)">
+                          <i class="bi bi-calculator me-1"></i>
+                          <span *ngIf="isCalculatingSimple">Calculando con datos...</span>
+                          <span *ngIf="!isCalculatingSimple">Calcular con Datos</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" (click)="resetSimpleFormulation()">
+                          <i class="bi bi-arrow-clockwise me-1"></i>
+                          Limpiar
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- Enhanced Simple Formulation Results Section -->
+                <div *ngIf="simpleFormulationResult" class="card mt-4">
+                  <div class="card-header">
+                    <h5 class="mb-0">
+                      <i class="fas fa-chart-line me-2"></i>
+                      Formulación Simple - Resultados Mejorados
+                      <span *ngIf="isFormulationAcceptable()" class="badge bg-success ms-2">ACEPTABLE</span>
+                      <span *ngIf="!isFormulationAcceptable()" class="badge bg-warning ms-2">REQUIERE MEJORAS</span>
+                    </h5>
+                  </div>
+
+                  <div class="card-body">
+                    <!-- Summary Stats -->
+                    <div class="row mb-4">
+                      <div class="col-md-3">
+                        <div class="text-center">
+                          <h6 class="text-muted">Volumen</h6>
+                          <h4>{{ simpleFormulationResult.volumeLiters }}L</h4>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="text-center">
+                          <h6 class="text-muted">Fertilizantes</h6>
+                          <h4>{{ simpleFormulationResult.fertilizers.length }}</h4>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="text-center">
+                          <h6 class="text-muted">Costo Total</h6>
+                          <h4>₡{{ simpleFormulationResult.totalCost.toFixed(2) }}</h4>
+                          <small class="text-muted">₡{{ (simpleFormulationResult.totalCost /
+                            simpleFormulationResult.volumeLiters).toFixed(4) }}/litro</small>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="text-center">
+                          <h6 class="text-muted">pH / EC Objetivo</h6>
+                          <h4>{{ simpleFormulationResult.targetPh }} / {{ simpleFormulationResult.targetEc }}</h4>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Enhanced Nutrient Balance -->
+                    <div class="row mb-4">
+                      <div class="col-12">
+                        <h6><i class="fas fa-balance-scale me-2"></i>Balance Nutricional Detallado</h6>
+                        <div class="table-responsive">
+                          <table class="table table-striped">
+                            <thead>
+                              <tr>
+                                <th>Nutriente</th>
+                                <th>Objetivo (ppm)</th>
+                                <th>Logrado (ppm)</th>
+                                <th>Porcentaje</th>
+                                <th>Estado</th>
+                                <th>Progreso</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td><strong>Nitrógeno (N)</strong></td>
+                                <td>{{ simpleFormulationResult.nutrientBalance.nitrogen.target.toFixed(1) }}</td>
+                                <td [class]="getNutrientAchievementColor('nitrogen')">
+                                  {{ simpleFormulationResult.nutrientBalance.nitrogen.achieved.toFixed(1) }}
+                                </td>
+                                <td [class]="getNutrientAchievementColor('nitrogen')">
+                                  {{ (simpleFormulationResult.nutrientBalance.nitrogen.ratio * 100).toFixed(1) }}%
+                                </td>
+                                <td>
+                                  <span *ngIf="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.9"
+                                    class="badge bg-success">Excelente</span>
+                                  <span
+                                    *ngIf="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.9"
+                                    class="badge bg-warning">Aceptable</span>
+                                  <span *ngIf="simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.7"
+                                    class="badge bg-danger">Insuficiente</span>
+                                </td>
+                                <td>
+                                  <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar"
+                                      [class.bg-success]="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.9"
+                                      [class.bg-warning]="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.9"
+                                      [class.bg-danger]="simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.7"
+                                      [style.width.%]="Math.min(simpleFormulationResult.nutrientBalance.nitrogen.ratio * 100, 100)">
+                                      {{ (simpleFormulationResult.nutrientBalance.nitrogen.ratio * 100).toFixed(0) }}%
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td><strong>Fósforo (P)</strong></td>
+                                <td>{{ simpleFormulationResult.nutrientBalance.phosphorus.target.toFixed(1) }}</td>
+                                <td [class]="getNutrientAchievementColor('phosphorus')">
+                                  {{ simpleFormulationResult.nutrientBalance.phosphorus.achieved.toFixed(1) }}
+                                </td>
+                                <td [class]="getNutrientAchievementColor('phosphorus')">
+                                  {{ (simpleFormulationResult.nutrientBalance.phosphorus.ratio * 100).toFixed(1) }}%
+                                </td>
+                                <td>
+                                  <span *ngIf="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.9"
+                                    class="badge bg-success">Excelente</span>
+                                  <span
+                                    *ngIf="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.9"
+                                    class="badge bg-warning">Aceptable</span>
+                                  <span *ngIf="simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.7"
+                                    class="badge bg-danger">Insuficiente</span>
+                                </td>
+                                <td>
+                                  <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar"
+                                      [class.bg-success]="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.9"
+                                      [class.bg-warning]="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.9"
+                                      [class.bg-danger]="simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.7"
+                                      [style.width.%]="Math.min(simpleFormulationResult.nutrientBalance.phosphorus.ratio * 100, 100)">
+                                      {{ (simpleFormulationResult.nutrientBalance.phosphorus.ratio * 100).toFixed(0) }}%
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td><strong>Potasio (K)</strong></td>
+                                <td>{{ simpleFormulationResult.nutrientBalance.potassium.target.toFixed(1) }}</td>
+                                <td [class]="getNutrientAchievementColor('potassium')">
+                                  {{ simpleFormulationResult.nutrientBalance.potassium.achieved.toFixed(1) }}
+                                </td>
+                                <td [class]="getNutrientAchievementColor('potassium')">
+                                  {{ (simpleFormulationResult.nutrientBalance.potassium.ratio * 100).toFixed(1) }}%
+                                </td>
+                                <td>
+                                  <span *ngIf="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.9"
+                                    class="badge bg-success">Excelente</span>
+                                  <span
+                                    *ngIf="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.potassium.ratio < 0.9"
+                                    class="badge bg-warning">Aceptable</span>
+                                  <span *ngIf="simpleFormulationResult.nutrientBalance.potassium.ratio < 0.7"
+                                    class="badge bg-danger">Insuficiente</span>
+                                </td>
+                                <td>
+                                  <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar"
+                                      [class.bg-success]="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.9"
+                                      [class.bg-warning]="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.potassium.ratio < 0.9"
+                                      [class.bg-danger]="simpleFormulationResult.nutrientBalance.potassium.ratio < 0.7"
+                                      [style.width.%]="Math.min(simpleFormulationResult.nutrientBalance.potassium.ratio * 100, 100)">
+                                      {{ (simpleFormulationResult.nutrientBalance.potassium.ratio * 100).toFixed(0) }}%
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Enhanced Fertilizer Recommendations -->
+                    <div class="row mb-4">
+                      <div class="col-12">
+                        <h6><i class="fas fa-seedling me-2"></i>Fertilizantes Recomendados</h6>
+                          <div class="table-responsive">
+                            <table class="table table-hover">
+                              <thead class="table-dark">
+                                <tr>
+                                  <th>Fertilizante</th>
+                                  <th>Concentración</th>
+                                  <th>Cantidad Total</th>
+                                  <th>Aporte N-P-K (ppm)</th>
+                                  <th>Costo</th>
+                                  <th>Composición Real</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr *ngFor="let fertilizer of simpleFormulationResult.fertilizers; let i = index">
+                                  <td>
+                                    <strong>{{ fertilizer.fertilizerName }}</strong>
+                                    <br>
+                                    <small class="text-muted">Posición {{ i + 1 }}</small>
+                                  </td>
+                                  <td>
+                                    <span class="badge bg-primary">{{ fertilizer.concentration.toFixed(2) }} g/L</span>
+                                  </td>
+                                  <td>
+                                    <span class="badge bg-info">{{ fertilizer.totalAmount || 0 }} g</span>
+                                  </td>
+                                  <td>
+                                    <div class="d-flex flex-column">
+                                      <small><strong>N:</strong> {{ fertilizer.npkContribution?.nitrogen?.toFixed(1) ||
+                                        0
+                                        }}
+                                        ppm</small>
+                                      <small><strong>P:</strong> {{ fertilizer.npkContribution?.phosphorus?.toFixed(1)
+                                        ||
+                                        0 }}
+                                        ppm</small>
+                                      <small><strong>K:</strong> {{ fertilizer.npkContribution?.potassium?.toFixed(1) ||
+                                        0
+                                        }}
+                                        ppm</small>
+                                    </div>
+                                  </td>
+                                  <td>
+                                    <span class="badge bg-success">₡{{ fertilizer.cost.toFixed(2) }}</span>
+                                  </td>
+                                  <td>
+                                    <div *ngIf="fertilizer.realComposition" class="small">
+                                      <div><strong>N:</strong> {{ fertilizer.realComposition.nitrogen }}%</div>
+                                      <div><strong>P:</strong> {{ fertilizer.realComposition.phosphorus }}%</div>
+                                      <div><strong>K:</strong> {{ fertilizer.realComposition.potassium }}%</div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                      </div>
+                    </div>
+
+                    <!-- Enhanced Instructions -->
+                    <div class="row mb-4">
+                      <div class="col-md-6">
+                        <h6><i class="fas fa-tasks me-2"></i>Instrucciones de Preparación</h6>
+                        <div class="card">
+                          <div class="card-body">
+                            <ol class="mb-0">
+                              <li
+                                *ngFor="let instruction of simpleFormulationResult.instructions.slice(3); let i = index">
+                                {{ instruction }}
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Advertencias y Recomendaciones</h6>
+                        <div class="card">
+                          <div class="card-body">
+                            <div *ngIf="simpleFormulationResult.warnings.length > 0" class="mb-3">
+                              <h6 class="text-warning">Advertencias:</h6>
+                              <ul class="list-unstyled">
+                                <li *ngFor="let warning of simpleFormulationResult.warnings" class="text-warning">
+                                  {{ warning }}
+                                </li>
+                              </ul>
+                            </div>
+
+                            <div *ngIf="getFormulationRecommendations().length > 0">
+                              <h6 class="text-info">Recomendaciones de Mejora:</h6>
+                              <ul class="list-unstyled">
+                                <li *ngFor="let recommendation of getFormulationRecommendations()" class="text-info">
+                                  <i class="fas fa-lightbulb me-1"></i>{{ recommendation }}
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Quality Score -->
+                    <div class="row">
+                      <div class="col-12">
+                        <div class="card" [class.border-success]="isFormulationAcceptable()"
+                          [class.border-warning]="!isFormulationAcceptable()">
+                          <div class="card-body text-center">
+                            <h5 *ngIf="isFormulationAcceptable()" class="text-success">
+                              <i class="fas fa-check-circle me-2"></i>Formulación Aceptable
+                            </h5>
+                            <h5 *ngIf="!isFormulationAcceptable()" class="text-warning">
+                              <i class="fas fa-exclamation-circle me-2"></i>Formulación Requiere Ajustes
+                            </h5>
+                            <p class="mb-0">{{ getDetailedFormulationSummary() }}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div class="text-center py-4" *ngIf="isCalculatingSimple">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Calculando...</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="col-lg-4">
+              <div class="sidebar-scroll">
+
+                <div class="card mb-3">
+                  <div class="card-header">
+                    <h6 class="card-title mb-0">
+                      <i class="bi bi-database me-2"></i>
+                      Estado de Datos
+                    </h6>
+                  </div>
+                  <div class="card-body py-2">
+                    <div class="d-flex justify-content-between mb-1">
+                      <small>Requerimientos:</small>
+                      <small class="text-success">
+                        <strong>{{ cropPhaseSolutionRequirements.length }}</strong>
+                        <i class="bi bi-check-circle ms-1"></i>
+                      </small>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                      <small>Fertilizantes activos:</small>
+                      <small class="text-success">
+                        <strong>{{ getRealFertilizersWithCompositions().length }}</strong>
+                        <i class="bi bi-check-circle ms-1"></i>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="card mb-3" *ngIf="simpleFormulationResult">
+                  <div class="card-header">
+                    <h6 class="card-title mb-0">
+                      <i class="bi bi-graph-up me-2"></i>
+                      Resumen de Resultados
+                    </h6>
+                  </div>
+                  <div class="card-body py-2">
+                    <div class="d-flex justify-content-between mb-1">
+                      <small>Fertilizantes:</small>
+                      <small><strong>{{ getSimpleFertilizerCount() }}</strong></small>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                      <small>Costo/Litro:</small>
+                      <small><strong>₡{{ (simpleFormulationResult.totalCost /
+                          simpleFormulationResult.volumeLiters).toFixed(3) }}</strong></small>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                      <small>Balance NPK:</small>
+                      <small class="text-muted">{{ getSimpleFormulationSummary() }}</small>
+                    </div>
+                    <div class="d-flex justify-content-between" *ngIf="hasSimpleWarnings()">
+                      <small>Advertencias:</small>
+                      <small class="text-warning"><strong>{{ simpleFormulationResult.warnings.length }}</strong></small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Available Phases with Real Data -->
+                <div class="card mb-3">
+                  <div class="card-header">
+                    <h6 class="card-title mb-0">
+                      <i class="bi bi-list-check me-2"></i>
+                      Fases con Datos
+                    </h6>
+                  </div>
+                  <div class="card-body p-0" style="max-height: 200px; overflow-y: auto;">
+                    <div class="list-group list-group-flush">
+                      <div class="list-group-item py-2" *ngFor="let phase of cropPhases">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div>
+                            <small><strong>{{ phase.cropName }} - {{ phase.name }}</strong></small>
+                            <br>
+                            <small class="text-muted">{{ phase.description }}</small>
+                          </div>
+                          <div>
+                            <i class="bi bi-check-circle text-success" *ngIf="getRealCropPhaseRequirements(phase.id)"
+                              title="Datos disponibles"></i>
+                            <i class="bi bi-x-circle text-muted" *ngIf="!getRealCropPhaseRequirements(phase.id)"
+                              title="Sin datos"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Saved Recipes -->
+                <div class="card">
+                  <div class="card-header">
+                    <h6 class="card-title mb-0">
+                      <i class="bi bi-bookmark me-2"></i>
+                      Recetas Guardadas
+                    </h6>
+                  </div>
+                  <div class="card-body p-0">
+                    <div class="saved-recipes-container" *ngIf="savedRecipes.length > 0; else noRecipes">
+                      <div class="recipe-item" *ngFor="let recipe of savedRecipes.slice(0, 10)"
+                        (click)="loadSimpleRecipe(recipe)">
+                        <div class="recipe-header">
+                          <h6 class="recipe-name">{{ recipe.name }}</h6>
+                          <small class="text-muted">{{ recipe.createdAt | date:'short' }}</small>
+                        </div>
+                        <div class="recipe-stats">
+                          <small class="text-muted">
+                            {{ recipe.volumeLiters }}L • pH {{ recipe.targetPh }} • EC {{ recipe.targetEc }} • ₡{{
+                            recipe.totalCost.toFixed(2) }}
+                          </small>
+                        </div>
+                        <div class="mt-1">
+                          <span class="badge bg-success">Datos</span>
+                        </div>
+                      </div>
+                      <div class="text-center p-3" *ngIf="savedRecipes.length > 10">
+                        <small class="text-muted">Mostrando 10 de {{ savedRecipes.length }} recetas</small>
+                      </div>
+                    </div>
+                    <ng-template #noRecipes>
+                      <div class="text-center text-muted py-4">
+                        <i class="bi bi-bookmark display-6 mb-2"></i>
+                        <p class="mb-0">No hay recetas guardadas</p>
+                        <small>Crea tu primera formulación con datos</small>
+                      </div>
+                    </ng-template>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Main Content - Only show when real data is available -->
-        <div class="row h-100" *ngIf="isSimpleFormulationAvailable()">
+      <!-- Advanced Calculator Tab -->
+      <div class="tab-pane fade" id="advanced-calculation" role="tabpanel" aria-labelledby="advanced-tab">
+        <div class="tab-container">
 
-          <!-- Left Panel - Formulation Setup -->
-          <div class="col-lg-8">
-            <div class="content-scroll">
-
-              <!-- Real Data Status -->
-              <div class="alert alert-success mb-3" role="alert">
-                <i class="bi bi-check-circle me-2"></i>
-                <strong>Datos cargados:</strong>
-                {{ cropPhaseSolutionRequirements.length }} requerimientos nutricionales,
-                {{ getRealFertilizersWithCompositions().length }} fertilizantes con composiciones
+          <!-- Loading Data Spinner -->
+          <div class="row mb-3" *ngIf="isLoading">
+            <div class="col-12 text-center">
+              <div class="spinner-border text-primary mb-2" role="status">
+                <span class="visually-hidden">Cargando...</span>
               </div>
-
-              <!-- Configuration Card -->
-              <div class="card">
-                <div class="card-header">
-                  <h5 class="card-title mb-0">
-                    <i class="bi bi-gear me-2"></i>
-                    Configuración de Formulación Simple (Datos)
-                  </h5>
-                </div>
-                <div class="card-body">
-                  <form [formGroup]="formulationForm" (ngSubmit)="calculateSimpleFormulation()">
-
-                    <!-- Basic Parameters -->
-                    <div class="row g-3 mb-4">
-                      <div class="col-md-6">
-                        <label for="recipeName" class="form-label">Nombre de la Receta</label>
-                        <input type="text" class="form-control" id="recipeName" formControlName="recipeName"
-                          placeholder="Mi receta nutritiva">
-                      </div>
-                      <div class="col-md-6">
-                        <label for="volumeLiters" class="form-label">Volumen (Litros) *</label>
-                        <input type="number" class="form-control" id="volumeLiters" formControlName="volumeLiters"
-                          min="1" max="10000" step="1" placeholder="1000">
-                      </div>
-                    </div>
-
-                    <!-- Crop Selection -->
-                    <div class="row g-3 mb-4">
-                      <div class="col-md-6">
-                        <label for="cropId" class="form-label">Cultivo *</label>
-                        <select class="form-select" id="cropId" formControlName="cropId" (change)="onCropChange()">
-                          <option value="">Seleccione un cultivo</option>
-                          <option *ngFor="let crop of crops" [value]="crop.id">
-                            {{ crop.name }}
-                          </option>
-                        </select>
-                      </div>
-                      <div class="col-md-6">
-                        <label for="cropPhaseId" class="form-label">Fase del Cultivo *</label>
-                        <select class="form-select" id="cropPhaseId" formControlName="cropPhaseId">
-                          <option value="">Seleccione una fase</option>
-                          <option *ngFor="let phase of getFilteredCropPhases()" [value]="phase.id"
-                            [disabled]="!getRealCropPhaseRequirements(phase.id)">
-                            {{ phase.name }} - {{ phase.description }}
-                            <span *ngIf="!getRealCropPhaseRequirements(phase.id)"> (Sin datos)</span>
-                          </option>
-                        </select>
-                        <small class="form-text text-muted">
-                          Solo se muestran fases con requerimientos nutricionales en la base de datos
-                        </small>
-                      </div>
-                    </div>
-
-                    <!-- Water Source and Parameters -->
-                    <div class="row g-3 mb-4">
-                      <div class="col-md-4">
-                        <label for="waterSourceId" class="form-label">Fuente de Agua</label>
-                        <select class="form-select" id="waterSourceId" formControlName="waterSourceId">
-                          <option value="">Agua estándar</option>
-                          <option *ngFor="let source of waterSources" [value]="source.id">
-                            {{ source.name || 'Fuente ' + source.id }}
-                          </option>
-                        </select>
-                      </div>
-                      <div class="col-md-4">
-                        <label for="targetPh" class="form-label">pH Objetivo</label>
-                        <input type="number" class="form-control" id="targetPh" formControlName="targetPh" min="4.0"
-                          max="8.0" step="0.1" placeholder="6.5">
-                      </div>
-                      <div class="col-md-4">
-                        <label for="targetEc" class="form-label">EC Objetivo (mS/cm)</label>
-                        <input type="number" class="form-control" id="targetEc" formControlName="targetEc" min="0.5"
-                          max="5.0" step="0.1" placeholder="2.0">
-                      </div>
-                    </div>
-
-                    <!-- Real Data Preview -->
-                    <div class="row g-3 mb-4" *ngIf="formulationForm.get('cropPhaseId')?.value">
-                      <div class="col-12">
-                        <div class="card bg-light">
-                          <div class="card-body py-2">
-                            <h6 class="card-title mb-2">
-                              <i class="bi bi-database me-1"></i>
-                              Datos de Base de Datos
-                            </h6>
-
-                            <!-- Use the more reliable helper method -->
-                            <div class="row"
-                              *ngIf="hasRealRequirementsForPhase(formulationForm.get('cropPhaseId')?.value); else noDataTemplate">
-                              <ng-container
-                                *ngIf="getRequirementDisplayData(formulationForm.get('cropPhaseId')?.value) as displayData">
-                                <div class="col-md-3">
-                                  <small><strong>N:</strong> {{ displayData.nitrogen }} ppm</small>
-                                </div>
-                                <div class="col-md-3">
-                                  <small><strong>P:</strong> {{ displayData.phosphorus }} ppm</small>
-                                </div>
-                                <div class="col-md-3">
-                                  <small><strong>K:</strong> {{ displayData.potassium }} ppm</small>
-                                </div>
-                                <div class="col-md-3">
-                                  <small><strong>pH:</strong> {{ displayData.ph }} | <strong>EC:</strong> {{
-                                    displayData.ec }}</small>
-                                </div>
-                                <div class="col-12 mt-2">
-                                  <small class="text-success">
-                                    <i class="bi bi-check-circle me-1"></i>
-                                    Datos encontrados: Ca: {{ displayData.calcium }}, Mg: {{ displayData.magnesium }},
-                                    SO4: {{ displayData.sulfur }}, Fe: {{ displayData.iron }}
-                                  </small>
-                                </div>
-                              </ng-container>
-                            </div>
-
-                            <ng-template #noDataTemplate>
-                              <small class="text-warning">
-                                <i class="bi bi-exclamation-triangle me-1"></i>
-                                No hay datos para esta fase en la base de datos para {{
-                                getCropPhaseName(formulationForm.get('cropPhaseId')?.value) }} con id {{
-                                formulationForm.get('cropPhaseId')?.value }}.
-                              </small>
-                            </ng-template>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="d-flex gap-2">
-                      <button type="submit" class="btn btn-primary"
-                        [disabled]="formulationForm.invalid || isCalculatingSimple || !getRealCropPhaseRequirements(formulationForm.get('cropPhaseId')?.value)">
-                        <i class="bi bi-calculator me-1"></i>
-                        <span *ngIf="isCalculatingSimple">Calculando con datos...</span>
-                        <span *ngIf="!isCalculatingSimple">Calcular con Datos</span>
-                      </button>
-                      <button type="button" class="btn btn-outline-secondary" (click)="resetSimpleFormulation()">
-                        <i class="bi bi-arrow-clockwise me-1"></i>
-                        Limpiar
-                      </button>
-                    </div>
-                  </form>
-                </div>
+              <div>
+                <strong>Procesando cálculo avanzado...</strong>
               </div>
-
-              <!-- Enhanced Simple Formulation Results Section -->
-              <div *ngIf="simpleFormulationResult" class="card mt-4">
-                <div class="card-header">
-                  <h5 class="mb-0">
-                    <i class="fas fa-chart-line me-2"></i>
-                    Formulación Simple - Resultados Mejorados
-                    <span *ngIf="isFormulationAcceptable()" class="badge bg-success ms-2">ACEPTABLE</span>
-                    <span *ngIf="!isFormulationAcceptable()" class="badge bg-warning ms-2">REQUIERE MEJORAS</span>
-                  </h5>
-                </div>
-
-                <div class="card-body">
-                  <!-- Summary Stats -->
-                  <div class="row mb-4">
-                    <div class="col-md-3">
-                      <div class="text-center">
-                        <h6 class="text-muted">Volumen</h6>
-                        <h4>{{ simpleFormulationResult.volumeLiters }}L</h4>
-                      </div>
-                    </div>
-                    <div class="col-md-3">
-                      <div class="text-center">
-                        <h6 class="text-muted">Fertilizantes</h6>
-                        <h4>{{ simpleFormulationResult.fertilizers.length }}</h4>
-                      </div>
-                    </div>
-                    <div class="col-md-3">
-                      <div class="text-center">
-                        <h6 class="text-muted">Costo Total</h6>
-                        <h4>₡{{ simpleFormulationResult.totalCost.toFixed(2) }}</h4>
-                        <small class="text-muted">₡{{ (simpleFormulationResult.totalCost /
-                          simpleFormulationResult.volumeLiters).toFixed(4) }}/litro</small>
-                      </div>
-                    </div>
-                    <div class="col-md-3">
-                      <div class="text-center">
-                        <h6 class="text-muted">pH / EC Objetivo</h6>
-                        <h4>{{ simpleFormulationResult.targetPh }} / {{ simpleFormulationResult.targetEc }}</h4>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Enhanced Nutrient Balance -->
-                  <div class="row mb-4">
-                    <div class="col-12">
-                      <h6><i class="fas fa-balance-scale me-2"></i>Balance Nutricional Detallado</h6>
-                      <div class="table-responsive">
-                        <table class="table table-striped">
-                          <thead>
-                            <tr>
-                              <th>Nutriente</th>
-                              <th>Objetivo (ppm)</th>
-                              <th>Logrado (ppm)</th>
-                              <th>Porcentaje</th>
-                              <th>Estado</th>
-                              <th>Progreso</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td><strong>Nitrógeno (N)</strong></td>
-                              <td>{{ simpleFormulationResult.nutrientBalance.nitrogen.target.toFixed(1) }}</td>
-                              <td [class]="getNutrientAchievementColor('nitrogen')">
-                                {{ simpleFormulationResult.nutrientBalance.nitrogen.achieved.toFixed(1) }}
-                              </td>
-                              <td [class]="getNutrientAchievementColor('nitrogen')">
-                                {{ (simpleFormulationResult.nutrientBalance.nitrogen.ratio * 100).toFixed(1) }}%
-                              </td>
-                              <td>
-                                <span *ngIf="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.9"
-                                  class="badge bg-success">Excelente</span>
-                                <span
-                                  *ngIf="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.9"
-                                  class="badge bg-warning">Aceptable</span>
-                                <span *ngIf="simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.7"
-                                  class="badge bg-danger">Insuficiente</span>
-                              </td>
-                              <td>
-                                <div class="progress" style="height: 20px;">
-                                  <div class="progress-bar"
-                                    [class.bg-success]="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.9"
-                                    [class.bg-warning]="simpleFormulationResult.nutrientBalance.nitrogen.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.9"
-                                    [class.bg-danger]="simpleFormulationResult.nutrientBalance.nitrogen.ratio < 0.7"
-                                    [style.width.%]="Math.min(simpleFormulationResult.nutrientBalance.nitrogen.ratio * 100, 100)">
-                                    {{ (simpleFormulationResult.nutrientBalance.nitrogen.ratio * 100).toFixed(0) }}%
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td><strong>Fósforo (P)</strong></td>
-                              <td>{{ simpleFormulationResult.nutrientBalance.phosphorus.target.toFixed(1) }}</td>
-                              <td [class]="getNutrientAchievementColor('phosphorus')">
-                                {{ simpleFormulationResult.nutrientBalance.phosphorus.achieved.toFixed(1) }}
-                              </td>
-                              <td [class]="getNutrientAchievementColor('phosphorus')">
-                                {{ (simpleFormulationResult.nutrientBalance.phosphorus.ratio * 100).toFixed(1) }}%
-                              </td>
-                              <td>
-                                <span *ngIf="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.9"
-                                  class="badge bg-success">Excelente</span>
-                                <span
-                                  *ngIf="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.9"
-                                  class="badge bg-warning">Aceptable</span>
-                                <span *ngIf="simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.7"
-                                  class="badge bg-danger">Insuficiente</span>
-                              </td>
-                              <td>
-                                <div class="progress" style="height: 20px;">
-                                  <div class="progress-bar"
-                                    [class.bg-success]="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.9"
-                                    [class.bg-warning]="simpleFormulationResult.nutrientBalance.phosphorus.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.9"
-                                    [class.bg-danger]="simpleFormulationResult.nutrientBalance.phosphorus.ratio < 0.7"
-                                    [style.width.%]="Math.min(simpleFormulationResult.nutrientBalance.phosphorus.ratio * 100, 100)">
-                                    {{ (simpleFormulationResult.nutrientBalance.phosphorus.ratio * 100).toFixed(0) }}%
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td><strong>Potasio (K)</strong></td>
-                              <td>{{ simpleFormulationResult.nutrientBalance.potassium.target.toFixed(1) }}</td>
-                              <td [class]="getNutrientAchievementColor('potassium')">
-                                {{ simpleFormulationResult.nutrientBalance.potassium.achieved.toFixed(1) }}
-                              </td>
-                              <td [class]="getNutrientAchievementColor('potassium')">
-                                {{ (simpleFormulationResult.nutrientBalance.potassium.ratio * 100).toFixed(1) }}%
-                              </td>
-                              <td>
-                                <span *ngIf="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.9"
-                                  class="badge bg-success">Excelente</span>
-                                <span
-                                  *ngIf="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.potassium.ratio < 0.9"
-                                  class="badge bg-warning">Aceptable</span>
-                                <span *ngIf="simpleFormulationResult.nutrientBalance.potassium.ratio < 0.7"
-                                  class="badge bg-danger">Insuficiente</span>
-                              </td>
-                              <td>
-                                <div class="progress" style="height: 20px;">
-                                  <div class="progress-bar"
-                                    [class.bg-success]="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.9"
-                                    [class.bg-warning]="simpleFormulationResult.nutrientBalance.potassium.ratio >= 0.7 && simpleFormulationResult.nutrientBalance.potassium.ratio < 0.9"
-                                    [class.bg-danger]="simpleFormulationResult.nutrientBalance.potassium.ratio < 0.7"
-                                    [style.width.%]="Math.min(simpleFormulationResult.nutrientBalance.potassium.ratio * 100, 100)">
-                                    {{ (simpleFormulationResult.nutrientBalance.potassium.ratio * 100).toFixed(0) }}%
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Enhanced Fertilizer Recommendations -->
-                  <div class="row mb-4">
-                    <div class="col-12">
-                      <h6><i class="fas fa-seedling me-2"></i>Fertilizantes Recomendados (Datos Reales)</h6>
-                      <div class="table-responsive">
-                        <table class="table table-hover">
-                          <thead class="table-dark">
-                            <tr>
-                              <th>Fertilizante</th>
-                              <th>Concentración</th>
-                              <th>Cantidad Total</th>
-                              <th>Aporte N-P-K (ppm)</th>
-                              <th>Costo</th>
-                              <th>Composición Real</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr *ngFor="let fertilizer of simpleFormulationResult.fertilizers; let i = index">
-                              <td>
-                                <strong>{{ fertilizer.fertilizerName }}</strong>
-                                <br>
-                                <small class="text-muted">Posición {{ i + 1 }}</small>
-                              </td>
-                              <td>
-                                <span class="badge bg-primary">{{ fertilizer.concentration.toFixed(2) }} g/L</span>
-                              </td>
-                              <td>
-                                <span class="badge bg-info">{{ fertilizer.totalAmount.toFixed(1) }} g</span>
-                              </td>
-                              <td>
-                                <div class="d-flex flex-column">
-                                  <small><strong>N:</strong> {{ fertilizer.npkContribution.nitrogen.toFixed(1) }}
-                                    ppm</small>
-                                  <small><strong>P:</strong> {{ fertilizer.npkContribution.phosphorus.toFixed(1) }}
-                                    ppm</small>
-                                  <small><strong>K:</strong> {{ fertilizer.npkContribution.potassium.toFixed(1) }}
-                                    ppm</small>
-                                </div>
-                              </td>
-                              <td>
-                                <span class="badge bg-success">₡{{ fertilizer.cost.toFixed(2) }}</span>
-                              </td>
-                              <td>
-                                <div *ngIf="fertilizer.realComposition" class="small">
-                                  <div><strong>N:</strong> {{ fertilizer.realComposition.nitrogen }}%</div>
-                                  <div><strong>P:</strong> {{ fertilizer.realComposition.phosphorus }}%</div>
-                                  <div><strong>K:</strong> {{ fertilizer.realComposition.potassium }}%</div>
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Enhanced Instructions -->
-                  <div class="row mb-4">
-                    <div class="col-md-6">
-                      <h6><i class="fas fa-tasks me-2"></i>Instrucciones de Preparación</h6>
-                      <div class="card">
-                        <div class="card-body">
-                          <ol class="mb-0">
-                            <li
-                              *ngFor="let instruction of simpleFormulationResult.instructions.slice(3); let i = index">
-                              {{ instruction }}
-                            </li>
-                          </ol>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="col-md-6">
-                      <h6><i class="fas fa-exclamation-triangle me-2"></i>Advertencias y Recomendaciones</h6>
-                      <div class="card">
-                        <div class="card-body">
-                          <div *ngIf="simpleFormulationResult.warnings.length > 0" class="mb-3">
-                            <h6 class="text-warning">Advertencias:</h6>
-                            <ul class="list-unstyled">
-                              <li *ngFor="let warning of simpleFormulationResult.warnings" class="text-warning">
-                                {{ warning }}
-                              </li>
-                            </ul>
-                          </div>
-
-                          <div *ngIf="getFormulationRecommendations().length > 0">
-                            <h6 class="text-info">Recomendaciones de Mejora:</h6>
-                            <ul class="list-unstyled">
-                              <li *ngFor="let recommendation of getFormulationRecommendations()" class="text-info">
-                                <i class="fas fa-lightbulb me-1"></i>{{ recommendation }}
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Quality Score -->
-                  <div class="row">
-                    <div class="col-12">
-                      <div class="card" [class.border-success]="isFormulationAcceptable()"
-                        [class.border-warning]="!isFormulationAcceptable()">
-                        <div class="card-body text-center">
-                          <h5 *ngIf="isFormulationAcceptable()" class="text-success">
-                            <i class="fas fa-check-circle me-2"></i>Formulación Aceptable
-                          </h5>
-                          <h5 *ngIf="!isFormulationAcceptable()" class="text-warning">
-                            <i class="fas fa-exclamation-circle me-2"></i>Formulación Requiere Ajustes
-                          </h5>
-                          <p class="mb-0">{{ getDetailedFormulationSummary() }}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Loading Indicator -->
-              <div class="text-center py-4" *ngIf="isCalculatingSimple">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Calculando...</span>
-                </div>
-                <p class="mt-2 text-muted">Calculando con datos de la base de datos...</p>
-              </div>
-
             </div>
           </div>
 
-          <!-- Right Panel - Real Data Info & Saved Recipes -->
-          <div class="col-lg-4">
-            <div class="sidebar-scroll">
+          <!-- Main Content -->
+          <div class="row h-100" *ngIf="!isLoading">
 
-              <!-- Real Data Status -->
-              <div class="card mb-3">
-                <div class="card-header">
-                  <h6 class="card-title mb-0">
-                    <i class="bi bi-database me-2"></i>
-                    Estado de Datos
-                  </h6>
-                </div>
-                <div class="card-body py-2">
-                  <div class="d-flex justify-content-between mb-1">
-                    <small>Requerimientos:</small>
-                    <small class="text-success">
-                      <strong>{{ cropPhaseSolutionRequirements.length }}</strong>
-                      <i class="bi bi-check-circle ms-1"></i>
-                    </small>
-                  </div>
-                  <div class="d-flex justify-content-between mb-1">
-                    <small>Fertilizantes activos:</small>
-                    <small class="text-success">
-                      <strong>{{ getRealFertilizersWithCompositions().length }}</strong>
-                      <i class="bi bi-check-circle ms-1"></i>
-                    </small>
-                  </div>
-                  <div class="d-flex justify-content-between">
-                    <small>Fuente:</small>
-                    <small class="text-primary"><strong>Base de Datos</strong></small>
-                  </div>
-                </div>
-              </div>
+            <!-- Left Panel - Advanced Calculator Form -->
+            <div class="col-lg-8">
+              <div class="content-scroll">
 
-              <!-- Quick Stats -->
-              <div class="card mb-3" *ngIf="simpleFormulationResult">
-                <div class="card-header">
-                  <h6 class="card-title mb-0">
-                    <i class="bi bi-graph-up me-2"></i>
-                    Resumen de Resultados
-                  </h6>
-                </div>
-                <div class="card-body py-2">
-                  <div class="d-flex justify-content-between mb-1">
-                    <small>Fertilizantes:</small>
-                    <small><strong>{{ getSimpleFertilizerCount() }}</strong></small>
+                <!-- Configuration Card -->
+                <div class="card">
+                  <div class="card-header">
+                    <h5 class="card-title mb-0">
+                      <i class="bi bi-calculator me-2"></i>
+                      Calculadora Avanzada de Nutrientes
+                    </h5>
                   </div>
-                  <div class="d-flex justify-content-between mb-1">
-                    <small>Costo/Litro:</small>
-                    <small><strong>₡{{ (simpleFormulationResult.totalCost /
-                        simpleFormulationResult.volumeLiters).toFixed(3) }}</strong></small>
-                  </div>
-                  <div class="d-flex justify-content-between mb-1">
-                    <small>Balance NPK:</small>
-                    <small class="text-muted">{{ getSimpleFormulationSummary() }}</small>
-                  </div>
-                  <div class="d-flex justify-content-between" *ngIf="hasSimpleWarnings()">
-                    <small>Advertencias:</small>
-                    <small class="text-warning"><strong>{{ simpleFormulationResult.warnings.length }}</strong></small>
-                  </div>
-                  <div class="d-flex justify-content-between">
-                    <small>Fuente datos:</small>
-                    <small class="text-success"><strong>Real DB</strong></small>
-                  </div>
-                </div>
-              </div>
+                  <div class="card-body">
+                    <form [formGroup]="calculationForm" (ngSubmit)="onSubmit()">
 
-              <!-- Available Phases with Real Data -->
-              <div class="card mb-3">
-                <div class="card-header">
-                  <h6 class="card-title mb-0">
-                    <i class="bi bi-list-check me-2"></i>
-                    Fases con Datos
-                  </h6>
-                </div>
-                <div class="card-body p-0" style="max-height: 200px; overflow-y: auto;">
-                  <div class="list-group list-group-flush">
-                    <div class="list-group-item py-2" *ngFor="let phase of cropPhases">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                          <small><strong>{{ phase.cropName }} - {{ phase.name }}</strong></small>
-                          <br>
-                          <small class="text-muted">{{ phase.description }}</small>
+                      <!-- Basic Parameters -->
+                      <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                          <label for="catalog_id" class="form-label">Catálogo *</label>
+                          <select class="form-select" id="catalog_id" formControlName="catalog_id">
+                            <option value="">Seleccione un catálogo</option>
+                            <option *ngFor="let catalog of catalogs" [value]="catalog.id">
+                              {{ catalog.name }}
+                            </option>
+                          </select>
                         </div>
-                        <div>
-                          <i class="bi bi-check-circle text-success" *ngIf="getRealCropPhaseRequirements(phase.id)"
-                            title="Datos disponibles"></i>
-                          <i class="bi bi-x-circle text-muted" *ngIf="!getRealCropPhaseRequirements(phase.id)"
-                            title="Sin datos"></i>
+                        <div class="col-md-6">
+                          <label for="phase_id" class="form-label">Fase del Cultivo *</label>
+                          <select class="form-select" id="phase_id" formControlName="phase_id">
+                            <option value="">Seleccione una fase</option>
+                            <option *ngFor="let phase of cropPhases" [value]="phase.id">
+                              {{ phase.name }} - {{ phase.description }}
+                            </option>
+                          </select>
                         </div>
                       </div>
+
+                      <!-- Water and Volume -->
+                      <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                          <label for="water_id" class="form-label">Fuente de Agua *</label>
+                          <select class="form-select" id="water_id" formControlName="water_id">
+                            <option value="">Seleccione fuente de agua</option>
+                            <option *ngFor="let source of waterSources" [value]="source.id">
+                              {{ source.name || 'Fuente ' + source.id }}
+                            </option>
+                          </select>
+                        </div>
+                        <div class="col-md-4">
+                          <label for="volume_liters" class="form-label">Volumen (Litros) *</label>
+                          <input type="number" class="form-control" id="volume_liters" formControlName="volume_liters"
+                            min="1" max="100000" step="1" placeholder="1000">
+                        </div>
+                        <div class="col-md-4">
+                          <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" id="use_ml" formControlName="use_ml">
+                            <label class="form-check-label" for="use_ml">
+                              Usar mL en resultados
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Advanced Options -->
+                      <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="apply_safety_caps"
+                              formControlName="apply_safety_caps">
+                            <label class="form-check-label" for="apply_safety_caps">
+                              Aplicar límites de seguridad
+                            </label>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="strict_caps"
+                              formControlName="strict_caps">
+                            <label class="form-check-label" for="strict_caps">
+                              Límites estrictos
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Action Buttons -->
+                      <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" [disabled]="calculationForm.invalid || isLoading">
+                          <i class="bi bi-calculator me-1"></i>
+                          <span *ngIf="isLoading">Calculando...</span>
+                          <span *ngIf="!isLoading">Calcular Formulación Avanzada</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" (click)="resetForm()">
+                          <i class="bi bi-arrow-clockwise me-1"></i>
+                          Limpiar
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- Results Section -->
+                <div *ngIf="calculationResults && showResults" class="card mt-4" id="calculation-results">
+                  <div class="card-header">
+                    <h5 class="mb-0">
+                      <i class="bi bi-chart-bar me-2"></i>
+                      Resultados de Calculadora Avanzada
+                    </h5>
+                  </div>
+                  <div class="card-body">
+
+                    <!-- Summary Stats -->
+                    <div class="row mb-4">
+                      <div class="col-md-3">
+                        <div class="text-center">
+                          <h6 class="text-muted">Fertilizantes Activos</h6>
+                          <h4>{{ calculationResults.optimization_summary.active_fertilizers }}</h4>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="text-center">
+                          <h6 class="text-muted">Dosificación Total</h6>
+                          <h4>{{ calculationResults.optimization_summary.total_dosage_g_per_L.toFixed(2) }}g/L</h4>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="text-center">
+                          <h6 class="text-muted">Costo Total</h6>
+                          <h4>{{ formatCurrency(calculationResults.cost_analysis.total_cost_crc) }}</h4>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="text-center">
+                          <h6 class="text-muted">Estado</h6>
+                          <h4 class="text-success" *ngIf="calculationResults.optimization_summary.status === 'success'">
+                            Exitoso
+                          </h4>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Fertilizer Dosages -->
+                    <div class="row mb-4">
+                      <div class="col-12">
+                        <h6><i class="bi bi-droplet me-2"></i>Dosificación de Fertilizantes</h6>
+                        <div class="table-responsive">
+                          <table class="table table-striped">
+                            <thead>
+                              <tr>
+                                <th>Fertilizante</th>
+                                <th>Dosificación (g/L)</th>
+                                <th>Dosificación (mL/L)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let fertilizer of getActiveFertilizers()">
+                                <td><strong>{{ fertilizer.name }}</strong></td>
+                                <td>{{ fertilizer.dosage.dosage_g_per_L.toFixed(3) }}</td>
+                                <td>{{ fertilizer.dosage.dosage_ml_per_L.toFixed(3) }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Nutrient Verification -->
+                    <div class="row mb-4">
+                      <div class="col-12">
+                        <h6><i class="bi bi-check-circle me-2"></i>Verificación de Nutrientes</h6>
+                        <div class="table-responsive">
+                          <table class="table table-hover">
+                            <thead>
+                              <tr>
+                                <th>Parámetro</th>
+                                <th>Objetivo</th>
+                                <th>Logrado</th>
+                                <th>Desviación</th>
+                                <th>Estado</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let result of calculationResults.calculation_results.verification_results">
+                                <td><strong>{{ result.parameter }}</strong></td>
+                                <td>{{ result.target_value.toFixed(2) }}</td>
+                                <td>{{ result.actual_value.toFixed(2) }}</td>
+                                <td>{{ formatPercent(result.percentage_deviation) }}</td>
+                                <td>
+                                  <span class="badge" [class.bg-success]="result.status === 'Excellent'"
+                                    [class.bg-warning]="result.status !== 'Excellent'">
+                                    {{ result.status }}
+                                  </span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Cost Analysis -->
+                    <div class="row">
+                      <div class="col-12">
+                        <h6><i class="bi bi-currency-exchange me-2"></i>Análisis de Costos</h6>
+                        <div class="row">
+                          <div class="col-md-4">
+                            <div class="card bg-light">
+                              <div class="card-body text-center">
+                                <h6>Costo Total</h6>
+                                <h4>{{ formatCurrency(calculationResults.cost_analysis.total_cost_crc) }}</h4>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="card bg-light">
+                              <div class="card-body text-center">
+                                <h6>Costo por Litro</h6>
+                                <h4>{{ formatCurrency(calculationResults.cost_analysis.cost_per_liter_crc) }}</h4>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-4">
+                            <div class="card bg-light">
+                              <div class="card-body text-center">
+                                <h6>Costo por m³</h6>
+                                <h4>{{ formatCurrency(calculationResults.cost_analysis.cost_per_m3_crc) }}</h4>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Export Options -->
+                    <div class="row mt-4">
+                      <div class="col-12">
+                        <div class="d-flex gap-2">
+                          <button class="btn btn-outline-primary" (click)="exportResults()">
+                            <i class="bi bi-download me-1"></i>
+                            Exportar JSON
+                          </button>
+                          <button class="btn btn-outline-secondary" (click)="printResults()">
+                            <i class="bi bi-printer me-1"></i>
+                            Imprimir
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Right Panel - Status and Info -->
+            <div class="col-lg-4">
+              <div class="sidebar-scroll">
+
+                <!-- Quick Stats -->
+                <div class="card mb-3" *ngIf="calculationResults">
+                  <div class="card-header">
+                    <h6 class="card-title mb-0">
+                      <i class="bi bi-graph-up me-2"></i>
+                      Resumen de Cálculo
+                    </h6>
+                  </div>
+                  <div class="card-body py-2">
+                    <div class="d-flex justify-content-between mb-1">
+                      <small>Fertilizantes:</small>
+                      <small><strong>{{ calculationResults.optimization_summary.active_fertilizers }}</strong></small>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                      <small>Desviación Promedio:</small>
+                      <small><strong>{{ calculationResults.optimization_summary.average_deviation_percent.toFixed(1)
+                          }}%</strong></small>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                      <small>Tiempo de Cálculo:</small>
+                      <small><strong>{{ calculationResults.optimization_summary.solver_time_seconds.toFixed(2)
+                          }}s</strong></small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <small>Tasa de Éxito:</small>
+                      <small class="text-success"><strong>{{
+                          calculationResults.optimization_summary.success_rate_percent
+                          }}%</strong></small>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Saved Recipes -->
-              <div class="card">
-                <div class="card-header">
-                  <h6 class="card-title mb-0">
-                    <i class="bi bi-bookmark me-2"></i>
-                    Recetas Guardadas
-                  </h6>
-                </div>
-                <div class="card-body p-0">
-                  <div class="saved-recipes-container" *ngIf="savedRecipes.length > 0; else noRecipes">
-                    <div class="recipe-item" *ngFor="let recipe of savedRecipes.slice(0, 10)"
-                      (click)="loadSimpleRecipe(recipe)">
-                      <div class="recipe-header">
-                        <h6 class="recipe-name">{{ recipe.name }}</h6>
-                        <small class="text-muted">{{ recipe.createdAt | date:'short' }}</small>
-                      </div>
-                      <div class="recipe-stats">
-                        <small class="text-muted">
-                          {{ recipe.volumeLiters }}L • pH {{ recipe.targetPh }} • EC {{ recipe.targetEc }} • ₡{{
-                          recipe.totalCost.toFixed(2) }}
-                        </small>
-                      </div>
-                      <div class="mt-1">
-                        <span class="badge bg-success">Datos</span>
-                      </div>
+                <!-- Available Data -->
+                <div class="card">
+                  <div class="card-header">
+                    <h6 class="card-title mb-0">
+                      <i class="bi bi-database me-2"></i>
+                      Datos Disponibles
+                    </h6>
+                  </div>
+                  <div class="card-body py-2">
+                    <div class="d-flex justify-content-between mb-1">
+                      <small>Catálogos:</small>
+                      <small class="text-success">
+                        <strong>{{ catalogs?.length || 0 }}</strong>
+                        <i class="bi bi-check-circle ms-1"></i>
+                      </small>
                     </div>
-                    <div class="text-center p-3" *ngIf="savedRecipes.length > 10">
-                      <small class="text-muted">Mostrando 10 de {{ savedRecipes.length }} recetas</small>
+                    <div class="d-flex justify-content-between mb-1">
+                      <small>Fases de cultivo:</small>
+                      <small class="text-success">
+                        <strong>{{ cropPhases?.length || 0 }}</strong>
+                        <i class="bi bi-check-circle ms-1"></i>
+                      </small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <small>Fuentes de agua:</small>
+                      <small class="text-success">
+                        <strong>{{ waterSources?.length || 0 }}</strong>
+                        <i class="bi bi-check-circle ms-1"></i>
+                      </small>
                     </div>
                   </div>
-                  <ng-template #noRecipes>
-                    <div class="text-center text-muted py-4">
-                      <i class="bi bi-bookmark display-6 mb-2"></i>
-                      <p class="mb-0">No hay recetas guardadas</p>
-                      <small>Crea tu primera formulación con datos</small>
-                    </div>
-                  </ng-template>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Recipes Modal -->
+    <div class="modal fade" id="allRecipesModal" style="z-index: 1055 !important;">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="allRecipesModalLabel">
+              <i class="bi bi-bookmark me-2"></i>
+              Todas las Recetas Guardadas ({{ totalRecipesCount }})
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-0">
+            <div class="search-box p-3">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" [(ngModel)]="recipeSearchTerm" (input)="filterAllRecipes()"
+                      placeholder="Buscar recetas por nombre o cultivo...">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <select class="form-select" [(ngModel)]="recipeSortBy" (change)="sortAllRecipes()">
+                    <option value="name">Ordenar por Nombre</option>
+                    <option value="date">Ordenar por Fecha</option>
+                    <option value="cost">Ordenar por Costo</option>
+                    <option value="crop">Ordenar por Cultivo</option>
+                  </select>
+                </div>
+                <div class="filter-chips">
+                  <button class="filter-chip" [class.active]="recipeFilter === 'all'" (click)="setRecipeFilter('all')">
+                    Todas
+                  </button>
+                  <button class="filter-chip" [class.active]="recipeFilter === 'recent'"
+                    (click)="setRecipeFilter('recent')">
+                    Recientes
+                  </button>
+                  <button class="filter-chip" [class.active]="recipeFilter === 'lowcost'"
+                    (click)="setRecipeFilter('lowcost')">
+                    Bajo
+                  </button>
+                  <button class="filter-chip" [class.active]="recipeFilter === 'highcost'"
+                    (click)="setRecipeFilter('highcost')">
+                    Alto Costo
+                  </button>
+                  <button class="filter-chip" *ngFor="let crop of getUniqueCrops()"
+                    [class.active]="recipeFilter === crop.toLowerCase()" (click)="setRecipeFilter(crop.toLowerCase())">
+                    {{ crop }}
+                  </button>
                 </div>
               </div>
 
+              <div class="recipe-grid p-3">
+                <div class="row g-3" *ngIf="filteredAllRecipes.length > 0; else noRecipesFound">
+                  <div class="col-lg-4 col-md-6" *ngFor="let recipe of filteredAllRecipes">
+                    <div class="card recipe-card h-100" (click)="selectRecipeFromModal(recipe)">
+                      <div class="card-body position-relative">
+                        <div class="recipe-badge">
+                          <span class="badge" [ngClass]="getRecipeStatusBadge(recipe)">
+                            {{ getRecipeStatus(recipe) }}
+                          </span>
+                        </div>
+                        <h6 class="card-title mb-2">{{ recipe.name }}</h6>
+                        <div class="recipe-meta">
+                          <div><strong>Cultivo:</strong> {{ getCropName(recipe.cropId) }}{{
+                            getCropPhaseName(recipe.cropPhaseId) ? ' - ' + getCropPhaseName(recipe.cropPhaseId) : '' }}
+                          </div>
+                          <div><strong>Volumen:</strong> {{ recipe.volumeLiters }}L</div>
+                          <div><strong>Creado:</strong> {{ recipe.createdAt | date:'dd MMM yyyy' }}</div>
+                        </div>
+                        <div class="nutrient-info">
+                          <span class="nutrient-badge">N: {{ recipe.targetNitrogen }}ppm</span>
+                          <span class="nutrient-badge">P: {{ recipe.targetPhosphorus }}ppm</span>
+                          <span class="nutrient-badge">K: {{ recipe.targetPotassium }}ppm</span>
+                        </div>
+                        <div class="recipe-fertilizers" *ngIf="recipe.fertilizers && recipe.fertilizers.length > 0">
+                          <strong>Fertilizantes:</strong>
+                          {{ getFertilizerNames(recipe.fertilizers).join(', ') }}
+                        </div>
+                        <div class="recipe-stats mt-3">
+                          <div class="stat-item">
+                            <span class="stat-value">₡{{ (recipe.totalCost / recipe.volumeLiters).toFixed(0) }}</span>
+                            <small class="stat-label">Costo/L</small>
+                          </div>
+                          <div class="stat-item">
+                            <span class="stat-value">{{ recipe.targetPh }}</span>
+                            <small class="stat-label">pH</small>
+                          </div>
+                          <div class="stat-item">
+                            <span class="stat-value">{{ recipe.targetEc }}</span>
+                            <small class="stat-label">EC</small>
+                          </div>
+                        </div>
+                        <div class="d-flex gap-2 mt-3">
+                          <button class="btn btn-sm btn-primary flex-fill"
+                            (click)="loadRecipeFromModal(recipe, $event)">
+                            <i class="bi bi-eye"></i> Ver
+                          </button>
+                          <button class="btn btn-sm btn-outline-secondary" (click)="copyRecipe(recipe, $event)"
+                            [title]="'Duplicar receta'">
+                            <i class="bi bi-copy"></i>
+                          </button>
+                          <button class="btn btn-sm btn-outline-success" (click)="exportSingleRecipe(recipe, $event)"
+                            [title]="'Exportar receta'">
+                            <i class="bi bi-download"></i>
+                          </button>
+                          <button class="btn btn-sm btn-outline-danger" (click)="deleteRecipeFromModal(recipe, $event)"
+                            [title]="'Eliminar receta'">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <ng-template #noRecipesFound>
+                  <div class="no-recipes">
+                    <i class="bi bi-search display-1 mb-3"></i>
+                    <h5>No se encontraron recetas</h5>
+                    <p class="text-muted">Intenta cambiar los filtros o términos de búsqueda</p>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <div class="d-flex justify-content-between align-items-center w-100">
+              <div class="text-muted">
+                <small>Mostrando {{ filteredAllRecipes.length }} de {{ totalRecipesCount }} recetas</small>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary" (click)="exportSelectedRecipes()"
+                  [disabled]="selectedRecipesForExport.length === 0">
+                  <i class="bi bi-download me-1"></i>
+                  Exportar Seleccionadas ({{ selectedRecipesForExport.length }})
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-
 
 
   <!-- Add this modal at the end of your template, before the closing divs: -->
@@ -808,3 +1303,4 @@
       </div>
     </div>
   </div>
+</div>

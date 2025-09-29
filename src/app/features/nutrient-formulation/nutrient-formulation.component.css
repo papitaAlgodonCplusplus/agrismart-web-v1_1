@@ -1184,3 +1184,46 @@ body.modal-open {
   background-color: rgba(0, 255, 0, 0.1) !important;
 }
 */
+
+/* CSS to fix tab content positioning and visibility */
+.tab-content {
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-pane {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.15s linear;
+}
+
+.tab-pane.active {
+  display: block;
+  opacity: 1;
+}
+
+.tab-pane.show {
+  opacity: 1;
+}
+
+/* Ensure proper z-index for tabs */
+.tab-container {
+  position: relative;
+  z-index: 1;
+  min-height: 400px;
+}
+
+/* Custom tab styling */
+.custom-tabs {
+  border-bottom: 2px solid #dee2e6;
+}
+
+.custom-tabs .nav-link {
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: #6c757d;
+  font-weight: 500;
+  padding: 12px 20px;
+  transition: all 0.2s ease;
+}

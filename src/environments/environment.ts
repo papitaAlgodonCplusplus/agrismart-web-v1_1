@@ -8,5 +8,5 @@ export const environment = {
   // OR point to production for testing
   agronomicApiUrl: 'https://agrismart-api.onrender.com',
   iotApiUrl: 'https://agrismart-iot-latest.onrender.com',
-  calculatorApi: 'https://fertilizer-calculator-api.onrender.com'
+  calculatorApi: 'https://agrismart-web-v1-1-gafq.onrender.com'
 };
