@@ -387,55 +387,82 @@ class SwaggerAPIClient:
 
     def map_requirements_to_targets(self, requirements_data: Optional[Dict]) -> Dict[str, float]:
         """
-        Map API requirements format to calculator target concentrations.
-        
-        Args:
-            requirements_data: API requirements data (can be None)
-            
-        Returns:
-            Dictionary of target concentrations in ppm
+        Map crop phase requirements to target nutrients.
+        Handles both dictionary and list response formats.
         """
-        targets = {}
-        
-        # Handle None or empty requirements
-        if not requirements_data:
-            print("[WARNING] No requirements data provided, returning empty targets")
+        try:
+            # Handle case where requirements_data is a list
+            if isinstance(requirements_data, list):
+                if len(requirements_data) == 0:
+                    logging.warning("Requirements data is an empty list")
+                    return self._get_default_targets()
+                # Take the first requirement from the list
+                requirements = requirements_data[0]
+                logging.info(f"Using first requirement from list: ID {requirements.get('id')}")
+            
+            # Handle case where requirements_data is a dictionary
+            elif isinstance(requirements_data, dict):
+                # Check if it has cropPhaseRequirements key
+                if 'cropPhaseRequirements' in requirements_data:
+                    crop_phase_reqs = requirements_data['cropPhaseRequirements']
+                    if not crop_phase_reqs or len(crop_phase_reqs) == 0:
+                        logging.warning("CropPhaseRequirements is empty")
+                        return self._get_default_targets()
+                    requirements = crop_phase_reqs[0]
+                else:
+                    # The dictionary itself might be the requirement
+                    requirements = requirements_data
+            
+            # Handle None case
+            elif requirements_data is None:
+                logging.warning("Requirements data is None")
+                return self._get_default_targets()
+            
+            else:
+                logging.warning(f"Requirements data is not a dictionary or list: {type(requirements_data)}")
+                return self._get_default_targets()
+
+            # Extract nutrient values safely
+            targets = {
+                'N': float(requirements.get('no3', 0) + requirements.get('nh4', 0)),
+                'P': float(requirements.get('h2PO4', 0) or requirements.get('h2po4', 0)),
+                'K': float(requirements.get('k', 0)),
+                'Ca': float(requirements.get('ca', 0)),
+                'Mg': float(requirements.get('mg', 0)),
+                'S': float(requirements.get('sO4', 0) or requirements.get('so4', 0)),
+                'Fe': float(requirements.get('fe', 0)),
+                'Mn': float(requirements.get('mn', 0)),
+                'Zn': float(requirements.get('zn', 0)),
+                'Cu': float(requirements.get('cu', 0)),
+                'B': float(requirements.get('b', 0)),
+                'Mo': float(requirements.get('mo', 0))
+            }
+            
+            logging.info(f"Mapped requirements to targets: {targets}")
             return targets
-        
-        # Handle case where requirements_data is not a dictionary
-        if not isinstance(requirements_data, dict):
-            print(f"[WARNING] Requirements data is not a dictionary: {type(requirements_data)}, {requirements_data}")
-            return targets
-        
-        # API field name to calculator nutrient mapping
-        nutrient_mapping = {
-            'nitrogen': 'N',
-            'phosphorus': 'P', 
-            'potassium': 'K',
-            'calcium': 'Ca',
-            'magnesium': 'Mg',
-            'sulfur': 'S',
-            'iron': 'Fe',
-            'manganese': 'Mn',
-            'zinc': 'Zn',
-            'copper': 'Cu',
-            'boron': 'B',
-            'molybdenum': 'Mo',
-            'chlorine': 'Cl',
-            'sodium': 'Na'
+
+        except Exception as e:
+            logging.error(f"Error mapping requirements to targets: {str(e)}")
+            logging.error(f"Requirements data: {requirements_data}")
+            return self._get_default_targets()
+
+
+    def _get_default_targets(self) -> Dict[str, float]:
+        """Return default nutrient targets when requirements data is unavailable."""
+        return {
+            'N': 200.0,
+            'P': 50.0,
+            'K': 300.0,
+            'Ca': 150.0,
+            'Mg': 50.0,
+            'S': 100.0,
+            'Fe': 3.0,
+            'Mn': 0.5,
+            'Zn': 0.3,
+            'Cu': 0.05,
+            'B': 0.3,
+            'Mo': 0.05
         }
-        
-        for api_field, calc_nutrient in nutrient_mapping.items():
-            if api_field in requirements_data:
-                value = requirements_data[api_field]
-                if value is not None and value > 0:
-                    targets[calc_nutrient] = float(value)
-                    print(f"  [TARGET] {calc_nutrient}: {value} ppm")
-        
-        if not targets:
-            print("[WARNING] No valid nutrient targets found in requirements data")
-        
-        return targets
 
     def map_water_to_analysis(self, water_data):
         """Map API water data to our analysis format with null safety"""
