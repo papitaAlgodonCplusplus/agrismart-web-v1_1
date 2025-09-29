@@ -715,7 +715,7 @@ async def swagger_integrated_calculation_with_linear_programming(
         calculation_results = {}
 
         # Initialize Swagger client and authenticate
-        async with SwaggerAPIClient("http://162.248.52.111:8082") as swagger_client:
+        async with SwaggerAPIClient("https://agrismart-agronomic-latest.onrender.com") as swagger_client:
             # Authentication
             print(f"\n[INFO] Authenticating with Swagger API...")
             login_result = await swagger_client.login("csolano@iapcr.com", "123")
@@ -1488,7 +1488,7 @@ async def swagger_integrated_calculation_with_constraints(
             )
         
         # Initialize Swagger API client
-        swagger_client = SwaggerAPIClient("http://162.248.52.111:8082")
+        swagger_client = SwaggerAPIClient("https://agrismart-agronomic-latest.onrender.com")
         print(f"\n[INFO] Authenticating with Swagger API...")
         login_result = await swagger_client.login("csolano@iapcr.com", "123")
         if not login_result.get('success'):
