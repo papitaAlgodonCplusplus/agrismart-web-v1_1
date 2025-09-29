@@ -404,7 +404,7 @@ class SwaggerAPIClient:
         
         # Handle case where requirements_data is not a dictionary
         if not isinstance(requirements_data, dict):
-            print(f"[WARNING] Requirements data is not a dictionary: {type(requirements_data)}")
+            print(f"[WARNING] Requirements data is not a dictionary: {type(requirements_data)}, {requirements_data}")
             return targets
         
         # API field name to calculator nutrient mapping
