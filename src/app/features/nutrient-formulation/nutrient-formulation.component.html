@@ -119,11 +119,11 @@
                       <!-- Crop Selection -->
                       <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                          <label for="cropId" class="form-label">Cultivo *</label>
-                          <select class="form-select" id="cropId" formControlName="cropId" (change)="onCropChange()">
-                            <option value="">Seleccione un cultivo</option>
-                            <option *ngFor="let crop of crops" [value]="crop.id">
-                              {{ crop.name }}
+                          <label for="catalog_id" class="form-label">Catálogo *</label>
+                          <select class="form-select" id="catalog_id" formControlName="catalog_id">
+                            <option value="">Seleccione un catálogo</option>
+                            <option *ngFor="let catalog of catalogs" [value]="catalog.id">
+                              {{ catalog.name }}
                             </option>
                           </select>
                         </div>
@@ -131,9 +131,9 @@
                           <label for="cropPhaseId" class="form-label">Fase del Cultivo *</label>
                           <select class="form-select" id="cropPhaseId" formControlName="cropPhaseId">
                             <option value="">Seleccione una fase</option>
-                            <option *ngFor="let phase of getFilteredCropPhases()" [value]="phase.id"
+                            <option *ngFor="let phase of cropPhases" [value]="phase.id"
                               [disabled]="!getRealCropPhaseRequirements(phase.id)">
-                              {{ phase.name }} - {{ phase.description }}
+                              {{ phase.cropName }} - {{ phase.name }}
                               <span *ngIf="!getRealCropPhaseRequirements(phase.id)"> (Sin datos)</span>
                             </option>
                           </select>
@@ -393,61 +393,61 @@
                     <div class="row mb-4">
                       <div class="col-12">
                         <h6><i class="fas fa-seedling me-2"></i>Fertilizantes Recomendados</h6>
-                          <div class="table-responsive">
-                            <table class="table table-hover">
-                              <thead class="table-dark">
-                                <tr>
-                                  <th>Fertilizante</th>
-                                  <th>Concentración</th>
-                                  <th>Cantidad Total</th>
-                                  <th>Aporte N-P-K (ppm)</th>
-                                  <th>Costo</th>
-                                  <th>Composición Real</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr *ngFor="let fertilizer of simpleFormulationResult.fertilizers; let i = index">
-                                  <td>
-                                    <strong>{{ fertilizer.fertilizerName }}</strong>
-                                    <br>
-                                    <small class="text-muted">Posición {{ i + 1 }}</small>
-                                  </td>
-                                  <td>
-                                    <span class="badge bg-primary">{{ fertilizer.concentration.toFixed(2) }} g/L</span>
-                                  </td>
-                                  <td>
-                                    <span class="badge bg-info">{{ fertilizer.totalAmount || 0 }} g</span>
-                                  </td>
-                                  <td>
-                                    <div class="d-flex flex-column">
-                                      <small><strong>N:</strong> {{ fertilizer.npkContribution?.nitrogen?.toFixed(1) ||
-                                        0
-                                        }}
-                                        ppm</small>
-                                      <small><strong>P:</strong> {{ fertilizer.npkContribution?.phosphorus?.toFixed(1)
-                                        ||
-                                        0 }}
-                                        ppm</small>
-                                      <small><strong>K:</strong> {{ fertilizer.npkContribution?.potassium?.toFixed(1) ||
-                                        0
-                                        }}
-                                        ppm</small>
-                                    </div>
-                                  </td>
-                                  <td>
-                                    <span class="badge bg-success">₡{{ fertilizer.cost.toFixed(2) }}</span>
-                                  </td>
-                                  <td>
-                                    <div *ngIf="fertilizer.realComposition" class="small">
-                                      <div><strong>N:</strong> {{ fertilizer.realComposition.nitrogen }}%</div>
-                                      <div><strong>P:</strong> {{ fertilizer.realComposition.phosphorus }}%</div>
-                                      <div><strong>K:</strong> {{ fertilizer.realComposition.potassium }}%</div>
-                                    </div>
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
+                        <div class="table-responsive">
+                          <table class="table table-hover">
+                            <thead class="table-dark">
+                              <tr>
+                                <th>Fertilizante</th>
+                                <th>Concentración</th>
+                                <th>Cantidad Total</th>
+                                <th>Aporte N-P-K (ppm)</th>
+                                <th>Costo</th>
+                                <th>Composición Real</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let fertilizer of simpleFormulationResult.fertilizers; let i = index">
+                                <td>
+                                  <strong>{{ fertilizer.fertilizerName }}</strong>
+                                  <br>
+                                  <small class="text-muted">Posición {{ i + 1 }}</small>
+                                </td>
+                                <td>
+                                  <span class="badge bg-primary">{{ fertilizer.concentration.toFixed(2) }} g/L</span>
+                                </td>
+                                <td>
+                                  <span class="badge bg-info">{{ fertilizer.totalAmount || 0 }} g</span>
+                                </td>
+                                <td>
+                                  <div class="d-flex flex-column">
+                                    <small><strong>N:</strong> {{ fertilizer.npkContribution?.nitrogen?.toFixed(1) ||
+                                      0
+                                      }}
+                                      ppm</small>
+                                    <small><strong>P:</strong> {{ fertilizer.npkContribution?.phosphorus?.toFixed(1)
+                                      ||
+                                      0 }}
+                                      ppm</small>
+                                    <small><strong>K:</strong> {{ fertilizer.npkContribution?.potassium?.toFixed(1) ||
+                                      0
+                                      }}
+                                      ppm</small>
+                                  </div>
+                                </td>
+                                <td>
+                                  <span class="badge bg-success">₡{{ fertilizer.cost.toFixed(2) }}</span>
+                                </td>
+                                <td>
+                                  <div *ngIf="fertilizer.realComposition" class="small">
+                                    <div><strong>N:</strong> {{ fertilizer.realComposition.nitrogen }}%</div>
+                                    <div><strong>P:</strong> {{ fertilizer.realComposition.phosphorus }}%</div>
+                                    <div><strong>K:</strong> {{ fertilizer.realComposition.potassium }}%</div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
 
@@ -691,6 +691,7 @@
 
                       <!-- Basic Parameters -->
                       <div class="row g-3 mb-4">
+                        <!-- Crop Selection -->
                         <div class="col-md-6">
                           <label for="catalog_id" class="form-label">Catálogo *</label>
                           <select class="form-select" id="catalog_id" formControlName="catalog_id">
@@ -700,14 +701,21 @@
                             </option>
                           </select>
                         </div>
+
+                        <!-- Crop Phase Selection -->
                         <div class="col-md-6">
-                          <label for="phase_id" class="form-label">Fase del Cultivo *</label>
-                          <select class="form-select" id="phase_id" formControlName="phase_id">
+                          <label for="adv_cropPhaseId" class="form-label">Fase del Cultivo *</label>
+                          <select class="form-select" id="cropPhaseId" formControlName="cropPhaseId">
                             <option value="">Seleccione una fase</option>
-                            <option *ngFor="let phase of cropPhases" [value]="phase.id">
-                              {{ phase.name }} - {{ phase.description }}
+                            <option *ngFor="let phase of cropPhases" [value]="phase.id"
+                              [disabled]="!getRealCropPhaseRequirements(phase.id)">
+                              {{ phase.cropName }} - {{ phase.name }}
+                              <span *ngIf="!getRealCropPhaseRequirements(phase.id)"> (Sin datos)</span>
                             </option>
                           </select>
+                          <small class="form-text text-muted">
+                            Solo se muestran fases con requerimientos nutricionales definidos
+                          </small>
                         </div>
                       </div>
 
@@ -761,7 +769,7 @@
 
                       <!-- Action Buttons -->
                       <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary" [disabled]="calculationForm.invalid || isLoading">
+                        <button type="submit" class="btn btn-primary">
                           <i class="bi bi-calculator me-1"></i>
                           <span *ngIf="isLoading">Calculando...</span>
                           <span *ngIf="!isLoading">Calcular Formulación Avanzada</span>

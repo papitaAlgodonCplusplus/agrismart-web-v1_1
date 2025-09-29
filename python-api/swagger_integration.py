@@ -215,7 +215,7 @@ class SwaggerAPIClient:
 
         print(f"[FETCH] Fetching crop phase requirements for phase {phase_id}...")
         
-        url = f"{self.base_url}/CropPhaseSolutionRequirement/GetByPhaseId"
+        url = f"{self.base_url}/CropPhaseSolutionRequirement"
         params = {'PhaseId': phase_id}
 
         try:
@@ -385,52 +385,56 @@ class SwaggerAPIClient:
 
         return fertilizer
 
-    def map_requirements_to_targets(self, requirements: Dict[str, Any]) -> Dict[str, float]:
+    def map_requirements_to_targets(self, requirements_data: Optional[Dict]) -> Dict[str, float]:
         """
-        Map Swagger crop requirements to our target concentrations format
-        """
-        print(f"[MAPPING] Mapping crop requirements...")
+        Map API requirements format to calculator target concentrations.
         
-        # Mapping from Swagger API field names to our element names
-        element_mapping = {
-            # Cations
-            'ca': 'Ca',
-            'k': 'K', 
-            'mg': 'Mg',
-            'na': 'Na',
-            'nH4': 'NH4',
-            'fe': 'Fe',
-            'mn': 'Mn',
-            'zn': 'Zn',
-            'cu': 'Cu',
+        Args:
+            requirements_data: API requirements data (can be None)
             
-            # Anions  
-            'n': 'N',
-            'nO3': 'N',  # Nitrate as N
-            's': 'S',
-            'sO4': 'S',  # Sulfate as S
-            'cl': 'Cl',
-            'p': 'P',
-            'h2PO4': 'P',  # Phosphate as P
-            'hcO3': 'HCO3',
-            'b': 'B',
-            'mo': 'Mo'
-        }
-
+        Returns:
+            Dictionary of target concentrations in ppm
+        """
         targets = {}
         
-        for api_field, our_field in element_mapping.items():
-            if api_field in requirements:
-                value = requirements[api_field]
+        # Handle None or empty requirements
+        if not requirements_data:
+            print("[WARNING] No requirements data provided, returning empty targets")
+            return targets
+        
+        # Handle case where requirements_data is not a dictionary
+        if not isinstance(requirements_data, dict):
+            print(f"[WARNING] Requirements data is not a dictionary: {type(requirements_data)}")
+            return targets
+        
+        # API field name to calculator nutrient mapping
+        nutrient_mapping = {
+            'nitrogen': 'N',
+            'phosphorus': 'P', 
+            'potassium': 'K',
+            'calcium': 'Ca',
+            'magnesium': 'Mg',
+            'sulfur': 'S',
+            'iron': 'Fe',
+            'manganese': 'Mn',
+            'zinc': 'Zn',
+            'copper': 'Cu',
+            'boron': 'B',
+            'molybdenum': 'Mo',
+            'chlorine': 'Cl',
+            'sodium': 'Na'
+        }
+        
+        for api_field, calc_nutrient in nutrient_mapping.items():
+            if api_field in requirements_data:
+                value = requirements_data[api_field]
                 if value is not None and value > 0:
-                    targets[our_field] = float(value)
-                    print(f"  {our_field}: {value} mg/L")
-
+                    targets[calc_nutrient] = float(value)
+                    print(f"  [TARGET] {calc_nutrient}: {value} ppm")
+        
         if not targets:
-            print(f"  [WARNING]  No valid requirements found, will use defaults")
-        else:
-            print(f"  [SUCCESS] Mapped {len(targets)} target concentrations")
-
+            print("[WARNING] No valid nutrient targets found in requirements data")
+        
         return targets
 
     def map_water_to_analysis(self, water_data):

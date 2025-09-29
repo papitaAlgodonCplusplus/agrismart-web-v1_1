@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpParams, HttpHeaders, HttpClient } from '@angular/common/http';
-import { forkJoin, Observable, of, catchError, tap, map } from 'rxjs';
+import { forkJoin, Observable, of, catchError, tap, map, finalize } from 'rxjs';
 import { WaterChemistryService, WaterChemistry } from '../water-chemistry/services/water-chemistry.service';
 import { FertilizerService } from '../fertilizers/services/fertilizer.service';
 import { CropService } from '../crops/services/crop.service';
@@ -412,7 +412,7 @@ export class NutrientFormulationComponent implements OnInit {
         return this.fb.group({
             user_id: [1],
             catalog_id: [null, Validators.required],
-            phase_id: [null, Validators.required],
+            cropPhaseId: [null, Validators.required],
             water_id: [null, Validators.required],
             volume_liters: [1000, [Validators.required, Validators.min(1), Validators.max(100000)]],
             use_ml: [true],
@@ -576,15 +576,7 @@ export class NutrientFormulationComponent implements OnInit {
         return phase?.name || 'Fase desconocida';
     }
     getFilteredCropPhases(): CropPhase[] {
-        const selectedCropId = this.formulationForm.get('cropId')?.value;
-        if (!selectedCropId) {
-            return [];
-        }
-        const cropIdNumber = typeof selectedCropId === 'string' ? parseInt(selectedCropId, 10) : selectedCropId;
-        const filtered = this.cropPhases.filter(phase => {
-            return phase.cropId === cropIdNumber;
-        });
-        return filtered;
+       return this.cropPhases;
     }
     getStatusClass(status: string): string {
         const classes = {
@@ -617,7 +609,7 @@ export class NutrientFormulationComponent implements OnInit {
             maxBudgetPerLiter: Number(formValue.maxBudgetPerLiter) || 100
         };
     }
-   
+
     public calculateEnhancedFertilizerMixFixed(recipe: FormulationRecipe): RecipeFertilizer[] {
         const selectedFertilizers: RecipeFertilizer[] = [];
         const availableFertilizers = this.fertilizers.filter(f => f.isActive);
@@ -1953,12 +1945,122 @@ export class NutrientFormulationComponent implements OnInit {
         ]);
     }
 
+
     onSubmit(): void {
-        if (this.calculationForm.valid) {
-            this.performCalculation();
-        } else {
-            this.markFormGroupTouched();
+        if (this.calculationForm.invalid) {
+            const invalidFields = Object.keys(this.calculationForm.controls)
+                .filter(key => this.calculationForm.get(key)?.invalid);
+            console.warn('Advanced form invalid:', invalidFields);
+            this.errorMessage = 'Por favor complete todos los campos requeridos';
+            return;
         }
+
+        this.isLoading = true;
+        this.errorMessage = '';
+
+        const formValue = this.calculationForm.value;
+        const cropPhaseId = formValue.cropPhaseId;
+
+        // Get requirements for selected crop phase
+        const requirements = this.getRealCropPhaseRequirements(cropPhaseId);
+
+        if (!requirements) {
+            this.errorMessage = 'No se encontraron requerimientos nutricionales';
+            this.isLoading = false;
+            return;
+        }
+
+        // Map to API format (maintains backward compatibility)
+        const requestBody = {
+            user_id: formValue.user_id || 1,
+            catalog_id: formValue.cropId, // Map cropId to catalog_id
+            phase_id: cropPhaseId,
+            water_id: formValue.water_id,
+            volume_liters: formValue.volume_liters,
+            use_ml: formValue.use_ml || false,
+            apply_safety_caps: formValue.apply_safety_caps !== false,
+            strict_caps: formValue.strict_caps || false,
+            requirements: {
+                EC: requirements.ec || 2.0,
+                HCO3: requirements.hco3 || 0,
+                NO3: requirements.no3 || 0,
+                H2PO4: requirements.h2po4 || 0,
+                SO4: requirements.so4 || 0,
+                Cl: requirements.cl || 0,
+                NH4: requirements.nh4 || 0,
+                K: requirements.k || 0,
+                Ca: requirements.ca || 0,
+                Mg: requirements.mg || 0,
+                Na: requirements.na || 0,
+                Fe: requirements.fe || 0,
+                Mn: requirements.mn || 0,
+                Zn: requirements.zn || 0,
+                Cu: requirements.cu || 0,
+                B: requirements.b || 0,
+                Mo: requirements.mo || 0
+            }
+        };
+
+        console.log('Advanced Calculator Request:', requestBody);
+
+        this.isLoading = true;
+        this.errorMessage = '';
+        this.successMessage = '';
+        this.showResults = false;
+
+        const formData = this.calculationForm.value;
+        console.log('Form Data:', formData);
+        formData.user_id = this.authService.getCurrentUser()['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid'] || 1;
+
+        // Build the API URL with query parameters
+        const apiUrl = 'https://agrismart-web-v1-1-gafq.onrender.com/swagger-integrated-calculation';
+
+        let params = new HttpParams()
+            .set('user_id', formData.user_id.toString())
+            .set('catalog_id', formData.catalog_id.toString())
+            .set('phase_id', formData.cropPhaseId.toString())
+            .set('water_id', formData.water_id.toString())
+            .set('volume_liters', formData.volume_liters.toString())
+            .set('use_ml', formData.use_ml.toString())
+            .set('apply_safety_caps', formData.apply_safety_caps.toString())
+            .set('strict_caps', formData.strict_caps.toString());
+
+        console.log('calling API URL: ', apiUrl + '?' + params.toString());
+
+        this.http.get<CalculationResponse>(apiUrl, { params }).pipe(
+            tap(response => {
+                console.log('API Response:', response);
+            }),
+            catchError(error => {
+                console.error('API Error:', error);
+                this.errorMessage = `Error en la calculadora de nutrientes: ${error.message || 'Error desconocido'}`;
+                return of(null);
+            })
+        ).subscribe({
+            next: (response) => {
+                this.isLoading = false;
+                if (response) {
+                    console.log('Calculation successful:', response);
+                    this.calculationResults = response;
+                    this.processResults();
+                    this.showResults = true;
+                    this.successMessage = 'Cálculo completado exitosamente';
+
+                    // Scroll to results
+                    setTimeout(() => {
+                        const resultsElement = document.getElementById('calculation-results');
+                        if (resultsElement) {
+                            resultsElement.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }, 100);
+                }
+            },
+            error: (error) => {
+                this.isLoading = false;
+                console.error('Subscription Error:', error);
+                this.errorMessage = `Error inesperado: ${error.message}`;
+            }
+        });
     }
 
     public performCalculation(): void {
@@ -2571,7 +2673,7 @@ export class NutrientFormulationComponent implements OnInit {
             ec: realRequirement.ec || null
         };
 
-        console.log('Normalized requirement:', normalizedRequirement);
+        // console.log('Normalized requirement:', normalizedRequirement);
         return normalizedRequirement;
     }
 
@@ -3055,14 +3157,14 @@ export class NutrientFormulationComponent implements OnInit {
      */
     public getRealFertilizersWithCompositions(): any[] {
         if (!this.fertilizers || this.fertilizers.length === 0) {
-            console.warn('No fertilizers loaded from database');
+            // console.warn('No fertilizers loaded from database');
             return [];
         }
 
         const realFertilizers = this.fertilizers.filter(fertilizer => {
             // Must be active
             if (!fertilizer.isActive) {
-                console.log(`Fertilizer ${fertilizer.name} - excluded: not active`);
+                // console.log(`Fertilizer ${fertilizer.name} - excluded: not active`);
                 return false;
             }
 
@@ -3070,10 +3172,10 @@ export class NutrientFormulationComponent implements OnInit {
             const hasRealComposition = this.hasEnhancedCompositionData(fertilizer);
 
             if (!hasRealComposition) {
-                console.log(`Fertilizer ${fertilizer.name} - excluded: no real composition data`);
-                console.log('Available fields:', Object.keys(fertilizer));
+                // console.log(`Fertilizer ${fertilizer.name} - excluded: no real composition data`);
+                // console.log('Available fields:', Object.keys(fertilizer));
             } else {
-                console.log(`Fertilizer ${fertilizer.name} - included: has composition data`);
+                // console.log(`Fertilizer ${fertilizer.name} - included: has composition data`);
             }
 
             return hasRealComposition;
@@ -3082,21 +3184,21 @@ export class NutrientFormulationComponent implements OnInit {
         console.log(`Found ${realFertilizers.length} fertilizers with real composition data out of ${this.fertilizers.length} total`);
 
         // Log composition details for debugging
-        realFertilizers.forEach(f => {
-            console.log(`${f.name} composition details:`, {
-                composition: f.composition,
-                percentages: {
-                    N: f.nitrogenPercentage,
-                    P: f.phosphorusPercentage,
-                    K: f.potassiumPercentage
-                },
-                chemical: {
-                    N: f.n || f.N,
-                    P: f.p || f.P,
-                    K: f.k || f.K
-                }
-            });
-        });
+        // realFertilizers.forEach(f => {
+        //     console.log(`${f.name} composition details:`, {
+        //         composition: f.composition,
+        //         percentages: {
+        //             N: f.nitrogenPercentage,
+        //             P: f.phosphorusPercentage,
+        //             K: f.potassiumPercentage
+        //         },
+        //         chemical: {
+        //             N: f.n || f.N,
+        //             P: f.p || f.P,
+        //             K: f.k || f.K
+        //         }
+        //     });
+        // });
 
         return realFertilizers;
     }
@@ -3305,5 +3407,57 @@ export class NutrientFormulationComponent implements OnInit {
         }
 
         return recommendations;
+    }
+
+
+    /**
+     * 1. Handle crop change in Advanced Calculator
+     */
+    onAdvancedCropChange(): void {
+        const cropId = this.calculationForm.get('cropId')?.value;
+        console.log('Advanced crop changed to:', cropId);
+
+        this.calculationForm.patchValue({
+            cropPhaseId: null
+        });
+    }
+
+    /**
+     * 2. Get filtered crop phases for Advanced Calculator
+     */
+    getAdvancedFilteredCropPhases(): any[] {
+        const selectedCropId = this.calculationForm?.get('cropId')?.value;
+
+        if (!selectedCropId || !this.cropPhases || this.cropPhases.length === 0) {
+            return [];
+        }
+
+        const filtered = this.cropPhases.filter((phase: any) => {
+            const matchesCrop = phase.cropId === parseInt(selectedCropId);
+            const hasRequirements = this.getRealCropPhaseRequirements(phase.id) !== null;
+            return matchesCrop && hasRequirements;
+        });
+
+        console.log(`Found ${filtered.length} phases with requirements for crop ${selectedCropId}`);
+        return filtered;
+    }
+
+    /**
+     * 3. Reset Advanced Calculator form
+     */
+    resetAdvancedForm(): void {
+        this.calculationForm.reset({
+            user_id: 1,
+            cropId: null,
+            cropPhaseId: null,
+            water_id: null,
+            volume_liters: 1000,
+            use_ml: true,
+            apply_safety_caps: true,
+            strict_caps: false
+        });
+        this.calculationResults = null;
+        this.showResults = false;
+        this.errorMessage = '';
     }
 }
