@@ -12,6 +12,7 @@ import { CatalogService, Catalog } from '../catalogs/services/catalog.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { RealDataSimpleFormulationService, SimpleFormulationRequest, SimpleFormulationResult } from './real-data-simple-formulation.service';
 
+import { NutrientRecipeService, CreateRecipeRequest, NutrientRecipe } from '../../core/services/nutrient-recipe.service';
 
 // Interfaces for the new API response
 interface CalculationResponse {
@@ -393,6 +394,7 @@ export class NutrientFormulationComponent implements OnInit {
 
     constructor(
         public fb: FormBuilder,
+        private nutrientRecipeService: NutrientRecipeService,
         public http: HttpClient,
         public router: Router,
         private fixedFormulationService: RealDataSimpleFormulationService,
@@ -441,11 +443,11 @@ export class NutrientFormulationComponent implements OnInit {
         return this.fb.group({
             recipeName: ['Nueva Receta', Validators.required],
             waterSourceId: [null, Validators.required],
-            cropId: [null, Validators.required],
+            cropId: [null],
             cropPhaseId: [null],
             volumeLiters: [[Validators.required]],
-            targetPh: [],
-            targetEc: [],
+            targetPh: [2.0],
+            targetEc: [3.0],
             maxBudgetPerLiter: [100],
             preferOrganic: [false],
             excludeFertilizers: [[]]
@@ -576,7 +578,7 @@ export class NutrientFormulationComponent implements OnInit {
         return phase?.name || 'Fase desconocida';
     }
     getFilteredCropPhases(): CropPhase[] {
-       return this.cropPhases;
+        return this.cropPhases;
     }
     getStatusClass(status: string): string {
         const classes = {
@@ -955,44 +957,82 @@ export class NutrientFormulationComponent implements OnInit {
             this.isLoading = false;
         }
     }
-    saveRecipe(): void {
-        if (!this.currentRecipe) return;
-        this.isLoading = true;
-        this.errorMessage = '';
-        const currentUser = this.authService.getCurrentUser();
-        const catalogId = currentUser?.catalogId || 1;
-        const recipeSummary = {
-            catalogId: catalogId,
-            name: `RECIPE_${this.currentRecipe.name}`,
-            description: `Recipe:${this.currentRecipe.name}|Cost:${this.currentRecipe.totalCost}`,
-            script: 'NUTRIENT_RECIPE',
-            entityType: 998,
-            active: true
-        };
-        console.log('🔥 Saving recipe summary to server:', recipeSummary);
-        this.apiService.post(this.ANALYTICAL_ENTITY_ENDPOINT, recipeSummary).pipe(
-            catchError(error => {
-                console.error('Failed to save recipe summary, using localStorage:', error);
-                return of({ success: false });
+    public saveRecipe(result: SimpleFormulationResult | any): void {
+        console.log('💾 Saving recipe to database...', result);
+        console.log('cropPhases:', this.cropPhases);
+        const recipeRequest = {
+            name: result.recipeName || `Recipe ${new Date().toLocaleDateString()}`,
+            description: `Nutrient recipe for ${this.getCropName(result.cropId)} - ${this.getCropPhaseName(result.cropPhaseId)}`,
+            cropId: this.cropPhases.find(phase => phase.id.toString() === result.cropPhaseId.toString())?.cropId || result.cropId,
+            cropPhaseId: result.cropPhaseId,
+            waterSourceId: null,
+            catalogId: 1,
+            targetPh: result.targetPh,
+            targetEc: result.targetEc,
+            volumeLiters: result.volumeLiters,
+            targetNitrogen: result.nutrientBalance.nitrogen.target,
+            targetPhosphorus: result.nutrientBalance.phosphorus.target,
+            targetPotassium: result.nutrientBalance.potassium.target,
+            targetCalcium: result.nutrientBalance.calcium?.target,
+            targetMagnesium: result.nutrientBalance.magnesium?.target,
+            targetSulfur: result.nutrientBalance.sulfur?.target,
+            targetIron: result.nutrientBalance.iron?.target,
+            achievedNitrogen: result.nutrientBalance.nitrogen.achieved,
+            achievedPhosphorus: result.nutrientBalance.phosphorus.achieved,
+            achievedPotassium: result.nutrientBalance.potassium.achieved,
+            achievedCalcium: result.nutrientBalance.calcium?.achieved,
+            achievedMagnesium: result.nutrientBalance.magnesium?.achieved,
+            achievedSulfur: result.nutrientBalance.sulfur?.achieved,
+            achievedIron: result.nutrientBalance.iron?.achieved,
+            totalCost: result.totalCost,
+            costPerLiter: result.totalCost / result.volumeLiters,
+            recipeType: this.isSimpleFormulationActive() ? 'Simple' : 'Advanced',
+            instructions: JSON.stringify(result.instructions || []),
+            warnings: JSON.stringify(result.warnings || []),
+            notes: result.notes,
+            fertilizers: result.fertilizers.map((fert: any, index: number) => {
+                // Try to find the fertilizer ID by name
+                const matchedFertilizer = this.fertilizers.find(f =>
+                    f.name?.trim().toLowerCase() === fert.fertilizerName?.trim().toLowerCase()
+                );
+
+                return {
+                    fertilizerId: matchedFertilizer?.id || 0, // Lookup ID or default to 0
+                    fertilizerName: fert.fertilizerName,
+                    concentrationGramsPerLiter: fert.concentration || 0,
+                    totalGrams: fert.totalAmount || 0,
+                    totalKilograms: fert.totalAmount ? fert.totalAmount / 1000 : undefined,
+                    nitrogenContribution: fert.npkContribution?.nitrogen || 0,
+                    phosphorusContribution: fert.npkContribution?.phosphorus || 0,
+                    potassiumContribution: fert.npkContribution?.potassium || 0,
+                    calciumContribution: fert.realComposition?.calcium || 0,
+                    magnesiumContribution: fert.realComposition?.magnesium || 0,
+                    sulfurContribution: fert.realComposition?.sulfur || 0,
+                    percentageOfN: fert.realComposition?.nitrogen || 0,
+                    percentageOfP: fert.realComposition?.phosphorus || 0,
+                    percentageOfK: fert.realComposition?.potassium || 0,
+                    costPerUnit: fert.cost / (fert.totalAmount || 1), // Calculate cost per gram
+                    totalCost: fert.cost || 0,
+                    costPortion: fert.cost || 0,
+                    applicationOrder: index + 1,
+                    applicationNotes: undefined
+                };
             })
-        ).subscribe({
-            next: (summaryResponse: any) => {
-                if (summaryResponse) {
-                    console.log('🔥 Recipe summary saved successfully:', summaryResponse);
-                    const recipeId = summaryResponse.id || Date.now();
-                    this.currentRecipe!.id = recipeId;
-                    this.saveRecipeDetails(recipeId, catalogId);
-                } else {
-                    console.error('Failed to save recipe summary, using localStorage');
-                    this.saveToLocalStorage();
-                }
+        };
+
+        this.nutrientRecipeService.create(recipeRequest).subscribe({
+            next: (response) => {
+                console.log('✅ Recipe saved to database:', response);
+                alert(`Recipe "${recipeRequest.name}" saved successfully!`);
+                this.loadSavedRecipes(); // Reload recipes
             },
             error: (error) => {
-                console.error('Error saving recipe summary:', error);
-                this.saveToLocalStorage();
+                console.error('❌ Error saving recipe:', error);
+                alert('Error saving recipe. Please try again.');
             }
         });
     }
+
     public saveRecipeDetails(recipeId: number, catalogId: number): void {
         if (!this.currentRecipe) return;
         const basicData = {
@@ -1733,56 +1773,51 @@ export class NutrientFormulationComponent implements OnInit {
         });
     }
     public loadSavedRecipes(): void {
-        this.apiService.get(this.ANALYTICAL_ENTITY_ENDPOINT).pipe(
-            catchError(error => {
-                console.error('Backend load failed, using localStorage:', error);
-                return of({ success: false });
-            })
-        ).subscribe({
-            next: (response: any) => {
-                if (response) {
-                    console.log('🔥 Loaded analytical entities from server:', response);
-                    console.log('🔥 Response structure:', Object.keys(response));
-
-                    // Try multiple possible paths to access the entities array
-                    let entities: any[] = [];
-                    if (response.result?.analiticalEntities) {
-                        entities = response.result.analiticalEntities;
-                    } else if (response.result?.analyticalEntities) {
-                        entities = response.result.analyticalEntities;
-                    } else if (response.analiticalEntities) {
-                        entities = response.analiticalEntities;
-                    } else if (response.analyticalEntities) {
-                        entities = response.analyticalEntities;
-                    } else if (Array.isArray(response.result)) {
-                        entities = response.result;
-                    } else if (Array.isArray(response)) {
-                        entities = response;
-                    } else {
-                        console.error('Could not find entities array in response:', response);
-                        entities = [];
-                    }
-
-                    console.log('🔥 Entities found:', entities.length);
-                    console.log('🔥 First few entities:', entities.slice(0, 3));
-
-                    // Filter for main recipe entries
-                    const recipeSummaries = entities.filter((entity: any) =>
-                        entity.script === 'NUTRIENT_RECIPE' && entity.active
-                    );
-
-                    console.log('🔥 Found recipe summaries:', recipeSummaries.length);
-                    console.log('🔥 Recipe summaries:', recipeSummaries.map(r => r.name));
-
-                    this.reconstructRecipes(entities, recipeSummaries);
-                } else {
-                    this.loadFromLocalStorage();
-                }
+        this.nutrientRecipeService.getAll().subscribe({
+            next: (recipes) => {
+                console.log('📦 Loaded recipes from database:', recipes);
+                this.savedRecipes = recipes.map(recipe => this.convertDatabaseRecipeToLocal(recipe));
+                this.filterAllRecipes();
             },
-            error: () => {
-                this.loadFromLocalStorage();
+            error: (error) => {
+                console.error('❌ Error loading recipes:', error);
             }
         });
+    }
+
+    // Convert database recipe format to local format
+    private convertDatabaseRecipeToLocal(dbRecipe: NutrientRecipe): any {
+        return {
+            id: dbRecipe.id,
+            name: dbRecipe.name,
+            cropId: dbRecipe.cropId,
+            cropPhaseId: dbRecipe.cropPhaseId,
+            volumeLiters: dbRecipe.volumeLiters,
+            targetPh: dbRecipe.targetPh,
+            targetEc: dbRecipe.targetEc,
+            totalCost: dbRecipe.totalCost || 0,
+            fertilizers: dbRecipe.fertilizers?.map(f => ({
+                fertilizerId: f.fertilizerId,
+                fertilizerName: f.fertilizerName,
+                concentration: f.concentrationGramsPerLiter,
+                totalGrams: f.totalGrams,
+                cost: f.totalCost,
+                percentageOfN: f.percentageOfN,
+                percentageOfP: f.percentageOfP,
+                percentageOfK: f.percentageOfK,
+                costPortion: f.costPortion
+            })) || [],
+            nutrientProfile: {
+                nitrogen: dbRecipe.achievedNitrogen || 0,
+                phosphorus: dbRecipe.achievedPhosphorus || 0,
+                potassium: dbRecipe.achievedPotassium || 0,
+                calcium: dbRecipe.achievedCalcium || 0,
+                magnesium: dbRecipe.achievedMagnesium || 0
+            },
+            instructions: dbRecipe.instructions ? JSON.parse(dbRecipe.instructions) : [],
+            warnings: dbRecipe.warnings ? JSON.parse(dbRecipe.warnings) : [],
+            createdAt: dbRecipe.dateCreated
+        };
     }
 
     public reconstructRecipes(allEntities: any[], summaries: any[]): void {
@@ -2551,10 +2586,12 @@ export class NutrientFormulationComponent implements OnInit {
      * Requires actual CropPhaseSolutionRequirement and Fertilizer data
      */
     calculateSimpleFormulation(): void {
-        if (this.formulationForm.invalid) {
-            this.errorMessage = 'Por favor complete todos los campos requeridos';
-            return;
-        }
+        // if (this.formulationForm.invalid) {
+        //     const invalidFields = Object.keys(this.formulationForm.controls).filter(key => this.formulationForm.get(key)?.invalid);
+        //     console.error('Formulario inválido, campos faltantes o incorrectos:', invalidFields);
+        //     this.errorMessage = 'Por favor complete todos los campos requeridos';
+        //     return;
+        // }
 
         this.isCalculatingSimple = true;
         this.errorMessage = '';
@@ -2562,13 +2599,6 @@ export class NutrientFormulationComponent implements OnInit {
         this.simpleFormulationResult = null;
 
         const formValue = this.formulationForm.value;
-
-        // Validate required fields
-        if (!formValue.cropId || !formValue.cropPhaseId || !formValue.volumeLiters) {
-            this.errorMessage = 'Seleccione cultivo, fase y volumen para continuar';
-            this.isCalculatingSimple = false;
-            return;
-        }
 
         // Get REAL crop phase requirements from database
         const realRequirements = this.getRealCropPhaseRequirements(formValue.cropPhaseId);
@@ -3460,4 +3490,39 @@ export class NutrientFormulationComponent implements OnInit {
         this.showResults = false;
         this.errorMessage = '';
     }
+
+
+    // Load recipes by crop phase
+    public loadRecipesByCropPhase(cropId: number, phaseId: number): void {
+        this.nutrientRecipeService.getByCropPhase(cropId, phaseId).subscribe({
+            next: (recipes) => {
+                console.log('📦 Loaded recipes for crop phase:', recipes);
+                this.savedRecipes = recipes.map(recipe => this.convertDatabaseRecipeToLocal(recipe));
+                this.filterAllRecipes();
+            },
+            error: (error) => {
+                console.error('❌ Error loading recipes:', error);
+            }
+        });
+    }
+
+    // Delete a recipe
+    public deleteRecipeFromDatabase(recipeId: number): void {
+        if (!confirm('Are you sure you want to delete this recipe?')) {
+            return;
+        }
+
+        this.nutrientRecipeService.delete(recipeId).subscribe({
+            next: () => {
+                console.log('✅ Recipe deleted');
+                alert('Recipe deleted successfully!');
+                this.loadSavedRecipes(); // Reload recipes
+            },
+            error: (error) => {
+                console.error('❌ Error deleting recipe:', error);
+                alert('Error deleting recipe. Please try again.');
+            }
+        });
+    }
+
 }

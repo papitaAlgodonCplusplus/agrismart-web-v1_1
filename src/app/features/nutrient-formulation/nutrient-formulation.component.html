@@ -220,7 +220,7 @@
                       <!-- Action Buttons -->
                       <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary"
-                          [disabled]="formulationForm.invalid || isCalculatingSimple || !getRealCropPhaseRequirements(formulationForm.get('cropPhaseId')?.value)">
+                          [disabled]="!getRealCropPhaseRequirements(formulationForm.get('cropPhaseId')?.value)">
                           <i class="bi bi-calculator me-1"></i>
                           <span *ngIf="isCalculatingSimple">Calculando con datos...</span>
                           <span *ngIf="!isCalculatingSimple">Calcular con Datos</span>
@@ -488,6 +488,32 @@
                                 </li>
                               </ul>
                             </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row mt-4">
+                        <div class="col-12">
+                          <div class="d-flex gap-2 flex-wrap">
+                            <!-- NEW: Save to Database Button -->
+                            <button class="btn btn-success" (click)="saveRecipe(simpleFormulationResult)"
+                              [disabled]="isLoading">
+                              <i class="bi bi-save me-1"></i>
+                              <span *ngIf="!isLoading">Guardar en Base de Datos</span>
+                              <span *ngIf="isLoading">
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                Guardando...
+                              </span>
+                            </button>
+
+                            <button class="btn btn-outline-primary" (click)="exportSimpleFormulation()">
+                              <i class="bi bi-download me-1"></i>
+                              Exportar JSON
+                            </button>
+
+                            <button class="btn btn-outline-secondary" (click)="printResults()">
+                              <i class="bi bi-printer me-1"></i>
+                              Imprimir
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -916,13 +942,26 @@
                     </div>
 
                     <!-- Export Options -->
+                    <!-- Save and Export Options -->
                     <div class="row mt-4">
                       <div class="col-12">
-                        <div class="d-flex gap-2">
-                          <button class="btn btn-outline-primary" (click)="exportResults()">
+                        <div class="d-flex gap-2 flex-wrap">
+                          <!-- NEW: Save to Database Button -->
+                          <button class="btn btn-success" (click)="saveRecipe(simpleFormulationResult)"
+                            [disabled]="isLoading">
+                            <i class="bi bi-save me-1"></i>
+                            <span *ngIf="!isLoading">Guardar en Base de Datos</span>
+                            <span *ngIf="isLoading">
+                              <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                              Guardando...
+                            </span>
+                          </button>
+
+                          <button class="btn btn-outline-primary" (click)="exportSimpleFormulation()">
                             <i class="bi bi-download me-1"></i>
                             Exportar JSON
                           </button>
+
                           <button class="btn btn-outline-secondary" (click)="printResults()">
                             <i class="bi bi-printer me-1"></i>
                             Imprimir
@@ -931,9 +970,9 @@
                       </div>
                     </div>
 
-                    <br></br>
-                    <br></br>
-                    <br></br>
+                    <br />
+                    <br />
+                    <br />
                   </div>
                 </div>
 
@@ -1115,6 +1154,10 @@
                           <button class="btn btn-sm btn-primary flex-fill"
                             (click)="loadRecipeFromModal(recipe, $event)">
                             <i class="bi bi-eye"></i> Ver
+                            <span *ngIf="recipe.id" class="badge bg-light text-dark ms-1"
+                              title="Guardado en base de datos">
+                              <i class="bi bi-database"></i>
+                            </span>
                           </button>
                           <button class="btn btn-sm btn-outline-secondary" (click)="copyRecipe(recipe, $event)"
                             [title]="'Duplicar receta'">
@@ -1124,8 +1167,8 @@
                             [title]="'Exportar receta'">
                             <i class="bi bi-download"></i>
                           </button>
-                          <button class="btn btn-sm btn-outline-danger" (click)="deleteRecipeFromModal(recipe, $event)"
-                            [title]="'Eliminar receta'">
+                          <button class="btn btn-sm btn-outline-danger" (click)="deleteRecipeFromDatabase(recipe.id)"
+                            *ngIf="recipe.id" [title]="'Eliminar de base de datos'">
                             <i class="bi bi-trash"></i>
                           </button>
                         </div>

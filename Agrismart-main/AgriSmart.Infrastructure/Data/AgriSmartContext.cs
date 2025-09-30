@@ -34,6 +34,46 @@ namespace AgriSmart.Infrastructure.Data
             entity.Property(e => e.Mo).HasColumnType("decimal(18,6)");
             entity.Property(e => e.pH).HasColumnType("decimal(18,2)");
             entity.Property(e => e.Temperature).HasColumnType("decimal(18,2)");
+
+
+            // Configure NutrientFormulationRecipe
+            modelBuilder.Entity<NutrientFormulationRecipe>(entity =>
+            {
+                entity.ToTable("NutrientFormulationRecipe");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(128);
+                entity.Property(e => e.Description).HasMaxLength(512);
+                entity.Property(e => e.RecipeType).HasMaxLength(32);
+                entity.Property(e => e.Notes).HasMaxLength(512);
+
+                entity.HasOne(e => e.Crop)
+                    .WithMany()
+                    .HasForeignKey(e => e.CropId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.CropPhase)
+                    .WithMany()
+                    .HasForeignKey(e => e.CropPhaseId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Configure NutrientFormulationRecipeFertilizer
+            modelBuilder.Entity<NutrientFormulationRecipeFertilizer>(entity =>
+            {
+                entity.ToTable("NutrientFormulationRecipeFertilizer");
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.Recipe)
+                    .WithMany(r => r.Fertilizers)
+                    .HasForeignKey(e => e.RecipeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Fertilizer)
+                    .WithMany()
+                    .HasForeignKey(e => e.FertilizerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         }
         public DbSet<IrrigationEngineeringDesign> IrrigationEngineeringDesigns { get; set; }
 
@@ -85,6 +125,8 @@ namespace AgriSmart.Infrastructure.Data
         public DbSet<MeasurementBase> MeasurementBase { get; set; }
         public DbSet<IrrigationDesign> IrrigationDesigns { get; set; }
         public DbSet<IrrigationTemplate> IrrigationTemplates { get; set; }
+        public DbSet<NutrientFormulationRecipe> NutrientFormulationRecipes { get; set; }
+        public DbSet<NutrientFormulationRecipeFertilizer> NutrientFormulationRecipeFertilizers { get; set; }
 
     }
 }
