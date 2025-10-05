@@ -178,7 +178,7 @@
           <tr *ngFor="let requirement of getPaginatedData(); trackBy: trackByIndex">
             <td>
               <div class="crop-info">
-                <strong>{{ getCropName(requirement.cropPhaseId) }}</strong>
+                <strong>{{ getCropNameRequirement(requirement.cropPhaseId) }}</strong>
               </div>
             </td>
             <td>
@@ -281,7 +281,7 @@
                     [class.is-invalid]="getFieldError('cropPhaseId')">
               <option value="">Seleccionar fase</option>
               <option *ngFor="let phase of availableCropPhases" [value]="phase.id">
-                {{ getCropName(phase.cropId) }} - {{ phase.name }}
+                {{ getCropName(phase) }} - {{ phase.name }} - {{ phase.cropId }}
               </option>
             </select>
             <div class="invalid-feedback">{{ getFieldError('cropPhaseId') }}</div>

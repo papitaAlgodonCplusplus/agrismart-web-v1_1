@@ -1115,7 +1115,7 @@ body {
 
 /* Override Bootstrap modal z-index values */
 .modal-backdrop {
-  z-index: 1040 !important;
+  z-index: -100 !important;
 }
 
 .modal {
@@ -1139,7 +1139,7 @@ body {
 /* Fix for Bootstrap 5 specific modal backdrop issues */
 .modal-backdrop.show {
   opacity: 0.5;
-  z-index: 1040 !important;
+  z-index: -100 !important;
 }
 
 .modal.show {
@@ -1226,4 +1226,149 @@ body.modal-open {
   font-weight: 500;
   padding: 12px 20px;
   transition: all 0.2s ease;
+}
+
+/* Add to your component CSS */
+#savedRecipesModal {
+  z-index: 1055 !important;
+}
+
+#savedRecipesModal ~ .modal-backdrop {
+  z-index: 1050 !important;
+}
+
+.modal-backdrop {
+  z-index: 1040 !important;
+  pointer-events: none; /* This allows clicking through the backdrop */
+}
+
+.modal-backdrop.show {
+  z-index: 1040 !important;
+  pointer-events: none;
+}
+
+.modal.show {
+  z-index: 1055 !important;
+  pointer-events: auto; /* Modal itself should capture clicks */
+}
+
+.modal-dialog {
+  pointer-events: auto; /* Ensure dialog content is clickable */
+}
+
+/* Remove or update these conflicting rules in your CSS */
+.modal-backdrop {
+  display: none !important; /* Hide backdrop completely */
+}
+
+.modal {
+  background-color: transparent !important;
+}
+
+body.modal-open {
+  overflow: hidden;
+  padding-right: 0 !important;
+}
+
+/* Custom Modal Styles */
+.custom-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.custom-modal-overlay.show {
+  display: flex;
+  opacity: 1;
+}
+
+.custom-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90vw;
+  max-width: 1200px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.custom-modal-overlay.show .custom-modal {
+  transform: scale(1);
+}
+
+.custom-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.custom-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.custom-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.custom-close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.custom-modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .custom-modal {
+    width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .custom-modal-header,
+  .custom-modal-body,
+  .custom-modal-footer {
+    padding: 1rem;
+  }
 }

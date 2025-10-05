@@ -42,7 +42,7 @@ builder.Services.Configure<JWTConfiguration>(builder.Configuration.GetSection("J
 
 builder.Services.AddDbContext<AgriSmartContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetSection("AgriSmartDbConfiguration").GetSection("ConnectionString").Value);
+    options.UseNpgsql(builder.Configuration.GetSection("AgriSmartDbConfiguration").GetSection("ConnectionString").Value);
 });
 
 //ILogger to file

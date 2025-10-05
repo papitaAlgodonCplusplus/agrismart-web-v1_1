@@ -173,7 +173,7 @@ export class PhaseRequirementsComponent implements OnInit {
       active: [true]
     });
   }
- 
+
 
   // Filter methods
   onFiltersChange(): void {
@@ -283,7 +283,7 @@ export class PhaseRequirementsComponent implements OnInit {
       });
     }
   }
- 
+
 
   deleteRequirement(requirement: CropPhaseSolutionRequirement): void {
     if (!requirement.id) return;
@@ -369,16 +369,26 @@ export class PhaseRequirementsComponent implements OnInit {
     this.successMessage = '';
   }
 
-  getCropName(cropPhaseId?: number): string {
-    if (!cropPhaseId) { 
+  getCropNameRequirement(cropPhaseId?: number): string {
+    if (!cropPhaseId) {
       console.error('Invalid cropPhaseId:', cropPhaseId);
       return 'N/A';
     }
-    const phase = this.availableCropPhases.find(p => p.id === cropPhaseId);
-    if (!phase) { 
+    const phase = this.availableCropPhases.find(p => p.id.toString() === cropPhaseId.toString());
+    if (!phase) {
       console.error('Crop phase not found for id:', cropPhaseId);
       return 'N/A';
     }
+    const crop = this.availableCrops.find(c => c.id.toString() === phase.cropId.toString());
+    return crop ? crop.name || 'N/A' : 'N/A';
+  }
+
+  getCropName(phase?: any): string {
+    if (!phase) {
+      console.error('Invalid phase:', phase);
+      return 'N/A';
+    }
+
     const crop = this.availableCrops.find(c => c.id === phase.cropId);
     return crop ? crop.name || 'N/A' : 'N/A';
   }
@@ -712,8 +722,8 @@ export class PhaseRequirementsComponent implements OnInit {
 
     return {
       // Basic fields - ensure proper type conversion to numbers
-      cropPhaseId: Number(formData.cropPhaseId) || 0,
-      phaseId: Number(formData.cropPhaseId) || 1,
+      cropPhaseId: Number(selectedCropPhase?.id) || 0,
+      phaseId: Number(selectedCropPhase?.id) || 0,
       name: formData.name || '',
       description: formData.description || '',
       notes: formData.notes || '',

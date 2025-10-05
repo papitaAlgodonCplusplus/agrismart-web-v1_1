@@ -105,18 +105,14 @@ export class CropListComponent implements OnInit {
   private initializeForm(): void {
     this.cropForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
-      scientificName: ['', Validators.maxLength(100)],
+      scientificName: [''],
       description: ['', Validators.maxLength(500)],
-      type: ['', Validators.required],
-      variety: ['', Validators.maxLength(100)],
-      growthCycleDays: ['', [Validators.min(1), Validators.max(1000)]],
+      type: [''],
+      variety: [''],
+      growthCycleDays: [''],
       harvestSeason: [''],
       waterRequirement: [''],
-      optimalTemperatureMin: ['', [Validators.min(-50), Validators.max(100)]],
-      optimalTemperatureMax: ['', [Validators.min(-50), Validators.max(100)]],
-      nitrogenRequirement: ['', [Validators.min(0), Validators.max(1000)]],
-      phosphorusRequirement: ['', [Validators.min(0), Validators.max(1000)]],
-      potassiumRequirement: ['', [Validators.min(0), Validators.max(1000)]],
+      cropBaseTemperature: ['', Validators.required],
       isActive: [true]
     });
   }
@@ -237,6 +233,7 @@ export class CropListComponent implements OnInit {
   submitForm(): void {
     if (this.cropForm.invalid) {
       this.cropForm.markAllAsTouched();
+      console.error("Invalid Form")
       return;
     }
 

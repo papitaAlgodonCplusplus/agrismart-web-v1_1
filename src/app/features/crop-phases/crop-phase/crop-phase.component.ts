@@ -88,6 +88,7 @@ export class CropPhaseComponent implements OnInit {
       name: ['', [Validators.required, Validators.maxLength(100)]],
       description: ['', Validators.maxLength(500)],
       cropId: [null, Validators.required],
+      catalogId: [null, Validators.required],
       sequence: [1, [Validators.required, Validators.min(1), Validators.max(100)]],
       startingWeek: [1, [Validators.required, Validators.min(1), Validators.max(52)]],
       durationWeeks: [1, [Validators.required, Validators.min(1), Validators.max(52)]],
@@ -109,37 +110,28 @@ export class CropPhaseComponent implements OnInit {
     }).subscribe({
       next: (data: any) => {
         try {
+          console.log("🐶 Data: ", data)
           // Safely handle catalogs - check if it's an array
-          if (Array.isArray(data.catalogs)) {
-            this.availableCatalogs = data.catalogs.filter((c: { isActive: any; }) => c.isActive);
-          } else if (data.catalogs && typeof data.catalogs === 'object') {
-            // Handle case where catalogs might be wrapped in another object
-            const catalogsArray = data.catalogs.data || data.catalogs.items || [];
-            this.availableCatalogs = Array.isArray(catalogsArray)
-              ? catalogsArray.filter(c => c.isActive)
-              : [];
-          } else {
-            console.warn('Catalogs data is not in expected format:', data.catalogs);
-            this.availableCatalogs = [];
-          }
+          this.availableCatalogs = data.catalogs.catalogs;
+          // if (Array.isArray(data.catalogs)) {
+          //   .filter((c: { isActive: any; }) => c.isActive);
+          // } else if (data.catalogs && typeof data.catalogs === 'object') {
+          //   // Handle case where catalogs might be wrapped in another object
+          //   const catalogsArray = data.catalogs.data || data.catalogs.items || [];
+          //   this.availableCatalogs = Array.isArray(catalogsArray)
+          //     ? catalogsArray.filter(c => c.isActive)
+          //     : [];
+          // } else {
+          //   console.warn('Catalogs data is not in expected format:', data.catalogs);
+          //   this.availableCatalogs = [];
+          // }
 
           if (this.availableCatalogs.length > 0) {
             this.selectedCatalogId = this.availableCatalogs[0].id;
           }
 
           // Safely handle crops - check if it's an array
-          if (Array.isArray(data.crops)) {
-            this.availableCrops = data.crops.filter((c: { isActive: any; }) => c.isActive);
-          } else if (data.crops && typeof data.crops === 'object') {
-            // Handle case where crops might be wrapped in another object
-            const cropsArray = data.crops.data || data.crops.items || [];
-            this.availableCrops = Array.isArray(cropsArray)
-              ? cropsArray.filter(c => c.isActive)
-              : [];
-          } else {
-            console.warn('Crops data is not in expected format:', data.crops);
-            this.availableCrops = [];
-          }
+          this.availableCrops = data.crops;
 
           // Safely handle cropPhases - check if it's an array
           if (Array.isArray(data.cropPhases)) {

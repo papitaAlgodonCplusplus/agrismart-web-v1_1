@@ -1,7 +1,7 @@
 ﻿using AgriSmart.Core.Configuration;
 using Microsoft.Extensions.Options;
 using System.Data;
-using Microsoft.Data.SqlClient;
+using Npgsql;
 
 namespace AgriSmart.Infrastructure.Data
 {
@@ -16,7 +16,7 @@ namespace AgriSmart.Infrastructure.Data
 
         public IDbConnection CreateConnection()
         {
-            return new SqlConnection(_agriSmartDbConfiguration.ConnectionString);
+            return new NpgsqlConnection(_agriSmartDbConfiguration.ConnectionString);
         }
     }
 }

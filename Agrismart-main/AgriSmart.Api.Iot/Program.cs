@@ -27,16 +27,16 @@ var connectionString = builder.Configuration.GetSection("AgriSmartDbConfiguratio
 
 builder.Services.AddDbContextPool<AgriSmartContext>(options =>
 {
-    options.UseSqlServer(connectionString, sqlOptions =>
+    options.UseNpgsql(connectionString, npgsqlOptions =>
     {
-        // Configure SQL Server specific options
-        sqlOptions.CommandTimeout(300); // 5 minutes timeout for commands
-        sqlOptions.EnableRetryOnFailure(
+        // Configure PostgreSQL specific options
+        npgsqlOptions.CommandTimeout(300); // 5 minutes timeout for commands
+        npgsqlOptions.EnableRetryOnFailure(
             maxRetryCount: 3,
             maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorNumbersToAdd: null
+            errorCodesToAdd: null
         );
-        sqlOptions.MigrationsAssembly("AgriSmart.Infrastructure"); // If migrations are in Infrastructure project
+        npgsqlOptions.MigrationsAssembly("AgriSmart.Infrastructure"); // If migrations are in Infrastructure project
     })
     .EnableSensitiveDataLogging(builder.Environment.IsDevelopment()) // Only in development
     .EnableServiceProviderCaching(true)
@@ -46,10 +46,10 @@ builder.Services.AddDbContextPool<AgriSmartContext>(options =>
 // Add DbContextFactory for background services and long-running operations
 builder.Services.AddDbContextFactory<AgriSmartContext>(options =>
 {
-    options.UseSqlServer(connectionString, sqlOptions =>
+    options.UseNpgsql(connectionString, npgsqlOptions =>
     {
-        sqlOptions.CommandTimeout(300);
-        sqlOptions.EnableRetryOnFailure(3, TimeSpan.FromSeconds(30), null);
+        npgsqlOptions.CommandTimeout(300);
+        npgsqlOptions.EnableRetryOnFailure(3, TimeSpan.FromSeconds(30), null);
     });
 });
 
@@ -57,7 +57,7 @@ builder.Services.AddMemoryCache();
 
 // Health Checks
 builder.Services.AddHealthChecks()
-    .AddSqlServer(connectionString, name: "database", failureStatus: HealthStatus.Unhealthy, tags: new[] { "ready", "live" });
+    .AddNpgSql(connectionString!, name: "database", failureStatus: HealthStatus.Unhealthy, tags: new[] { "ready", "live" });
 
 //ILogger to file
 builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>());

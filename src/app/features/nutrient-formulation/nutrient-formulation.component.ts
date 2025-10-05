@@ -28,6 +28,34 @@ interface CalculationResponse {
     data_sources: DataSources;
 }
 
+
+export interface LoadedRecipe {
+    id: number;
+    name: string;
+    description: string;
+    cropId: number;
+    cropName: string;
+    cropPhaseId: number;
+    cropPhaseName: string;
+    volumeLiters: number;
+    targetPh: number;
+    targetEc: number;
+    totalCost: number;
+    costPerLiter: number;
+    dateCreated: string;
+    recipeType: string;
+    fertilizers: {
+        fertilizerId: number;
+        fertilizerName: string;
+        concentrationGramsPerLiter: number;
+        totalGrams: number;
+        totalCost: number;
+        percentageOfN?: number;
+        percentageOfP?: number;
+        percentageOfK?: number;
+    }[];
+}
+
 interface UserInfo {
     clientId: number;
     userEmail: string;
@@ -211,6 +239,12 @@ interface FormulationRecipe {
     };
     instructions?: string[];
     warnings?: string[];
+    description?: string;
+    cropName?: string;
+    cropPhaseName?: string;
+    recipeType?: string;
+    dateCreated?: Date | string;
+    costPerLiter?: number;
 }
 interface Crop {
     id: number;
@@ -243,6 +277,10 @@ interface RecipeFertilizer {
     percentageOfP: number;
     percentageOfK: number;
     costPortion: number;
+    fertilizerName?: string;
+    concentrationGramsPerLiter?: number;
+    totalGrams?: number;
+    totalCost?: number;
 }
 interface FormulationConstraints {
     maxBudgetPerLiter: number;
@@ -361,9 +399,9 @@ export class NutrientFormulationComponent implements OnInit {
     crops: Crop[] = [];
     cropPhases: CropPhase[] = [];
     cropPhaseSolutionRequirements: CropPhaseSolutionRequirement[] = [];
-    currentRecipe: FormulationRecipe | null = null;
+    currentRecipe: any | null = null;
     formulationResults: any[] = [];
-    savedRecipes: FormulationRecipe[] = [];
+    savedRecipes: any[] = [];
     isLoading = false;
     errorMessage = '';
     successMessage = '';
@@ -435,9 +473,9 @@ export class NutrientFormulationComponent implements OnInit {
         this.loadFormData();
         this.debugFertilizerProperties();
         this.loadRealCropPhaseRequirements(); // Add this line
-        setTimeout(() => {
-            this.debugCropPhaseRequirements();
-        }, 2000);
+        // setTimeout(() => {
+        //     this.debugCropPhaseRequirements();
+        // }, 2000);
     }
     public createForm(): FormGroup {
         return this.fb.group({
@@ -461,7 +499,7 @@ export class NutrientFormulationComponent implements OnInit {
             })
         );
     }
-    onCropChange(): void {
+    onCropChange(event?: any): void {
         const cropId = this.formulationForm.get('cropId')?.value;
         if (cropId) {
             this.formulationForm.patchValue({ cropPhaseId: null });
@@ -542,6 +580,7 @@ export class NutrientFormulationComponent implements OnInit {
         }
     }
     loadRecipe(recipe: FormulationRecipe): void {
+        console.log("Recipe loaded from DB: ", recipe)
         this.currentRecipe = { ...recipe };
         this.formulationForm.patchValue({
             recipeName: recipe.name,
@@ -579,6 +618,16 @@ export class NutrientFormulationComponent implements OnInit {
     }
     getFilteredCropPhases(): CropPhase[] {
         return this.cropPhases;
+    }
+
+    // Alias for template compatibility
+    getFilteredPhases(): CropPhase[] {
+        return this.getFilteredCropPhases();
+    }
+
+    // Alias for template compatibility
+    onPhaseChange(event?: any): void {
+        this.onCropPhaseChange();
     }
     getStatusClass(status: string): string {
         const classes = {
@@ -1105,7 +1154,7 @@ export class NutrientFormulationComponent implements OnInit {
             console.error('No fertilizers to save for recipe', this.currentRecipe);
             return;
         }
-        const fertilizerPromises = this.currentRecipe.fertilizers.map((fert, index) => {
+        const fertilizerPromises = this.currentRecipe.fertilizers.map((fert: { fertilizerId: any; concentration: any; percentageOfN: any; percentageOfP: any; percentageOfK: any; costPortion: any; }, index: any) => {
             const fertRecord = {
                 catalogId: catalogId,
                 name: `RECIPE_FERT_${recipeId}_${index}`,
@@ -1307,7 +1356,7 @@ export class NutrientFormulationComponent implements OnInit {
                         this.crops = Array.isArray(data.crops) ? data.crops : [];
                         this.cropPhases = Array.isArray(data.cropPhases) ? data.cropPhases : [];
                         this.fertilizerChemistries = Array.isArray(data.fertilizerChemistries) ? data.fertilizerChemistries : [];
-                        this.loadOptimizedFertilizers(firstCatalogId);
+                        this.loadOptimizedFertilizers();
                         console.log('this.fertilizers:', this.fertilizers);
 
                         for (const phase of this.cropPhases) {
@@ -1604,21 +1653,20 @@ export class NutrientFormulationComponent implements OnInit {
         }
         return null;
     }
-    public loadOptimizedFertilizers(catalogId: number): void {
+    public loadOptimizedFertilizers(): void {
         const cropPhaseIds = [...new Set(this.cropPhases.map(phase => phase.id))];
         if (cropPhaseIds.length === 0) {
             console.error('No crop phases available to load optimized fertilizers');
-            this.loadBasicFertilizers(catalogId);
+            this.loadBasicFertilizers();
             return;
         }
         const fertilizerObservables = cropPhaseIds.map(cropPhaseId =>
             this.fertilizerService.getFertilizersWithOptimalComposition(
-                catalogId,
                 cropPhaseId,
                 { onlyActive: true }
             ).pipe(
                 map((response: any) => {
-                    // console.log(`Received fertilizers for crop phase ${cropPhaseId}:`, response);
+                    console.log(`Received fertilizers for crop phase ${cropPhaseId}:`, response);
                     // let fertilizers: any[] = [];
                     const fertilizers = response;
                     // if (Array.isArray(response)) {
@@ -1674,12 +1722,12 @@ export class NutrientFormulationComponent implements OnInit {
             },
             error: (error) => {
                 console.error('Error loading optimized fertilizers:', error);
-                this.loadBasicFertilizers(catalogId);
+                this.loadBasicFertilizers();
             }
         });
     }
-    public loadBasicFertilizers(catalogId: number): void {
-        this.fertilizerService.getFertilizersWithCatalogId(catalogId, { onlyActive: true }).subscribe({
+    public loadBasicFertilizers(): void {
+        this.fertilizerService.getAll({ onlyActive: true }).subscribe({
             next: (response) => {
                 let fertilizers: any[] = [];
                 if (Array.isArray(response)) {
@@ -1776,8 +1824,7 @@ export class NutrientFormulationComponent implements OnInit {
         this.nutrientRecipeService.getAll().subscribe({
             next: (recipes) => {
                 console.log('📦 Loaded recipes from database:', recipes);
-                this.savedRecipes = recipes.map(recipe => this.convertDatabaseRecipeToLocal(recipe));
-                this.filterAllRecipes();
+                this.savedRecipes = recipes;
             },
             error: (error) => {
                 console.error('❌ Error loading recipes:', error);
@@ -2273,6 +2320,11 @@ export class NutrientFormulationComponent implements OnInit {
         this.successMessage = '';
     }
 
+    // Alias for template compatibility
+    resetCalculation(): void {
+        this.resetForm();
+    }
+
     navigateBack(): void {
         this.router.navigate(['/dashboard']);
     }
@@ -2426,13 +2478,7 @@ export class NutrientFormulationComponent implements OnInit {
             .map(rf => rf.fertilizer?.name || 'Fertilizante desconocido')
             .slice(0, 3); // Show only first 3 fertilizers
     }
-
-    selectRecipeFromModal(recipe: FormulationRecipe): void {
-        // This method is called when clicking on the card (not buttons)
-        this.loadRecipe(recipe);
-        this.closeModal('allRecipesModal');
-    }
-
+ 
     loadRecipeFromModal(recipe: FormulationRecipe, event: Event): void {
         event.stopPropagation();
         this.loadRecipe(recipe);
@@ -2504,28 +2550,23 @@ export class NutrientFormulationComponent implements OnInit {
         setTimeout(() => this.successMessage = '', 3000);
     }
 
-    // Method 1: Configure Bootstrap Modal without backdrop
     openAllRecipesModal(): void {
         this.initializeModalData();
         this.filterAllRecipes();
 
         setTimeout(() => {
-            const modalElement = document.getElementById('allRecipesModal');
+            const modalElement = document.getElementById('savedRecipesModal');
             if (modalElement) {
-                // Remove any existing modal instances
-                const existingModal = (window as any).bootstrap?.Modal?.getInstance(modalElement);
-                if (existingModal) {
-                    existingModal.dispose();
-                }
-
-                // Create modal with no backdrop
-                const modal = new (window as any).bootstrap.Modal(modalElement, {
-                    backdrop: false,  // This removes the backdrop entirely
-                    keyboard: true,   // Still allow ESC key to close
-                    focus: true
-                });
-
+                const modal = new (window as any).bootstrap.Modal(modalElement);
                 modal.show();
+
+                // Remove backdrop after modal is shown
+                modalElement.addEventListener('shown.bs.modal', () => {
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.remove();
+                    }
+                }, { once: true });
             }
         }, 50);
     }
@@ -2855,6 +2896,11 @@ export class NutrientFormulationComponent implements OnInit {
         }
     }
 
+    // Alias for template compatibility
+    calculate(): void {
+        this.calculateFormulation();
+    }
+
     /**
      * Check if we should use simple calculation (when in Simple Formulation tab)
      */
@@ -3068,13 +3114,13 @@ export class NutrientFormulationComponent implements OnInit {
             });
         }
 
-        console.log('\nCrop Phases:');
-        if (this.cropPhases && this.cropPhases.length > 0) {
-            this.cropPhases.forEach((phase, index) => {
-                const hasReq = this.hasRealRequirementsForPhase(phase.id);
-                console.log(`${index + 1}. ID: ${phase.id}, Name: ${phase.name}, Has Requirements: ${hasReq}`);
-            });
-        }
+        // console.log('\nCrop Phases:');
+        // if (this.cropPhases && this.cropPhases.length > 0) {
+        //     this.cropPhases.forEach((phase, index) => {
+        //         const hasReq = this.hasRealRequirementsForPhase(phase.id);
+        //         console.log(`${index + 1}. ID: ${phase.id}, Name: ${phase.name}, Has Requirements: ${hasReq}`);
+        //     });
+        // }
 
         console.log('=== END DEBUG ===');
     }
@@ -3093,8 +3139,6 @@ export class NutrientFormulationComponent implements OnInit {
             console.log('Requirement data:', reqData);
         }
     }
-
-
 
     /**
      * Replace the calculateWithRealDataFixed method with this improved version
@@ -3525,4 +3569,349 @@ export class NutrientFormulationComponent implements OnInit {
         });
     }
 
+    // Note: currentRecipe property already declared earlier in the component
+
+    /**
+     * Loads a recipe when selected from the saved recipes modal
+     * This method should be called when a recipe is selected from loadSavedRecipes()
+     */
+    public onRecipeSelected(recipe: any): void {
+        console.log('📋 Recipe selected from database:', recipe);
+
+        // Map the database recipe structure to currentRecipe
+        this.currentRecipe = {
+            id: recipe.id,
+            name: recipe.name,
+            description: recipe.description || `Receta para ${this.getCropName(recipe.cropId)} - ${this.getCropPhaseName(recipe.cropPhaseId)}`,
+            cropId: recipe.cropId,
+            cropName: recipe.cropName || this.getCropName(recipe.cropId),
+            cropPhaseId: recipe.cropPhaseId,
+            cropPhaseName: recipe.cropPhaseName || this.getCropPhaseName(recipe.cropPhaseId),
+            volumeLiters: recipe.volumeLiters,
+            targetPh: recipe.targetPh,
+            targetEc: recipe.targetEc,
+            totalCost: recipe.totalCost || 0,
+            costPerLiter: recipe.costPerLiter || (recipe.totalCost / recipe.volumeLiters),
+            dateCreated: recipe.dateCreated,
+            recipeType: recipe.recipeType || 'Simple',
+            fertilizers: recipe.fertilizers?.map((f: any) => ({
+                fertilizerId: f.fertilizerId,
+                fertilizerName: f.fertilizerName,
+                concentrationGramsPerLiter: f.concentrationGramsPerLiter,
+                totalGrams: f.totalGrams,
+                totalCost: f.totalCost,
+                percentageOfN: f.percentageOfN,
+                percentageOfP: f.percentageOfP,
+                percentageOfK: f.percentageOfK
+            })) || []
+        };
+
+        // Clear any existing calculation results to show only the loaded recipe
+        this.simpleFormulationResult = null;
+        this.calculationResults = null;
+
+        this.successMessage = `Receta "${recipe.name}" cargada exitosamente`;
+
+        // Close the modal if it's open
+        const modalElement = document.getElementById('savedRecipesModal');
+        if (modalElement) {
+            const bootstrapModal = (window as any).bootstrap?.Modal?.getInstance(modalElement);
+            if (bootstrapModal) {
+                bootstrapModal.hide();
+            }
+        }
+
+        // Scroll to the loaded recipe section
+        setTimeout(() => {
+            const recipeSection = document.querySelector('.border-info');
+            if (recipeSection) {
+                recipeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 300);
+    }
+
+    /**
+     * Uses the currently loaded recipe to populate the form
+     */
+    public useLoadedRecipe(): void {
+        if (!this.currentRecipe) return;
+
+        // Populate the form with recipe data
+        this.formulationForm.patchValue({
+            recipeName: this.currentRecipe.name,
+            cropId: this.currentRecipe.cropId,
+            cropPhaseId: this.currentRecipe.cropPhaseId,
+            volumeLiters: this.currentRecipe.volumeLiters,
+            targetPh: this.currentRecipe.targetPh,
+            targetEc: this.currentRecipe.targetEc
+        });
+
+        this.successMessage = `Receta "${this.currentRecipe.name}" cargada en el formulario`;
+
+        // Scroll to form
+        setTimeout(() => {
+            const formElement = document.querySelector('.card-header');
+            if (formElement) {
+                formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
+    }
+
+    /**
+     * Exports the currently loaded recipe as JSON
+     */
+    public exportLoadedRecipe(): void {
+        if (!this.currentRecipe) return;
+
+        const exportData = {
+            ...this.currentRecipe,
+            exportedAt: new Date().toISOString(),
+            exportedBy: 'AgriSmart System'
+        };
+
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        const fileName = `receta-${this.currentRecipe.name.replace(/\s+/g, '-')}-${Date.now()}.json`;
+
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', fileName);
+        linkElement.click();
+
+        this.successMessage = 'Receta exportada exitosamente';
+    }
+
+    /**
+     * Clears the currently loaded recipe from view
+     */
+    public clearLoadedRecipe(): void {
+        this.currentRecipe = null;
+        this.successMessage = 'Vista de receta cerrada';
+    }
+
+    /**
+     * Duplicates the current recipe with a new name
+     */
+    public duplicateRecipe(): void {
+        if (!this.currentRecipe) return;
+
+        const newRecipe = {
+            ...this.currentRecipe,
+            id: 0, // New ID will be assigned by database
+            name: `${this.currentRecipe.name} (Copia)`,
+            dateCreated: new Date().toISOString()
+        };
+
+        // Populate form with duplicated recipe data
+        this.formulationForm.patchValue({
+            recipeName: newRecipe.name,
+            cropId: newRecipe.cropId,
+            cropPhaseId: newRecipe.cropPhaseId,
+            volumeLiters: newRecipe.volumeLiters,
+            targetPh: newRecipe.targetPh,
+            targetEc: newRecipe.targetEc
+        });
+
+        this.successMessage = `Receta duplicada como "${newRecipe.name}". Modifique y guarde para crear una nueva.`;
+        this.clearLoadedRecipe();
+    }
+
+    /**
+     * Prints the loaded recipe details
+     */
+    public printLoadedRecipe(): void {
+        if (!this.currentRecipe) return;
+
+        // Create a printable version
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            this.errorMessage = 'No se pudo abrir la ventana de impresión';
+            return;
+        }
+
+        const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receta: ${this.currentRecipe.name}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                h1 { color: #007bff; border-bottom: 3px solid #007bff; padding-bottom: 10px; }
+                h2 { color: #28a745; margin-top: 30px; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                th { background-color: #f8f9fa; font-weight: bold; }
+                .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+                .info-box { border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+                .info-label { font-weight: bold; color: #6c757d; font-size: 12px; }
+                .info-value { font-size: 18px; color: #212529; margin-top: 5px; }
+                .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #6c757d; }
+                @media print {
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Receta de Formulación Nutricional</h1>
+            <p><strong>Nombre:</strong> ${this.currentRecipe.name}</p>
+            <p><strong>Descripción:</strong> ${this.currentRecipe.description || 'N/A'}</p>
+            <p><strong>Cultivo:</strong> ${this.currentRecipe.cropName || this.getCropName(this.currentRecipe.cropId)}</p>
+            <p><strong>Fase:</strong> ${this.currentRecipe.cropPhaseName || this.getCropPhaseName(this.currentRecipe.cropPhaseId)}</p>
+            <p><strong>Tipo:</strong> ${this.currentRecipe.recipeType || 'Simple'}</p>
+            <p><strong>Fecha de Creación:</strong> ${new Date(this.currentRecipe.dateCreated).toLocaleString()}</p>
+
+            <h2>Parámetros Objetivo</h2>
+            <div class="info-grid">
+                <div class="info-box">
+                    <div class="info-label">Volumen</div>
+                    <div class="info-value">${this.currentRecipe.volumeLiters} L</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">pH Objetivo</div>
+                    <div class="info-value">${this.currentRecipe.targetPh}</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">EC Objetivo</div>
+                    <div class="info-value">${this.currentRecipe.targetEc} dS/m</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">Costo Total</div>
+                    <div class="info-value">₡${this.currentRecipe.totalCost?.toFixed(2)}</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">Costo por Litro</div>
+                    <div class="info-value">₡${this.currentRecipe.costPerLiter?.toFixed(2)}</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">Fertilizantes</div>
+                    <div class="info-value">${this.currentRecipe.fertilizers?.length || 0}</div>
+                </div>
+            </div>
+
+            <h2>Detalle de Fertilizantes</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Fertilizante</th>
+                        <th>NPK</th>
+                        <th>Concentración (g/L)</th>
+                        <th>Total (g)</th>
+                        <th>Costo Total</th>
+                        <th>% Costo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${this.currentRecipe.fertilizers?.map((fert: { fertilizerName: any; percentageOfN: any; percentageOfP: any; percentageOfK: any; concentrationGramsPerLiter: number; totalGrams: number; totalCost: number; }, index: number) => `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${fert.fertilizerName}</td>
+                            <td>${fert.percentageOfN || 0}-${fert.percentageOfP || 0}-${fert.percentageOfK || 0}</td>
+                            <td>${fert.concentrationGramsPerLiter?.toFixed(3)}</td>
+                            <td>${fert.totalGrams?.toFixed(2)}</td>
+                            <td>₡${fert.totalCost?.toFixed(2)}</td>
+                            <td>${((fert.totalCost / this.currentRecipe.totalCost) * 100).toFixed(1)}%</td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="7">No hay fertilizantes</td></tr>'}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" style="text-align: right;"><strong>TOTAL:</strong></td>
+                        <td><strong>₡${this.currentRecipe.totalCost?.toFixed(2)}</strong></td>
+                        <td><strong>100%</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="footer">
+                <p>Documento generado por AgriSmart System</p>
+                <p>Fecha de impresión: ${new Date().toLocaleString()}</p>
+            </div>
+
+            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 20px 0;">
+                Imprimir
+            </button>
+        </body>
+        </html>
+    `;
+
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+    }
+
+    // Note: selectRecipeFromModal() already exists earlier in the component
+
+    /**
+     * Checks if a loaded recipe is currently being displayed
+     */
+    public hasLoadedRecipe(): boolean {
+        return this.currentRecipe !== null;
+    }
+
+    /**
+     * Gets the total number of fertilizers in the loaded recipe
+     */
+    public getLoadedRecipeFertilizerCount(): number {
+        return this.currentRecipe?.fertilizers?.length || 0;
+    }
+
+    /**
+     * Calculates cost percentage for a fertilizer in the loaded recipe
+     */
+    public getFertilizerCostPercentage(fertilizer: any): number {
+        if (!this.currentRecipe || !this.currentRecipe.totalCost) return 0;
+        return (fertilizer.totalCost / this.currentRecipe.totalCost) * 100;
+    }
+
+    // Add this property
+    isRecipesModalOpen = false;
+
+    // Replace openAllRecipesModal with this
+    openRecipesModal(): void {
+        this.initializeModalData();
+        this.filterAllRecipes();
+        this.isRecipesModalOpen = true;
+        document.body.style.overflow = 'hidden'; // Prevent body scroll
+    }
+
+    // Replace closeModal with this
+    closeRecipesModal(): void {
+        this.isRecipesModalOpen = false;
+        document.body.style.overflow = ''; // Restore body scroll
+    }
+
+    // Update selectRecipeFromModal
+    selectRecipeFromModal(recipe: FormulationRecipe): void {
+        this.loadRecipe(recipe);
+        this.closeRecipesModal();
+    }
+
+    // Note: loadSavedRecipes() already exists earlier in the component
+
+    // ==================== NOTES ====================
+    /*
+     * INTEGRATION STEPS:
+     * 
+     * 1. Add the LoadedRecipe interface at the top of your component file
+     * 
+     * 2. Add the currentRecipe property to your component class properties
+     * 
+     * 3. Copy ALL the methods above into your component class
+     * 
+     * 4. Ensure your loadSavedRecipes() method exists and works correctly
+     * 
+     * 5. Update your modal's recipe selection to call selectRecipeFromModal(recipe)
+     * 
+     * 6. Test by:
+     *    - Opening the "Recetas Guardadas" modal
+     *    - Selecting a recipe
+     *    - Verifying the loaded recipe section appears
+     *    - Testing all action buttons (Use, Export, Duplicate, Print, Close)
+     * 
+     * 7. The loaded recipe section will only show when:
+     *    - currentRecipe is NOT null
+     *    - AND simpleFormulationResult is null (Simple tab)
+     *    - OR calculationResults is null (Advanced tab)
+     */
 }

@@ -53,7 +53,8 @@
       "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Handlers\\Queries\" /B)",
       "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Validators\\Queries\")",
       "Bash(del fix_nullable_bool.py)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(dotnet restore:*)"
     ],
     "deny": [],
     "ask": []

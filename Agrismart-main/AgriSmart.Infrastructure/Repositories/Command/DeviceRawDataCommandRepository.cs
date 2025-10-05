@@ -2,7 +2,8 @@
 using AgriSmart.Core.Entities;
 using AgriSmart.Core.Repositories.Commands;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.SqlClient;
+using Npgsql;
+using NpgsqlTypes;
 using System.Data;
 using Microsoft.AspNetCore.Http;
 using AgriSmart.Core.Repositories.Queries;
@@ -21,19 +22,19 @@ namespace AgriSmart.Infrastructure.Repositories.Command
         {
             try
             {
-                var parameters = new List<SqlParameter>();
-                parameters.Add(new SqlParameter("@deviceId", deviceId));
+                var parameters = new List<NpgsqlParameter>();
+                parameters.Add(new NpgsqlParameter("deviceId", deviceId));
 
-                SqlParameter result = new SqlParameter();
-                result.ParameterName = "@resultMessage";
-                result.SqlDbType = SqlDbType.NVarChar;
+                NpgsqlParameter result = new NpgsqlParameter();
+                result.ParameterName = "resultMessage";
+                result.NpgsqlDbType = NpgsqlDbType.Varchar;
                 result.Size = 128;
                 result.Direction = ParameterDirection.Output;
                 parameters.Add(result);
 
                 _context.Database.SetCommandTimeout(600);
 
-                return await _context.Database.ExecuteSqlRawAsync(@"exec [ProcessDeviceRawData2] @deviceId, @resultMessage", parameters);
+                return await _context.Database.ExecuteSqlRawAsync(@"CALL ""ProcessDeviceRawData2""($1, $2)", parameters);
 
             }
             catch (Exception ex)

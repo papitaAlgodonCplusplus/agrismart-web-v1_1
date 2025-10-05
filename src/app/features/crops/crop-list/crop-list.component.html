@@ -280,7 +280,7 @@
         <i class="bi bi-x-circle"></i>
         Cancelar
       </button>
-      <button type="submit" class="btn btn-primary" (click)="submitForm()" [disabled]="isLoading || cropForm.invalid">
+      <button type="submit" class="btn btn-primary" (click)="submitForm()">
         <span class="spinner-border spinner-border-sm me-2" *ngIf="isLoading"></span>
         <i class="bi bi-check-circle" *ngIf="!isLoading"></i>
         {{ isEditMode ? 'Actualizar' : 'Crear' }} Cultivo

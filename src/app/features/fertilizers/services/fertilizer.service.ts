@@ -214,7 +214,6 @@ export class FertilizerService {
    * If no catalogId provided, it will try to get the current user's catalog
    */
   getAll(filters?: FertilizerFilters): Observable<Fertilizer[]> {
-    console.log("Getting all Fertilizers with filters: ", filters)
     if (filters?.catalogId) {
       return this.getFertilizersWithCatalogId(filters.catalogId, filters);
     }
@@ -1247,8 +1246,8 @@ export class FertilizerService {
   private getCropPhaseSolutionRequirement(phaseId: number): Observable<any> {
     // FIX: Always include BOTH required parameters
     const params = new HttpParams()
-      .set('PhaseId', phaseId.toString())
-      .set('IncludeInactives', 'true'); // ← This was missing and causing 400 errors!
+      .set('PhaseId', phaseId)
+      .set('IncludeInactives', 'true');
 
     const url = `${this.apiConfig.agronomicApiUrl}/CropPhaseSolutionRequirement`;
     const headers = this.getAuthHeaders();
@@ -1296,7 +1295,6 @@ export class FertilizerService {
    * Enhanced method that combines CropPhaseSolutionRequirement data with fertilizer selection
    */
   getFertilizersWithOptimalComposition(
-    catalogId: number | undefined,
     cropPhaseId?: number,
     filters?: FertilizerFilters
   ): Observable<Fertilizer[]> {
@@ -1305,7 +1303,7 @@ export class FertilizerService {
       fertilizers: Fertilizer[] | { fertilizers?: Fertilizer[]; result?: Fertilizer[]; data?: Fertilizer[] } | any;
       solutionRequirements: any;
     }>({
-      fertilizers: this.getFertilizersWithCatalogId(catalogId, filters),
+      fertilizers: this.getAll(filters),
       solutionRequirements: cropPhaseId ?
         this.getCropPhaseSolutionRequirement(cropPhaseId) :
         of(null)

@@ -95,19 +95,15 @@
           <label for="searchTerm" class="form-label">Buscar</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control" id="searchTerm" 
-                   [(ngModel)]="filters.searchTerm" 
-                   (ngModelChange)="onFiltersChange()"
-                   placeholder="Nombre, descripción...">
+            <input type="text" class="form-control" id="searchTerm" [(ngModel)]="filters.searchTerm"
+              (ngModelChange)="onFiltersChange()" placeholder="Nombre, descripción...">
           </div>
         </div>
 
         <!-- Crop Filter -->
         <div class="col-md-3">
           <label for="cropFilter" class="form-label">Cultivo</label>
-          <select class="form-select" id="cropFilter" 
-                  [(ngModel)]="filters.cropId" 
-                  (ngModelChange)="onFiltersChange()">
+          <select class="form-select" id="cropFilter" [(ngModel)]="filters.cropId" (ngModelChange)="onFiltersChange()">
             <option [ngValue]="undefined">Todos los cultivos</option>
             <option *ngFor="let crop of availableCrops" [ngValue]="crop.id">{{ crop.name }}</option>
           </select>
@@ -116,27 +112,22 @@
         <!-- Duration Range -->
         <div class="col-md-2">
           <label for="minDuration" class="form-label">Min. Semanas</label>
-          <input type="number" class="form-control" id="minDuration" 
-                 [(ngModel)]="filters.minDuration" 
-                 (ngModelChange)="onFiltersChange()"
-                 placeholder="1" min="1" max="52">
+          <input type="number" class="form-control" id="minDuration" [(ngModel)]="filters.minDuration"
+            (ngModelChange)="onFiltersChange()" placeholder="1" min="1" max="52">
         </div>
 
         <div class="col-md-2">
           <label for="maxDuration" class="form-label">Max. Semanas</label>
-          <input type="number" class="form-control" id="maxDuration" 
-                 [(ngModel)]="filters.maxDuration" 
-                 (ngModelChange)="onFiltersChange()"
-                 placeholder="52" min="1" max="52">
+          <input type="number" class="form-control" id="maxDuration" [(ngModel)]="filters.maxDuration"
+            (ngModelChange)="onFiltersChange()" placeholder="52" min="1" max="52">
         </div>
 
         <!-- Active Status -->
         <div class="col-md-1">
           <label class="form-label">Estado</label>
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="activeFilter" 
-                   [(ngModel)]="filters.onlyActive" 
-                   (ngModelChange)="onFiltersChange()">
+            <input class="form-check-input" type="checkbox" id="activeFilter" [(ngModel)]="filters.onlyActive"
+              (ngModelChange)="onFiltersChange()">
             <label class="form-check-label" for="activeFilter">
               Solo activas
             </label>
@@ -184,7 +175,7 @@
             <th>Secuencia</th>
             <th>Inicio (Semana)</th>
             <th>Duración</th>
-            <th>Temperatura</th>
+            <!-- <th>Temperatura</th> -->
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
@@ -209,36 +200,27 @@
             <td>
               <span class="badge bg-secondary">{{ phase.durationWeeks }} sem.</span>
             </td>
-            <td>
+            <!-- <td>
               <small class="text-muted">{{ phase.temperatureRange || 'N/A' }}</small>
-            </td>
+            </td> -->
             <td>
-              <span class="badge" 
-                    [class.bg-success]="phase.active" 
-                    [class.bg-secondary]="!phase.active">
+              <span class="badge" [class.bg-success]="phase.active" [class.bg-secondary]="!phase.active">
                 {{ phase.active ? 'Activa' : 'Inactiva' }}
               </span>
             </td>
             <td>
               <div class="action-buttons">
-                <button type="button" class="btn btn-sm btn-outline-primary me-1" 
-                        (click)="showEditForm(phase)" 
-                        [disabled]="isLoading"
-                        title="Editar">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="showEditForm(phase)"
+                  [disabled]="isLoading" title="Editar">
                   <i class="bi bi-pencil"></i>
                 </button>
-                <button type="button" class="btn btn-sm" 
-                        [class.btn-outline-warning]="phase.active"
-                        [class.btn-outline-success]="!phase.active"
-                        (click)="toggleCropPhaseStatus(phase)" 
-                        [disabled]="isLoading"
-                        [title]="phase.active ? 'Desactivar' : 'Activar'">
+                <!-- <button type="button" class="btn btn-sm" [class.btn-outline-warning]="phase.active"
+                  [class.btn-outline-success]="!phase.active" (click)="toggleCropPhaseStatus(phase)"
+                  [disabled]="isLoading" [title]="phase.active ? 'Desactivar' : 'Activar'">
                   <i class="bi" [class.bi-pause-circle]="phase.active" [class.bi-play-circle]="!phase.active"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-danger ms-1" 
-                        (click)="deleteCropPhase(phase)" 
-                        [disabled]="isLoading"
-                        title="Eliminar">
+                </button> -->
+                <button type="button" class="btn btn-sm btn-outline-danger ms-1" (click)="deleteCropPhase(phase)"
+                  [disabled]="isLoading" title="Eliminar">
                   <i class="bi bi-trash"></i>
                 </button>
               </div>
@@ -257,9 +239,8 @@
               <i class="bi bi-chevron-left"></i>
             </button>
           </li>
-          <li class="page-item" 
-              *ngFor="let page of [].constructor(getTotalPages()); let i = index" 
-              [class.active]="currentPage === i + 1">
+          <li class="page-item" *ngFor="let page of [].constructor(getTotalPages()); let i = index"
+            [class.active]="currentPage === i + 1">
             <button class="page-link" (click)="goToPage(i + 1)">{{ i + 1 }}</button>
           </li>
           <li class="page-item" [class.disabled]="currentPage === getTotalPages()">
@@ -294,13 +275,22 @@
           <div class="col-md-6">
             <label for="name" class="form-label">Nombre *</label>
             <input type="text" class="form-control" id="name" formControlName="name"
-                   [class.is-invalid]="getFieldError('name')" placeholder="Nombre de la fase">
+              [class.is-invalid]="getFieldError('name')" placeholder="Nombre de la fase">
             <div class="invalid-feedback">{{ getFieldError('name') }}</div>
+          </div>
+          <div class="col-md-6">
+            <label for="catalogId" class="form-label">Catalogo *</label>
+            <select class="form-select" id="catalogId" formControlName="catalogId"
+              [class.is-invalid]="getFieldError('catalogId')">
+              <option value="">Seleccionar catalogo</option>
+              <option *ngFor="let catalog of availableCatalogs" [value]="catalog.id">{{ catalog.name }}</option>
+            </select>
+            <div class="invalid-feedback">{{ getFieldError('catalogId') }}</div>
           </div>
           <div class="col-md-6">
             <label for="cropId" class="form-label">Cultivo *</label>
             <select class="form-select" id="cropId" formControlName="cropId"
-                    [class.is-invalid]="getFieldError('cropId')" (change)="onCropChange()">
+              [class.is-invalid]="getFieldError('cropId')" (change)="onCropChange()">
               <option value="">Seleccionar cultivo</option>
               <option *ngFor="let crop of availableCrops" [value]="crop.id">{{ crop.name }}</option>
             </select>
@@ -312,8 +302,7 @@
           <div class="col-12">
             <label for="description" class="form-label">Descripción</label>
             <textarea class="form-control" id="description" formControlName="description" rows="3"
-                      [class.is-invalid]="getFieldError('description')" 
-                      placeholder="Descripción de la fase"></textarea>
+              [class.is-invalid]="getFieldError('description')" placeholder="Descripción de la fase"></textarea>
             <div class="invalid-feedback">{{ getFieldError('description') }}</div>
           </div>
         </div>
@@ -326,69 +315,25 @@
           <div class="col-md-4">
             <label for="sequence" class="form-label">Secuencia *</label>
             <input type="number" class="form-control" id="sequence" formControlName="sequence"
-                   [class.is-invalid]="getSequenceError()" 
-                   placeholder="1" min="1" max="100">
+              [class.is-invalid]="getSequenceError()" placeholder="1" min="1" max="100">
             <div class="invalid-feedback">{{ getSequenceError() }}</div>
             <small class="form-text text-muted">Orden de la fase en el cultivo</small>
           </div>
           <div class="col-md-4">
             <label for="startingWeek" class="form-label">Semana de Inicio *</label>
             <input type="number" class="form-control" id="startingWeek" formControlName="startingWeek"
-                   [class.is-invalid]="getFieldError('startingWeek')" 
-                   placeholder="1" min="1" max="52">
+              [class.is-invalid]="getFieldError('startingWeek')" placeholder="1" min="1" max="52">
             <div class="invalid-feedback">{{ getFieldError('startingWeek') }}</div>
           </div>
           <div class="col-md-4">
             <label for="durationWeeks" class="form-label">Duración (Semanas) *</label>
             <input type="number" class="form-control" id="durationWeeks" formControlName="durationWeeks"
-                   [class.is-invalid]="getFieldError('durationWeeks')" 
-                   placeholder="2" min="1" max="52">
+              [class.is-invalid]="getFieldError('durationWeeks')" placeholder="2" min="1" max="52">
             <div class="invalid-feedback">{{ getFieldError('durationWeeks') }}</div>
           </div>
         </div>
       </div>
 
-      <!-- Environmental Conditions -->
-      <div class="form-section">
-        <h6 class="form-section-title">Condiciones Ambientales</h6>
-        <div class="row">
-          <div class="col-md-4">
-            <label for="temperatureRange" class="form-label">Rango de Temperatura</label>
-            <input type="text" class="form-control" id="temperatureRange" formControlName="temperatureRange"
-                   [class.is-invalid]="getFieldError('temperatureRange')" 
-                   placeholder="18-25°C">
-            <div class="invalid-feedback">{{ getFieldError('temperatureRange') }}</div>
-          </div>
-          <div class="col-md-4">
-            <label for="humidityRange" class="form-label">Rango de Humedad</label>
-            <input type="text" class="form-control" id="humidityRange" formControlName="humidityRange"
-                   [class.is-invalid]="getFieldError('humidityRange')" 
-                   placeholder="60-80%">
-            <div class="invalid-feedback">{{ getFieldError('humidityRange') }}</div>
-          </div>
-          <div class="col-md-4">
-            <label for="lightRequirement" class="form-label">Requerimiento de Luz</label>
-            <input type="text" class="form-control" id="lightRequirement" formControlName="lightRequirement"
-                   [class.is-invalid]="getFieldError('lightRequirement')" 
-                   placeholder="12-16 horas/día">
-            <div class="invalid-feedback">{{ getFieldError('lightRequirement') }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Critical Notes -->
-      <div class="form-section">
-        <h6 class="form-section-title">Notas Importantes</h6>
-        <div class="row">
-          <div class="col-12">
-            <label for="criticalNotes" class="form-label">Notas Críticas</label>
-            <textarea class="form-control" id="criticalNotes" formControlName="criticalNotes" rows="4"
-                      [class.is-invalid]="getFieldError('criticalNotes')" 
-                      placeholder="Notas importantes sobre esta fase del cultivo"></textarea>
-            <div class="invalid-feedback">{{ getFieldError('criticalNotes') }}</div>
-          </div>
-        </div>
-      </div>
 
       <!-- Status -->
       <div class="form-section">
@@ -406,7 +351,8 @@
         <i class="bi bi-x-circle"></i>
         Cancelar
       </button>
-      <button type="submit" class="btn btn-primary" (click)="submitForm()" [disabled]="isLoading || cropPhaseForm.invalid">
+      <button type="submit" class="btn btn-primary" (click)="submitForm()"
+        [disabled]="isLoading || cropPhaseForm.invalid">
         <span class="spinner-border spinner-border-sm me-2" *ngIf="isLoading"></span>
         <i class="bi bi-check-circle" *ngIf="!isLoading"></i>
         {{ isEditMode ? 'Actualizar' : 'Crear' }} Fase
