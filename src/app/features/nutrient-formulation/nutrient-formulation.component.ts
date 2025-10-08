@@ -451,9 +451,10 @@ export class NutrientFormulationComponent implements OnInit {
     public createCalculationForm(): FormGroup {
         return this.fb.group({
             user_id: [1],
-            catalog_id: [null, Validators.required],
+            catalogId: [null],
             cropPhaseId: [null, Validators.required],
-            water_id: [null, Validators.required],
+            waterSourceId: [null, Validators.required],
+            targetPh: [6.5],
             volume_liters: [1000, [Validators.required, Validators.min(1), Validators.max(100000)]],
             use_ml: [true],
             apply_safety_caps: [true],
@@ -617,7 +618,9 @@ export class NutrientFormulationComponent implements OnInit {
         return phase?.name || 'Fase desconocida';
     }
     getFilteredCropPhases(): CropPhase[] {
-        return this.cropPhases;
+        // returns cropphases where cropPhaseSolutionRequirements has an entry
+        const availableCropPhasesId = this.cropPhaseSolutionRequirements.map(req => req.phaseId);
+        return this.cropPhases.filter(phase => availableCropPhasesId.includes(phase.id));
     }
 
     // Alias for template compatibility
@@ -2027,124 +2030,6 @@ export class NutrientFormulationComponent implements OnInit {
         ]);
     }
 
-
-    onSubmit(): void {
-        if (this.calculationForm.invalid) {
-            const invalidFields = Object.keys(this.calculationForm.controls)
-                .filter(key => this.calculationForm.get(key)?.invalid);
-            console.warn('Advanced form invalid:', invalidFields);
-            this.errorMessage = 'Por favor complete todos los campos requeridos';
-            return;
-        }
-
-        this.isLoading = true;
-        this.errorMessage = '';
-
-        const formValue = this.calculationForm.value;
-        const cropPhaseId = formValue.cropPhaseId;
-
-        // Get requirements for selected crop phase
-        const requirements = this.getRealCropPhaseRequirements(cropPhaseId);
-
-        if (!requirements) {
-            this.errorMessage = 'No se encontraron requerimientos nutricionales';
-            this.isLoading = false;
-            return;
-        }
-
-        // Map to API format (maintains backward compatibility)
-        const requestBody = {
-            user_id: formValue.user_id || 1,
-            catalog_id: formValue.cropId, // Map cropId to catalog_id
-            phase_id: cropPhaseId,
-            water_id: formValue.water_id,
-            volume_liters: formValue.volume_liters,
-            use_ml: formValue.use_ml || false,
-            apply_safety_caps: formValue.apply_safety_caps !== false,
-            strict_caps: formValue.strict_caps || false,
-            requirements: {
-                EC: requirements.ec || 2.0,
-                HCO3: requirements.hco3 || 0,
-                NO3: requirements.no3 || 0,
-                H2PO4: requirements.h2po4 || 0,
-                SO4: requirements.so4 || 0,
-                Cl: requirements.cl || 0,
-                NH4: requirements.nh4 || 0,
-                K: requirements.k || 0,
-                Ca: requirements.ca || 0,
-                Mg: requirements.mg || 0,
-                Na: requirements.na || 0,
-                Fe: requirements.fe || 0,
-                Mn: requirements.mn || 0,
-                Zn: requirements.zn || 0,
-                Cu: requirements.cu || 0,
-                B: requirements.b || 0,
-                Mo: requirements.mo || 0
-            }
-        };
-
-        console.log('Advanced Calculator Request:', requestBody);
-
-        this.isLoading = true;
-        this.errorMessage = '';
-        this.successMessage = '';
-        this.showResults = false;
-
-        const formData = this.calculationForm.value;
-        console.log('Form Data:', formData);
-        formData.user_id = this.authService.getCurrentUser()['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid'] || 1;
-
-        // Build the API URL with query parameters
-        const apiUrl = 'https://agrismart-web-v1-1-gafq.onrender.com/swagger-integrated-calculation';
-
-        let params = new HttpParams()
-            .set('user_id', formData.user_id.toString())
-            .set('catalog_id', formData.catalog_id.toString())
-            .set('phase_id', formData.cropPhaseId.toString())
-            .set('water_id', formData.water_id.toString())
-            .set('volume_liters', formData.volume_liters.toString())
-            .set('use_ml', formData.use_ml.toString())
-            .set('apply_safety_caps', formData.apply_safety_caps.toString())
-            .set('strict_caps', formData.strict_caps.toString());
-
-        console.log('calling API URL: ', apiUrl + '?' + params.toString());
-
-        this.http.get<CalculationResponse>(apiUrl, { params }).pipe(
-            tap(response => {
-                console.log('API Response:', response);
-            }),
-            catchError(error => {
-                console.error('API Error:', error);
-                this.errorMessage = `Error en la calculadora de nutrientes: ${error.message || 'Error desconocido'}`;
-                return of(null);
-            })
-        ).subscribe({
-            next: (response) => {
-                this.isLoading = false;
-                if (response) {
-                    console.log('Calculation successful:', response);
-                    this.calculationResults = response;
-                    this.processResults();
-                    this.showResults = true;
-                    this.successMessage = 'Cálculo completado exitosamente';
-
-                    // Scroll to results
-                    setTimeout(() => {
-                        const resultsElement = document.getElementById('calculation-results');
-                        if (resultsElement) {
-                            resultsElement.scrollIntoView({ behavior: 'smooth' });
-                        }
-                    }, 100);
-                }
-            },
-            error: (error) => {
-                this.isLoading = false;
-                console.error('Subscription Error:', error);
-                this.errorMessage = `Error inesperado: ${error.message}`;
-            }
-        });
-    }
-
     public performCalculation(): void {
         this.isLoading = true;
         this.errorMessage = '';
@@ -2478,7 +2363,7 @@ export class NutrientFormulationComponent implements OnInit {
             .map(rf => rf.fertilizer?.name || 'Fertilizante desconocido')
             .slice(0, 3); // Show only first 3 fertilizers
     }
- 
+
     loadRecipeFromModal(recipe: FormulationRecipe, event: Event): void {
         event.stopPropagation();
         this.loadRecipe(recipe);
@@ -2913,29 +2798,120 @@ export class NutrientFormulationComponent implements OnInit {
      * Existing advanced calculation (renamed for clarity)
      */
     public calculateAdvancedFormulation(): void {
-        // Keep your existing calculateFormulation logic here for Advanced Calculator
-        if (this.formulationForm.invalid) {
-            const invalidFields = Object.keys(this.formulationForm.controls).filter(key => this.formulationForm.get(key)?.invalid);
-            console.warn('Formulario inválido, campos faltantes o incorrectos:', invalidFields);
+        if (this.calculationForm.invalid) {
+            const invalidFields = Object.keys(this.calculationForm.controls)
+                .filter(key => this.calculationForm.get(key)?.invalid);
+            console.warn('Advanced form invalid:', invalidFields);
             this.errorMessage = 'Por favor complete todos los campos requeridos';
             return;
         }
 
         this.isLoading = true;
         this.errorMessage = '';
-        const formValue = this.sanitizeFormValues(this.formulationForm.value);
-        const selectedWaterSource = this.waterSources.find(w => w.id === formValue.waterSourceId);
-        const selectedCrop = this.crops.find(c => c.id === formValue.cropId);
-        const selectedPhase = formValue.cropPhaseId ? this.cropPhases.find(p => p.id === formValue.cropPhaseId) : undefined;
 
-        if (!selectedWaterSource || !selectedCrop) {
-            console.error('Selected water source or crop not found: ', formValue);
-            this.errorMessage = 'Error: Datos de fuente de agua o cultivo no encontrados';
+        const formValue = this.calculationForm.value;
+        const cropPhaseId = formValue.cropPhaseId;
+
+        // Get requirements for selected crop phase
+        const requirements = this.getRealCropPhaseRequirements(cropPhaseId);
+
+        if (!requirements) {
+            this.errorMessage = 'No se encontraron requerimientos nutricionales';
             this.isLoading = false;
             return;
         }
 
-        this.calculateWithRealDataFixed(formValue, selectedWaterSource, selectedCrop, selectedPhase);
+        // Map to API format (maintains backward compatibility)
+        const requestBody = {
+            user_id: formValue.user_id || 1,
+            catalog_id: formValue.catalogId, // Map cropId to catalog_id
+            phase_id: cropPhaseId,
+            water_id: formValue.waterPhaseId,
+            volume_liters: formValue.volume_liters,
+            use_ml: formValue.use_ml || false,
+            apply_safety_caps: formValue.apply_safety_caps !== false,
+            strict_caps: formValue.strict_caps || false,
+            requirements: {
+                EC: requirements.ec || 2.0,
+                HCO3: requirements.hco3 || 0,
+                NO3: requirements.no3 || 0,
+                H2PO4: requirements.h2po4 || 0,
+                SO4: requirements.so4 || 0,
+                Cl: requirements.cl || 0,
+                NH4: requirements.nh4 || 0,
+                K: requirements.k || 0,
+                Ca: requirements.ca || 0,
+                Mg: requirements.mg || 0,
+                Na: requirements.na || 0,
+                Fe: requirements.fe || 0,
+                Mn: requirements.mn || 0,
+                Zn: requirements.zn || 0,
+                Cu: requirements.cu || 0,
+                B: requirements.b || 0,
+                Mo: requirements.mo || 0
+            }
+        };
+
+        console.log('Advanced Calculator Request:', requestBody);
+
+        this.isLoading = true;
+        this.errorMessage = '';
+        this.successMessage = '';
+        this.showResults = false;
+
+        const formData = this.calculationForm.value;
+        console.log('Form Data:', formData);
+        formData.user_id = this.authService.getCurrentUser()['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid'] || 1;
+
+        // Build the API URL with query parameters
+        const apiUrl = 'https://agrismart-web-v1-1-gafq.onrender.com/swagger-integrated-calculation';
+
+        let params = new HttpParams()
+            .set('user_id', formData.user_id.toString())
+            .set('catalog_id', formData.catalogId.toString())
+            .set('phase_id', formData.cropPhaseId.toString())
+            .set('water_id', formData.waterSourceId.toString())
+            .set('volume_liters', formData.volume_liters.toString())
+            .set('use_ml', formData.use_ml.toString())
+            .set('apply_safety_caps', formData.apply_safety_caps.toString())
+            .set('strict_caps', formData.strict_caps.toString());
+
+        console.log('calling API URL: ', apiUrl + '?' + params.toString());
+
+        this.http.get<CalculationResponse>(apiUrl, { params }).pipe(
+            tap(response => {
+                console.log('API Response:', response);
+            }),
+            catchError(error => {
+                console.error('API Error:', error);
+                this.errorMessage = `Error en la calculadora de nutrientes: ${error.message || 'Error desconocido'}`;
+                return of(null);
+            })
+        ).subscribe({
+            next: (response) => {
+                this.isLoading = false;
+                if (response) {
+                    console.log('Calculation successful:', response);
+                    this.calculationResults = response;
+                    this.processResults();
+                    this.showResults = true;
+                    this.successMessage = 'Cálculo completado exitosamente';
+
+                    // Scroll to results
+                    setTimeout(() => {
+                        const resultsElement = document.getElementById('calculation-results');
+                        if (resultsElement) {
+                            resultsElement.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }, 100);
+                }
+            },
+            error: (error) => {
+                this.isLoading = false;
+                console.error('Subscription Error:', error);
+                this.errorMessage = `Error inesperado: ${error.message}`;
+            }
+        });
     }
 
     /**
@@ -3143,12 +3119,10 @@ export class NutrientFormulationComponent implements OnInit {
     /**
      * Replace the calculateWithRealDataFixed method with this improved version
      */
-    calculateWithRealDataFixed(formValue: any, selectedWaterSource: any, selectedCrop: any, selectedPhase: any): void {
+    calculateWithRealDataFixed(formValue: any, selectedWaterSource: any): void {
         console.log('=== STARTING REAL DATA CALCULATION ===');
         console.log('Form value:', formValue);
         console.log('Selected water source:', selectedWaterSource);
-        console.log('Selected crop:', selectedCrop);
-        console.log('Selected phase:', selectedPhase);
 
         this.isLoading = true;
         this.errorMessage = '';
@@ -3201,7 +3175,7 @@ export class NutrientFormulationComponent implements OnInit {
                     console.log('Result:', result);
 
                     this.simpleFormulationResult = result;
-                    this.successMessage = 'Formulación calculada exitosamente usando datos reales de la base de datos';
+                    this.successMessage = 'Formulación calculada exitosamente';
                     this.isLoading = false;
 
                     // Log nutrient achievement summary

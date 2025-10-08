@@ -1246,6 +1246,7 @@ export class FertilizerService {
   private getCropPhaseSolutionRequirement(phaseId: number): Observable<any> {
     // FIX: Always include BOTH required parameters
     const params = new HttpParams()
+      .set('CropPhaseId', phaseId)
       .set('PhaseId', phaseId)
       .set('IncludeInactives', 'true');
 
@@ -1275,7 +1276,7 @@ export class FertilizerService {
             backendMessage = error.error.message;
           }
         }
-        if(backendMessage === 'Object returned is null') {
+        if (backendMessage === 'Object returned is null') {
           return of(null);
         }
         console.error(`❌ CropPhaseSolutionRequirement API error for PhaseId=${phaseId}:`, error);

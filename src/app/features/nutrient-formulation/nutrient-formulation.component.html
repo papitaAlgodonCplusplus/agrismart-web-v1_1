@@ -751,19 +751,20 @@
                       <div class="row g-3 mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Fase del Cultivo</label>
-                          <select class="form-select" formControlName="phaseId">
+                          <select class="form-select" formControlName="cropPhaseId">
                             <option value="">Seleccione fase</option>
-                            <option *ngFor="let phase of cropPhases" [value]="phase.id">
-                              {{ phase.cropName }} - {{ phase.name }}
+                            <option *ngFor="let phase of getFilteredPhases()" [value]="phase.id">
+                              {{ getCropName(phase.cropId) }} - {{ phase.name }}
                             </option>
                           </select>
                         </div>
 
                         <div class="col-md-6">
-                          <label class="form-label">Fuente de Agua</label>
-                          <select class="form-select" formControlName="waterId">
+                          <label for="waterSourceId" class="form-label">Fuente de Agua</label>
+                          <select class="form-select" id="waterSourceId" formControlName="waterSourceId">
                             <option value="">Seleccione fuente</option>
-                            <option *ngFor="let water of waterSources" [value]="water.id">{{ water.name }}</option>
+                            <option *ngFor="let water of waterSources" [value]="water.id">Fuente #{{ water.id }}
+                            </option>
                           </select>
                         </div>
                       </div>
@@ -774,14 +775,6 @@
                           <select class="form-select" formControlName="catalogId">
                             <option value="">Seleccione catálogo</option>
                             <option *ngFor="let catalog of catalogs" [value]="catalog.id">{{ catalog.name }}</option>
-                          </select>
-                        </div>
-
-                        <div class="col-md-4">
-                          <label class="form-label">Método de Optimización</label>
-                          <select class="form-select" formControlName="optimizationMethod">
-                            <option value="LP">Programación Lineal</option>
-                            <option value="GREEDY">Greedy Algorithm</option>
                           </select>
                         </div>
 
@@ -799,8 +792,7 @@
                               <i class="bi bi-x-circle me-1"></i>
                               Limpiar
                             </button>
-                            <button type="submit" class="btn btn-primary"
-                              [disabled]="!calculationForm.valid || isLoading">
+                            <button type="submit" class="btn btn-primary">
                               <i class="bi bi-calculator me-1"></i>
                               <span *ngIf="!isLoading">Calcular</span>
                               <span *ngIf="isLoading">
@@ -1138,7 +1130,11 @@
                         </div>
                       </div>
                     </div>
-
+                    <br/>
+                    <br/>
+                    <br/>
+                    <br/>
+                    <br/>
                   </div>
                 </div>
 
