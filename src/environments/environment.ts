@@ -6,7 +6,7 @@ export const environment = {
 //   calculatorApi: 'https://fertilizer-calculator-api.onrender.com'
   
   // OR point to production for testing
-  agronomicApiUrl: 'https://agrismart-api.onrender.com',
+  agronomicApiUrl: 'https://agrismart-agronomic-latest.onrender.com',
   iotApiUrl: 'https://agrismart-iot-latest.onrender.com',
   calculatorApi: 'https://agrismart-web-v1-1-gafq.onrender.com'
 };
