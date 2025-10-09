@@ -22,6 +22,7 @@ using AgriSmart.Infrastructure.Mappings; // Commented out due to build issues
 using AgriSmart.Application.Agronomic.Commands;
 
 var builder = WebApplication.CreateBuilder(args);
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // Register Calculator Services
 builder.Services.AddScoped<IIrrigationDesignCalculator, IrrigationDesignCalculator>();
