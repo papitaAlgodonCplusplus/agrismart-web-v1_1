@@ -1208,20 +1208,28 @@ export class NutrientFormulationComponent implements OnInit {
             return null;
         }
     }
-    deleteRecipe(recipe: FormulationRecipe): void {
-        if (!confirm(`¿Está seguro de que desea eliminar la receta "${recipe.name}"?`)) {
+    public deleteRecipe(recipeId: number, event?: Event): void {
+        // Prevent card click event from firing
+        if (event) {
+            event.stopPropagation();
+        }
+
+        if (!confirm('¿Está seguro de que desea eliminar esta receta?')) {
             return;
         }
-        if (!recipe.id) {
-            this.errorMessage = 'No se puede eliminar una receta sin ID';
-            return;
-        }
-        this.isLoading = true;
-        if (recipe.id > 1000000) {
-            this.deleteFromLocalStorage(recipe.id);
-            return;
-        }
-        this.deleteRecipeFromBackend(recipe.id);
+
+        this.nutrientRecipeService.delete(recipeId).subscribe({
+            next: () => {
+                console.log('✅ Recipe deleted');
+                this.successMessage = 'Receta eliminada exitosamente';
+                this.loadSavedRecipes(); // Reload recipes
+                this.filterAllRecipes(); // Refresh filtered list
+            },
+            error: (error) => {
+                console.error('❌ Error deleting recipe:', error);
+                this.errorMessage = 'Error al eliminar la receta. Por favor intente nuevamente.';
+            }
+        });
     }
     public deleteRecipeFromBackend(recipeId: number): void {
         this.apiService.get(this.ANALYTICAL_ENTITY_ENDPOINT).pipe(
@@ -2403,19 +2411,6 @@ export class NutrientFormulationComponent implements OnInit {
         this.successMessage = `Receta "${recipe.name}" exportada exitosamente`;
         setTimeout(() => this.successMessage = '', 3000);
     }
-
-    deleteRecipeFromModal(recipe: FormulationRecipe, event: Event): void {
-        event.stopPropagation();
-
-        if (confirm(`¿Está seguro de que desea eliminar la receta "${recipe.name}"?`)) {
-            this.deleteRecipe(recipe);
-            this.filterAllRecipes(); // Refresh the filtered list
-
-            this.successMessage = `Receta "${recipe.name}" eliminada exitosamente`;
-            setTimeout(() => this.successMessage = '', 3000);
-        }
-    }
-
     exportSelectedRecipes(): void {
         if (this.selectedRecipesForExport.length === 0) {
             this.errorMessage = 'No hay recetas seleccionadas para exportar';

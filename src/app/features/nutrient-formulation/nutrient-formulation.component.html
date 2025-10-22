@@ -1130,11 +1130,11 @@
                         </div>
                       </div>
                     </div>
-                    <br/>
-                    <br/>
-                    <br/>
-                    <br/>
-                    <br/>
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
                   </div>
                 </div>
 
@@ -1276,6 +1276,10 @@
             <div class="col-md-6 col-lg-4" *ngFor="let recipe of filteredAllRecipes">
               <div class="card recipe-card h-100" (click)="selectRecipeFromModal(recipe)">
                 <span class="recipe-badge badge bg-primary">{{ recipe.recipeType || 'Simple' }}</span>
+                <button class="btn btn-sm btn-danger recipe-delete-btn" (click)="deleteRecipe(recipe.id ?? 0, $event)"
+                  title="Eliminar receta">
+                  <i class="bi bi-trash"></i>
+                </button>
                 <div class="card-body">
                   <h6 class="card-title">{{ recipe.name }}</h6>
                   <p class="recipe-meta text-muted mb-2">
