@@ -1,5 +1,8 @@
 # APIs
 
+dotnet build  --configuration=production
+dotnet publish -c Release -o ./publish
+
 # AgriSmart .NET Backend API Endpoints Reference
 
 ## Base URLs

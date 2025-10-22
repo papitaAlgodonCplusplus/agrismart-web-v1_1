@@ -32,7 +32,10 @@ namespace AgriSmart.Core.Entities
         // Application Order
         public int? ApplicationOrder { get; set; }
         public string? ApplicationNotes { get; set; }
-        
+
+        // Status
+        public bool? Active { get; set; }
+
         // Navigation Properties
         public virtual NutrientFormulationRecipe? Recipe { get; set; }
         public virtual Fertilizer? Fertilizer { get; set; }

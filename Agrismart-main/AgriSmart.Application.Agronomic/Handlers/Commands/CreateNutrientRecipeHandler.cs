@@ -104,6 +104,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                             CostPortion = fertDto.CostPortion,
                             ApplicationOrder = fertDto.ApplicationOrder,
                             ApplicationNotes = fertDto.ApplicationNotes,
+                            Active = true,
                             CreatedBy = GetSessionUserId(),
                             DateCreated = DateTime.Now
                         };

@@ -2561,12 +2561,12 @@ export class NutrientFormulationComponent implements OnInit {
             next: (result) => {
                 this.simpleFormulationResult = result;
                 this.currentRecipe = this.convertSimpleResultToRecipe(result);
-                this.successMessage = 'Formulación calculada exitosamente con datos reales';
+                this.successMessage = 'Formulación calculada exitosamente';
                 this.isCalculatingSimple = false;
             },
             error: (error) => {
                 console.error('Error calculating simple formulation:', error);
-                this.errorMessage = error.message || 'Error al calcular la formulación con datos reales';
+                this.errorMessage = error.message || 'Error al calcular la formulación';
                 this.isCalculatingSimple = false;
             }
         });

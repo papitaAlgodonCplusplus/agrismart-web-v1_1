@@ -82,5 +82,93 @@ namespace AgriSmart.API.Agronomic.Controllers
             return token;
         }
 
+        /// <summary>
+        /// Refresh an existing token to extend its expiration time
+        /// </summary>
+        /// <returns>Updated token with new expiration</returns>
+        [HttpPost("RefreshToken")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<Response<LoginResponse>>> RefreshToken()
+        {
+            try
+            {
+                // Get the current user's token from the Authorization header
+                var authHeader = Request.Headers["Authorization"].ToString();
+                if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+                {
+                    return Unauthorized();
+                }
+
+                var token = authHeader.Substring("Bearer ".Length).Trim();
+
+                // Validate and decode the existing token
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(_jwtConfiguration.Secret);
+
+                try
+                {
+                    var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
+                        ValidateIssuer = true,
+                        ValidIssuer = _jwtConfiguration.ValidIssuer,
+                        ValidateAudience = true,
+                        ValidAudience = _jwtConfiguration.ValidAudience,
+                        ValidateLifetime = false // We don't validate lifetime since we're refreshing
+                    }, out SecurityToken validatedToken);
+
+                    // Extract claims from the existing token
+                    var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    var clientId = principal.FindFirst(ClaimTypes.PrimarySid)?.Value;
+                    var profileId = principal.FindFirst(ClaimTypes.Role)?.Value;
+                    var userName = principal.FindFirst(ClaimTypes.Name)?.Value;
+
+                    if (string.IsNullOrEmpty(userId))
+                    {
+                        return Unauthorized();
+                    }
+
+                    // Create new claims with the same information
+                    var authClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, userName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.PrimarySid, clientId),
+                new Claim(ClaimTypes.Role, profileId)
+            };
+
+                    // Generate new token with extended expiration
+                    var newToken = GetToken(authClaims);
+                    var newTokenString = new JwtSecurityTokenHandler().WriteToken(newToken);
+
+                    // Create response
+                    var loginResponse = new LoginResponse
+                    {
+                        Id = int.Parse(userId),
+                        ClientId = int.Parse(clientId),
+                        UserName = userName,
+                        ProfileId = int.Parse(profileId),
+                        Token = newTokenString,
+                        ValidTo = newToken.ValidTo,
+                        Active = true
+                    };
+
+                    var response = new Response<LoginResponse>(loginResponse);
+
+                    return Ok(response);
+                }
+                catch (SecurityTokenException)
+                {
+                    return Unauthorized();
+                }
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized();
+            }
+        }
     }
 }
