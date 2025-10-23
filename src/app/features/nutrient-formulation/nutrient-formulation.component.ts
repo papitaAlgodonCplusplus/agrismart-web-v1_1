@@ -619,8 +619,8 @@ export class NutrientFormulationComponent implements OnInit {
     }
     getFilteredCropPhases(): CropPhase[] {
         // returns cropphases where cropPhaseSolutionRequirements has an entry
-        const availableCropPhasesId = this.cropPhaseSolutionRequirements.map(req => req.phaseId);
-        return this.cropPhases.filter(phase => availableCropPhasesId.includes(phase.id));
+        const availableCropPhasesId = this.cropPhaseSolutionRequirements.map(req => req.phaseId.toString());
+        return this.cropPhases.filter(phase => availableCropPhasesId.includes(phase.id.toString()));
     }
 
     // Alias for template compatibility
@@ -1009,82 +1009,135 @@ export class NutrientFormulationComponent implements OnInit {
             this.isLoading = false;
         }
     }
+    getLast2CharsToInt(value: string): number {
+        if (!value || value.length < 2) return 0;
+        const last2Chars = value.slice(-2);
+        const intValue = parseInt(last2Chars, 10);
+        console.log(`Extracted integer from last 2 chars of "${value}":`, intValue);
+        return isNaN(intValue) ? 0 : intValue;
+    }
     public saveRecipe(result: SimpleFormulationResult | any): void {
         console.log('💾 Saving recipe to database...', result);
         console.log('cropPhases:', this.cropPhases);
-        const recipeRequest = {
+
+        // Defensive checks
+        if (!result) {
+            console.error('❌ No result provided to saveRecipe');
+            alert('Error: No recipe data to save.');
+            return;
+        } else {
+            console.log('Result to save:', result);
+        }
+
+        const phaseId = this.getLast2CharsToInt(result.data_sources.requirements_api);
+        const matchedCropId = this.cropPhases.find(phase => phase.id === phaseId)?.cropId;
+
+        console.log('Derived matchedCropId from requirements_api:', matchedCropId);
+
+        let cropId = matchedCropId;
+        if (!cropId || isNaN(Number(cropId))) {
+            console.error('❌ Invalid cropId:', cropId);
+            alert('Error: Invalid crop selection. Please select a valid crop.');
+            return;
+        }
+        cropId = Number(cropId);
+
+        // Determine cropPhaseId - ensure it's a valid integer
+        const cropPhaseId = this.cropPhases.find(phase => phase.id === phaseId)?.id;
+        if (!cropPhaseId || isNaN(Number(cropPhaseId))) {
+            console.error('❌ Invalid cropPhaseId:', cropPhaseId);
+            alert('Error: Invalid crop phase selection. Please select a valid crop phase.');
+            return;
+        }
+
+        // Map fertilizers with proper structure
+        const fertilizers = (result.fertilizers || []).map((fert: any, index: number) => {
+            const matchedFertilizer = this.fertilizers?.find(f =>
+                f.name?.trim().toLowerCase() === fert.fertilizerName?.trim().toLowerCase()
+            );
+
+            return {
+                fertilizerId: matchedFertilizer?.id || 0,
+                concentrationGramsPerLiter: Number(fert.concentration) || 0,
+                totalGrams: Number(fert.totalAmount) || 0,
+                totalKilograms: fert.totalAmount ? Number(fert.totalAmount) / 1000 : null,
+                nitrogenContribution: Number(fert.npkContribution?.nitrogen) || 0,
+                phosphorusContribution: Number(fert.npkContribution?.phosphorus) || 0,
+                potassiumContribution: Number(fert.npkContribution?.potassium) || 0,
+                calciumContribution: Number(fert.realComposition?.calcium) || 0,
+                magnesiumContribution: Number(fert.realComposition?.magnesium) || 0,
+                sulfurContribution: Number(fert.realComposition?.sulfur) || 0,
+                percentageOfN: Number(fert.realComposition?.nitrogen) || 0,
+                percentageOfP: Number(fert.realComposition?.phosphorus) || 0,
+                percentageOfK: Number(fert.realComposition?.potassium) || 0,
+                costPerUnit: (fert.totalAmount || 1) !== 0 ? (Number(fert.cost) || 0) / (Number(fert.totalAmount) || 1) : 0,
+                totalCost: Number(fert.cost) || 0,
+                costPortion: Number(fert.cost) || 0,
+                applicationOrder: index + 1,
+                applicationNotes: null
+            };
+        });
+
+        // Build the command object matching CreateNutrientRecipeCommand
+        const command = {
             name: result.recipeName || `Recipe ${new Date().toLocaleDateString()}`,
-            description: `Nutrient recipe for ${this.getCropName(result.cropId)} - ${this.getCropPhaseName(result.cropPhaseId)}`,
-            cropId: this.cropPhases.find(phase => phase.id.toString() === result.cropPhaseId.toString())?.cropId || result.cropId,
-            cropPhaseId: result.cropPhaseId,
+            description: `Nutrient recipe for ${this.getCropName(cropId)} - ${this.getCropPhaseName(cropPhaseId)}`,
+            cropId: cropId,
+            cropPhaseId: cropPhaseId,
             waterSourceId: null,
             catalogId: 1,
-            targetPh: result.targetPh,
-            targetEc: result.targetEc,
-            volumeLiters: result.volumeLiters,
-            targetNitrogen: result.nutrientBalance.nitrogen.target,
-            targetPhosphorus: result.nutrientBalance.phosphorus.target,
-            targetPotassium: result.nutrientBalance.potassium.target,
-            targetCalcium: result.nutrientBalance.calcium?.target,
-            targetMagnesium: result.nutrientBalance.magnesium?.target,
-            targetSulfur: result.nutrientBalance.sulfur?.target,
-            targetIron: result.nutrientBalance.iron?.target,
-            achievedNitrogen: result.nutrientBalance.nitrogen.achieved,
-            achievedPhosphorus: result.nutrientBalance.phosphorus.achieved,
-            achievedPotassium: result.nutrientBalance.potassium.achieved,
-            achievedCalcium: result.nutrientBalance.calcium?.achieved,
-            achievedMagnesium: result.nutrientBalance.magnesium?.achieved,
-            achievedSulfur: result.nutrientBalance.sulfur?.achieved,
-            achievedIron: result.nutrientBalance.iron?.achieved,
-            totalCost: result.totalCost,
-            costPerLiter: result.totalCost / result.volumeLiters,
+            targetPh: Number(result.targetPh) || 0,
+            targetEc: Number(result.targetEc) || 0,
+            volumeLiters: Number(result.volumeLiters) || 0,
+            targetNitrogen: Number(result.nutrientBalance?.nitrogen?.target) || 0,
+            targetPhosphorus: Number(result.nutrientBalance?.phosphorus?.target) || 0,
+            targetPotassium: Number(result.nutrientBalance?.potassium?.target) || 0,
+            targetCalcium: result.nutrientBalance?.calcium?.target ? Number(result.nutrientBalance.calcium.target) : null,
+            targetMagnesium: result.nutrientBalance?.magnesium?.target ? Number(result.nutrientBalance.magnesium.target) : null,
+            targetSulfur: result.nutrientBalance?.sulfur?.target ? Number(result.nutrientBalance.sulfur.target) : null,
+            targetIron: result.nutrientBalance?.iron?.target ? Number(result.nutrientBalance.iron.target) : null,
+            achievedNitrogen: result.nutrientBalance?.nitrogen?.achieved ? Number(result.nutrientBalance.nitrogen.achieved) : null,
+            achievedPhosphorus: result.nutrientBalance?.phosphorus?.achieved ? Number(result.nutrientBalance.phosphorus.achieved) : null,
+            achievedPotassium: result.nutrientBalance?.potassium?.achieved ? Number(result.nutrientBalance.potassium.achieved) : null,
+            achievedCalcium: result.nutrientBalance?.calcium?.achieved ? Number(result.nutrientBalance.calcium.achieved) : null,
+            achievedMagnesium: result.nutrientBalance?.magnesium?.achieved ? Number(result.nutrientBalance.magnesium.achieved) : null,
+            achievedSulfur: result.nutrientBalance?.sulfur?.achieved ? Number(result.nutrientBalance.sulfur.achieved) : null,
+            achievedIron: result.nutrientBalance?.iron?.achieved ? Number(result.nutrientBalance.iron.achieved) : null,
+            totalCost: result.totalCost ? Number(result.totalCost) : null,
+            costPerLiter: result.volumeLiters ? (Number(result.totalCost) || 0) / Number(result.volumeLiters) : null,
             recipeType: this.isSimpleFormulationActive() ? 'Simple' : 'Advanced',
             instructions: JSON.stringify(result.instructions || []),
             warnings: JSON.stringify(result.warnings || []),
-            notes: result.notes,
-            fertilizers: result.fertilizers.map((fert: any, index: number) => {
-                // Try to find the fertilizer ID by name
-                const matchedFertilizer = this.fertilizers.find(f =>
-                    f.name?.trim().toLowerCase() === fert.fertilizerName?.trim().toLowerCase()
-                );
-
-                return {
-                    fertilizerId: matchedFertilizer?.id || 0, // Lookup ID or default to 0
-                    fertilizerName: fert.fertilizerName,
-                    concentrationGramsPerLiter: fert.concentration || 0,
-                    totalGrams: fert.totalAmount || 0,
-                    totalKilograms: fert.totalAmount ? fert.totalAmount / 1000 : undefined,
-                    nitrogenContribution: fert.npkContribution?.nitrogen || 0,
-                    phosphorusContribution: fert.npkContribution?.phosphorus || 0,
-                    potassiumContribution: fert.npkContribution?.potassium || 0,
-                    calciumContribution: fert.realComposition?.calcium || 0,
-                    magnesiumContribution: fert.realComposition?.magnesium || 0,
-                    sulfurContribution: fert.realComposition?.sulfur || 0,
-                    percentageOfN: fert.realComposition?.nitrogen || 0,
-                    percentageOfP: fert.realComposition?.phosphorus || 0,
-                    percentageOfK: fert.realComposition?.potassium || 0,
-                    costPerUnit: fert.cost / (fert.totalAmount || 1), // Calculate cost per gram
-                    totalCost: fert.cost || 0,
-                    costPortion: fert.cost || 0,
-                    applicationOrder: index + 1,
-                    applicationNotes: undefined
-                };
-            })
+            notes: result.notes || null,
+            fertilizers: fertilizers
         };
 
-        this.nutrientRecipeService.create(recipeRequest).subscribe({
+        console.log('📦 Command prepared for API:', command);
+
+        // Send the command directly (not wrapped)
+        this.nutrientRecipeService.create(command).subscribe({
             next: (response) => {
                 console.log('✅ Recipe saved to database:', response);
-                alert(`Recipe "${recipeRequest.name}" saved successfully!`);
-                this.loadSavedRecipes(); // Reload recipes
+                alert(`Recipe "${command.name}" saved successfully!`);
+                this.loadSavedRecipes();
             },
             error: (error) => {
                 console.error('❌ Error saving recipe:', error);
-                alert('Error saving recipe. Please try again.');
+
+                // Enhanced error messaging
+                let errorMessage = 'Error saving recipe. ';
+                if (error.originalError?.error?.errors) {
+                    const errors = error.originalError.error.errors;
+                    const errorMessages = Object.keys(errors).map(key => `${key}: ${errors[key].join(', ')}`);
+                    errorMessage += errorMessages.join('; ');
+                } else if (error.message) {
+                    errorMessage += error.message;
+                }
+
+                alert(errorMessage);
             }
         });
     }
-
     public saveRecipeDetails(recipeId: number, catalogId: number): void {
         if (!this.currentRecipe) return;
         const basicData = {
