@@ -11,6 +11,7 @@ import { ApiService } from '../../core/services/api.service';
 import { CatalogService, Catalog } from '../catalogs/services/catalog.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { RealDataSimpleFormulationService, SimpleFormulationRequest, SimpleFormulationResult } from './real-data-simple-formulation.service';
+import { Chart, registerables } from 'chart.js';
 
 import { NutrientRecipeService, CreateRecipeRequest, NutrientRecipe } from '../../core/services/nutrient-recipe.service';
 
@@ -24,8 +25,31 @@ interface CalculationResponse {
     performance_metrics: PerformanceMetrics;
     cost_analysis: CostAnalysis;
     calculation_results: CalculationResults;
+    calculation_data_used?: CalculationDataUsed;
     linear_programming_analysis: LinearProgrammingAnalysis;
     data_sources: DataSources;
+}
+
+interface CalculationDataUsed {
+    api_fertilizers_raw?: any[];
+    water_analysis?: WaterAnalysis;
+    volume_liters?: number;
+    target_concentrations?: any;
+}
+
+interface WaterAnalysis {
+    Ca?: number;
+    K?: number;
+    N?: number;
+    P?: number;
+    Mg?: number;
+    S?: number;
+    Fe?: number;
+    Mn?: number;
+    Zn?: number;
+    Cu?: number;
+    B?: number;
+    Mo?: number;
 }
 
 
@@ -121,6 +145,54 @@ interface CostAnalysis {
     };
     regional_factor: number;
     region: string;
+}
+
+// Add after existing interfaces
+interface FertilizerUsageData {
+    name: string;
+    dosage_g_per_L: number;
+    dosage_ml_per_L: number;
+    cost_crc: number;
+    cost_percentage: number;
+    nutrient_contribution: {
+        N: number;
+        P: number;
+        K: number;
+        Ca: number;
+        Mg: number;
+        S: number;
+        Fe: number;
+        Mn: number;
+        Zn: number;
+        Cu: number;
+        B: number;
+        Mo: number;
+    };
+    raw_fertilizer: any; // From api_fertilizers_raw
+}
+
+interface EnhancedCostAnalysis {
+    total_cost_crc: number;
+    cost_per_liter_concentrated: number;
+    cost_per_liter_diluted: number;
+    cost_per_m3_diluted: number;
+    cost_per_fertilizer: { [key: string]: number };
+    api_price_coverage_percent: number;
+}
+
+interface WaterAnalysisDisplay {
+    Ca: number;
+    K: number;
+    N: number;
+    P: number;
+    Mg: number;
+    S: number;
+    Fe: number;
+    Mn: number;
+    Zn: number;
+    Cu: number;
+    B: number;
+    Mo: number;
 }
 
 interface CalculationResults {
@@ -409,6 +481,12 @@ export class NutrientFormulationComponent implements OnInit {
     Message!: string;
 
     calculationForm!: FormGroup;
+    // Enhanced data for visualizations
+    fertilizerUsageData: any[] = [];
+    enhancedCostAnalysis: EnhancedCostAnalysis | null = null;
+    waterAnalysisDisplay: WaterAnalysisDisplay | null = null;
+    performanceMetricsDisplay: any | null = null;
+    optimizationSummaryDisplay: any | null = null;
 
     // Data arrays
     catalogs: Catalog[] = [];
@@ -422,6 +500,8 @@ export class NutrientFormulationComponent implements OnInit {
     nutrientChartData: any[] = [];
     costChartData: any[] = [];
     public Math = Math;
+    private dosageChart: Chart | null = null;
+    private costDistributionChart: Chart | null = null;
 
     public realDataFormulationService = new RealDataSimpleFormulationService();
 
@@ -443,6 +523,7 @@ export class NutrientFormulationComponent implements OnInit {
         public catalogService: CatalogService,
         public apiService: ApiService
     ) {
+        Chart.register(...registerables);
         this.formulationForm = this.createForm();
         this.calculationForm = this.createCalculationForm(); // Add this line
     }
@@ -663,48 +744,6 @@ export class NutrientFormulationComponent implements OnInit {
             maxBudgetPerLiter: Number(formValue.maxBudgetPerLiter) || 100
         };
     }
-
-    public calculateEnhancedFertilizerMixFixed(recipe: FormulationRecipe): RecipeFertilizer[] {
-        const selectedFertilizers: RecipeFertilizer[] = [];
-        const availableFertilizers = this.fertilizers.filter(f => f.isActive);
-        if (availableFertilizers.length === 0) {
-            console.warn('No active fertilizers available');
-            const allFertilizers = this.fertilizers.filter(f =>
-                f.composition && (f.composition.nitrogen > 0 || f.composition.phosphorus > 0 || f.composition.potassium > 0)
-            );
-            if (allFertilizers.length > 0) {
-                return this.calculateSimpleFertilizerMix(recipe, allFertilizers);
-            }
-            return [];
-        }
-        const fertilizersWithChemistry = availableFertilizers.map(fert => {
-            const chemistry = this.fertilizerChemistries.find(c => c.fertilizerId === fert.id);
-            return { ...fert, chemistry };
-        });
-        const targets = {
-            nitrogen: Number(recipe.targetNitrogen) || 200,
-            phosphorus: Number(recipe.targetPhosphorus) || 50,
-            potassium: Number(recipe.targetPotassium) || 300,
-            calcium: Number(recipe.targetCalcium) || 150,
-            magnesium: Number(recipe.targetMagnesium) || 50
-        };
-        const optimalFertilizers = this.selectOptimalFertilizersFixed(fertilizersWithChemistry, targets, Number(recipe.volumeLiters));
-        optimalFertilizers.forEach(fert => {
-            const volumeLiters = Number(recipe.volumeLiters) || 1000;
-            const costPortion = (fert.concentration * volumeLiters * (fert.pricePerUnit || 0)) / 1000;
-            selectedFertilizers.push({
-                fertilizerId: fert.id,
-                fertilizer: fert,
-                concentration: Math.round(fert.concentration * 100) / 100,
-                percentageOfN: this.calculateNutrientContribution(fert, 'nitrogen', targets.nitrogen),
-                percentageOfP: this.calculateNutrientContribution(fert, 'phosphorus', targets.phosphorus),
-                percentageOfK: this.calculateNutrientContribution(fert, 'potassium', targets.potassium),
-                costPortion: Math.round(costPortion * 100) / 100
-            });
-        });
-        recipe.totalCost = selectedFertilizers.reduce((sum, fert) => sum + fert.costPortion, 0);
-        return selectedFertilizers;
-    }
     public calculateSimpleFertilizerMix(recipe: FormulationRecipe, fertilizers: Fertilizer[]): RecipeFertilizer[] {
         const selectedFertilizers: RecipeFertilizer[] = [];
         const targets = {
@@ -867,13 +906,43 @@ export class NutrientFormulationComponent implements OnInit {
         const kMet = (original.potassium - remaining.potassium) / original.potassium >= (1 - threshold);
         return nMet && pMet && kMet;
     }
-    public calculateNutrientContribution(fertilizer: any, nutrient: string, target: number): number {
-        if (!fertilizer.composition) return 0;
-        const composition = fertilizer.composition[nutrient] || 0;
-        const concentration = fertilizer.concentration || 0;
-        if (target === 0) return 0;
-        const contribution = (composition * concentration) / 1000;
-        return Math.min(100, Math.round((contribution / target) * 10000) / 100);
+    /**
+  * Calculate nutrient contribution from fertilizer (in grams)
+  * Updated to work with new fertilizer data structure
+  */
+    private calculateNutrientContribution(fertilizer: any, dosageGPerL: number, volumeLiters: number): any {
+        if (!fertilizer) {
+            return { N: 0, P: 0, K: 0, Ca: 0, Mg: 0, S: 0, Fe: 0, Mn: 0, Zn: 0, Cu: 0, B: 0, Mo: 0 };
+        }
+
+        const totalGrams = dosageGPerL * volumeLiters;
+
+        // Helper function to get nutrient value
+        const getNutrientValue = (nutrientKey: string): number => {
+            const value = fertilizer[nutrientKey] || 0;
+
+            // If value is in ppm (> 1000), convert to percentage
+            if (value > 1000) {
+                return (value / 10000); // Convert ppm to percentage
+            }
+
+            return value;
+        };
+
+        return {
+            N: (getNutrientValue('n') * totalGrams) / 100,
+            P: (getNutrientValue('p') * totalGrams) / 100,
+            K: (getNutrientValue('k') * totalGrams) / 100,
+            Ca: (getNutrientValue('ca') * totalGrams) / 100,
+            Mg: (getNutrientValue('mg') * totalGrams) / 100,
+            S: (getNutrientValue('s') * totalGrams) / 100,
+            Fe: (getNutrientValue('fe') * totalGrams) / 100,
+            Mn: (getNutrientValue('mn') * totalGrams) / 100,
+            Zn: (getNutrientValue('zn') * totalGrams) / 100,
+            Cu: (getNutrientValue('cu') * totalGrams) / 100,
+            B: (getNutrientValue('b') * totalGrams) / 100,
+            Mo: (getNutrientValue('mo') * totalGrams) / 100
+        };
     }
     public generateEnhancedFormulationResults(recipe: FormulationRecipe, waterSource: WaterChemistry): any[] {
         let achievedN = waterSource.no3 || 0;
@@ -2091,66 +2160,6 @@ export class NutrientFormulationComponent implements OnInit {
         ]);
     }
 
-    public performCalculation(): void {
-        this.isLoading = true;
-        this.errorMessage = '';
-        this.successMessage = '';
-        this.showResults = false;
-
-        const formData = this.calculationForm.value;
-        formData.user_id = this.authService.getCurrentUser()['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid'] || 1;
-
-        // Build the API URL with query parameters
-        const apiUrl = 'hhttps://agrismart-web-v1-1-2.onrender.com/swagger-integrated-calculation';
-
-        let params = new HttpParams()
-            .set('user_id', formData.user_id.toString())
-            .set('catalog_id', formData.catalog_id.toString())
-            .set('phase_id', formData.phase_id.toString())
-            .set('water_id', formData.water_id.toString())
-            .set('volume_liters', formData.volume_liters.toString())
-            .set('use_ml', formData.use_ml.toString())
-            .set('apply_safety_caps', formData.apply_safety_caps.toString())
-            .set('strict_caps', formData.strict_caps.toString());
-
-        console.log('calling API URL: ', apiUrl + '?' + params.toString());
-
-        this.http.get<CalculationResponse>(apiUrl, { params }).pipe(
-            tap(response => {
-                console.log('API Response:', response);
-            }),
-            catchError(error => {
-                console.error('API Error:', error);
-                this.errorMessage = `Error en la calculadora de nutrientes: ${error.message || 'Error desconocido'}`;
-                return of(null);
-            })
-        ).subscribe({
-            next: (response) => {
-                this.isLoading = false;
-                if (response) {
-                    console.log('Calculation successful:', response);
-                    this.calculationResults = response;
-                    this.processResults();
-                    this.showResults = true;
-                    this.successMessage = 'Cálculo completado exitosamente';
-
-                    // Scroll to results
-                    setTimeout(() => {
-                        const resultsElement = document.getElementById('calculation-results');
-                        if (resultsElement) {
-                            resultsElement.scrollIntoView({ behavior: 'smooth' });
-                        }
-                    }, 100);
-                }
-            },
-            error: (error) => {
-                this.isLoading = false;
-                console.error('Subscription Error:', error);
-                this.errorMessage = `Error inesperado: ${error.message}`;
-            }
-        });
-    }
-
     public processResults(): void {
         if (!this.calculationResults) return;
 
@@ -2173,7 +2182,7 @@ export class NutrientFormulationComponent implements OnInit {
             parameter: result.parameter,
             target: result.target_value,
             actual: result.actual_value,
-            deviation: Math.abs(result.percentage_deviation),
+            deviation: this.calculateDeviation(result.actual_value, result.target_value), // MODIFIED
             status: result.status
         }));
 
@@ -2187,6 +2196,383 @@ export class NutrientFormulationComponent implements OnInit {
                 percentage: this.calculationResults!.cost_analysis.cost_percentages[name] || 0
             }))
             .sort((a, b) => b.cost - a.cost);
+
+        // NEW: Process enhanced fertilizer usage data
+        this.processFertilizerUsageData();
+
+        // NEW: Process enhanced cost analysis
+        this.processEnhancedCostAnalysis();
+        console.log("finished processEnhancedCostAnalysis")
+
+        // NEW: Process water analysis display
+        this.processWaterAnalysis();
+        console.log("finished processWaterAnalysis")
+
+        // NEW: Process performance metrics (rounded to 2 decimals)
+        this.processPerformanceMetrics();
+        console.log("finished processPerformanceMetrics")
+
+        // NEW: Process optimization summary (rounded to 2 decimals)
+        this.processOptimizationSummary();
+        console.log("finished processOptimizationSummary")
+
+        this.renderFertilizerCharts();
+        console.log("finished renderFertilizerCharts")
+    }
+
+    /**
+ * Calculate deviation as difference between achieved and target
+ */
+    private calculateDeviation(actual: number, target: number): number {
+        return actual - target;
+    }
+
+    /**
+     * Process fertilizer usage data from api_fertilizers_raw
+     */
+    private processFertilizerUsageData(): void {
+        if (!this.calculationResults?.calculation_data_used?.api_fertilizers_raw) {
+            this.fertilizerUsageData = [];
+            return;
+        }
+
+        const rawFertilizers = this.calculationResults.calculation_data_used.api_fertilizers_raw;
+        const dosages = this.calculationResults.calculation_results.fertilizer_dosages;
+        const costs = this.calculationResults.cost_analysis.fertilizer_costs;
+        const costPercentages = this.calculationResults.cost_analysis.cost_percentages;
+        const volumeLiters = this.calculationResults.calculation_data_used.volume_liters || 1000;
+
+        this.fertilizerUsageData = Object.entries(dosages)
+            .filter(([name, dosage]) => dosage.dosage_g_per_L > 0)
+            .map(([name, dosage]) => {
+                const rawFert = rawFertilizers.find((f: any) => f.name === name);
+                const cost = costs[name] || 0;
+                const costPercentage = costPercentages[name] || 0;
+
+                // Calculate nutrient contribution
+                const nutrientContribution = this.calculateNutrientContribution(
+                    rawFert,
+                    dosage.dosage_g_per_L,
+                    volumeLiters
+                );
+
+                return {
+                    name,
+                    dosage_g_per_L: dosage.dosage_g_per_L,
+                    dosage_ml_per_L: dosage.dosage_ml_per_L,
+                    cost_crc: cost,
+                    cost_percentage: costPercentage,
+                    nutrient_contribution: nutrientContribution,
+                    raw_fertilizer: rawFert
+                };
+            })
+            .sort((a, b) => b.cost_crc - a.cost_crc);
+
+        console.log("this.fertilizerUsageData: ", this.fertilizerUsageData);
+    }
+
+
+    /**
+     * Process enhanced cost analysis
+     */
+    private processEnhancedCostAnalysis(): void {
+        if (!this.calculationResults?.cost_analysis) {
+            this.enhancedCostAnalysis = null;
+            return;
+        }
+
+        const costAnalysis = this.calculationResults.cost_analysis;
+
+        this.enhancedCostAnalysis = {
+            total_cost_crc: costAnalysis.total_cost_crc,
+            cost_per_liter_concentrated: costAnalysis.cost_per_liter_crc,
+            cost_per_liter_diluted: costAnalysis.cost_per_liter_crc,
+            cost_per_m3_diluted: costAnalysis.cost_per_m3_crc,
+            cost_per_fertilizer: costAnalysis.fertilizer_costs,
+            api_price_coverage_percent: costAnalysis.api_price_coverage_percent
+        };
+    }
+
+    /**
+     * Process water analysis for display
+     */
+    private processWaterAnalysis(): void {
+        if (!this.calculationResults?.calculation_data_used?.water_analysis) {
+            this.waterAnalysisDisplay = null;
+            return;
+        }
+
+        const waterAnalysis = this.calculationResults.calculation_data_used.water_analysis;
+
+        this.waterAnalysisDisplay = {
+            Ca: waterAnalysis.Ca || 0,
+            K: waterAnalysis.K || 0,
+            N: waterAnalysis.N || 0,
+            P: waterAnalysis.P || 0,
+            Mg: waterAnalysis.Mg || 0,
+            S: waterAnalysis.S || 0,
+            Fe: waterAnalysis.Fe || 0,
+            Mn: waterAnalysis.Mn || 0,
+            Zn: waterAnalysis.Zn || 0,
+            Cu: waterAnalysis.Cu || 0,
+            B: waterAnalysis.B || 0,
+            Mo: waterAnalysis.Mo || 0
+        };
+    }
+
+    /**
+     * Process performance metrics with rounding to 2 decimals
+     */
+    private processPerformanceMetrics(): void {
+        if (!this.calculationResults?.performance_metrics) {
+            this.performanceMetricsDisplay = null;
+            return;
+        }
+
+        const metrics = this.calculationResults.performance_metrics;
+
+        this.performanceMetricsDisplay = {
+            fertilizers_fetched: metrics.fertilizers_fetched,
+            fertilizers_processed: metrics.fertilizers_processed,
+            fertilizers_matched: metrics.fertilizers_matched,
+            active_dosages: metrics.active_dosages,
+            micronutrients_auto_added: metrics.micronutrients_auto_added,
+            optimization_method: metrics.optimization_method,
+            micronutrient_coverage: metrics.micronutrient_coverage,
+            safety_status: metrics.safety_status,
+            precision_achieved: metrics.precision_achieved
+        };
+    }
+
+    /**
+     * Process optimization summary with rounding to 2 decimals
+     */
+    private processOptimizationSummary(): void {
+        if (!this.calculationResults?.optimization_summary) {
+            this.optimizationSummaryDisplay = null;
+            return;
+        }
+
+        const summary = this.calculationResults.optimization_summary;
+
+        this.optimizationSummaryDisplay = {
+            method: summary.method,
+            status: summary.status,
+            active_fertilizers: summary.active_fertilizers,
+            total_dosage_g_per_L: this.roundToDecimals(summary.total_dosage_g_per_L, 2),
+            average_deviation_percent: this.roundToDecimals(summary.average_deviation_percent, 2),
+            solver_time_seconds: this.roundToDecimals(summary.solver_time_seconds, 2),
+            ionic_balance_error: this.roundToDecimals(summary.ionic_balance_error, 2),
+            success_rate_percent: this.roundToDecimals(summary.success_rate_percent, 2)
+        };
+    }
+
+    /**
+ * Render fertilizer usage charts
+ */
+    private renderFertilizerCharts(): void {
+        if (!this.fertilizerUsageData || this.fertilizerUsageData.length === 0) {
+            return;
+        }
+
+        // Destroy existing charts if they exist
+        if (this.dosageChart) {
+            this.dosageChart.destroy();
+        }
+        if (this.costDistributionChart) {
+            this.costDistributionChart.destroy();
+        }
+
+        // Wait for DOM to be ready
+        setTimeout(() => {
+            this.renderDosageChart();
+            this.renderCostDistributionChart();
+        }, 100);
+    }
+
+    /**
+     * Render dosage distribution chart
+     */
+    private renderDosageChart(): void {
+        const canvas = document.getElementById('dosageChart') as HTMLCanvasElement;
+        if (!canvas) {
+            console.warn('Dosage chart canvas not found');
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const labels = this.fertilizerUsageData.map(f => f.name);
+        const dataGPerL = this.fertilizerUsageData.map(f => f.dosage_g_per_L);
+        const dataMlPerL = this.fertilizerUsageData.map(f => f.dosage_ml_per_L);
+
+        this.dosageChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Dosificación (g/L)',
+                        data: dataGPerL,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Dosificación (mL/L)',
+                        data: dataMlPerL,
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'g/L'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'mL/L'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y.toFixed(3);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Render cost distribution chart
+     */
+    private renderCostDistributionChart(): void {
+        const canvas = document.getElementById('costDistributionChart') as HTMLCanvasElement;
+        if (!canvas) {
+            console.warn('Cost distribution chart canvas not found');
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const labels = this.fertilizerUsageData.map(f => f.name);
+        const costs = this.fertilizerUsageData.map(f => f.cost_crc);
+        const percentages = this.fertilizerUsageData.map(f => f.cost_percentage);
+
+        // Generate colors dynamically
+        const colors = this.generateChartColors(labels.length);
+
+        this.costDistributionChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Costo (₡)',
+                    data: costs,
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const percentage = percentages[context.dataIndex];
+                                return `${label}: ₡${value.toFixed(2)} (${percentage.toFixed(1)}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Generate colors for charts
+     */
+    private generateChartColors(count: number): { background: string[], border: string[] } {
+        const baseColors = [
+            { bg: 'rgba(255, 99, 132, 0.6)', border: 'rgba(255, 99, 132, 1)' },
+            { bg: 'rgba(54, 162, 235, 0.6)', border: 'rgba(54, 162, 235, 1)' },
+            { bg: 'rgba(255, 206, 86, 0.6)', border: 'rgba(255, 206, 86, 1)' },
+            { bg: 'rgba(75, 192, 192, 0.6)', border: 'rgba(75, 192, 192, 1)' },
+            { bg: 'rgba(153, 102, 255, 0.6)', border: 'rgba(153, 102, 255, 1)' },
+            { bg: 'rgba(255, 159, 64, 0.6)', border: 'rgba(255, 159, 64, 1)' },
+            { bg: 'rgba(199, 199, 199, 0.6)', border: 'rgba(199, 199, 199, 1)' },
+            { bg: 'rgba(83, 102, 255, 0.6)', border: 'rgba(83, 102, 255, 1)' },
+            { bg: 'rgba(255, 102, 196, 0.6)', border: 'rgba(255, 102, 196, 1)' },
+            { bg: 'rgba(102, 255, 178, 0.6)', border: 'rgba(102, 255, 178, 1)' }
+        ];
+
+        const background: string[] = [];
+        const border: string[] = [];
+
+        for (let i = 0; i < count; i++) {
+            const color = baseColors[i % baseColors.length];
+            background.push(color.bg);
+            border.push(color.border);
+        }
+
+        return { background, border };
+    }
+
+    /**
+     * Round number to specified decimals
+     */
+    private roundToDecimals(value: number, decimals: number): number {
+        return Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
     }
 
     public markFormGroupTouched(): void {
@@ -2944,14 +3330,7 @@ export class NutrientFormulationComponent implements OnInit {
                     this.processResults();
                     this.showResults = true;
                     this.successMessage = 'Cálculo completado exitosamente';
-
-                    // Scroll to results
-                    setTimeout(() => {
-                        const resultsElement = document.getElementById('calculation-results');
-                        if (resultsElement) {
-                            resultsElement.scrollIntoView({ behavior: 'smooth' });
-                        }
-                    }, 100);
+                    console.log(this.successMessage)
                 }
             },
             error: (error) => {
@@ -3276,8 +3655,6 @@ export class NutrientFormulationComponent implements OnInit {
 
             return hasRealComposition;
         });
-
-        console.log(`Found ${realFertilizers.length} fertilizers with real composition data out of ${this.fertilizers.length} total`);
 
         // Log composition details for debugging
         // realFertilizers.forEach(f => {
@@ -3908,32 +4285,19 @@ export class NutrientFormulationComponent implements OnInit {
         this.loadRecipe(recipe);
         this.closeRecipesModal();
     }
+    /**
+ * Get deviation class for styling
+ */
+    getDeviationClass(deviation: number): string {
+        if (Math.abs(deviation) < 1) return 'text-success';
+        if (Math.abs(deviation) < 5) return 'text-warning';
+        return 'text-danger';
+    }
 
-    // Note: loadSavedRecipes() already exists earlier in the component
-
-    // ==================== NOTES ====================
-    /*
-     * INTEGRATION STEPS:
-     * 
-     * 1. Add the LoadedRecipe interface at the top of your component file
-     * 
-     * 2. Add the currentRecipe property to your component class properties
-     * 
-     * 3. Copy ALL the methods above into your component class
-     * 
-     * 4. Ensure your loadSavedRecipes() method exists and works correctly
-     * 
-     * 5. Update your modal's recipe selection to call selectRecipeFromModal(recipe)
-     * 
-     * 6. Test by:
-     *    - Opening the "Recetas Guardadas" modal
-     *    - Selecting a recipe
-     *    - Verifying the loaded recipe section appears
-     *    - Testing all action buttons (Use, Export, Duplicate, Print, Close)
-     * 
-     * 7. The loaded recipe section will only show when:
-     *    - currentRecipe is NOT null
-     *    - AND simpleFormulationResult is null (Simple tab)
-     *    - OR calculationResults is null (Advanced tab)
+    /**
+     * Get water analysis keys for iteration
      */
+    getWaterAnalysisKeys(): string[] {
+        return ['Ca', 'K', 'N', 'P', 'Mg', 'S', 'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo'];
+    }
 }

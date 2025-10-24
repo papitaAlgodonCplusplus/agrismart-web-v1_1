@@ -1068,7 +1068,7 @@
                       </div>
                     </div>
 
-                    <!-- Nutrient Verification -->
+                    <!-- Nutrient Verification Table with Calculated Deviation -->
                     <div class="row mb-4">
                       <div class="col-12">
                         <h6><i class="bi bi-check-circle me-2"></i>Verificación de Nutrientes</h6>
@@ -1088,18 +1088,239 @@
                                 <td><strong>{{ result.parameter }}</strong></td>
                                 <td>{{ result.target_value.toFixed(2) }}</td>
                                 <td>{{ result.actual_value.toFixed(2) }}</td>
-                                <td>{{ formatPercent(result.percentage_deviation) }}</td>
+                                <td>
+                                  <span [class]="getDeviationClass(result.actual_value - result.target_value)">
+                                    {{ (result.actual_value - result.target_value).toFixed(2) }}
+                                  </span>
+                                </td>
                                 <td>
                                   <span class="badge" [class.bg-success]="result.status === 'Excellent'"
                                     [class.bg-info]="result.status === 'Good'"
                                     [class.bg-warning]="result.status === 'Acceptable'"
-                                    [class.bg-danger]="result.status === 'Poor'">
+                                    [class.bg-danger]="result.status === 'Low'">
                                     {{ result.status }}
                                   </span>
                                 </td>
                               </tr>
                             </tbody>
                           </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Performance Metrics -->
+                    <div class="row mb-4" *ngIf="performanceMetricsDisplay">
+                      <div class="col-12">
+                        <h6><i class="bi bi-speedometer2 me-2"></i>Métricas de Rendimiento</h6>
+                        <div class="row g-3">
+                          <div class="col-md-3">
+                            <div class="card border-info">
+                              <div class="card-body text-center">
+                                <h6 class="text-muted small">Fertilizantes Procesados</h6>
+                                <h4 class="mb-0">{{ performanceMetricsDisplay.fertilizers_processed }}</h4>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="card border-success">
+                              <div class="card-body text-center">
+                                <h6 class="text-muted small">Dosificaciones Activas</h6>
+                                <h4 class="mb-0">{{ performanceMetricsDisplay.active_dosages }}</h4>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Optimization Summary -->
+                    <div class="row mb-4" *ngIf="optimizationSummaryDisplay">
+                      <div class="col-12">
+                        <h6><i class="bi bi-graph-up me-2"></i>Resumen de Optimización</h6>
+                        <div class="table-responsive">
+                          <table class="table table-sm table-bordered">
+                            <tbody>
+                              <tr>
+                                <td class="fw-bold">Método</td>
+                                <td>{{ optimizationSummaryDisplay.method }}</td>
+                                <td class="fw-bold">Estado</td>
+                                <td>{{ optimizationSummaryDisplay.status }}</td>
+                              </tr>
+                              <tr>
+                                <td class="fw-bold">Fertilizantes Activos</td>
+                                <td>{{ optimizationSummaryDisplay.active_fertilizers }}</td>
+                                <td class="fw-bold">Dosificación Total (g/L)</td>
+                                <td>{{ optimizationSummaryDisplay.total_dosage_g_per_L }}</td>
+                              </tr>
+                              <tr>
+                                <td class="fw-bold">Desviación Promedio (%)</td>
+                                <td>{{ optimizationSummaryDisplay.average_deviation_percent }}%</td>
+                                <td class="fw-bold">Tasa de Éxito (%)</td>
+                                <td>{{ optimizationSummaryDisplay.success_rate_percent }}%</td>
+                              </tr>
+                              <tr>
+                                <td class="fw-bold">Tiempo de Resolución (s)</td>
+                                <td>{{ optimizationSummaryDisplay.solver_time_seconds }}</td>
+                                <td class="fw-bold">Error de Balance Iónico</td>
+                                <td>{{ optimizationSummaryDisplay.ionic_balance_error }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Enhanced Cost Analysis -->
+                    <div class="row mb-4" *ngIf="enhancedCostAnalysis">
+                      <div class="col-12">
+                        <h6><i class="bi bi-currency-dollar me-2"></i>Análisis de Costos Detallado</h6>
+                        <div class="row g-3 mb-3">
+                          <div class="col-md-3">
+                            <div class="card bg-light">
+                              <div class="card-body">
+                                <small class="text-muted">Costo Total</small>
+                                <h5 class="mb-0">₡{{ enhancedCostAnalysis.total_cost_crc.toFixed(2) }}</h5>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="card bg-light">
+                              <div class="card-body">
+                                <small class="text-muted">Costo por Litro</small>
+                                <h5 class="mb-0">₡{{ enhancedCostAnalysis.cost_per_liter_concentrated.toFixed(2) }}</h5>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="card bg-light">
+                              <div class="card-body">
+                                <small class="text-muted">Costo por m³</small>
+                                <h5 class="mb-0">₡{{ enhancedCostAnalysis.cost_per_m3_diluted.toFixed(2) }}</h5>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="card bg-light">
+                              <div class="card-body">
+                                <small class="text-muted">Cobertura de Precios API</small>
+                                <h5 class="mb-0">{{ enhancedCostAnalysis.api_price_coverage_percent }}%</h5>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Cost Breakdown by Fertilizer -->
+                        <h6 class="mt-3">Desglose de Costos por Fertilizante</h6>
+                        <div class="table-responsive">
+                          <table class="table table-sm table-striped">
+                            <thead>
+                              <tr>
+                                <th>Fertilizante</th>
+                                <th class="text-end">Costo (₡)</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let item of enhancedCostAnalysis.cost_per_fertilizer | keyvalue">
+                                <td>{{ item.key }}</td>
+                                <td class="text-end">{{ item.value.toFixed(2) }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Water Analysis -->
+                    <div class="row mb-4" *ngIf="waterAnalysisDisplay">
+                      <div class="col-12">
+                        <h6><i class="bi bi-droplet me-2"></i>Análisis del Agua de Riego</h6>
+                        <div class="row g-2">
+                          <div class="col-md-2 col-sm-4" *ngFor="let nutrient of getWaterAnalysisKeys()">
+                            <div class="card border">
+                              <div class="card-body p-2 text-center">
+                                  <small class="text-muted d-block">{{ nutrient }}</small>
+                                  <strong>{{ $any(waterAnalysisDisplay)[nutrient].toFixed(2) }}</strong>
+                                </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Fertilizer Usage Graphs -->
+                    <div class="row mb-4" *ngIf="fertilizerUsageData.length > 0">
+                      <div class="col-12">
+                        <h6><i class="bi bi-bar-chart me-2"></i>Análisis de Uso de Fertilizantes</h6>
+
+                        <!-- Dosage Distribution Chart -->
+                        <div class="card mb-3">
+                          <div class="card-header">
+                            <strong>Distribución de Cantidad Necesaria (g/L)</strong>
+                          </div>
+                          <div class="card-body">
+                            <div class="chart-container" style="max-height: 300px;">
+                              <canvas id="dosageChart"></canvas>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Cost Distribution Chart -->
+                        <div class="card mb-3">
+                          <div class="card-header">
+                            <strong>Distribución de Costos</strong>
+                          </div>
+                          <div class="card-body">
+                            <div class="chart-container" style="max-height: 300px;">
+                              <canvas id="costDistributionChart"></canvas>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Nutritional Contribution Table -->
+                        <div class="card">
+                          <div class="card-header">
+                            <strong>Aporte Nutricional por Fertilizante (g)</strong>
+                          </div>
+                          <div class="card-body">
+                            <div class="table-responsive">
+                              <table class="table table-sm table-hover">
+                                <thead>
+                                  <tr>
+                                    <th>Fertilizante</th>
+                                    <th class="text-end">N</th>
+                                    <th class="text-end">P</th>
+                                    <th class="text-end">K</th>
+                                    <th class="text-end">Ca</th>
+                                    <th class="text-end">Mg</th>
+                                    <th class="text-end">S</th>
+                                    <th class="text-end">Fe</th>
+                                    <th class="text-end">Mn</th>
+                                    <th class="text-end">Zn</th>
+                                    <th class="text-end">Cu</th>
+                                    <th class="text-end">B</th>
+                                    <th class="text-end">Mo</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr *ngFor="let fert of fertilizerUsageData">
+                                    <td><strong>{{ fert.name }}</strong></td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.N.toFixed(2) }}</td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.P.toFixed(2) }}</td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.K.toFixed(2) }}</td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.Ca.toFixed(2) }}</td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.Mg.toFixed(2) }}</td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.S.toFixed(2) }}</td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.Fe.toFixed(2) }}</td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.Mn.toFixed(2) }}</td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.Zn.toFixed(2) }}</td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.Cu.toFixed(2) }}</td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.B.toFixed(2) }}</td>
+                                    <td class="text-end">{{ fert.nutrient_contribution.Mo.toFixed(2) }}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
