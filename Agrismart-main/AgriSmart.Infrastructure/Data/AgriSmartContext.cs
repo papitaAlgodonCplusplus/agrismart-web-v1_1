@@ -82,6 +82,9 @@ namespace AgriSmart.Infrastructure.Data
         public DbSet<Company> Company { get; set; }
         public DbSet<User> User { get; set; }
         public DbSet<Profile> Profile { get; set; }
+        public DbSet<IrrigationPlan> IrrigationPlans { get; set; }
+        public DbSet<IrrigationMode> IrrigationModes { get; set; }
+        public DbSet<IrrigationPlanEntry> IrrigationPlanEntries { get; set; }
         public DbSet<UserFarm> UserFarm { get; set; }
         public DbSet<UserStatus> UserStatus { get; set; }
         public DbSet<Farm> Farm { get; set; }

@@ -10,6 +10,7 @@ using AgriSmart.Application.Agronomic.Handlers.Queries;
 using AgriSmart.Application.Agronomic.Handlers.Commands;
 using AgriSmart.Core.Repositories.Commands;
 using AgriSmart.Infrastructure.Repositories.Command;
+using AgriSmart.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -52,7 +53,8 @@ LoggerProviderOptions.RegisterProviderOptions<FileLoggingConfiguration, FileLogg
 
 builder.Services.AddAutoMapper(typeof(Program));
 //Command Handlers
-builder.Services.AddMediatR(cfg => {
+builder.Services.AddMediatR(cfg =>
+{
     cfg.RegisterServicesFromAssembly(typeof(GetAllCatalogsHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(GetAllClientsHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(GetClientByIdHandler).Assembly);
@@ -147,7 +149,7 @@ builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(GetAnalyticalEntityByIdQuery).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(CreateAnalyticalEntityHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(UpdateAnaliticalEntityHandler).Assembly);
-    cfg.RegisterServicesFromAssembly(typeof(GetAllIrrigationRequestsHandler ).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetAllIrrigationRequestsHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(GetAllMeasurementsBaseHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(ProcessCropProductionRawDataMeasurementsHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(CreateIrrigationEventHandler).Assembly);
@@ -174,6 +176,29 @@ builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(DeleteSensorCommandHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(DeleteWaterChemistryCommandHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(DeleteWaterCommandHandler).Assembly);
+
+    // ========== NEW: IRRIGATION SCHEDULING HANDLERS ==========
+    // Register handlers for IrrigationPlan
+    cfg.RegisterServicesFromAssembly(typeof(CreateIrrigationPlanHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(UpdateIrrigationPlanHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteIrrigationPlanHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetAllIrrigationPlansHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetIrrigationPlanByIdHandler).Assembly);
+
+    // Register handlers for IrrigationMode
+    cfg.RegisterServicesFromAssembly(typeof(CreateIrrigationModeHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(UpdateIrrigationModeHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteIrrigationModeHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetAllIrrigationModesHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetIrrigationModeByIdHandler).Assembly);
+
+    // Register handlers for IrrigationPlanEntry
+    cfg.RegisterServicesFromAssembly(typeof(CreateIrrigationPlanEntryHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(UpdateIrrigationPlanEntryHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteIrrigationPlanEntryHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetAllIrrigationPlanEntriesHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetIrrigationPlanEntryByIdHandler).Assembly);
+    // ========================================================
 });
 
 //Repositories
@@ -268,6 +293,20 @@ builder.Services.AddScoped<OptimizationEngine>();
 builder.Services.AddScoped<EconomicAnalysisEngine>();
 builder.Services.AddAutoMapper(typeof(IrrigationDesignMappingProfile)); // Commented out due to build issues
 builder.Services.AddAutoMapper(typeof(AgriSmart.Application.Agronomic.Mappings.IrrigationEngineeringDesignProfile));
+// ========== NEW: IRRIGATION SCHEDULING REPOSITORIES ==========
+// IrrigationPlan Repositories
+builder.Services.AddTransient<IIrrigationPlanCommandRepository, IrrigationPlanCommandRepository>();
+builder.Services.AddTransient<IIrrigationPlanQueryRepository, IrrigationPlanQueryRepository>();
+
+// IrrigationMode Repositories  
+builder.Services.AddTransient<IIrrigationModeCommandRepository, IrrigationModeCommandRepository>();
+builder.Services.AddTransient<IIrrigationModeQueryRepository, IrrigationModeQueryRepository>();
+
+// IrrigationPlanEntry Repositories
+builder.Services.AddTransient<IIrrigationPlanEntryCommandRepository, IrrigationPlanEntryCommandRepository>();
+builder.Services.AddTransient<IIrrigationPlanEntryQueryRepository, IrrigationPlanEntryQueryRepository>();
+// =============================================================
+
 
 builder.Services.AddAuthentication(options =>
 {
@@ -293,7 +332,8 @@ builder.Services.AddAuthentication(options =>
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c => {
+builder.Services.AddSwaggerGen(c =>
+{
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "JWTToken_Auth_API",

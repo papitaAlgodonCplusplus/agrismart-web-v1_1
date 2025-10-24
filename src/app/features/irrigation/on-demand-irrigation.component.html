@@ -141,15 +141,6 @@
           </div>
         </div>
       </div>
-
-      <div class="alerts-section" *ngIf="systemStatus?.alerts?.length">
-        <h4>Alertas Activas</h4>
-        <div class="alert-item" *ngFor="let alert of systemStatus?.alerts || []" [ngClass]="'alert-' + alert.severity">
-          <i class="bi bi-exclamation-triangle"></i>
-          {{ alert.message }}
-          <small>{{ formatDate(alert.timestamp) }}</small>
-        </div>
-      </div>
     </div>
 
     <!-- Device List Table with Real Data -->
