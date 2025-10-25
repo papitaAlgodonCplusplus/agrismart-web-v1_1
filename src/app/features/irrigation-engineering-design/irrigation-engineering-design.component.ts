@@ -142,7 +142,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     this.isLoading = true;
 
     forkJoin({
-      plans: this.schedulingService.getAllIrrigationPlans().pipe(catchError(() => of([]))),
+      plans: this.schedulingService.getAllIrrigationPlansWithEntries().pipe(catchError(() => of([]))),
       modes: this.schedulingService.getAllIrrigationModes().pipe(catchError(() => of([]))),
       entries: this.schedulingService.getAllIrrigationPlanEntries().pipe(catchError(() => of([])))
     })

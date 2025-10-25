@@ -94,8 +94,32 @@ export class IrrigationSchedulingService {
 
   // ==================== Irrigation Plan ====================
   
-  getAllIrrigationPlans(): Observable<IrrigationPlan[]> {
-    return this.apiService.get<IrrigationPlan[]>('/IrrigationPlan');
+  /**
+   * Get all irrigation plans with their entries
+   */
+  getAllIrrigationPlansWithEntries(): Observable<{ irrigationPlans: IrrigationPlan[], irrigationPlanEntries: IrrigationPlanEntry[] }> {
+    return new Observable(observer => {
+      // Fetch both plans and entries in parallel
+      const plans$ = this.apiService.get<{ irrigationPlans: IrrigationPlan[] }>('/IrrigationPlan');
+      const entries$ = this.apiService.get<{ irrigationPlanEntries: IrrigationPlanEntry[] }>('/IrrigationPlanEntry');
+      let plans: IrrigationPlan[] = [];
+      let entries: IrrigationPlanEntry[] = [];
+
+      plans$.subscribe({
+        next: (plansRes) => {
+          plans = Array.isArray(plansRes.irrigationPlans) ? plansRes.irrigationPlans : [];
+          entries$.subscribe({
+            next: (entriesRes) => {
+              entries = Array.isArray(entriesRes.irrigationPlanEntries) ? entriesRes.irrigationPlanEntries : [];
+              observer.next({ irrigationPlans: plans, irrigationPlanEntries: entries });
+              observer.complete();
+            },
+            error: (err) => observer.error(err)
+          });
+        },
+        error: (err) => observer.error(err)
+      });
+    });
   }
 
   getIrrigationPlanById(id: number): Observable<IrrigationPlan> {
@@ -140,8 +164,10 @@ export class IrrigationSchedulingService {
   getOnDemandMode(): Observable<IrrigationMode | undefined> {
     return new Observable(observer => {
       this.getAllIrrigationModes().subscribe({
-        next: (modes) => {
-          const onDemand = modes.find(m => m.name === 'OnDemand');
+        next: (modes: any) => {
+          console.log('Irrigation Modes:', modes.irrigationModes);
+          const modesArray = Array.isArray(modes.irrigationModes) ? modes.irrigationModes : [];
+          const onDemand = modesArray.find((m: { name: string; }) => m.name === 'OnDemand');
           observer.next(onDemand);
           observer.complete();
         },

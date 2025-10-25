@@ -1,1137 +1,478 @@
-<!-- src/app/features/irrigation/on-demand-irrigation.component.html - FIXED VERSION -->
+<!-- src/app/features/irrigation/on-demand-irrigation.component.html -->
 <div class="on-demand-irrigation-container">
-
   <!-- Page Header -->
   <div class="page-header">
     <div class="header-content">
-      <h1 class="page-title">
-        <i class="bi bi-droplet-fill"></i>
-        Irrigación Bajo Demanda
-      </h1>
-      <p class="page-subtitle">
-        Control inteligente y optimización de irrigación basada en condiciones actuales
-      </p>
+      <h1><i class="fas fa-tint"></i> Riego Bajo Demanda</h1>
+      <p class="lead">Ejecute planes de riego inmediatamente o programe para horarios específicos</p>
     </div>
     <div class="header-actions">
-      <button class="btn btn-outline btn-large" (click)="toggleAutoRefresh()" [class.active]="autoRefresh">
-        <i class="bi" [ngClass]="autoRefresh ? 'bi-pause-circle' : 'bi-play-circle'"></i>
-        {{ autoRefresh ? 'Pausar' : 'Auto-actualizar' }}
+      <button 
+        class="btn btn-primary"
+        (click)="showExecutionDialog()"
+        [disabled]="isLoading || !onDemandMode">
+        <i class="fas fa-play"></i> Ejecutar Riego
       </button>
-      <button class="btn btn-info btn-large" (click)="exportReport()" [disabled]="!calculationResult">
-        <i class="bi bi-download"></i>
-        Exportar Reporte
+      <button 
+        class="btn btn-secondary"
+        (click)="loadOnDemandEntries()"
+        [disabled]="isLoading">
+        <i class="fas fa-sync-alt"></i> Actualizar
       </button>
     </div>
   </div>
 
-  <!-- Success/Error Messages -->
-  <div class="messages" *ngIf="successMessage || errorMessage">
+  <!-- Messages -->
+  <div class="messages" *ngIf="errorMessage || successMessage">
     <div class="alert alert-success" *ngIf="successMessage">
-      <i class="bi bi-check-circle"></i>
+      <i class="fas fa-check-circle"></i>
       {{ successMessage }}
     </div>
-    <div class="alert alert-error" *ngIf="errorMessage">
-      <i class="bi bi-exclamation-triangle"></i>
+    <div class="alert alert-danger" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
       {{ errorMessage }}
     </div>
   </div>
 
   <!-- Loading State -->
   <div class="loading-container" *ngIf="isLoading">
-    <div class="loading-spinner">
-    </div>
+    <div class="spinner"></div>
+    <p>Cargando datos de riego bajo demanda...</p>
   </div>
 
   <!-- Main Content -->
-  <div *ngIf="!isLoading">
+  <div class="content-wrapper" *ngIf="!isLoading">
+    
+    <!-- Statistics Cards -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ onDemandEntries.length }}</h3>
+          <p>Total de Ejecuciones</p>
+        </div>
+      </div>
 
-    <!-- System Status Card with Real Data -->
-    <div class="system-status-card">
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <i class="fas fa-play-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ getActiveExecutions().length }}</h3>
+          <p>Activas Ahora</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon orange">
+          <i class="fas fa-calendar-day"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ getTodayExecutionCount() }}</h3>
+          <p>Ejecuciones de Hoy</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ formatDuration(getTodayTotalDuration()) }}</h3>
+          <p>Duración Total Hoy</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card quick-actions-card">
       <div class="card-header">
-        <h3><i class="bi bi-gear"></i> Estado del Sistema</h3>
-        <div class="status-indicator" [ngClass]="isSystemHealthy ? 'healthy' : 'warning'">
-          {{ isSystemHealthy ? 'Sistema Saludable' : 'Alertas Activas' }}
-        </div>
+        <h5><i class="fas fa-bolt"></i> Acciones Rápidas</h5>
       </div>
-
-      <div class="status-grid" *ngIf="systemStatus">
-        <div class="status-item">
-          <div class="status-label">Presión del Sistema</div>
-          <div class="status-value"
-            [ngClass]="(systemStatus.systemPressure || 0) > 2 ? 'text-green-600' : 'text-red-600'">
-            {{ formatPressure(systemStatus.systemPressure || 0) }}
-          </div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">Flujo Total</div>
-          <div class="status-value">{{ formatFlowRate(systemStatus.totalFlowRate || 0) }}</div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">Dispositivos Activos</div>
-          <div class="status-value">{{ systemStatus.activeDevices }} / {{ systemStatus.totalDevices }}</div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">Última Actualización</div>
-          <div class="status-value">{{ formatDate(systemStatus.lastUpdate) }}</div>
-        </div>
-      </div>
-
-      <!-- System Measurements Overview -->
-      <div class="measurements-overview" *ngIf="systemStatus?.measurements">
-        <h4>Mediciones del Sistema</h4>
-        <div class="measurement-grid">
-          <div class="measurement-item"
-            *ngIf="systemStatus.measurements.temperature && systemStatus.measurements.temperature.length > 0">
-            <div class="measurement-icon">
-              <i class="bi bi-thermometer-half"></i>
-            </div>
-            <div class="measurement-info">
-              <div class="measurement-value">
-                {{ formatTemperature(systemStatus.measurements.temperature[systemStatus.measurements.temperature.length
-                - 1]?.value || 0) }}
-              </div>
-              <div class="measurement-label">Temperatura</div>
-              <div class="measurement-count">{{ systemStatus.measurements.temperature.length }} lecturas</div>
-            </div>
-          </div>
-
-          <div class="measurement-item"
-            *ngIf="systemStatus.measurements.soilMoisture && systemStatus.measurements.soilMoisture.length > 0">
-            <div class="measurement-icon">
-              <i class="bi bi-moisture"></i>
-            </div>
-            <div class="measurement-info">
-              <div class="measurement-value">
-                {{ formatPercentage(systemStatus.measurements.soilMoisture[systemStatus.measurements.soilMoisture.length
-                - 1]?.value || 0) }}
-              </div>
-              <div class="measurement-label">Humedad del Suelo</div>
-              <div class="measurement-count">{{ systemStatus.measurements.soilMoisture.length }} lecturas</div>
-            </div>
-          </div>
-
-          <div class="measurement-item"
-            *ngIf="systemStatus.measurements.pressure && systemStatus.measurements.pressure.length > 0">
-            <div class="measurement-icon">
-              <i class="bi bi-speedometer2"></i>
-            </div>
-            <div class="measurement-info">
-              <div class="measurement-value">
-                {{ formatPressure(systemStatus.measurements.pressure[systemStatus.measurements.pressure.length -
-                1]?.value || 0) }}
-              </div>
-              <div class="measurement-label">Presión</div>
-              <div class="measurement-count">{{ systemStatus.measurements.pressure.length }} lecturas</div>
-            </div>
-          </div>
-
-          <div class="measurement-item"
-            *ngIf="systemStatus.measurements.flow && systemStatus.measurements.flow.length > 0">
-            <div class="measurement-icon">
-              <i class="bi bi-water"></i>
-            </div>
-            <div class="measurement-info">
-              <div class="measurement-value">
-                {{ formatFlowRate(systemStatus.measurements.flow[systemStatus.measurements.flow.length - 1]?.value || 0)
-                }}
-              </div>
-              <div class="measurement-label">Flujo</div>
-              <div class="measurement-count">{{ systemStatus.measurements.flow.length }} lecturas</div>
+      <div class="card-body">
+        <p class="text-muted mb-3">Seleccione un plan de riego e inicie inmediatamente:</p>
+        <div class="quick-action-buttons">
+          <div class="plan-quick-actions" *ngFor="let plan of irrigationPlans">
+            <div class="plan-name">{{ plan.name }}</div>
+            <div class="duration-buttons">
+              <button 
+                class="btn btn-sm btn-outline-primary"
+                (click)="quickExecute(plan.id, 15)"
+                [disabled]="isExecuting">
+                15 min
+              </button>
+              <button 
+                class="btn btn-sm btn-outline-primary"
+                (click)="quickExecute(plan.id, 30)"
+                [disabled]="isExecuting">
+                30 min
+              </button>
+              <button 
+                class="btn btn-sm btn-outline-primary"
+                (click)="quickExecute(plan.id, 60)"
+                [disabled]="isExecuting">
+                1 hora
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Device List Table with Real Data -->
-    <div class="devices-table-card" *ngIf="systemStatus?.devices?.length">
-      <div class="card-header">
-        <h3><i class="bi bi-cpu"></i> Dispositivos del Sistema</h3>
-        <div class="devices-summary">
-          Total: {{ systemStatus?.totalDevices }} | Activos: {{ systemStatus?.activeDevices }}
-        </div>
+    <!-- Active Executions -->
+    <div class="card active-executions-card" *ngIf="getActiveExecutions().length > 0">
+      <div class="card-header bg-success text-white">
+        <h5><i class="fas fa-water"></i> Riegos Activos</h5>
       </div>
-
-      <div class="devices-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Dispositivo</th>
-              <th>Estado</th>
-              <th>Tipo</th>
-              <th>Fecha Creación</th>
-              <th>Última Actualización</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let device of systemStatus?.devices"
-              [ngClass]="device.active ? 'device-active' : 'device-inactive'">
-              <td class="device-info">
-                <div class="device-icon">
-                  <i class="bi" [ngClass]="getDeviceIcon(device.deviceId)"></i>
-                </div>
-                <div class="device-details">
-                  <div class="device-name">{{ device.deviceId }}</div>
-                  <div class="device-id">ID: {{ device.deviceId }}</div>
-                </div>
-              </td>
-              <td>
-                <span class="status-badge" [ngClass]="device.active ? 'status-active' : 'status-inactive'">
-                  {{ device.active ? 'Activo' : 'Inactivo' }}
-                </span>
-              </td>
-              <td>
-                <span class="device-type" [ngClass]="getDeviceTypeClass(device.deviceId)">
-                  {{ getDeviceType(device.deviceId) }}
-                </span>
-              </td>
-              <td>{{ formatDate(device.lastReading) }}</td>
-              <td>{{ 'N/A' }}</td>
-            </tr>
-            <tr *ngIf="systemStatus?.devices?.length === 0">
-              <td colspan="5" class="text-center">No hay dispositivos registrados</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Irrigation Form Card -->
-    <div class="irrigation-form-card">
-      <div class="card-header">
-        <h3><i class="bi bi-sliders"></i> Configuración de Irrigación</h3>
-        <button class="btn btn-outline" (click)="toggleAdvancedOptions()">
-          <i class="bi bi-gear"></i>
-          {{ showAdvancedOptions ? 'Ocultar' : 'Mostrar' }} Opciones Avanzadas
-        </button>
-      </div>
-
-      <form [formGroup]="irrigationForm" class="irrigation-form">
-        <!-- Basic Configuration -->
-        <div class="form-section">
-          <h4>Configuración Básica</h4>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="cropProductionId">Sector de Producción *</label>
-              <select id="cropProductionId" class="form-control" formControlName="cropProductionId">
-                <option value="">Seleccionar sector...</option>
-                <option *ngFor="let production of cropProductions" [value]="production.id">
-                  {{ production.name }} ({{ production.length }}m x {{ production.width }}m)
-                </option>
-              </select>
-              <div class="form-hint">Seleccione el sector de producción a irrigar</div>
+      <div class="card-body">
+        <div class="active-execution-list">
+          <div class="active-execution-item" *ngFor="let entry of getActiveExecutions()">
+            <div class="execution-info">
+              <h6>{{ getIrrigationPlanName(entry.irrigationPlanId) }}</h6>
+              <p class="mb-1">
+                <i class="fas fa-clock"></i> Iniciado: {{ formatTime(entry.startTime) }}
+              </p>
+              <p class="mb-0">
+                <i class="fas fa-hourglass-half"></i> {{ getEntryStatus(entry) }}
+              </p>
             </div>
-
-            <div class="form-group">
-              <label for="irrigationMode">Modo de Irrigación</label>
-              <select id="irrigationMode" class="form-control" formControlName="irrigationMode">
-                <option value="automatic">Automático (Recomendado)</option>
-                <option value="manual">Manual</option>
-                <option value="scheduled">Programado</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="priority">Prioridad</label>
-              <select id="priority" class="form-control" formControlName="priority">
-                <option value="low">Baja</option>
-                <option value="medium">Media</option>
-                <option value="high">Alta</option>
-                <option value="critical">Crítica</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="duration">Duración (minutos)</label>
-              <input type="number" id="duration" class="form-control" formControlName="duration" min="1" max="480"
-                step="1">
-              <div class="form-hint">Duración de la irrigación en minutos (1-480)</div>
-            </div>
-
-            <div class="form-group">
-              <label for="waterAmount">Cantidad de Agua (litros)</label>
-              <input type="number" id="waterAmount" class="form-control" formControlName="waterAmount" min="0"
-                step="0.1">
-              <div class="form-hint">Calculado automáticamente en modo automático</div>
-            </div>
-
-            <div class="form-group">
-              <label for="reason">Motivo</label>
-              <select id="reason" class="form-control" formControlName="reason">
-                <option value="on_demand">Bajo Demanda</option>
-                <option value="stress_detected">Estrés Detectado</option>
-                <option value="schedule_override">Anulación de Programa</option>
-                <option value="maintenance">Mantenimiento</option>
-                <option value="test">Prueba del Sistema</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="checkbox-group">
-              <input type="checkbox" id="overrideSchedule" formControlName="overrideSchedule">
-              <label for="overrideSchedule">Anular programación existente</label>
-            </div>
-
-            <div class="checkbox-group">
-              <input type="checkbox" id="useOptimalTiming" formControlName="useOptimalTiming">
-              <label for="useOptimalTiming">Usar tiempo optimal</label>
-            </div>
-
-            <div class="checkbox-group">
-              <input type="checkbox" id="considerWeather" formControlName="considerWeather">
-              <label for="considerWeather">Considerar condiciones climáticas</label>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="notes">Notas</label>
-              <textarea id="notes" class="form-control" formControlName="notes" rows="3"
-                placeholder="Notas adicionales sobre esta irrigación..."></textarea>
-            </div>
-          </div>
-        </div>
-
-        <!-- Advanced Options -->
-        <div class="form-section" *ngIf="showAdvancedOptions">
-          <h4>Configuración Hidráulica Avanzada</h4>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="customFlowRate">Flujo Personalizado (L/h)</label>
-              <input type="number" id="customFlowRate" class="form-control" formControlName="customFlowRate" min="0"
-                step="0.1">
-              <div class="form-hint">Dejar en 0 para usar valor automático</div>
-            </div>
-
-            <div class="form-group">
-              <label for="targetPressure">Presión Objetivo (bar)</label>
-              <input type="number" id="targetPressure" class="form-control" formControlName="targetPressure" min="0.5"
-                max="10" step="0.1">
-            </div>
-
-            <div class="form-group">
-              <label for="pipeLength">Longitud de Tubería (m)</label>
-              <input type="number" id="pipeLength" class="form-control" formControlName="pipeLength" min="1" step="1">
-            </div>
-
-            <div class="form-group">
-              <label for="elevation">Elevación (m)</label>
-              <input type="number" id="elevation" class="form-control" formControlName="elevation" step="0.1">
-            </div>
-          </div>
-
-          <h5>Umbrales Ambientales</h5>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="minSoilMoisture">Humedad Mínima del Suelo (%)</label>
-              <input type="number" id="minSoilMoisture" class="form-control" formControlName="minSoilMoisture" min="0"
-                max="100" step="1">
-            </div>
-
-            <div class="form-group">
-              <label for="maxTemperature">Temperatura Máxima (°C)</label>
-              <input type="number" id="maxTemperature" class="form-control" formControlName="maxTemperature" min="0"
-                max="50" step="0.1">
-            </div>
-
-            <div class="form-group">
-              <label for="minHumidity">Humedad Mínima del Aire (%)</label>
-              <input type="number" id="minHumidity" class="form-control" formControlName="minHumidity" min="0" max="100"
-                step="1">
-            </div>
-          </div>
-        </div>
-
-        <!-- Form Actions -->
-        <div class="form-actions">
-          <div class="action-buttons">
-            <button type="button" class="btn btn-secondary" (click)="resetForm()">
-              <i class="bi bi-arrow-clockwise"></i>
-              Reiniciar
-            </button>
-            <button type="button" class="btn btn-info" (click)="testSystem()" [disabled]="!selectedCropProduction">
-              <i class="bi bi-tools"></i>
-              Probar Sistema
-            </button>
-          </div>
-
-          <div class="action-buttons">
-            <button type="button" class="btn btn-primary btn-large" (click)="calculateOnDemandIrrigation()"
-              [disabled]="!isFormValid || isCalculating">
-              <i class="bi" [ngClass]="isCalculating ? 'bi-arrow-clockwise fa-spin' : 'bi-calculator'"></i>
-              {{ isCalculating ? 'Calculando...' : 'Calcular Irrigación' }}
-            </button>
-          </div>
-        </div>
-      </form>
-    </div>
-
-    <!-- Crop Production Details -->
-    <div class="crop-details-card" *ngIf="selectedCropProduction">
-      <div class="card-header">
-        <h3><i class="bi bi-info-circle"></i> Detalles del Sector</h3>
-      </div>
-
-      <div class="details-grid">
-        <div class="detail-section">
-          <h4>Información General</h4>
-          <div class="detail-item">
-            <span class="label">Nombre:</span>
-            <span class="value">{{ selectedCropProduction.name }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">ID del Cultivo:</span>
-            <span class="value">{{ selectedCropProduction.cropId }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Estado:</span>
-            <span class="value">{{ getCropProductionStatus() }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Área:</span>
-            <span class="value">{{ getCropProductionArea().toFixed(1) }} m²</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Dimensiones:</span>
-            <span class="value">{{ getCropProductionDimensions() }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Fecha Inicio:</span>
-            <span class="value">{{ getPlantingDate() }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Fecha Fin:</span>
-            <span class="value">{{ getHarvestDate() }}</span>
-          </div>
-        </div>
-
-        <div class="detail-section" *ngIf="selectedContainer">
-          <h4>Contenedor</h4>
-          <div class="detail-item">
-            <span class="label">Nombre:</span>
-            <span class="value">{{ selectedContainer.name }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Tipo ID:</span>
-            <span class="value">{{ selectedContainer.containerTypeId }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Dimensiones:</span>
-            <span class="value">{{ getContainerDimensions() }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Diámetro Superior:</span>
-            <span class="value">{{ selectedContainer.upperDiameter }}cm</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Diámetro Inferior:</span>
-            <span class="value">{{ selectedContainer.lowerDiameter }}cm</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Catálogo ID:</span>
-            <span class="value">{{ selectedContainer.catalogId }}</span>
-          </div>
-        </div>
-
-        <div class="detail-section" *ngIf="selectedDropper">
-          <h4>Sistema de Goteo</h4>
-          <div class="detail-item">
-            <span class="label">Nombre:</span>
-            <span class="value">{{ selectedDropper.name }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Flujo por Goteador:</span>
-            <span class="value">{{ formatFlowRate(selectedDropper.flowRate) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Número de Goteadores:</span>
-            <span class="value">{{ selectedCropProduction.numberOfDroppersPerContainer }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Flujo Total:</span>
-            <span class="value">{{ formatFlowRate(getTotalFlowRate()) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Catálogo ID:</span>
-            <span class="value">{{ selectedDropper.catalogId }}</span>
-          </div>
-        </div>
-
-        <div class="detail-section" *ngIf="selectedGrowingMedium">
-          <h4>Medio de Cultivo</h4>
-          <div class="detail-item">
-            <span class="label">Nombre:</span>
-            <span class="value">{{ selectedGrowingMedium.name }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Capacidad del Contenedor:</span>
-            <span class="value">{{ formatPercentage(getGrowingMediumWaterRetention()) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Punto de Marchitez:</span>
-            <span class="value">{{ formatPercentage(selectedGrowingMedium.permanentWiltingPoint || 0) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Agua Fácilmente Disponible:</span>
-            <span class="value">{{ formatPercentage(selectedGrowingMedium.easelyAvailableWaterPercentage || 0) }}</span>
-          </div>
-          <div class="detail-item">
-            <span class="label">Catálogo ID:</span>
-            <span class="value">{{ selectedGrowingMedium.catalogId }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Real-time Sensor Data with Actual Measurements -->
-    <div class="sensor-data-card" *ngIf="realTimeData$ | async as sensorData">
-      <div class="card-header">
-        <h3><i class="bi bi-graph-up"></i> Datos de Sensores en Tiempo Real</h3>
-        <div class="last-update">
-          Última actualización: {{ formatDate(sensorData.timestamp) }}
-        </div>
-      </div>
-
-      <div class="sensor-grid">
-        <div class="sensor-item">
-          <div class="sensor-icon">
-            <i class="bi bi-thermometer-half"></i>
-          </div>
-          <div class="sensor-data">
-            <div class="sensor-value" [ngClass]="sensorData.temperature > 30 ? 'text-red-600' : 'text-green-600'">
-              {{ formatTemperature(sensorData.temperature) }}
-            </div>
-            <div class="sensor-label">Temperatura</div>
-            <div class="sensor-readings" *ngIf="sensorData.rawData?.temperatureReadings?.length">
-              {{ sensorData.rawData.temperatureReadings.length }} lecturas recientes
-            </div>
-          </div>
-        </div>
-
-        <div class="sensor-item">
-          <div class="sensor-icon">
-            <i class="bi bi-droplet"></i>
-          </div>
-          <div class="sensor-data">
-            <div class="sensor-value" [ngClass]="sensorData.soilMoisture < 30 ? 'text-red-600' : 'text-green-600'">
-              {{ formatPercentage(sensorData.soilMoisture) }}
-            </div>
-            <div class="sensor-label">Humedad del Suelo</div>
-            <div class="sensor-readings" *ngIf="sensorData.rawData?.soilMoistureReadings?.length">
-              {{ sensorData.rawData.soilMoistureReadings.length }} lecturas recientes
-            </div>
-          </div>
-        </div>
-
-        <div class="sensor-item">
-          <div class="sensor-icon">
-            <i class="bi bi-moisture"></i>
-          </div>
-          <div class="sensor-data">
-            <div class="sensor-value">
-              {{ formatPercentage(sensorData.humidity) }}
-            </div>
-            <div class="sensor-label">Humedad del Aire</div>
-            <div class="sensor-readings" *ngIf="sensorData.rawData?.humidityReadings?.length">
-              {{ sensorData.rawData.humidityReadings.length }} lecturas recientes
-            </div>
-          </div>
-        </div>
-
-        <div class="sensor-item">
-          <div class="sensor-icon">
-            <i class="bi bi-speedometer2"></i>
-          </div>
-          <div class="sensor-data">
-            <div class="sensor-value">
-              {{ formatPressure(sensorData.pressure) }}
-            </div>
-            <div class="sensor-label">Presión</div>
-            <div class="sensor-readings" *ngIf="sensorData.rawData?.pressureReadings?.length">
-              {{ sensorData.rawData.pressureReadings.length }} lecturas recientes
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Raw Data Details -->
-      <div class="raw-data-section" *ngIf="sensorData.rawData && showAdvancedOptions">
-        <h5>Datos de Mediciones Detallados</h5>
-        <div class="raw-data-grid">
-          <div class="raw-data-item" *ngFor="let reading of sensorData.rawData.temperatureReadings.slice(-3)">
-            <span class="reading-time">{{ formatDate(reading.recordDate) }}</span>
-            <span class="reading-value">{{ formatTemperature(reading.recordValue) }}</span>
-            <span class="reading-sensor">Sensor {{ reading.sensorId }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Calculation Results with Real Data -->
-    <div class="calculation-results-card" *ngIf="calculationResult">
-      <div class="card-header">
-        <h3><i class="bi bi-calculator"></i> Resultados del Cálculo</h3>
-        <div class="recommendation-badge" [ngClass]="'text-' + calculationResult.priority + '-600'">
-          Prioridad {{ calculationResult.priority }}
-        </div>
-      </div>
-
-      <div class="recommendation-section">
-        <div class="recommendation-header">
-          <div class="recommendation-icon" [ngClass]="calculationResult.shouldIrrigate ? 'recommend' : 'not-recommend'">
-            <i class="bi" [ngClass]="calculationResult.shouldIrrigate ? 'bi-droplet-fill' : 'bi-droplet'"></i>
-          </div>
-          <div class="recommendation-text">
-            <h4>{{ calculationResult.shouldIrrigate ? 'Irrigación Recomendada' : 'Irrigación No Necesaria' }}</h4>
-            <p>{{ calculationResult.reason }}</p>
-          </div>
-        </div>
-
-        <div class="calculation-details">
-          <div class="detail-grid">
-            <div class="calc-item">
-              <span class="label">Duración Recomendada:</span>
-              <span class="value">{{ formatDuration(calculationResult.recommendedDuration) }}</span>
-            </div>
-            <div class="calc-item">
-              <span class="label">Cantidad de Agua:</span>
-              <span class="value">{{ formatWaterAmount(calculationResult.waterAmount) }}</span>
-            </div>
-            <div class="calc-item">
-              <span class="label">Evapotranspiración:</span>
-              <span class="value">{{ calculationResult.calculations.evapotranspiration.toFixed(1) }} mm/día</span>
-            </div>
-            <div class="calc-item">
-              <span class="label">Déficit Hídrico:</span>
-              <span class="value">{{ calculationResult.calculations.waterDeficit.toFixed(1) }} mm</span>
-            </div>
-            <div class="calc-item">
-              <span class="label">Flujo de Irrigación:</span>
-              <span class="value">{{ formatFlowRate(calculationResult.calculations.flowRate) }}</span>
-            </div>
-            <div class="calc-item">
-              <span class="label">Eficiencia del Sistema:</span>
-              <span class="value">{{ formatPercentage(calculationResult.calculations.efficiency) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="current-conditions">
-          <h5>Condiciones Actuales</h5>
-          <div class="conditions-grid">
-            <div class="condition-item">
-              <span class="label">Humedad del Suelo:</span>
-              <span class="value" [ngClass]="calculationResult.conditions.soilMoisture < 30 ? 'warning' : ''">
-                {{ formatPercentage(calculationResult.conditions.soilMoisture) }}
-              </span>
-            </div>
-            <div class="condition-item">
-              <span class="label">Temperatura:</span>
-              <span class="value" [ngClass]="calculationResult.conditions.temperature > 30 ? 'warning' : ''">
-                {{ formatTemperature(calculationResult.conditions.temperature) }}
-              </span>
-            </div>
-            <div class="condition-item">
-              <span class="label">Humedad del Aire:</span>
-              <span class="value">
-                {{ formatPercentage(calculationResult.conditions.humidity) }}
-              </span>
-            </div>
-            <div class="condition-item">
-              <span class="label">Última Irrigación:</span>
-              <span class="value">
-                {{ calculationResult.conditions.lastIrrigation ? formatDate(calculationResult.conditions.lastIrrigation)
-                : 'Nunca' }}
+            <div class="execution-badge">
+              <span class="badge badge-success">
+                <i class="fas fa-play"></i> En Ejecución
               </span>
             </div>
           </div>
         </div>
-
-        <div class="execution-section" *ngIf="calculationResult.shouldIrrigate">
-          <button class="btn btn-success btn-large" (click)="executeIrrigation()"
-            [disabled]="!canExecuteIrrigation || isIrrigating">
-            <i class="bi" [ngClass]="isIrrigating ? 'bi-arrow-clockwise fa-spin' : 'bi-play-fill'"></i>
-            {{ isIrrigating ? 'Irrigando...' : 'Ejecutar Irrigación' }}
-          </button>
-
-          <button class="btn btn-danger" (click)="stopIrrigation()" *ngIf="isIrrigating">
-            <i class="bi bi-stop-fill"></i>
-            Detener Irrigación
-          </button>
-        </div>
       </div>
     </div>
 
-    <!-- Technical Calculations -->
-    <div class="technical-calculations" *ngIf="hydraulicCalculation || flowRateCalculation">
-
-      <!-- Hydraulic Calculations -->
-      <div class="calculation-card" *ngIf="hydraulicCalculation">
-        <div class="card-header">
-          <h3><i class="bi bi-diagram-3"></i> Cálculos Hidráulicos</h3>
-        </div>
-
-        <div class="calculation-grid">
-          <div class="calc-item">
-            <span class="label">Pérdida de Presión:</span>
-            <span class="value">{{ formatPressure(hydraulicCalculation.pressure) }}</span>
-          </div>
-          <div class="calc-item">
-            <span class="label">Velocidad de Flujo:</span>
-            <span class="value">{{ hydraulicCalculation.velocity.toFixed(2) }} m/s</span>
-          </div>
-          <div class="calc-item">
-            <span class="label">Número de Reynolds:</span>
-            <span class="value">{{ hydraulicCalculation.reynoldsNumber.toFixed(0) }}</span>
-          </div>
-          <div class="calc-item">
-            <span class="label">Factor de Fricción:</span>
-            <span class="value">{{ hydraulicCalculation.frictionFactor.toFixed(4) }}</span>
-          </div>
-          <div class="calc-item">
-            <span class="label">Cabeza Total:</span>
-            <span class="value">{{ hydraulicCalculation.totalHead.toFixed(1) }} m</span>
-          </div>
-          <div class="calc-item">
-            <span class="label">Potencia Requerida:</span>
-            <span class="value">{{ hydraulicCalculation.powerRequired.toFixed(2) }} kW</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Flow Rate Calculations -->
-      <div class="calculation-card" *ngIf="flowRateCalculation">
-        <div class="card-header">
-          <h3><i class="bi bi-speedometer"></i> Cálculos de Flujo</h3>
-        </div>
-
-        <div class="calculation-grid">
-          <div class="calc-item">
-            <span class="label">Flujo Total:</span>
-            <span class="value">{{ formatFlowRate(flowRateCalculation.totalFlowRate) }}</span>
-          </div>
-          <div class="calc-item">
-            <span class="label">Flujo por m²:</span>
-            <span class="value">{{ flowRateCalculation.flowRatePerArea.toFixed(2) }} L/h/m²</span>
-          </div>
-          <div class="calc-item">
-            <span class="label">Eficiencia de Aplicación:</span>
-            <span class="value">{{ formatPercentage(flowRateCalculation.applicationEfficiency) }}</span>
-          </div>
-          <div class="calc-item">
-            <span class="label">Uniformidad:</span>
-            <span class="value">{{ formatPercentage(flowRateCalculation.uniformity) }}</span>
-          </div>
-          <div class="calc-item">
-            <span class="label">Tasa de Precipitación:</span>
-            <span class="value">{{ flowRateCalculation.precipitationRate.toFixed(1) }} mm/h</span>
-          </div>
-          <div class="calc-item">
-            <span class="label">Presión Requerida:</span>
-            <span class="value">{{ formatPressure(flowRateCalculation.pressureRequired) }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Schedule Optimization -->
-    <div class="optimization-card" *ngIf="scheduleOptimization">
+    <!-- Execution History -->
+    <div class="card history-card">
       <div class="card-header">
-        <h3><i class="bi bi-lightning"></i> Optimización de Programación</h3>
+        <h5><i class="fas fa-history"></i> Historial de Ejecuciones</h5>
       </div>
-
-      <div class="optimization-content">
-        <div class="optimization-recommendation">
-          <div class="recommendation-item">
-            <span class="label">Próximo Riego Óptimo:</span>
-            <span class="value">{{ formatDate(scheduleOptimization.nextOptimalTime) }}</span>
-          </div>
-          <div class="recommendation-item">
-            <span class="label">Duración Recomendada:</span>
-            <span class="value">{{ formatDuration(scheduleOptimization.recommendedDuration) }}</span>
-          </div>
-          <div class="recommendation-item">
-            <span class="label">Cantidad de Agua:</span>
-            <span class="value">{{ formatWaterAmount(scheduleOptimization.waterAmount) }}</span>
-          </div>
-          <div class="recommendation-item">
-            <span class="label">Frecuencia:</span>
-            <span class="value">{{ scheduleOptimization.frequency }} vez(es) por día</span>
-          </div>
-          <div class="recommendation-item">
-            <span class="label">Ahorro Estimado:</span>
-            <span class="value">{{ formatPercentage(scheduleOptimization.waterSavings) }}</span>
-          </div>
-        </div>
-
-        <div class="optimization-conditions">
-          <h5>Condiciones Óptimas</h5>
-          <div class="conditions-list">
-            <div class="condition">
-              <span class="label">Temperatura Óptima:</span>
-              <span class="value">{{ formatTemperature(scheduleOptimization.optimalConditions.temperature) }}</span>
-            </div>
-            <div class="condition">
-              <span class="label">Humedad Óptima:</span>
-              <span class="value">{{ formatPercentage(scheduleOptimization.optimalConditions.humidity) }}</span>
-            </div>
-            <div class="condition">
-              <span class="label">Velocidad del Viento:</span>
-              <span class="value">{{ scheduleOptimization.optimalConditions.windSpeed }} km/h</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Evapotranspiration Data with Real Calculations -->
-    <div class="et-data-card" *ngIf="evapotranspirationData.length > 0">
-      <div class="card-header">
-        <h3><i class="bi bi-graph-up"></i> Datos de Evapotranspiración</h3>
-        <div class="et-summary">
-          Promedio ET: {{ averageET.toFixed(1) }} mm/día | Datos de {{ evapotranspirationData.length }} días
-        </div>
-      </div>
-
-      <div class="et-chart">
-        <div class="et-item" *ngFor="let data of evapotranspirationData.slice(-7)">
-          <div class="et-date">{{ formatDate(data.date).split(' ')[0] }}</div>
-          <div class="et-bars">
-            <div class="et-bar et-reference" [style.height.px]="data.referenceET * 10">
-              <div class="et-value">{{ data.referenceET.toFixed(1) }}</div>
-            </div>
-            <div class="et-bar et-crop" [style.height.px]="data.cropET * 10">
-              <div class="et-value">{{ data.cropET.toFixed(1) }}</div>
-            </div>
-          </div>
-          <div class="et-labels">
-            <div>ET₀</div>
-            <div>ETc</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="et-legend">
-        <div class="legend-item">
-          <div class="legend-color et-reference"></div>
-          <span>ET₀ Referencia</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color et-crop"></div>
-          <span>ETc Cultivo</span>
-        </div>
-      </div>
-
-      <!-- Detailed ET Data -->
-      <div class="et-details" *ngIf="showAdvancedOptions">
-        <h5>Detalles de Evapotranspiración</h5>
-        <div class="et-details-grid">
-          <div class="et-detail-item" *ngFor="let data of evapotranspirationData.slice(-3)">
-            <div class="et-detail-date">{{ formatDate(data.date).split(' ')[0] }}</div>
-            <div class="et-detail-values">
-              <div>Coef. Cultivo: {{ data.cropCoefficient.toFixed(2) }}</div>
-              <div>Temp: {{ formatTemperature(data.temperature) }}</div>
-              <div>Humedad: {{ formatPercentage(data.humidity) }}</div>
-              <div>Viento: {{ data.windSpeed.toFixed(1) }} m/s</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- History Section with Real API Data -->
-    <div class="history-section">
-
-      <!-- Recent Events with Real Data -->
-      <div class="events-card">
-        <div class="card-header">
-          <h3><i class="bi bi-clock-history"></i> Eventos de Irrigación Recientes</h3>
-          <small>Últimos {{ recentEvents.length }} eventos</small>
-        </div>
-
-        <div class="events-list">
-          <div class="event-item" *ngFor="let event of recentEvents"
-            [style.border-left-color]="getStatusColor('completed')">
-            <div class="event-icon">
-              <i class="bi bi-droplet-fill"></i>
-            </div>
-            <div class="event-details">
-              <div class="event-header">
-                <span class="event-status" [ngClass]="getStatusColor('completed')">Completado</span>
-                <span class="event-date">{{ formatDate(event.dateTimeStart) }}</span>
-              </div>
-              <div class="event-info">
-                Inicio: {{ formatDate(event.dateTimeStart) }} |
-                Fin: {{ event.dateTimeEnd ? formatDate(event.dateTimeEnd) : 'En curso' }}
-                <div *ngIf="event.irrigationMeasurements && event.irrigationMeasurements.length"
-                  class="event-measurements">
-                  {{ event.irrigationMeasurements.length }} mediciones registradas
-                </div>
-              </div>
-              <div class="event-id">ID del Evento: {{ event.id }}</div>
-            </div>
-          </div>
-
-          <div class="event-item" *ngIf="recentEvents.length === 0">
-            <div class="event-icon">
-              <i class="bi bi-info-circle"></i>
-            </div>
-            <div class="event-details">
-              <div class="event-header">
-                <span class="event-status">Sin eventos</span>
-              </div>
-              <div class="event-info">No hay eventos de irrigación registrados en los últimos 7 días</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Measurements Data -->
-      <div class="measurements-card">
-        <div class="card-header">
-          <h3><i class="bi bi-graph-down"></i> Mediciones del Sistema</h3>
-          <div class="measurements-summary">
-            <div>Mediciones de Irrigación: {{ recentMeasurements.length }}</div>
-            <div>Mediciones Agregadas: {{ aggregatedMeasurements.length }}</div>
-            <div>Mediciones Base: {{ rawMeasurements.length }}</div>
-            <div>KPIs: {{ kpiMeasurements.length }}</div>
-          </div>
-        </div>
-
-        <!-- Aggregated Measurements Table -->
-        <div class="measurements-table" *ngIf="aggregatedMeasurements.length > 0">
-          <h5>Mediciones Agregadas (Última Semana)</h5>
-          <table>
+      <div class="card-body">
+        <div class="table-responsive" *ngIf="onDemandEntries.length > 0; else noEntries">
+          <table class="table table-hover">
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th>Variable</th>
-                <th>Mínimo</th>
-                <th>Máximo</th>
-                <th>Promedio</th>
-                <th>Suma</th>
+                <th>Plan de Riego</th>
+                <th>Hora de Inicio</th>
+                <th>Duración</th>
+                <th>Ejecutado En</th>
+                <th>Estado</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let measurement of aggregatedMeasurements.slice(0, 10)">
-                <td>{{ formatDate(measurement.recordDate) }}</td>
-                <td>Variable {{ measurement.measurementVariableId }}</td>
-                <td>{{ measurement.minValue.toFixed(2) }}</td>
-                <td>{{ measurement.maxValue.toFixed(2) }}</td>
-                <td
-                  [ngClass]="measurement.measurementVariableId === 1 && measurement.avgValue > 30 ? 'text-red-600' : 'text-green-600'">
-                  {{ measurement.avgValue.toFixed(2) }}
+              <tr *ngFor="let entry of onDemandEntries">
+                <td>
+                  <strong>{{ getIrrigationPlanName(entry.irrigationPlanId) }}</strong>
                 </td>
-                <td>{{ measurement.sumValue.toFixed(2) }}</td>
-              </tr>
-              <tr *ngIf="aggregatedMeasurements.length === 0">
-                <td colspan="6" class="text-center">No hay mediciones agregadas registradas</td>
+                <td>
+                  <i class="fas fa-clock"></i> {{ formatTime(entry.startTime) }}
+                </td>
+                <td>
+                  <span class="badge badge-info">{{ formatDuration(entry.duration) }}</span>
+                </td>
+                <td>{{ formatDateTime(entry.dateCreated) }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getStatusClass(entry)">
+                    {{ getEntryStatus(entry) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button 
+                      class="btn btn-sm btn-outline-info"
+                      (click)="viewEntryDetails(entry)"
+                      title="Ver Detalles">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button 
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="deleteEntry(entry)"
+                      [disabled]="getEntryStatus(entry).includes('Active')"
+                      title="Eliminar">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Raw Measurements Summary -->
-        <div class="raw-measurements-summary" *ngIf="rawMeasurements.length > 0">
-          <h5>Mediciones Base Recientes (Últimas 24 horas)</h5>
-          <div class="raw-measurements-grid">
-            <div class="raw-measurement-card" *ngFor="let measurement of rawMeasurements.slice(-6)">
-              <div class="measurement-header">
-                <span class="measurement-variable">Variable {{ measurement.measurementVariableId }}</span>
-                <span class="measurement-sensor">Sensor {{ measurement.sensorId }}</span>
-              </div>
-              <div class="measurement-value-large">{{ measurement.recordValue.toFixed(2) }}</div>
-              <div class="measurement-timestamp">{{ formatDate(measurement.recordDate) }}</div>
-            </div>
+        <ng-template #noEntries>
+          <div class="no-data">
+            <i class="fas fa-inbox"></i>
+            <p>No hay historial de ejecuciones disponible</p>
+            <button class="btn btn-primary" (click)="showExecutionDialog()">
+              <i class="fas fa-play"></i> Ejecutar Primer Riego
+            </button>
           </div>
-        </div>
-
-        <!-- KPI Measurements -->
-        <div class="kpi-measurements" *ngIf="kpiMeasurements.length > 0">
-          <h5>Indicadores KPI</h5>
-          <div class="kpi-grid">
-            <div class="kpi-item" *ngFor="let kpi of kpiMeasurements.slice(-4)">
-              <div class="kpi-header">
-                <span class="kpi-name">KPI {{ kpi.kpiId }}</span>
-                <span class="kpi-date">{{ formatDate(kpi.recordDate) }}</span>
-              </div>
-              <div class="kpi-values">
-                <div class="kpi-value">
-                  <span class="kpi-label">Promedio:</span>
-                  <span class="kpi-number">{{ kpi.avgValue.toFixed(2) }}</span>
-                </div>
-                <div class="kpi-value">
-                  <span class="kpi-label">Máximo:</span>
-                  <span class="kpi-number">{{ kpi.maxValue.toFixed(2) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Statistics Section with Real Data -->
-    <div class="statistics-section" *ngIf="selectedCropProduction">
-      <div class="system-status-card">
-        <div class="card-header">
-          <h3><i class="bi bi-bar-chart"></i> Estadísticas del Sistema</h3>
-        </div>
-
-        <div class="status-grid">
-          <div class="status-item">
-            <div class="status-label">Uso de Agua Actual</div>
-            <div class="status-value">{{ formatWaterAmount(currentWaterUsage) }}</div>
-          </div>
-          <div class="status-item">
-            <div class="status-label">Eficiencia del Sistema</div>
-            <div class="status-value">{{ formatPercentage(systemEfficiency) }}</div>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Días Desde Última Irrigación</span>
-            <div class="status-value" [ngClass]="daysSinceLastIrrigation > 2 ? 'text-red-600' : 'text-green-600'">
-              {{ daysSinceLastIrrigation }} días
-            </div>
-          </div>
-          <div class="status-item">
-            <div class="status-label">ET Promedio</div>
-            <div class="status-value">{{ averageET.toFixed(1) }} mm/día</div>
-          </div>
-        </div>
-
-        <!-- Data Quality Indicators -->
-        <div class="data-quality-section">
-          <h5>Calidad de Datos</h5>
-          <div class="quality-grid">
-            <div class="quality-item">
-              <span class="quality-label">Eventos Registrados:</span>
-              <span class="quality-value">{{ recentEvents.length }}</span>
-            </div>
-            <div class="quality-item">
-              <span class="quality-label">Mediciones Totales:</span>
-              <span class="quality-value">{{ rawMeasurements.length + aggregatedMeasurements.length }}</span>
-            </div>
-            <div class="quality-item">
-              <span class="quality-label">Variables Monitoreadas:</span>
-              <span class="quality-value">{{ getUniqueVariablesCount() }}</span>
-            </div>
-            <div class="quality-item">
-              <span class="quality-label">Sensores Activos:</span>
-              <span class="quality-value">{{ getUniqueSensorsCount() }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Water Usage Analytics -->
-    <div class="analytics-card" *ngIf="waterUsageAnalytics">
-      <div class="card-header">
-      <h3><i class="bi bi-graph-up-arrow"></i> Análisis de Uso de Agua</h3>
-      <div class="analytics-period">
-        Período: {{ formatDate(waterUsageAnalytics.startDate) }} - {{ formatDate(waterUsageAnalytics.endDate) }}
-      </div>
-      </div>
-
-      <div class="analytics-content">
-      <div class="analytics-summary">
-        <div class="summary-item">
-        <div class="summary-label">Uso Total</div>
-        <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.totalUsage) }}</div>
-        </div>
-        <div class="summary-item">
-        <div class="summary-label">Promedio Diario</div>
-        <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.dailyAverage) }}</div>
-        </div>
-        <div class="summary-item">
-        <div class="summary-label">Pico de Uso</div>
-        <div class="summary-value">{{ formatWaterAmount(waterUsageAnalytics.peakUsage) }}</div>
-        </div>
-        <div class="summary-item">
-        <div class="summary-label">Eficiencia</div>
-        <div class="summary-value">{{ formatPercentage(waterUsageAnalytics.efficiency) }}</div>
-        </div>
-      </div>
-
-      <div class="usage-trends" *ngIf="waterUsageAnalytics.trends">
-        <h5>Tendencias de Uso</h5>
-        <div class="trend-items">
-        <div class="trend-item" *ngFor="let trend of waterUsageAnalytics.trends">
-          <div class="trend-date">{{ formatDate(trend.date) }}</div>
-          <div class="trend-bar" [style.width.%]="(trend.usage / waterUsageAnalytics.peakUsage) * 100">
-          <div class="trend-value">{{ formatWaterAmount(trend.usage) }}</div>
-          </div>
-        </div>
-        </div>
-      </div>
-      </div>
-    </div>
-
-    <!-- Environmental Impact -->
-    <div class="impact-card" *ngIf="environmentalImpact">
-      <div class="card-header">
-      <h3><i class="bi bi-tree"></i> Impacto Ambiental</h3>
-      </div>
-
-      <div class="impact-content">
-      <div class="impact-metrics">
-          <div class="impact-item">
-            <div class="impact-icon">
-              <i class="bi bi-droplet-half"></i>
-            </div>
-            <div class="impact-details">
-              <div class="impact-value">{{ formatPercentage(environmentalImpact.waterSavings) }}</div>
-              <div class="impact-label">Ahorro de Agua</div>
-            </div>
-          </div>
-          <div class="impact-item">
-            <div class="impact-icon">
-              <i class="bi bi-lightning"></i>
-            </div>
-            <div class="impact-details">
-              <div class="impact-value">{{ environmentalImpact.energySavings.toFixed(1) }} kWh</div>
-              <div class="impact-label">Ahorro de Energía</div>
-            </div>
-          </div>
-          <div class="impact-item">
-            <div class="impact-icon">
-              <i class="bi bi-cloud"></i>
-            </div>
-            <div class="impact-details">
-              <div class="impact-value">{{ environmentalImpact.carbonReduction.toFixed(2) }} kg CO₂</div>
-              <div class="impact-label">Reducción de Carbono</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Footer Information -->
-  <div class="footer-info" *ngIf="selectedCropProduction">
-    <div class="info-grid">
-      <div class="info-item">
-        <i class="bi bi-droplet"></i>
-        <span>Sistema: {{ selectedCropProduction.name }}</span>
-      </div>
-      <div class="info-item" [ngClass]="isSystemHealthy ? 'text-green-600' : 'text-red-600'">
-        <i class="bi" [ngClass]="isSystemHealthy ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
-        <span>{{ isSystemHealthy ? 'Sistema operativo' : 'Atención requerida' }}</span>
-      </div>
-      <div class="info-item">
-        <i class="bi bi-clock"></i>
-        <span>Última sincronización: {{ systemStatus ? formatDate(systemStatus.lastUpdate) : 'Nunca' }}</span>
-      </div>
-      <div class="info-item">
-        <i class="bi bi-database"></i>
-        <span>Datos en tiempo real: {{ (realTimeData$ | async) ? 'Conectado' : 'Desconectado' }}</span>
+        </ng-template>
       </div>
     </div>
   </div>
+
+  <!-- Execution Form Modal -->
+  <div class="modal-backdrop" *ngIf="showExecutionForm" (click)="cancelExecution()"></div>
+  <div class="modal-dialog" *ngIf="showExecutionForm">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-play-circle"></i> Ejecutar Riego Bajo Demanda
+        </h5>
+        <button type="button" class="close-btn" (click)="cancelExecution()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <form [formGroup]="executionForm" (ngSubmit)="executeOnDemandIrrigation()">
+        <div class="modal-body">
+          
+          <!-- Irrigation Plan Selection -->
+          <div class="form-group">
+            <label for="irrigationPlanId">
+              <i class="fas fa-clipboard-list"></i> Plan de Riego *
+            </label>
+            <select 
+              class="form-control"
+              id="irrigationPlanId"
+              formControlName="irrigationPlanId"
+              required>
+              <option value="">Seleccione un plan de riego</option>
+              <option *ngFor="let plan of irrigationPlans" [value]="plan.id">
+                {{ plan.name }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="executionForm.get('irrigationPlanId')?.invalid && executionForm.get('irrigationPlanId')?.touched">
+              Por favor seleccione un plan de riego
+            </div>
+          </div>
+
+          <!-- Farm Filter (Optional) -->
+          <div class="form-group">
+            <label for="farmId">
+              <i class="fas fa-map-marked-alt"></i> Finca (Filtro Opcional)
+            </label>
+            <select 
+              class="form-control"
+              id="farmId"
+              formControlName="farmId"
+              (change)="onFarmChange($any($event.target).value)">
+              <option [value]="null">Todas las Fincas</option>
+              <option *ngFor="let farm of farms" [value]="farm.id">
+                {{ farm.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Crop Production Filter (Optional) -->
+          <div class="form-group">
+            <label for="cropProductionId">
+              <i class="fas fa-seedling"></i> Producción de Cultivo (Filtro Opcional)
+            </label>
+            <select 
+              class="form-control"
+              id="cropProductionId"
+              formControlName="cropProductionId">
+              <option [value]="null">Todas las Producciones</option>
+              <option *ngFor="let production of filteredCropProductions" [value]="production.id">
+                {{ production.name || 'Producción #' + production.id }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Start Time -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="startHours">
+                  <i class="fas fa-clock"></i> Hora de Inicio *
+                </label>
+                <input 
+                  type="number"
+                  class="form-control"
+                  id="startHours"
+                  formControlName="startHours"
+                  min="0"
+                  max="23"
+                  placeholder="0-23">
+                <div class="invalid-feedback" *ngIf="executionForm.get('startHours')?.invalid && executionForm.get('startHours')?.touched">
+                  La hora debe estar entre 0 y 23
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="startMinutes">
+                  <i class="fas fa-clock"></i> Minuto de Inicio *
+                </label>
+                <input 
+                  type="number"
+                  class="form-control"
+                  id="startMinutes"
+                  formControlName="startMinutes"
+                  min="0"
+                  max="59"
+                  placeholder="0-59">
+                <div class="invalid-feedback" *ngIf="executionForm.get('startMinutes')?.invalid && executionForm.get('startMinutes')?.touched">
+                  El minuto debe estar entre 0 y 59
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Duration -->
+          <div class="form-group">
+            <label for="duration">
+              <i class="fas fa-hourglass-half"></i> Duración (minutos) *
+            </label>
+            <input 
+              type="number"
+              class="form-control"
+              id="duration"
+              formControlName="duration"
+              min="1"
+              max="240"
+              placeholder="Ingrese la duración en minutos">
+            <small class="form-text text-muted">
+              Actual: {{ formatDuration(executionForm.get('duration')?.value || 0) }}
+            </small>
+            <div class="invalid-feedback" *ngIf="executionForm.get('duration')?.invalid && executionForm.get('duration')?.touched">
+              La duración debe estar entre 1 y 240 minutos
+            </div>
+          </div>
+
+          <!-- Sequence -->
+          <div class="form-group">
+            <label for="sequence">
+              <i class="fas fa-sort-numeric-up"></i> Secuencia *
+            </label>
+            <input 
+              type="number"
+              class="form-control"
+              id="sequence"
+              formControlName="sequence"
+              min="1"
+              placeholder="Secuencia de ejecución">
+            <small class="form-text text-muted">
+              Orden de ejecución si existen múltiples entradas
+            </small>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group">
+            <label for="notes">
+              <i class="fas fa-sticky-note"></i> Notas (Opcional)
+            </label>
+            <textarea 
+              class="form-control"
+              id="notes"
+              formControlName="notes"
+              rows="3"
+              placeholder="Agregue cualquier nota sobre esta ejecución..."></textarea>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button 
+            type="button" 
+            class="btn btn-secondary"
+            (click)="cancelExecution()"
+            [disabled]="isExecuting">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary"
+            [disabled]="executionForm.invalid || isExecuting">
+            <i class="fas fa-spinner fa-spin" *ngIf="isExecuting"></i>
+            <i class="fas fa-play" *ngIf="!isExecuting"></i>
+            {{ isExecuting ? 'Ejecutando...' : 'Ejecutar Ahora' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Entry Details Modal -->
+  <div class="modal-backdrop" *ngIf="selectedEntry" (click)="closeEntryDetails()"></div>
+  <div class="modal-dialog" *ngIf="selectedEntry">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-info-circle"></i> Detalles de Ejecución
+        </h5>
+        <button type="button" class="close-btn" (click)="closeEntryDetails()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label><i class="fas fa-clipboard-list"></i> Plan de Riego:</label>
+            <span>{{ getIrrigationPlanName(selectedEntry.irrigationPlanId) }}</span>
+          </div>
+
+          <div class="detail-item">
+            <label><i class="fas fa-clock"></i> Hora de Inicio:</label>
+            <span>{{ formatTime(selectedEntry.startTime) }}</span>
+          </div>
+
+          <div class="detail-item">
+            <label><i class="fas fa-hourglass-half"></i> Duración:</label>
+            <span>{{ formatDuration(selectedEntry.duration) }}</span>
+          </div>
+
+          <div class="detail-item">
+            <label><i class="fas fa-calendar-alt"></i> Ejecutado En:</label>
+            <span>{{ formatDateTime(selectedEntry.dateCreated) }}</span>
+          </div>
+
+          <div class="detail-item">
+            <label><i class="fas fa-info-circle"></i> Estado:</label>
+            <span class="badge" [ngClass]="getStatusClass(selectedEntry)">
+              {{ getEntryStatus(selectedEntry) }}
+            </span>
+          </div>
+
+          <div class="detail-item">
+            <label><i class="fas fa-sort-numeric-up"></i> Secuencia:</label>
+            <span>{{ selectedEntry.sequence }}</span>
+          </div>
+
+          <div class="detail-item">
+            <label><i class="fas fa-toggle-on"></i> Activo:</label>
+            <span>
+              <span class="badge" [class.badge-success]="selectedEntry.active" [class.badge-secondary]="!selectedEntry.active">
+                {{ selectedEntry.active ? 'Sí' : 'No' }}
+              </span>
+            </span>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedEntry.dateUpdated">
+            <label><i class="fas fa-calendar-check"></i> Última Actualización:</label>
+            <span>{{ formatDateTime(selectedEntry.dateUpdated) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          class="btn btn-secondary"
+          (click)="closeEntryDetails()">
+          <i class="fas fa-times"></i> Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>
