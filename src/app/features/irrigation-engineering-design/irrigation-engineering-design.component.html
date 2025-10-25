@@ -10,926 +10,1165 @@
       </h1>
       <p class="lead">Sistema completo de diseño agronómico-hidráulico con datos IoT en tiempo real</p>
     </div>
+  </div>
 
-    <div class="header-actions">
-      <div class="btn-group" role="group">
-        <button class="btn btn-outline-secondary" (click)="exportDesign()" [disabled]="!currentDesign">
-          <i class="bi bi-download"></i>
-          Exportar
+  <div class="irrigation-scheduling-container">
+    <div class="header-section">
+      <h2 class="page-title">Programación de Diseño de Ingeniería de Riego</h2>
+      <hr class="title-divider">
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="row g-3">
+        <div class="col-12 col-md-6 col-lg-3">
+          <label for="projectFilter" class="form-label">Proyecto</label>
+          <select id="projectFilter" class="form-select" [(ngModel)]="selectedProject" (change)="onFilterChange()">
+            <option value="">Todos los proyectos</option>
+            <option *ngFor="let project of projects" [value]="project.id">
+              {{ project.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+          <label for="statusFilter" class="form-label">Estado</label>
+          <select id="statusFilter" class="form-select" [(ngModel)]="selectedStatus" (change)="onFilterChange()">
+            <option value="">Todos</option>
+            <option value="pending">Pendiente</option>
+            <option value="in-progress">En Progreso</option>
+            <option value="completed">Completado</option>
+            <option value="cancelled">Cancelado</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+          <label for="dateFrom" class="form-label">Fecha Desde</label>
+          <input type="date" id="dateFrom" class="form-control" [(ngModel)]="dateFrom" (change)="onFilterChange()">
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-3">
+          <label for="dateTo" class="form-label">Fecha Hasta</label>
+          <input type="date" id="dateTo" class="form-control" [(ngModel)]="dateTo" (change)="onFilterChange()">
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="onlyActive" [(ngModel)]="onlyActive"
+              (change)="onFilterChange()">
+            <label class="form-check-label" for="onlyActive">
+              Solo activos
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-primary" (click)="loadSchedules()">
+          <i class="bi bi-search me-1"></i> Consultar
         </button>
-
-        <button class="btn btn-outline-warning" (click)="resetDesign()">
-          <i class="bi bi-arrow-counterclockwise"></i>
-          Restablecer
+        <button class="btn btn-success" (click)="createNew()">
+          <i class="bi bi-plus-circle me-1"></i> Nueva Programación
+        </button>
+        <button class="btn btn-outline-secondary" (click)="exportToExcel()">
+          <i class="bi bi-file-earmark-excel me-1"></i> Exportar
         </button>
       </div>
     </div>
-  </div>
 
-  <!-- Real-Time Data Status Panel -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card border-info">
-        <div class="card-header bg-info text-white">
-          <h5 class="mb-0">
-            <i class="bi bi-cloud-check-fill"></i>
-            Estado de Datos IoT en Tiempo Real
-            <span class="badge bg-light text-dark ms-2" [class.bg-success]="hasRealTimeData"
-              [class.bg-secondary]="!hasRealTimeData">
-              {{ hasRealTimeData ? 'CONECTADO' : 'DESCONECTADO' }}
-            </span>
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-2">
-              <div class="text-center">
-                <i class="bi bi-thermometer-half text-danger fs-2"></i>
-                <h6 class="mt-2">Temperatura</h6>
-                <strong class="text-primary">{{ formatTemperature(realTimeTemperature) }}</strong>
-                <small class="text-muted d-block">Actual</small>
-              </div>
-            </div>
-            <div class="col-md-2">
-              <div class="text-center">
-                <i class="bi bi-speedometer2 text-info fs-2"></i>
-                <h6 class="mt-2">Presión</h6>
-                <strong class="text-primary">{{ formatPressure(realTimePressure) }}</strong>
-                <small class="text-muted d-block">Sistema</small>
-              </div>
-            </div>
-            <div class="col-md-2">
-              <div class="text-center">
-                <i class="bi bi-droplet text-primary fs-2"></i>
-                <h6 class="mt-2">Flujo</h6>
-                <strong class="text-primary">{{ formatFlowRate(realTimeFlowRate) }}</strong>
-                <small class="text-muted d-block">Total</small>
-              </div>
-            </div>
-            <div class="col-md-2">
-              <div class="text-center">
-                <i class="bi bi-moisture text-info fs-2"></i>
-                <h6 class="mt-2">Humedad</h6>
-                <strong class="text-primary">{{ formatPercentage(realTimeHumidity) }}</strong>
-                <small class="text-muted d-block">Ambiente</small>
-              </div>
-            </div>
-            <div class="col-md-2">
-              <div class="text-center">
-                <i class="bi bi-patch-check text-success fs-2"></i>
-                <h6 class="mt-2">pH Suelo</h6>
-                <strong class="text-primary">{{ realTimeSoilPH.toFixed(2) }}</strong>
-                <small class="text-muted d-block">Actual</small>
-              </div>
-            </div>
-            <div class="col-md-2">
-              <div class="text-center">
-                <i class="bi bi-router text-warning fs-2"></i>
-                <h6 class="mt-2">Dispositivos</h6>
-                <strong class="text-primary">{{ activeDevicesCount }}/{{ totalDevicesCount }}</strong>
-                <small class="text-muted d-block">Activos</small>
-              </div>
-            </div>
-          </div>
-          <div class="row mt-3">
-            <div class="col-md-6">
-              <small class="text-muted">
-                <i class="bi bi-clock"></i>
-                Última actualización: {{ lastUpdateTime }}
-              </small>
-            </div>
-            <div class="col-md-6 text-end">
-              <small class="text-muted">
-                <i class="bi bi-activity"></i>
-                Estado del sistema: {{ systemStatusText }}
-              </small>
-            </div>
-          </div>
-          <div class="row mt-2" *ngIf="isLoadingRealTimeData">
-            <div class="col-12">
-              <div class="progress" style="height: 4px;">
-                <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" style="width: 100%"></div>
-              </div>
-              <small class="text-muted">Actualizando datos en tiempo real...</small>
-            </div>
-          </div>
-        </div>
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
       </div>
+      <p class="mt-2">Cargando programaciones...</p>
     </div>
-  </div>
 
-  <!-- Progress Indicator -->
-  <div class="calculation-progress" *ngIf="isCalculating || isOptimizing || isSaving">
-    <div class="progress">
-      <div class="progress-bar progress-bar-striped progress-bar-animated" [style.width.%]="calculationProgress">
-        {{ calculationProgress }}%
+    <!-- Schedule Table -->
+    <ng-container *ngIf="!isLoading">
+      <div *ngIf="schedules$ | async as schedules" class="table-section">
+        <div class="results-info">
+          <p class="text-muted">
+            <strong>{{ schedules.length }}</strong> programación(es) encontrada(s)
+          </p>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered">
+            <thead class="table-header">
+              <tr>
+                <th class="sortable" (click)="sortBy('id')">
+                  ID
+                  <i class="bi" [ngClass]="getSortIcon('id')"></i>
+                </th>
+                <th class="sortable" (click)="sortBy('projectName')">
+                  Proyecto
+                  <i class="bi" [ngClass]="getSortIcon('projectName')"></i>
+                </th>
+                <th class="sortable" (click)="sortBy('designPhase')">
+                  Fase de Diseño
+                  <i class="bi" [ngClass]="getSortIcon('designPhase')"></i>
+                </th>
+                <th class="sortable" (click)="sortBy('scheduledDate')">
+                  Fecha Programada
+                  <i class="bi" [ngClass]="getSortIcon('scheduledDate')"></i>
+                </th>
+                <th class="sortable" (click)="sortBy('completionDate')">
+                  Fecha Completada
+                  <i class="bi" [ngClass]="getSortIcon('completionDate')"></i>
+                </th>
+                <th>Responsable</th>
+                <th>Estado</th>
+                <th class="sortable" (click)="sortBy('progress')">
+                  Progreso
+                  <i class="bi" [ngClass]="getSortIcon('progress')"></i>
+                </th>
+                <th class="actions-column">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let schedule of schedules" [class.row-inactive]="!schedule.isActive">
+                <td>{{ schedule.id }}</td>
+                <td>
+                  <strong>{{ schedule.projectName }}</strong>
+                  <br>
+                  <small class="text-muted">{{ schedule.location }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-info">{{ schedule.designPhase }}</span>
+                </td>
+                <td>{{ schedule.scheduledDate | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <span *ngIf="schedule.completionDate">
+                    {{ schedule.completionDate | date:'dd/MM/yyyy' }}
+                  </span>
+                  <span *ngIf="!schedule.completionDate" class="text-muted">-</span>
+                </td>
+                <td>
+                  <div class="responsible-info">
+                    <i class="bi bi-person-circle me-1"></i>
+                    {{ schedule.responsibleEngineer }}
+                  </div>
+                </td>
+                <td>
+                  <span class="badge status-badge" [ngClass]="getStatusClass(schedule.status)">
+                    {{ getStatusLabel(schedule.status) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="progress-container">
+                    <div class="progress">
+                      <div class="progress-bar" [ngClass]="getProgressBarClass(schedule.progress)"
+                        [style.width.%]="schedule.progress" role="progressbar" [attr.aria-valuenow]="schedule.progress"
+                        aria-valuemin="0" aria-valuemax="100">
+                      </div>
+                    </div>
+                    <small class="progress-text">{{ schedule.progress }}%</small>
+                  </div>
+                </td>
+                <td class="actions-cell">
+                  <div class="action-buttons-group">
+                    <button class="btn btn-sm btn-outline-primary" (click)="viewDetails(schedule)" title="Ver detalles">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" (click)="edit(schedule)" title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" (click)="updateProgress(schedule)"
+                      title="Actualizar progreso">
+                      <i class="bi bi-check-circle"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="delete(schedule)" title="Eliminar"
+                      [disabled]="schedule.status === 'completed'">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="schedules.length === 0" class="empty-state">
+          <i class="bi bi-calendar-x empty-icon"></i>
+          <h4>No se encontraron programaciones</h4>
+          <p class="text-muted">No hay programaciones que coincidan con los filtros seleccionados.</p>
+          <button class="btn btn-primary mt-3" (click)="createNew()">
+            <i class="bi bi-plus-circle me-1"></i> Crear primera programación
+          </button>
+        </div>
       </div>
+
+      <!-- Pagination -->
+      <div *ngIf="!isLoading && (schedules$ | async)?.length" class="pagination-section">
+        <nav aria-label="Paginación">
+          <ul class="pagination justify-content-center">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" (click)="goToPage(currentPage - 1)" aria-label="Anterior">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+              <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" (click)="goToPage(currentPage + 1)" aria-label="Siguiente">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </ng-container>
+
+    <!-- Progress Indicator -->
+    <div class="calculation-progress" *ngIf="isCalculating || isOptimizing || isSaving">
+      <div class="progress">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" [style.width.%]="calculationProgress">
+          {{ calculationProgress }}%
+        </div>
+      </div>
+      <p class="text-center mt-2">{{ calculationStatusText }}</p>
     </div>
-    <p class="text-center mt-2">{{ calculationStatusText }}</p>
-  </div>
 
-  <!-- Navigation Tabs -->
-  <ul class="nav nav-tabs mb-4" id="designTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'design'" (click)="setActiveTab('design')" type="button">
-        <i class="bi bi-gear-fill"></i>
-        Parámetros de Diseño
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'hydraulic'" (click)="setActiveTab('hydraulic')"
-        type="button" [disabled]="!isDesignValid">
-        <i class="bi bi-water"></i>
-        Cálculos Hidráulicos
-        <span class="badge bg-success ms-1" *ngIf="hydraulicResults">✓</span>
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'validation'" (click)="setActiveTab('validation')"
-        type="button" [disabled]="!hydraulicResults">
-        <i class="bi bi-shield-check"></i>
-        Validación
-        <span class="badge ms-1" [class.bg-success]="validationResults?.isValid"
-          [class.bg-danger]="validationResults && !validationResults?.isValid" *ngIf="validationResults">
-          {{ validationResults?.isValid ? '✓' : '✗' }}
-        </span>
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'optimization'" (click)="setActiveTab('optimization')"
-        type="button" [disabled]="!canPerformOptimization">
-        <i class="bi bi-speedometer"></i>
-        Optimización
-        <span class="badge bg-primary ms-1" *ngIf="optimizationResults">✓</span>
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'results'" (click)="setActiveTab('results')" type="button"
-        [disabled]="!hydraulicResults">
-        <i class="bi bi-bar-chart-fill"></i>
-        Resultados
-      </button>
-    </li>
-  </ul>
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" id="designTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="activeTab === 'design'" (click)="setActiveTab('design')" type="button">
+          <i class="bi bi-gear-fill"></i>
+          Parámetros de Diseño
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="activeTab === 'hydraulic'" (click)="setActiveTab('hydraulic')"
+          type="button" [disabled]="!isDesignValid">
+          <i class="bi bi-water"></i>
+          Cálculos Hidráulicos
+          <span class="badge bg-success ms-1" *ngIf="hydraulicResults">✓</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="activeTab === 'validation'" (click)="setActiveTab('validation')"
+          type="button" [disabled]="!hydraulicResults">
+          <i class="bi bi-shield-check"></i>
+          Validación
+          <span class="badge ms-1" [class.bg-success]="validationResults?.isValid"
+            [class.bg-danger]="validationResults && !validationResults?.isValid" *ngIf="validationResults">
+            {{ validationResults?.isValid ? '✓' : '✗' }}
+          </span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="activeTab === 'optimization'" (click)="setActiveTab('optimization')"
+          type="button" [disabled]="!canPerformOptimization">
+          <i class="bi bi-speedometer"></i>
+          Optimización
+          <span class="badge bg-primary ms-1" *ngIf="optimizationResults">✓</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" [class.active]="activeTab === 'results'" (click)="setActiveTab('results')"
+          type="button" [disabled]="!hydraulicResults">
+          <i class="bi bi-bar-chart-fill"></i>
+          Resultados
+        </button>
+      </li>
+    </ul>
 
-  <!-- Tab Content -->
-  <div class="tab-content" id="designTabContent">
+    <!-- Tab Content -->
+    <div class="tab-content" id="designTabContent">
 
-    <!-- Design Parameters Tab -->
-    <div class="tab-pane" [class.show]="activeTab === 'design'" [class.active]="activeTab === 'design'">
+      <!-- Design Parameters Tab -->
+      <div class="tab-pane" [class.show]="activeTab === 'design'" [class.active]="activeTab === 'design'">
 
-      <!-- Existing Designs Selection Table -->
-      <div class="card mb-4" *ngIf="designs && designs.length > 0">
-        <div class="card-header bg-primary text-white">
-          <h4><i class="bi bi-folder-open"></i> Diseños Existentes</h4>
-        </div>
-        <div class="card-body">
-          <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i>
-            Seleccione un diseño existente para cargar sus parámetros o cree uno nuevo desde cero.
-          </div>
-
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>Seleccionar</th>
-                  <th>Nombre</th>
-                  <th>Finca</th>
-                  <th>Unidad de Producción</th>
-                  <th>Área Total</th>
-                  <th>Estado</th>
-                  <th>Fecha de Creación</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let design of designs" [class.table-primary]="currentDesign?.id === design.id"
-                  style="cursor: pointer;">
-                  <td>
-                    <div class="form-check">
-                      <input class="form-check-input" type="radio" name="selectedDesign" [id]="'design-' + design.id"
-                        [value]="design.id" (change)="loadExistingDesign(design)"
-                        [checked]="currentDesign?.id === design.id">
-                      <label class="form-check-label" [for]="'design-' + design.id"></label>
-                    </div>
-                  </td>
-                  <td>
-                    <strong>{{ design.name }}</strong>
-                    <br>
-                    <small class="text-muted">{{ design.description }}</small>
-                  </td>
-                  <td>
-                    <span class="badge bg-secondary">{{ design.farmName || 'N/A' }}</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-info">{{ design.cropProductionName || 'N/A' }}</span>
-                  </td>
-                  <td>
-                    <strong>{{ formatArea(design.totalArea) }}</strong>
-                    <br>
-                    <small class="text-muted">{{ design.plantDensity }} plantas/m²</small>
-                  </td>
-                  <td>
-                    <span class="badge" [class.bg-success]="design.status === 'completed'"
-                      [class.bg-warning]="design.status === 'draft'"
-                      [class.bg-primary]="design.status === 'in-progress'">
-                      {{ getStatusText(design.status) }}
-                    </span>
-                    <div class="mt-1">
-                      <small class="badge bg-light text-dark" *ngIf="design.isHydraulicallyValid">
-                        <i class="bi bi-water text-primary"></i> Hidráulico
-                      </small>
-                      <small class="badge bg-light text-dark" *ngIf="design.meetsAgronomicRequirements">
-                        <i class="bi bi-tree text-success"></i> Agronómico
-                      </small>
-                      <small class="badge bg-light text-dark" *ngIf="design.isEconomicallyViable">
-                        <i class="bi bi-currency-dollar text-warning"></i> Económico
-                      </small>
-                    </div>
-                  </td>
-                  <td>
-                    <small>{{ formatDate(design.createdAt) }}</small>
-                    <br>
-                    <small class="text-muted">v{{ design.version }}</small>
-                  </td>
-                  <td>
-                    <div class="btn-group btn-group-sm" role="group">
-                      <button type="button" class="btn btn-outline-primary" (click)="loadExistingDesign(design)"
-                        title="Cargar diseño">
-                        <i class="bi bi-upload"></i>
-                      </button>
-                      <button type="button" class="btn btn-outline-info" (click)="duplicateDesign(design)"
-                        title="Duplicar diseño">
-                        <i class="bi bi-files"></i>
-                      </button>
-                      <button type="button" class="btn btn-outline-success" (click)="exportSingleDesign(design)"
-                        title="Exportar diseño">
-                        <i class="bi bi-download"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="row mt-3">
-            <div class="col-md-6">
-              <button type="button" class="btn btn-outline-secondary" (click)="clearSelection()">
-                <i class="bi bi-x-circle"></i>
-                Limpiar Selección
-              </button>
-            </div>
-            <div class="col-md-6 text-end">
-              <button type="button" class="btn btn-success" (click)="createNewDesign()">
-                <i class="bi bi-plus-circle"></i>
-                Crear Nuevo Diseño
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <form [formGroup]="designForm" novalidate>
-
-        <!-- Basic Information -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4><i class="bi bi-info-circle"></i> Información Básica</h4>
+        <!-- Existing Designs Selection Table -->
+        <div class="card mb-4" *ngIf="designs && designs.length > 0">
+          <div class="card-header bg-primary text-white">
+            <h4><i class="bi bi-folder-open"></i> Diseños Existentes</h4>
           </div>
           <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group mb-3">
-                  <label class="form-label">Nombre del Diseño</label>
-                  <input type="text" class="form-control" formControlName="name" placeholder="Ej: Diseño Invernadero A">
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group mb-3">
-                  <label class="form-label">Finca</label>
-                  <select class="form-select" formControlName="farmId">
-                    <option value="">Seleccionar finca...</option>
-                    <option *ngFor="let farm of farms" [value]="farm.id">{{ farm.name }}</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group mb-3">
-                  <label class="form-label">Unidad de Producción</label>
-                  <select class="form-select" formControlName="cropProductionId">
-                    <option value="">Seleccionar unidad de producción...</option>
-                    <option *ngFor="let cp of cropProductions" [value]="cp.id">{{ cp.name }}</option>
-                  </select>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group mb-3">
-                  <label class="form-label">Descripción</label>
-                  <textarea class="form-control" formControlName="description" rows="3"
-                    placeholder="Descripción del diseño de riego..."></textarea>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Crop Area Configuration -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4><i class="bi bi-grid-3x3-gap"></i> Configuración del Área de Cultivo</h4>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Área Total (m²)</label>
-                  <input type="number" class="form-control" formControlName="totalArea" min="1" step="0.1">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Espaciamiento entre Plantas (m)</label>
-                  <input type="number" class="form-control" formControlName="plantSpacing" min="0.1" step="0.1">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Espaciamiento entre Hileras (m)</label>
-                  <input type="number" class="form-control" formControlName="rowSpacing" min="0.5" step="0.1">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Número de Plantas</label>
-                  <input type="number" class="form-control" formControlName="numberOfPlants" min="1" step="1" readonly>
-                  <small class="text-muted">Calculado automáticamente</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Environmental Parameters with Real-Time Data -->
-        <div class="card mb-4 border-success">
-          <div class="card-header bg-success text-white">
-            <h4>
-              <i class="bi bi-cloud-sun"></i>
-              Parámetros Ambientales
-              <span class="badge bg-light text-dark ms-2">
-                <i class="bi bi-wifi"></i> DATOS EN TIEMPO REAL
-              </span>
-            </h4>
-          </div>
-          <div class="card-body" formGroupName="climate">
-            <div class="alert alert-info" *ngIf="hasRealTimeData">
+            <div class="alert alert-info">
               <i class="bi bi-info-circle"></i>
-              Los valores se actualizan automáticamente con datos de sensores IoT cada 30 segundos.
-            </div>
-            <div class="alert alert-warning" *ngIf="!hasRealTimeData">
-              <i class="bi bi-exclamation-triangle"></i>
-              Sin conexión a sensores IoT. Se utilizan valores por defecto que pueden ser editados manualmente.
+              Seleccione un diseño existente para cargar sus parámetros o cree uno nuevo desde cero.
             </div>
 
-            <div class="row">
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">
-                    Temperatura Promedio (°C)
-                    <i class="bi bi-thermometer-half text-danger ms-1" *ngIf="hasRealTimeData"></i>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" class="form-control" formControlName="averageTemperature" min="0" step="0.1"
-                      [class.border-success]="hasRealTimeData">
-                    <span class="input-group-text" *ngIf="hasRealTimeData">
-                      <i class="bi bi-wifi text-success"></i>
-                    </span>
-                  </div>
-                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatTemperature(realTimeTemperature)
-                    }}</small>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">
-                    Humedad Promedio (%)
-                    <i class="bi bi-moisture text-info ms-1" *ngIf="hasRealTimeData"></i>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" class="form-control" formControlName="averageHumidity" min="0" max="100"
-                      step="1" [class.border-success]="hasRealTimeData">
-                    <span class="input-group-text" *ngIf="hasRealTimeData">
-                      <i class="bi bi-wifi text-success"></i>
-                    </span>
-                  </div>
-                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatPercentage(realTimeHumidity)
-                    }}</small>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Velocidad del Viento (m/s)</label>
-                  <input type="number" class="form-control" formControlName="windSpeed" min="0" step="0.1">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Radiación Solar (MJ/m²/día)</label>
-                  <input type="number" class="form-control" formControlName="solarRadiation" min="0" step="0.1">
-                </div>
-              </div>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Seleccionar</th>
+                    <th>Nombre</th>
+                    <th>Finca</th>
+                    <th>Unidad de Producción</th>
+                    <th>Área Total</th>
+                    <th>Estado</th>
+                    <th>Fecha de Creación</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let design of designs" [class.table-primary]="currentDesign?.id === design.id"
+                    style="cursor: pointer;">
+                    <td>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="selectedDesign" [id]="'design-' + design.id"
+                          [value]="design.id" (change)="loadExistingDesign(design)"
+                          [checked]="currentDesign?.id === design.id">
+                        <label class="form-check-label" [for]="'design-' + design.id"></label>
+                      </div>
+                    </td>
+                    <td>
+                      <strong>{{ design.name }}</strong>
+                      <br>
+                      <small class="text-muted">{{ design.description }}</small>
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary">{{ design.farmName || 'N/A' }}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-info">{{ design.cropProductionName || 'N/A' }}</span>
+                    </td>
+                    <td>
+                      <strong>{{ formatArea(design.totalArea) }}</strong>
+                      <br>
+                      <small class="text-muted">{{ design.plantDensity }} plantas/m²</small>
+                    </td>
+                    <td>
+                      <span class="badge" [class.bg-success]="design.status === 'completed'"
+                        [class.bg-warning]="design.status === 'draft'"
+                        [class.bg-primary]="design.status === 'in-progress'">
+                        {{ getStatusText(design.status) }}
+                      </span>
+                      <div class="mt-1">
+                        <small class="badge bg-light text-dark" *ngIf="design.isHydraulicallyValid">
+                          <i class="bi bi-water text-primary"></i> Hidráulico
+                        </small>
+                        <small class="badge bg-light text-dark" *ngIf="design.meetsAgronomicRequirements">
+                          <i class="bi bi-tree text-success"></i> Agronómico
+                        </small>
+                        <small class="badge bg-light text-dark" *ngIf="design.isEconomicallyViable">
+                          <i class="bi bi-currency-dollar text-warning"></i> Económico
+                        </small>
+                      </div>
+                    </td>
+                    <td>
+                      <small>{{ formatDate(design.createdAt) }}</small>
+                      <br>
+                      <small class="text-muted">v{{ design.version }}</small>
+                    </td>
+                    <td>
+                      <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary" (click)="loadExistingDesign(design)"
+                          title="Cargar diseño">
+                          <i class="bi bi-upload"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-info" (click)="duplicateDesign(design)"
+                          title="Duplicar diseño">
+                          <i class="bi bi-files"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-success" (click)="exportSingleDesign(design)"
+                          title="Exportar diseño">
+                          <i class="bi bi-download"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-            <div class="row">
-              <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">Elevación (m.s.n.m.)</label>
-                  <input type="number" class="form-control" formControlName="elevation" min="0" step="1">
-                </div>
+            <div class="row mt-3">
+              <div class="col-md-6">
+                <button type="button" class="btn btn-outline-secondary" (click)="clearSelection()">
+                  <i class="bi bi-x-circle"></i>
+                  Limpiar Selección
+                </button>
+              </div>
+              <div class="col-md-6 text-end">
+                <button type="button" class="btn btn-success" (click)="createNewDesign()">
+                  <i class="bi bi-plus-circle"></i>
+                  Crear Nuevo Diseño
+                </button>
               </div>
             </div>
           </div>
         </div>
+        <form [formGroup]="designForm" novalidate>
 
-        <!-- Water Source with Real-Time Data -->
-        <div class="card mb-4 border-info">
-          <div class="card-header bg-info text-white">
-            <h4>
-              <i class="bi bi-droplet-fill"></i>
-              Fuente de Agua
-              <span class="badge bg-light text-dark ms-2">
-                <i class="bi bi-wifi"></i> MONITOREO EN TIEMPO REAL
-              </span>
-            </h4>
-          </div>
-          <div class="card-body" formGroupName="waterSource">
-            <div class="row">
-              <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">Tipo de Fuente</label>
-                  <select class="form-select" formControlName="sourceType">
-                    <option value="well">Pozo</option>
-                    <option value="reservoir">Reservorio</option>
-                    <option value="municipal">Municipal</option>
-                    <option value="river">Río</option>
-                  </select>
+          <!-- Basic Information -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h4><i class="bi bi-info-circle"></i> Información Básica</h4>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Nombre del Diseño</label>
+                    <input type="text" class="form-control" formControlName="name"
+                      placeholder="Ej: Diseño Invernadero A">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Finca</label>
+                    <select class="form-select" formControlName="farmId">
+                      <option value="">Seleccionar finca...</option>
+                      <option *ngFor="let farm of farms" [value]="farm.id">{{ farm.name }}</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-              <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">
-                    Presión del Agua (bar)
-                    <i class="bi bi-speedometer2 text-info ms-1" *ngIf="hasRealTimeData"></i>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" class="form-control" formControlName="waterPressure" min="0" step="0.1"
-                      [class.border-success]="hasRealTimeData">
-                    <span class="input-group-text" *ngIf="hasRealTimeData">
-                      <i class="bi bi-wifi text-success"></i>
-                    </span>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Unidad de Producción</label>
+                    <select class="form-select" formControlName="cropProductionId">
+                      <option value="">Seleccionar unidad de producción...</option>
+                      <option *ngFor="let cp of cropProductions" [value]="cp.id">{{ cp.name }}</option>
+                    </select>
                   </div>
-                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatPressure(realTimePressure)
-                    }}</small>
                 </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">
-                    Flujo de Agua (L/min)
-                    <i class="bi bi-droplet text-primary ms-1" *ngIf="hasRealTimeData"></i>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" class="form-control" formControlName="waterFlow" min="0" step="1"
-                      [class.border-success]="hasRealTimeData">
-                    <span class="input-group-text" *ngIf="hasRealTimeData">
-                      <i class="bi bi-wifi text-success"></i>
-                    </span>
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Descripción</label>
+                    <textarea class="form-control" formControlName="description" rows="3"
+                      placeholder="Descripción del diseño de riego..."></textarea>
                   </div>
-                  <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatFlowRate(realTimeFlowRate)
-                    }}</small>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Water Quality Parameters with Real-Time Data -->
-            <div class="mt-3" formGroupName="waterQuality">
-              <h6>
-                Parámetros de Calidad del Agua
-                <span class="badge bg-success ms-2" *ngIf="hasRealTimeData">
-                  <i class="bi bi-wifi"></i> DATOS IoT
-                </span>
-              </h6>
+          <!-- Crop Area Configuration -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h4><i class="bi bi-grid-3x3-gap"></i> Configuración del Área de Cultivo</h4>
+            </div>
+            <div class="card-body">
               <div class="row">
-                <div class="col-md-2">
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Área Total (m²)</label>
+                    <input type="number" class="form-control" formControlName="totalArea" min="1" step="0.1">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Espaciamiento entre Plantas (m)</label>
+                    <input type="number" class="form-control" formControlName="plantSpacing" min="0.1" step="0.1">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Espaciamiento entre Hileras (m)</label>
+                    <input type="number" class="form-control" formControlName="rowSpacing" min="0.5" step="0.1">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Número de Plantas</label>
+                    <input type="number" class="form-control" formControlName="numberOfPlants" min="1" step="1"
+                      readonly>
+                    <small class="text-muted">Calculado automáticamente</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Environmental Parameters with Real-Time Data -->
+          <div class="card mb-4 border-success">
+            <div class="card-header bg-success text-white">
+              <h4>
+                <i class="bi bi-cloud-sun"></i>
+                Parámetros Ambientales
+                <span class="badge bg-light text-dark ms-2">
+                  <i class="bi bi-wifi"></i> DATOS EN TIEMPO REAL
+                </span>
+              </h4>
+            </div>
+            <div class="card-body" formGroupName="climate">
+              <div class="alert alert-info" *ngIf="hasRealTimeData">
+                <i class="bi bi-info-circle"></i>
+                Los valores se actualizan automáticamente con datos de sensores IoT cada 30 segundos.
+              </div>
+              <div class="alert alert-warning" *ngIf="!hasRealTimeData">
+                <i class="bi bi-exclamation-triangle"></i>
+                Sin conexión a sensores IoT. Se utilizan valores por defecto que pueden ser editados manualmente.
+              </div>
+
+              <div class="row">
+                <div class="col-md-3">
                   <div class="form-group mb-3">
                     <label class="form-label">
-                      pH
-                      <i class="bi bi-patch-check text-success ms-1" *ngIf="hasRealTimeData"></i>
+                      Temperatura Promedio (°C)
+                      <i class="bi bi-thermometer-half text-danger ms-1" *ngIf="hasRealTimeData"></i>
                     </label>
                     <div class="input-group">
-                      <input type="number" class="form-control" formControlName="ph" min="4" max="9" step="0.1"
+                      <input type="number" class="form-control" formControlName="averageTemperature" min="0" step="0.1"
                         [class.border-success]="hasRealTimeData">
                       <span class="input-group-text" *ngIf="hasRealTimeData">
                         <i class="bi bi-wifi text-success"></i>
                       </span>
                     </div>
-                    <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ realTimeSoilPH.toFixed(2) }}</small>
+                    <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{
+                      formatTemperature(realTimeTemperature)
+                      }}</small>
                   </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                   <div class="form-group mb-3">
-                    <label class="form-label">CE (dS/m)</label>
-                    <input type="number" class="form-control" formControlName="electricalConductivity" min="0"
+                    <label class="form-label">
+                      Humedad Promedio (%)
+                      <i class="bi bi-moisture text-info ms-1" *ngIf="hasRealTimeData"></i>
+                    </label>
+                    <div class="input-group">
+                      <input type="number" class="form-control" formControlName="averageHumidity" min="0" max="100"
+                        step="1" [class.border-success]="hasRealTimeData">
+                      <span class="input-group-text" *ngIf="hasRealTimeData">
+                        <i class="bi bi-wifi text-success"></i>
+                      </span>
+                    </div>
+                    <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatPercentage(realTimeHumidity)
+                      }}</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Velocidad del Viento (m/s)</label>
+                    <input type="number" class="form-control" formControlName="windSpeed" min="0" step="0.1">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Radiación Solar (MJ/m²/día)</label>
+                    <input type="number" class="form-control" formControlName="solarRadiation" min="0" step="0.1">
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Elevación (m.s.n.m.)</label>
+                    <input type="number" class="form-control" formControlName="elevation" min="0" step="1">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Water Source with Real-Time Data -->
+          <div class="card mb-4 border-info">
+            <div class="card-header bg-info text-white">
+              <h4>
+                <i class="bi bi-droplet-fill"></i>
+                Fuente de Agua
+                <span class="badge bg-light text-dark ms-2">
+                  <i class="bi bi-wifi"></i> MONITOREO EN TIEMPO REAL
+                </span>
+              </h4>
+            </div>
+            <div class="card-body" formGroupName="waterSource">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Tipo de Fuente</label>
+                    <select class="form-select" formControlName="sourceType">
+                      <option value="well">Pozo</option>
+                      <option value="reservoir">Reservorio</option>
+                      <option value="municipal">Municipal</option>
+                      <option value="river">Río</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">
+                      Presión del Agua (bar)
+                      <i class="bi bi-speedometer2 text-info ms-1" *ngIf="hasRealTimeData"></i>
+                    </label>
+                    <div class="input-group">
+                      <input type="number" class="form-control" formControlName="waterPressure" min="0" step="0.1"
+                        [class.border-success]="hasRealTimeData">
+                      <span class="input-group-text" *ngIf="hasRealTimeData">
+                        <i class="bi bi-wifi text-success"></i>
+                      </span>
+                    </div>
+                    <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatPressure(realTimePressure)
+                      }}</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">
+                      Flujo de Agua (L/min)
+                      <i class="bi bi-droplet text-primary ms-1" *ngIf="hasRealTimeData"></i>
+                    </label>
+                    <div class="input-group">
+                      <input type="number" class="form-control" formControlName="waterFlow" min="0" step="1"
+                        [class.border-success]="hasRealTimeData">
+                      <span class="input-group-text" *ngIf="hasRealTimeData">
+                        <i class="bi bi-wifi text-success"></i>
+                      </span>
+                    </div>
+                    <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ formatFlowRate(realTimeFlowRate)
+                      }}</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Water Quality Parameters with Real-Time Data -->
+              <div class="mt-3" formGroupName="waterQuality">
+                <h6>
+                  Parámetros de Calidad del Agua
+                  <span class="badge bg-success ms-2" *ngIf="hasRealTimeData">
+                    <i class="bi bi-wifi"></i> DATOS IoT
+                  </span>
+                </h6>
+                <div class="row">
+                  <div class="col-md-2">
+                    <div class="form-group mb-3">
+                      <label class="form-label">
+                        pH
+                        <i class="bi bi-patch-check text-success ms-1" *ngIf="hasRealTimeData"></i>
+                      </label>
+                      <div class="input-group">
+                        <input type="number" class="form-control" formControlName="ph" min="4" max="9" step="0.1"
+                          [class.border-success]="hasRealTimeData">
+                        <span class="input-group-text" *ngIf="hasRealTimeData">
+                          <i class="bi bi-wifi text-success"></i>
+                        </span>
+                      </div>
+                      <small class="text-success" *ngIf="hasRealTimeData">Sensor: {{ realTimeSoilPH.toFixed(2)
+                        }}</small>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="form-group mb-3">
+                      <label class="form-label">CE (dS/m)</label>
+                      <input type="number" class="form-control" formControlName="electricalConductivity" min="0"
+                        step="0.1">
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="form-group mb-3">
+                      <label class="form-label">SDT (ppm)</label>
+                      <input type="number" class="form-control" formControlName="totalDissolvedSolids" min="0" step="1">
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="form-group mb-3">
+                      <label class="form-label">NO₃ (ppm)</label>
+                      <input type="number" class="form-control" formControlName="nitrates" min="0" step="0.1">
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="form-group mb-3">
+                      <label class="form-label">P (ppm)</label>
+                      <input type="number" class="form-control" formControlName="phosphorus" min="0" step="0.1">
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="form-group mb-3">
+                      <label class="form-label">K (ppm)</label>
+                      <input type="number" class="form-control" formControlName="potassium" min="0" step="0.1">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Emitter Configuration -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h4><i class="bi bi-droplet-half"></i> Configuración de Emisores</h4>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Tipo de Emisor</label>
+                    <select class="form-select" formControlName="emitterType">
+                      <option value="dripper">Gotero</option>
+                      <option value="sprinkler">Aspersor</option>
+                      <option value="mist">Microaspersor</option>
+                      <option value="bubbler">Burbujeo</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Caudal del Emisor (L/h)</label>
+                    <input type="number" class="form-control" formControlName="emitterFlowRate" min="0.5" step="0.1">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Emisores por Planta</label>
+                    <input type="number" class="form-control" formControlName="emittersPerPlant" min="1" step="1">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">
+                      Presión de Operación (bar)
+                      <i class="bi bi-speedometer2 text-info ms-1" *ngIf="hasRealTimeData"></i>
+                    </label>
+                    <div class="input-group">
+                      <input type="number" class="form-control" formControlName="operatingPressure" min="0.5" step="0.1"
+                        [class.border-success]="hasRealTimeData">
+                      <span class="input-group-text" *ngIf="hasRealTimeData">
+                        <i class="bi bi-activity text-success"></i>
+                      </span>
+                    </div>
+                    <small class="text-success" *ngIf="hasRealTimeData">Actual: {{ formatPressure(realTimePressure)
+                      }}</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Requerimiento Diario de Agua (L/día/planta)</label>
+                    <input type="number" class="form-control" formControlName="dailyWaterRequirement" min="0.1"
+                      step="0.1" readonly>
+                    <small class="text-muted">Calculado automáticamente basado en número de plantas</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Frecuencia de Riego (veces por día)</label>
+                    <input type="number" class="form-control" formControlName="irrigationFrequency" min="0.1"
                       step="0.1">
                   </div>
                 </div>
-                <div class="col-md-2">
+              </div>
+            </div>
+          </div>
+
+          <!-- Pipeline Configuration -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h4><i class="bi bi-diagram-2"></i> Configuración de Tuberías</h4>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
                   <div class="form-group mb-3">
-                    <label class="form-label">SDT (ppm)</label>
-                    <input type="number" class="form-control" formControlName="totalDissolvedSolids" min="0" step="1">
+                    <label class="form-label">Diámetro Tubería Principal (mm)</label>
+                    <input type="number" class="form-control" formControlName="mainPipeDiameter" min="25" step="1">
                   </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                   <div class="form-group mb-3">
-                    <label class="form-label">NO₃ (ppm)</label>
-                    <input type="number" class="form-control" formControlName="nitrates" min="0" step="0.1">
+                    <label class="form-label">Diámetro Tubería Secundaria (mm)</label>
+                    <input type="number" class="form-control" formControlName="secondaryPipeDiameter" min="16" step="1">
                   </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                   <div class="form-group mb-3">
-                    <label class="form-label">P (ppm)</label>
-                    <input type="number" class="form-control" formControlName="phosphorus" min="0" step="0.1">
+                    <label class="form-label">Diámetro Tubería Lateral (mm)</label>
+                    <input type="number" class="form-control" formControlName="lateralPipeDiameter" min="12" step="1">
                   </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                   <div class="form-group mb-3">
-                    <label class="form-label">K (ppm)</label>
-                    <input type="number" class="form-control" formControlName="potassium" min="0" step="0.1">
+                    <label class="form-label">Material de Tubería</label>
+                    <select class="form-select" formControlName="pipelineMaterial">
+                      <option value="PE">Polietileno (PE)</option>
+                      <option value="PVC">PVC</option>
+                      <option value="HDPE">HDPE</option>
+                      <option value="PPR">PPR</option>
+                    </select>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Emitter Configuration -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4><i class="bi bi-droplet-half"></i> Configuración de Emisores</h4>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Tipo de Emisor</label>
-                  <select class="form-select" formControlName="emitterType">
-                    <option value="dripper">Gotero</option>
-                    <option value="sprinkler">Aspersor</option>
-                    <option value="mist">Microaspersor</option>
-                    <option value="bubbler">Burbujeo</option>
-                  </select>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Caudal del Emisor (L/h)</label>
-                  <input type="number" class="form-control" formControlName="emitterFlowRate" min="0.5" step="0.1">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Emisores por Planta</label>
-                  <input type="number" class="form-control" formControlName="emittersPerPlant" min="1" step="1">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">
-                    Presión de Operación (bar)
-                    <i class="bi bi-speedometer2 text-info ms-1" *ngIf="hasRealTimeData"></i>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" class="form-control" formControlName="operatingPressure" min="0.5" step="0.1"
-                      [class.border-success]="hasRealTimeData">
-                    <span class="input-group-text" *ngIf="hasRealTimeData">
-                      <i class="bi bi-activity text-success"></i>
-                    </span>
+          <!-- System Components -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h4><i class="bi bi-gear-wide-connected"></i> Componentes del Sistema</h4>
+            </div>
+            <div class="card-body" formGroupName="components">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" formControlName="hasFiltration" id="hasFiltration">
+                    <label class="form-check-label" for="hasFiltration">
+                      <i class="bi bi-funnel"></i> Sistema de Filtración
+                    </label>
                   </div>
-                  <small class="text-success" *ngIf="hasRealTimeData">Actual: {{ formatPressure(realTimePressure)
-                    }}</small>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" formControlName="hasAutomation" id="hasAutomation">
+                    <label class="form-check-label" for="hasAutomation">
+                      <i class="bi bi-robot"></i> Automatización
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" formControlName="hasFertigation"
+                      id="hasFertigation">
+                    <label class="form-check-label" for="hasFertigation">
+                      <i class="bi bi-droplet-fill"></i> Fertirrigación
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" formControlName="hasBackflowPrevention"
+                      id="hasBackflowPrevention">
+                    <label class="form-check-label" for="hasBackflowPrevention">
+                      <i class="bi bi-shield-check"></i> Prevención de Reflujo
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" formControlName="hasPressureRegulation"
+                      id="hasPressureRegulation">
+                    <label class="form-check-label" for="hasPressureRegulation">
+                      <i class="bi bi-speedometer"></i> Regulación de Presión
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" formControlName="hasFlowMeter" id="hasFlowMeter">
+                    <label class="form-check-label" for="hasFlowMeter">
+                      <i class="bi bi-graph-up"></i> Medidor de Flujo
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group mb-3">
-                  <label class="form-label">Requerimiento Diario de Agua (L/día/planta)</label>
-                  <input type="number" class="form-control" formControlName="dailyWaterRequirement" min="0.1" step="0.1"
-                    readonly>
-                  <small class="text-muted">Calculado automáticamente basado en número de plantas</small>
+          <!-- Action Buttons -->
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <span class="text-muted">
+                    <i class="bi bi-info-circle"></i>
+                    Complete todos los parámetros para continuar con los cálculos hidráulicos
+                  </span>
                 </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group mb-3">
-                  <label class="form-label">Frecuencia de Riego (veces por día)</label>
-                  <input type="number" class="form-control" formControlName="irrigationFrequency" min="0.1" step="0.1">
+                <div>
+                  <button type="button" class="btn btn-primary" (click)="setActiveTab('hydraulic')">
+                    <i class="bi bi-arrow-right"></i>
+                    Continuar a Cálculos Hidráulicos
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </form>
+      </div>
 
-        <!-- Pipeline Configuration -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4><i class="bi bi-diagram-2"></i> Configuración de Tuberías</h4>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Diámetro Tubería Principal (mm)</label>
-                  <input type="number" class="form-control" formControlName="mainPipeDiameter" min="25" step="1">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Diámetro Tubería Secundaria (mm)</label>
-                  <input type="number" class="form-control" formControlName="secondaryPipeDiameter" min="16" step="1">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Diámetro Tubería Lateral (mm)</label>
-                  <input type="number" class="form-control" formControlName="lateralPipeDiameter" min="12" step="1">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Material de Tubería</label>
-                  <select class="form-select" formControlName="pipelineMaterial">
-                    <option value="PE">Polietileno (PE)</option>
-                    <option value="PVC">PVC</option>
-                    <option value="HDPE">HDPE</option>
-                    <option value="PPR">PPR</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- Hydraulic Calculations Tab -->
+      <div class="tab-pane" [class.show]="activeTab === 'hydraulic'" [class.active]="activeTab === 'hydraulic'">
+        <form [formGroup]="hydraulicForm" novalidate>
 
-        <!-- System Components -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4><i class="bi bi-gear-wide-connected"></i> Componentes del Sistema</h4>
-          </div>
-          <div class="card-body" formGroupName="components">
-            <div class="row">
-              <div class="col-md-4">
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="hasFiltration" id="hasFiltration">
-                  <label class="form-check-label" for="hasFiltration">
-                    <i class="bi bi-funnel"></i> Sistema de Filtración
-                  </label>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="hasAutomation" id="hasAutomation">
-                  <label class="form-check-label" for="hasAutomation">
-                    <i class="bi bi-robot"></i> Automatización
-                  </label>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="hasFertigation" id="hasFertigation">
-                  <label class="form-check-label" for="hasFertigation">
-                    <i class="bi bi-droplet-fill"></i> Fertirrigación
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-4">
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="hasBackflowPrevention"
-                    id="hasBackflowPrevention">
-                  <label class="form-check-label" for="hasBackflowPrevention">
-                    <i class="bi bi-shield-check"></i> Prevención de Reflujo
-                  </label>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="hasPressureRegulation"
-                    id="hasPressureRegulation">
-                  <label class="form-check-label" for="hasPressureRegulation">
-                    <i class="bi bi-speedometer"></i> Regulación de Presión
-                  </label>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="hasFlowMeter" id="hasFlowMeter">
-                  <label class="form-check-label" for="hasFlowMeter">
-                    <i class="bi bi-graph-up"></i> Medidor de Flujo
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between">
-              <div>
-                <span class="text-muted">
-                  <i class="bi bi-info-circle"></i>
-                  Complete todos los parámetros para continuar con los cálculos hidráulicos
+          <!-- Operating Parameters with Real-Time Data -->
+          <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning text-dark">
+              <h4>
+                <i class="bi bi-sliders"></i>
+                Parámetros de Operación
+                <span class="badge bg-dark ms-2">
+                  <i class="bi bi-wifi"></i> TIEMPO REAL
                 </span>
-              </div>
-              <div>
-                <button type="button" class="btn btn-primary" (click)="setActiveTab('hydraulic')">
-                  <i class="bi bi-arrow-right"></i>
-                  Continuar a Cálculos Hidráulicos
-                </button>
+              </h4>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">
+                      Presión de Operación (bar)
+                      <i class="bi bi-speedometer2 text-warning ms-1" *ngIf="hasRealTimeData"></i>
+                    </label>
+                    <div class="input-group">
+                      <input type="number" class="form-control" formControlName="operatingPressure" min="0.5" step="0.1"
+                        [class.border-warning]="hasRealTimeData">
+                      <span class="input-group-text" *ngIf="hasRealTimeData">
+                        <i class="bi bi-wifi text-warning"></i>
+                      </span>
+                    </div>
+                    <small class="text-warning" *ngIf="hasRealTimeData">Actual: {{ formatPressure(realTimePressure)
+                      }}</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">
+                      Caudal Máximo (L/min)
+                      <i class="bi bi-droplet text-primary ms-1" *ngIf="hasRealTimeData"></i>
+                    </label>
+                    <div class="input-group">
+                      <input type="number" class="form-control" formControlName="maxFlowRate" min="0.1" step="0.1"
+                        [class.border-warning]="hasRealTimeData">
+                      <span class="input-group-text" *ngIf="hasRealTimeData">
+                        <i class="bi bi-wifi text-warning"></i>
+                      </span>
+                    </div>
+                    <small class="text-warning" *ngIf="hasRealTimeData">Actual: {{ formatFlowRate(realTimeFlowRate)
+                      }}</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Velocidad de Diseño (m/s)</label>
+                    <input type="number" class="form-control" formControlName="designVelocity" min="0.5" max="3"
+                      step="0.1">
+                    <small class="text-muted">Recomendado: 1.5 - 2.0 m/s</small>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </form>
-    </div>
 
-    <!-- Hydraulic Calculations Tab -->
-    <div class="tab-pane" [class.show]="activeTab === 'hydraulic'" [class.active]="activeTab === 'hydraulic'">
-      <form [formGroup]="hydraulicForm" novalidate>
+          <!-- Pressure Loss Calculations -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h4><i class="bi bi-graph-down"></i> Cálculos de Pérdida de Presión</h4>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Coeficiente de Fricción</label>
+                    <input type="number" class="form-control" formControlName="frictionLossCoefficient" min="0.1"
+                      step="0.01">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Coeficiente de Pérdidas Menores</label>
+                    <input type="number" class="form-control" formControlName="minorLossCoefficient" min="0.05"
+                      step="0.01">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Diferencia de Elevación (m)</label>
+                    <input type="number" class="form-control" formControlName="elevationDifference" step="0.1">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <!-- Operating Parameters with Real-Time Data -->
-        <div class="card mb-4 border-warning">
-          <div class="card-header bg-warning text-dark">
+          <!-- Performance Requirements -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h4><i class="bi bi-target"></i> Requerimientos de Rendimiento</h4>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Uniformidad Objetivo (%)</label>
+                    <input type="number" class="form-control" formControlName="targetUniformity" min="80" max="100"
+                      step="1">
+                    <small class="text-muted">Mínimo recomendado: 85%</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Eficiencia Objetivo (%)</label>
+                    <input type="number" class="form-control" formControlName="targetEfficiency" min="70" max="100"
+                      step="1">
+                    <small class="text-muted">Mínimo recomendado: 80%</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Variación Máxima de Presión (%)</label>
+                    <input type="number" class="form-control" formControlName="maximumPressureVariation" min="5"
+                      max="20" step="1">
+                    <small class="text-muted">Máximo recomendado: 10%</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Calculation Results -->
+          <div class="card mb-4" *ngIf="hydraulicResults">
+            <div class="card-header bg-success text-white">
+              <h4><i class="bi bi-calculator"></i> Resultados de Cálculos Hidráulicos</h4>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="metric-card">
+                    <h6>Pérdida Total de Presión</h6>
+                    <h4 class="text-primary">{{ formatPressure(totalPressureLoss) }}</h4>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="metric-card">
+                    <h6>Uniformidad Alcanzada</h6>
+                    <h4 class="text-success">{{ formatPercentage(uniformityAchieved) }}</h4>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="metric-card">
+                    <h6>Eficiencia de Aplicación</h6>
+                    <h4 class="text-info">{{ formatPercentage(efficiencyAchieved) }}</h4>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="metric-card">
+                    <h6>Confiabilidad del Sistema</h6>
+                    <h4
+                      [class]="systemReliabilityScore >= 80 ? 'text-success' : systemReliabilityScore >= 60 ? 'text-warning' : 'text-danger'">
+                      {{ formatPercentage(systemReliabilityScore) }}
+                    </h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" (click)="setActiveTab('design')">
+                  <i class="bi bi-arrow-left"></i>
+                  Volver a Diseño
+                </button>
+                <div>
+                  <button type="button" class="btn btn-success me-2" [disabled]="!canPerformCalculations"
+                    (click)="performHydraulicCalculations()">
+                    <i class="bi bi-calculator"></i>
+                    {{ hydraulicResults ? 'Recalcular' : 'Calcular' }} Hidráulica
+                  </button>
+                  <button type="button" class="btn btn-primary" (click)="setActiveTab('validation')">
+                    <i class="bi bi-arrow-right"></i>
+                    Continuar a Validación
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Validation Tab -->
+      <div class="tab-pane" [class.show]="activeTab === 'validation'" [class.active]="activeTab === 'validation'">
+        <div class="card mb-4" *ngIf="validationResults">
+          <div class="card-header" [class.bg-success]="validationResults.isValid"
+            [class.bg-danger]="!validationResults.isValid" class="text-white">
             <h4>
-              <i class="bi bi-sliders"></i>
-              Parámetros de Operación
-              <span class="badge bg-dark ms-2">
-                <i class="bi bi-wifi"></i> TIEMPO REAL
-              </span>
+              <i class="bi" [class.bi-check-circle-fill]="validationResults.isValid"
+                [class.bi-x-circle-fill]="!validationResults.isValid"></i>
+              Estado de Validación del Sistema
             </h4>
           </div>
           <div class="card-body">
             <div class="row">
-              <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">
-                    Presión de Operación (bar)
-                    <i class="bi bi-speedometer2 text-warning ms-1" *ngIf="hasRealTimeData"></i>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" class="form-control" formControlName="operatingPressure" min="0.5" step="0.1"
-                      [class.border-warning]="hasRealTimeData">
-                    <span class="input-group-text" *ngIf="hasRealTimeData">
-                      <i class="bi bi-wifi text-warning"></i>
+              <div class="col-md-12">
+                <div class="alert" [class.alert-success]="validationResults.isValid"
+                  [class.alert-danger]="!validationResults.isValid">
+                  <h5>
+                    {{ validationResults.isValid ? 'Sistema Válido' : 'Sistema Requiere Ajustes' }}
+                    <span class="badge ms-2" [class.bg-success]="validationResults.isValid"
+                      [class.bg-danger]="!validationResults.isValid">
+                      Puntuación: {{ validationResults.overallScore }}/100
                     </span>
-                  </div>
-                  <small class="text-warning" *ngIf="hasRealTimeData">Actual: {{ formatPressure(realTimePressure)
-                    }}</small>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">
-                    Caudal Máximo (L/min)
-                    <i class="bi bi-droplet text-primary ms-1" *ngIf="hasRealTimeData"></i>
-                  </label>
-                  <div class="input-group">
-                    <input type="number" class="form-control" formControlName="maxFlowRate" min="0.1" step="0.1"
-                      [class.border-warning]="hasRealTimeData">
-                    <span class="input-group-text" *ngIf="hasRealTimeData">
-                      <i class="bi bi-wifi text-warning"></i>
-                    </span>
-                  </div>
-                  <small class="text-warning" *ngIf="hasRealTimeData">Actual: {{ formatFlowRate(realTimeFlowRate)
-                    }}</small>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">Velocidad de Diseño (m/s)</label>
-                  <input type="number" class="form-control" formControlName="designVelocity" min="0.5" max="3"
-                    step="0.1">
-                  <small class="text-muted">Recomendado: 1.5 - 2.0 m/s</small>
+                  </h5>
+                  <p class="mb-0">
+                    {{ validationResults.isValid ?
+                    'El diseño cumple con todos los criterios de validación técnica.' :
+                    'El diseño presenta problemas que deben ser corregidos antes de la implementación.' }}
+                  </p>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Pressure Loss Calculations -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4><i class="bi bi-graph-down"></i> Cálculos de Pérdida de Presión</h4>
-          </div>
-          <div class="card-body">
             <div class="row">
               <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">Coeficiente de Fricción</label>
-                  <input type="number" class="form-control" formControlName="frictionLossCoefficient" min="0.1"
-                    step="0.01">
+                <h6>Validación de Presión</h6>
+                <div class="validation-item" [class.text-success]="validationResults.pressureValidation.isValid"
+                  [class.text-danger]="!validationResults.pressureValidation.isValid">
+                  <i class="bi" [class.bi-check-circle]="validationResults.pressureValidation.isValid"
+                    [class.bi-x-circle]="!validationResults.pressureValidation.isValid"></i>
+                  {{ validationResults.pressureValidation.isValid ? 'Válido' : 'Inválido' }}
                 </div>
+                <small class="text-muted">
+                  Presión min: {{ formatPressure(validationResults.pressureValidation.minPressure) }}<br>
+                  Presión max: {{ formatPressure(validationResults.pressureValidation.maxPressure) }}<br>
+                  Variación: {{ formatPercentage(validationResults.pressureValidation.pressureVariation) }}
+                </small>
               </div>
               <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">Coeficiente de Pérdidas Menores</label>
-                  <input type="number" class="form-control" formControlName="minorLossCoefficient" min="0.05"
-                    step="0.01">
+                <h6>Validación de Flujo</h6>
+                <div class="validation-item" [class.text-success]="validationResults.flowValidation.isValid"
+                  [class.text-danger]="!validationResults.flowValidation.isValid">
+                  <i class="bi" [class.bi-check-circle]="validationResults.flowValidation.isValid"
+                    [class.bi-x-circle]="!validationResults.flowValidation.isValid"></i>
+                  {{ validationResults.flowValidation.isValid ? 'Válido' : 'Inválido' }}
                 </div>
+                <small class="text-muted">
+                  Balance de flujo: {{ formatPercentage(validationResults.flowValidation.totalFlowBalance) }}<br>
+                  Variación: {{ formatPercentage(validationResults.flowValidation.flowStabilityIndex) }}<br>
+                  Flujo adecuado: {{ validationResults.flowValidation.adequateFlowForAllZones ? 'Sí' : 'No' }}
+                </small>
               </div>
               <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">Diferencia de Elevación (m)</label>
-                  <input type="number" class="form-control" formControlName="elevationDifference" step="0.1">
+                <h6>Validación de Uniformidad</h6>
+                <div class="validation-item" [class.text-success]="validationResults.uniformityValidation.isValid"
+                  [class.text-danger]="!validationResults.uniformityValidation.isValid">
+                  <i class="bi" [class.bi-check-circle]="validationResults.uniformityValidation.isValid"
+                    [class.bi-x-circle]="!validationResults.uniformityValidation.isValid"></i>
+                  {{ validationResults.uniformityValidation.isValid ? 'Válido' : 'Inválido' }}
                 </div>
+                <small class="text-muted">
+                  Uniformidad alcanzada: {{ formatPercentage(validationResults.uniformityValidation.achievedUniformity)
+                  }}<br>
+                  Objetivo: {{ formatPercentage(validationResults.uniformityValidation.targetUniformity) }}<br>
+                  Grado: {{ validationResults.uniformityValidation.uniformityGrade }}
+                </small>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Performance Requirements -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4><i class="bi bi-target"></i> Requerimientos de Rendimiento</h4>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">Uniformidad Objetivo (%)</label>
-                  <input type="number" class="form-control" formControlName="targetUniformity" min="80" max="100"
-                    step="1">
-                  <small class="text-muted">Mínimo recomendado: 85%</small>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">Eficiencia Objetivo (%)</label>
-                  <input type="number" class="form-control" formControlName="targetEfficiency" min="70" max="100"
-                    step="1">
-                  <small class="text-muted">Mínimo recomendado: 80%</small>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="form-group mb-3">
-                  <label class="form-label">Variación Máxima de Presión (%)</label>
-                  <input type="number" class="form-control" formControlName="maximumPressureVariation" min="5" max="20"
-                    step="1">
-                  <small class="text-muted">Máximo recomendado: 10%</small>
-                </div>
+            <div class="mt-4" *ngIf="validationResults.issues && validationResults.issues.length > 0">
+              <h6>Problemas Identificados</h6>
+              <div class="alert alert-warning">
+                <ul class="mb-0">
+                  <li *ngFor="let issue of validationResults.issues"
+                    [class]="'text-' + (issue.severity === 'critical' ? 'danger' : issue.severity === 'warning' ? 'warning' : 'info')">
+                    <strong>{{ issue.category }}:</strong> {{ issue.message }}
+                    <small class="d-block" *ngIf="issue.recommendedAction">{{ issue.recommendedAction }}</small>
+                  </li>
+                </ul>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Calculation Results -->
-        <div class="card mb-4" *ngIf="hydraulicResults">
-          <div class="card-header bg-success text-white">
-            <h4><i class="bi bi-calculator"></i> Resultados de Cálculos Hidráulicos</h4>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-3">
-                <div class="metric-card">
-                  <h6>Pérdida Total de Presión</h6>
-                  <h4 class="text-primary">{{ formatPressure(totalPressureLoss) }}</h4>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="metric-card">
-                  <h6>Uniformidad Alcanzada</h6>
-                  <h4 class="text-success">{{ formatPercentage(uniformityAchieved) }}</h4>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="metric-card">
-                  <h6>Eficiencia de Aplicación</h6>
-                  <h4 class="text-info">{{ formatPercentage(efficiencyAchieved) }}</h4>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="metric-card">
-                  <h6>Confiabilidad del Sistema</h6>
-                  <h4
-                    [class]="systemReliabilityScore >= 80 ? 'text-success' : systemReliabilityScore >= 60 ? 'text-warning' : 'text-danger'">
-                    {{ formatPercentage(systemReliabilityScore) }}
-                  </h4>
-                </div>
+            <div class="mt-4" *ngIf="validationResults.recommendations && validationResults.recommendations.length > 0">
+              <h6>Recomendaciones</h6>
+              <div class="alert alert-info">
+                <ul class="mb-0">
+                  <li *ngFor="let recommendation of validationResults.recommendations">{{ recommendation }}</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -939,656 +1178,534 @@
         <div class="card">
           <div class="card-body">
             <div class="d-flex justify-content-between">
-              <button type="button" class="btn btn-outline-secondary" (click)="setActiveTab('design')">
+              <button type="button" class="btn btn-outline-secondary" (click)="setActiveTab('hydraulic')">
                 <i class="bi bi-arrow-left"></i>
-                Volver a Diseño
+                Volver a Hidráulica
               </button>
               <div>
-                <button type="button" class="btn btn-success me-2" [disabled]="!canPerformCalculations"
-                  (click)="performHydraulicCalculations()">
-                  <i class="bi bi-calculator"></i>
-                  {{ hydraulicResults ? 'Recalcular' : 'Calcular' }} Hidráulica
+                <button type="button" class="btn btn-warning me-2" (click)="validateSystem()">
+                  <i class="bi bi-shield-check"></i>
+                  Revalidar Sistema
                 </button>
-                <button type="button" class="btn btn-primary" (click)="setActiveTab('validation')">
+                <button type="button" class="btn btn-primary" [disabled]="!canPerformOptimization"
+                  (click)="setActiveTab('optimization')">
                   <i class="bi bi-arrow-right"></i>
-                  Continuar a Validación
+                  Continuar a Optimización
                 </button>
               </div>
             </div>
           </div>
         </div>
-      </form>
-    </div>
-
-    <!-- Validation Tab -->
-    <div class="tab-pane" [class.show]="activeTab === 'validation'" [class.active]="activeTab === 'validation'">
-      <div class="card mb-4" *ngIf="validationResults">
-        <div class="card-header" [class.bg-success]="validationResults.isValid"
-          [class.bg-danger]="!validationResults.isValid" class="text-white">
-          <h4>
-            <i class="bi" [class.bi-check-circle-fill]="validationResults.isValid"
-              [class.bi-x-circle-fill]="!validationResults.isValid"></i>
-            Estado de Validación del Sistema
-          </h4>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-12">
-              <div class="alert" [class.alert-success]="validationResults.isValid"
-                [class.alert-danger]="!validationResults.isValid">
-                <h5>
-                  {{ validationResults.isValid ? 'Sistema Válido' : 'Sistema Requiere Ajustes' }}
-                  <span class="badge ms-2" [class.bg-success]="validationResults.isValid"
-                    [class.bg-danger]="!validationResults.isValid">
-                    Puntuación: {{ validationResults.overallScore }}/100
-                  </span>
-                </h5>
-                <p class="mb-0">
-                  {{ validationResults.isValid ?
-                  'El diseño cumple con todos los criterios de validación técnica.' :
-                  'El diseño presenta problemas que deben ser corregidos antes de la implementación.' }}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-4">
-              <h6>Validación de Presión</h6>
-              <div class="validation-item" [class.text-success]="validationResults.pressureValidation.isValid"
-                [class.text-danger]="!validationResults.pressureValidation.isValid">
-                <i class="bi" [class.bi-check-circle]="validationResults.pressureValidation.isValid"
-                  [class.bi-x-circle]="!validationResults.pressureValidation.isValid"></i>
-                {{ validationResults.pressureValidation.isValid ? 'Válido' : 'Inválido' }}
-              </div>
-              <small class="text-muted">
-                Presión min: {{ formatPressure(validationResults.pressureValidation.minPressure) }}<br>
-                Presión max: {{ formatPressure(validationResults.pressureValidation.maxPressure) }}<br>
-                Variación: {{ formatPercentage(validationResults.pressureValidation.pressureVariation) }}
-              </small>
-            </div>
-            <div class="col-md-4">
-              <h6>Validación de Flujo</h6>
-              <div class="validation-item" [class.text-success]="validationResults.flowValidation.isValid"
-                [class.text-danger]="!validationResults.flowValidation.isValid">
-                <i class="bi" [class.bi-check-circle]="validationResults.flowValidation.isValid"
-                  [class.bi-x-circle]="!validationResults.flowValidation.isValid"></i>
-                {{ validationResults.flowValidation.isValid ? 'Válido' : 'Inválido' }}
-              </div>
-              <small class="text-muted">
-                Balance de flujo: {{ formatPercentage(validationResults.flowValidation.totalFlowBalance) }}<br>
-                Variación: {{ formatPercentage(validationResults.flowValidation.flowStabilityIndex) }}<br>
-                Flujo adecuado: {{ validationResults.flowValidation.adequateFlowForAllZones ? 'Sí' : 'No' }}
-              </small>
-            </div>
-            <div class="col-md-4">
-              <h6>Validación de Uniformidad</h6>
-              <div class="validation-item" [class.text-success]="validationResults.uniformityValidation.isValid"
-                [class.text-danger]="!validationResults.uniformityValidation.isValid">
-                <i class="bi" [class.bi-check-circle]="validationResults.uniformityValidation.isValid"
-                  [class.bi-x-circle]="!validationResults.uniformityValidation.isValid"></i>
-                {{ validationResults.uniformityValidation.isValid ? 'Válido' : 'Inválido' }}
-              </div>
-              <small class="text-muted">
-                Uniformidad alcanzada: {{ formatPercentage(validationResults.uniformityValidation.achievedUniformity)
-                }}<br>
-                Objetivo: {{ formatPercentage(validationResults.uniformityValidation.targetUniformity) }}<br>
-                Grado: {{ validationResults.uniformityValidation.uniformityGrade }}
-              </small>
-            </div>
-          </div>
-
-          <div class="mt-4" *ngIf="validationResults.issues && validationResults.issues.length > 0">
-            <h6>Problemas Identificados</h6>
-            <div class="alert alert-warning">
-              <ul class="mb-0">
-                <li *ngFor="let issue of validationResults.issues"
-                  [class]="'text-' + (issue.severity === 'critical' ? 'danger' : issue.severity === 'warning' ? 'warning' : 'info')">
-                  <strong>{{ issue.category }}:</strong> {{ issue.message }}
-                  <small class="d-block" *ngIf="issue.recommendedAction">{{ issue.recommendedAction }}</small>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="mt-4" *ngIf="validationResults.recommendations && validationResults.recommendations.length > 0">
-            <h6>Recomendaciones</h6>
-            <div class="alert alert-info">
-              <ul class="mb-0">
-                <li *ngFor="let recommendation of validationResults.recommendations">{{ recommendation }}</li>
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="card">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <button type="button" class="btn btn-outline-secondary" (click)="setActiveTab('hydraulic')">
-              <i class="bi bi-arrow-left"></i>
-              Volver a Hidráulica
-            </button>
-            <div>
-              <button type="button" class="btn btn-warning me-2" (click)="validateSystem()">
-                <i class="bi bi-shield-check"></i>
-                Revalidar Sistema
-              </button>
-              <button type="button" class="btn btn-primary" [disabled]="!canPerformOptimization"
-                (click)="setActiveTab('optimization')">
-                <i class="bi bi-arrow-right"></i>
-                Continuar a Optimización
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <!-- Optimization Tab -->
+      <div class="tab-pane" [class.show]="activeTab === 'optimization'" [class.active]="activeTab === 'optimization'">
+        <form [formGroup]="optimizationForm" novalidate>
 
-    <!-- Optimization Tab -->
-    <div class="tab-pane" [class.show]="activeTab === 'optimization'" [class.active]="activeTab === 'optimization'">
-      <form [formGroup]="optimizationForm" novalidate>
-
-        <!-- Optimization Goals -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4><i class="bi bi-bullseye"></i> Objetivos de Optimización</h4>
-          </div>
-          <div class="card-body" formGroupName="optimizationGoals">
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="minimizeCost" id="minimizeCost">
-                  <label class="form-check-label" for="minimizeCost">
-                    <i class="bi bi-cash-stack"></i> Minimizar Costo
-                  </label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="maximizeUniformity"
-                    id="maximizeUniformity">
-                  <label class="form-check-label" for="maximizeUniformity">
-                    <i class="bi bi-graph-up"></i> Maximizar Uniformidad
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="maximizeEfficiency"
-                    id="maximizeEfficiency">
-                  <label class="form-check-label" for="maximizeEfficiency">
-                    <i class="bi bi-speedometer2"></i> Maximizar Eficiencia
-                  </label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="minimizeEnergyConsumption"
-                    id="minimizeEnergyConsumption">
-                  <label class="form-check-label" for="minimizeEnergyConsumption">
-                    <i class="bi bi-lightning"></i> Minimizar Consumo Energético
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-check mb-3">
-                  <input class="form-check-input" type="checkbox" formControlName="minimizeWaterUsage"
-                    id="minimizeWaterUsage">
-                  <label class="form-check-label" for="minimizeWaterUsage">
-                    <i class="bi bi-droplet"></i> Minimizar Uso de Agua
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Economic Parameters -->
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4><i class="bi bi-currency-dollar"></i> Parámetros Económicos</h4>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Costo de Agua ($/m³)</label>
-                  <input type="number" class="form-control" formControlName="waterCostPerM3" min="0" step="0.01">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Costo de Energía ($/kWh)</label>
-                  <input type="number" class="form-control" formControlName="energyCostPerKWh" min="0" step="0.01">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Costo de Mano de Obra ($/hora)</label>
-                  <input type="number" class="form-control" formControlName="laborCostPerHour" min="0" step="0.5">
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-3">
-                  <label class="form-label">Costo de Mantenimiento (%)</label>
-                  <input type="number" class="form-control" formControlName="maintenanceCostPercentage" min="0" max="20"
-                    step="0.5">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Optimization Results -->
-        <div class="card mb-4" *ngIf="optimizationResults">
-          <div class="card-header bg-primary text-white">
-            <h4><i class="bi bi-graph-up-arrow"></i> Resultados de Optimización</h4>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-3">
-                <div class="metric-card">
-                  <h6>Puntuación Final</h6>
-                  <h4 [class]="optimizationScoreClass">{{ formatPercentage(optimizationResults.finalScore || 0) }}</h4>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="metric-card">
-                  <h6>Costo Estimado</h6>
-                  <h4 class="text-success">{{ formatCurrency(estimatedCost) }}</h4>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="metric-card">
-                  <h6>Ahorro de Agua</h6>
-                  <h4 class="text-info">{{ formatPercentage(waterSavings) }}</h4>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="metric-card">
-                  <h6>Ahorro Energético</h6>
-                  <h4 class="text-warning">{{ formatPercentage(energySavings) }}</h4>
-                </div>
-              </div>
-            </div>
-
-            <div class="row mt-4"
-              *ngIf="optimizationResults.results?.convergenceHistory && optimizationResults.results.convergenceHistory.length > 0">
-              <div class="col-12">
-                <h6>Pasos de Optimización Realizados</h6>
-                <div class="timeline">
-                  <div class="timeline-item"
-                    *ngFor="let step of optimizationResults.results?.convergenceHistory; let i = index">
-                    <span class="timeline-badge bg-primary">{{ i + 1 }}</span>
-                    <div class="timeline-content">
-                      <h6>Iteración {{ step.iteration }}</h6>
-                      <p class="text-muted">Mejor valor objetivo: {{ step.bestObjectiveValue.toFixed(2) || 0 }}</p>
-                      <small class="text-success">Mejora: {{ formatPercentage(step.improvement || 0) }}</small>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between">
-              <button type="button" class="btn btn-outline-secondary" (click)="setActiveTab('validation')">
-                <i class="bi bi-arrow-left"></i>
-                Volver a Validación
-              </button>
-              <div>
-                <button type="button" class="btn btn-primary me-2" [disabled]="!canPerformOptimization"
-                  (click)="performOptimization()">
-                  <i class="bi bi-lightning"></i>
-                  {{ optimizationResults ? 'Reoptimizar' : 'Optimizar' }} Diseño
-                </button>
-                <button type="button" class="btn btn-success" [disabled]="!optimizationResults"
-                  (click)="setActiveTab('results')">
-                  <i class="bi bi-arrow-right"></i>
-                  Ver Resultados Finales
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
-    </div>
-
-    <!-- Results Tab -->
-    <div class="tab-pane" [class.show]="activeTab === 'results'" [class.active]="activeTab === 'results'">
-
-      <!-- Summary Dashboard -->
-      <div class="row mb-4">
-        <div class="col-12">
-          <div class="card border-success">
-            <div class="card-header bg-success text-white">
-              <h4><i class="bi bi-trophy"></i> Resumen Ejecutivo del Diseño</h4>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-8">
-                  <h5>{{ designForm.get('name')?.value || 'Diseño de Riego' }}</h5>
-                  <p class="text-muted">{{ designForm.get('description')?.value || 'Sistema de riego optimizado con
-                    datos IoT en tiempo real' }}</p>
-
-                  <div class="row mt-3">
-                    <div class="col-md-6">
-                      <strong>Área Total:</strong> {{ formatArea(designForm.get('totalArea')?.value || 0) }}<br>
-                      <strong>Número de Plantas:</strong> {{ designForm.get('numberOfPlants')?.value || 0 }}<br>
-                      <strong>Tipo de Emisor:</strong> {{ designForm.get('emitterType')?.value || 'N/A' }}
-                    </div>
-                    <div class="col-md-6">
-                      <strong>Presión de Operación:</strong> {{
-                      formatPressure(hydraulicForm.get('operatingPressure')?.value || 0) }}<br>
-                      <strong>Caudal Total:</strong> {{ formatFlowRate(hydraulicForm.get('maxFlowRate')?.value || 0)
-                      }}<br>
-                      <strong>Material de Tubería:</strong> {{ designForm.get('pipelineMaterial')?.value || 'N/A' }}
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="text-center">
-                    <h6>Estado del Diseño</h6>
-                    <div class="status-badge" [class.bg-success]="validationResults?.isValid"
-                      [class.bg-warning]="!validationResults?.isValid">
-                      <i class="bi" [class.bi-check-circle-fill]="validationResults?.isValid"
-                        [class.bi-exclamation-triangle-fill]="!validationResults?.isValid"></i>
-                      {{ validationResults?.isValid ? 'VALIDADO' : 'PENDIENTE' }}
-                    </div>
-                    <small class="text-muted d-block mt-2">
-                      Puntuación: {{ validationResults?.overallScore || 0 }}/100
-                    </small>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Performance Metrics -->
-      <div class="row mb-4">
-        <div class="col-md-3">
-          <div class="card text-center">
-            <div class="card-body">
-              <i class="bi bi-droplet-fill text-primary fs-1"></i>
-              <h5 class="card-title mt-2">Uniformidad</h5>
-              <h3 class="text-primary">{{ formatPercentage(uniformityAchieved) }}</h3>
-              <small class="text-muted">Objetivo: {{ hydraulicForm.get('targetUniformity')?.value || 90 }}%</small>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-center">
-            <div class="card-body">
-              <i class="bi bi-speedometer2 text-success fs-1"></i>
-              <h5 class="card-title mt-2">Eficiencia</h5>
-              <h3 class="text-success">{{ formatPercentage(efficiencyAchieved) }}</h3>
-              <small class="text-muted">Objetivo: {{ hydraulicForm.get('targetEfficiency')?.value || 85 }}%</small>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-center">
-            <div class="card-body">
-              <i class="bi bi-graph-down text-info fs-1"></i>
-              <h5 class="card-title mt-2">Pérdida de Presión</h5>
-              <h3 class="text-info">{{ formatPressure(totalPressureLoss) }}</h3>
-              <small class="text-muted">Máximo: {{ formatPressure((hydraulicForm.get('operatingPressure')?.value || 0) *
-                0.2) }}</small>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-center">
-            <div class="card-body">
-              <i class="bi bi-shield-check text-warning fs-1"></i>
-              <h5 class="card-title mt-2">Confiabilidad</h5>
-              <h3 class="text-warning">{{ formatPercentage(systemReliabilityScore) }}</h3>
-              <small class="text-muted">Puntuación compuesta</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Real-Time Integration Summary -->
-      <div class="row mb-4">
-        <div class="col-12">
-          <div class="card border-info">
-            <div class="card-header bg-info text-white">
-              <h5><i class="bi bi-wifi"></i> Integración de Datos IoT en Tiempo Real</h5>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <h6>Datos Ambientales Utilizados</h6>
-                  <ul class="list-unstyled">
-                    <li><i class="bi bi-thermometer-half text-danger"></i> <strong>Temperatura:</strong> {{
-                      formatTemperature(realTimeTemperature) }}</li>
-                    <li><i class="bi bi-moisture text-info"></i> <strong>Humedad:</strong> {{
-                      formatPercentage(realTimeHumidity) }}</li>
-                    <li><i class="bi bi-speedometer2 text-warning"></i> <strong>Presión del Sistema:</strong> {{
-                      formatPressure(realTimePressure) }}</li>
-                    <li><i class="bi bi-droplet text-primary"></i> <strong>Flujo Total:</strong> {{
-                      formatFlowRate(realTimeFlowRate) }}</li>
-                  </ul>
-                </div>
-                <div class="col-md-6">
-                  <h6>Calidad del Agua Monitoreada</h6>
-                  <ul class="list-unstyled">
-                    <li><i class="bi bi-patch-check text-success"></i> <strong>pH del Suelo:</strong> {{
-                      realTimeSoilPH.toFixed(2) }}</li>
-                    <li><i class="bi bi-activity text-info"></i> <strong>Estado del Sistema:</strong> {{
-                      systemStatusText }}</li>
-                    <li><i class="bi bi-router text-warning"></i> <strong>Dispositivos Activos:</strong> {{
-                      activeDevicesCount }}/{{ totalDevicesCount }}</li>
-                    <li><i class="bi bi-clock text-muted"></i> <strong>Última Actualización:</strong> {{ lastUpdateTime
-                      }}</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="alert alert-success mt-3" *ngIf="hasRealTimeData">
-                <i class="bi bi-check-circle"></i>
-                <strong>Conexión Activa:</strong> El diseño se ha optimizado utilizando datos en tiempo real de {{
-                activeDevicesCount }} sensores IoT activos.
-                Los parámetros se actualizan automáticamente cada 30 segundos para mantener la precisión del diseño.
-              </div>
-
-              <div class="alert alert-warning mt-3" *ngIf="!hasRealTimeData">
-                <i class="bi bi-exclamation-triangle"></i>
-                <strong>Sin Conexión IoT:</strong> El diseño utiliza valores por defecto. Conecte los sensores IoT para
-                obtener
-                datos en tiempo real y mejorar la precisión del diseño.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Economic Analysis -->
-      <div class="row mb-4" *ngIf="optimizationResults">
-        <div class="col-12">
-          <div class="card">
+          <!-- Optimization Goals -->
+          <div class="card mb-4">
             <div class="card-header">
-              <h5><i class="bi bi-currency-dollar"></i> Análisis Económico</h5>
+              <h4><i class="bi bi-bullseye"></i> Objetivos de Optimización</h4>
+            </div>
+            <div class="card-body" formGroupName="optimizationGoals">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" formControlName="minimizeCost" id="minimizeCost">
+                    <label class="form-check-label" for="minimizeCost">
+                      <i class="bi bi-cash-stack"></i> Minimizar Costo
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" formControlName="maximizeUniformity"
+                      id="maximizeUniformity">
+                    <label class="form-check-label" for="maximizeUniformity">
+                      <i class="bi bi-graph-up"></i> Maximizar Uniformidad
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" formControlName="maximizeEfficiency"
+                      id="maximizeEfficiency">
+                    <label class="form-check-label" for="maximizeEfficiency">
+                      <i class="bi bi-speedometer2"></i> Maximizar Eficiencia
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" formControlName="minimizeEnergyConsumption"
+                      id="minimizeEnergyConsumption">
+                    <label class="form-check-label" for="minimizeEnergyConsumption">
+                      <i class="bi bi-lightning"></i> Minimizar Consumo Energético
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" formControlName="minimizeWaterUsage"
+                      id="minimizeWaterUsage">
+                    <label class="form-check-label" for="minimizeWaterUsage">
+                      <i class="bi bi-droplet"></i> Minimizar Uso de Agua
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Economic Parameters -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h4><i class="bi bi-currency-dollar"></i> Parámetros Económicos</h4>
             </div>
             <div class="card-body">
               <div class="row">
-                <div class="col-md-4">
-                  <div class="economic-metric">
-                    <h6>Costo Total Estimado</h6>
-                    <h4 class="text-primary">{{ formatCurrency(estimatedCost) }}</h4>
-                    <small class="text-muted">Incluye materiales, instalación y configuración</small>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Costo de Agua ($/m³)</label>
+                    <input type="number" class="form-control" formControlName="waterCostPerM3" min="0" step="0.01">
                   </div>
                 </div>
-                <div class="col-md-4">
-                  <div class="economic-metric">
-                    <h6>Ahorro Anual de Agua</h6>
-                    <h4 class="text-success">{{ formatPercentage(waterSavings) }}</h4>
-                    <small class="text-muted">Comparado con sistema convencional</small>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Costo de Energía ($/kWh)</label>
+                    <input type="number" class="form-control" formControlName="energyCostPerKWh" min="0" step="0.01">
                   </div>
                 </div>
-                <div class="col-md-4">
-                  <div class="economic-metric">
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Costo de Mano de Obra ($/hora)</label>
+                    <input type="number" class="form-control" formControlName="laborCostPerHour" min="0" step="0.5">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-group mb-3">
+                    <label class="form-label">Costo de Mantenimiento (%)</label>
+                    <input type="number" class="form-control" formControlName="maintenanceCostPercentage" min="0"
+                      max="20" step="0.5">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Optimization Results -->
+          <div class="card mb-4" *ngIf="optimizationResults">
+            <div class="card-header bg-primary text-white">
+              <h4><i class="bi bi-graph-up-arrow"></i> Resultados de Optimización</h4>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="metric-card">
+                    <h6>Puntuación Final</h6>
+                    <h4 [class]="optimizationScoreClass">{{ formatPercentage(optimizationResults.finalScore || 0) }}
+                    </h4>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="metric-card">
+                    <h6>Costo Estimado</h6>
+                    <h4 class="text-success">{{ formatCurrency(estimatedCost) }}</h4>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="metric-card">
+                    <h6>Ahorro de Agua</h6>
+                    <h4 class="text-info">{{ formatPercentage(waterSavings) }}</h4>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="metric-card">
                     <h6>Ahorro Energético</h6>
                     <h4 class="text-warning">{{ formatPercentage(energySavings) }}</h4>
-                    <small class="text-muted">Reducción en consumo eléctrico</small>
                   </div>
                 </div>
               </div>
 
-              <div class="row mt-4">
-                <div class="col-md-6">
-                  <h6>Costos Operativos Anuales</h6>
-                  <table class="table table-sm">
-                    <tbody>
-                      <tr>
-                        <td>Agua</td>
-                        <td class="text-end">{{ formatCurrency(0) }}</td>
-                      </tr>
-                      <tr>
-                        <td>Energía</td>
-                        <td class="text-end">{{ formatCurrency(0) }}</td>
-                      </tr>
-                      <tr>
-                        <td>Mantenimiento</td>
-                        <td class="text-end">{{ formatCurrency(0) }}</td>
-                      </tr>
-                      <tr class="table-primary">
-                        <td><strong>Total Anual</strong></td>
-                        <td class="text-end"><strong>{{ formatCurrency(0) }}</strong></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <div class="col-md-6">
-                  <h6>Período de Retorno de Inversión</h6>
-                  <div class="text-center">
-                    <h3 class="text-success">{{ (0).toFixed(1) }} años</h3>
-                    <small class="text-muted">Basado en ahorros proyectados</small>
+              <div class="row mt-4"
+                *ngIf="optimizationResults.results?.convergenceHistory && optimizationResults.results.convergenceHistory.length > 0">
+                <div class="col-12">
+                  <h6>Pasos de Optimización Realizados</h6>
+                  <div class="timeline">
+                    <div class="timeline-item"
+                      *ngFor="let step of optimizationResults.results?.convergenceHistory; let i = index">
+                      <span class="timeline-badge bg-primary">{{ i + 1 }}</span>
+                      <div class="timeline-content">
+                        <h6>Iteración {{ step.iteration }}</h6>
+                        <p class="text-muted">Mejor valor objetivo: {{ step.bestObjectiveValue.toFixed(2) || 0 }}</p>
+                        <small class="text-success">Mejora: {{ formatPercentage(step.improvement || 0) }}</small>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Technical Specifications -->
-      <div class="row mb-4">
-        <div class="col-12">
+          <!-- Action Buttons -->
           <div class="card">
-            <div class="card-header">
-              <h5><i class="bi bi-gear"></i> Especificaciones Técnicas</h5>
-            </div>
             <div class="card-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <h6>Configuración de Tuberías</h6>
-                  <table class="table table-sm">
-                    <tbody>
-                      <tr>
-                        <td>Tubería Principal</td>
-                        <td>{{ designForm.get('mainPipeDiameter')?.value || 0 }} mm</td>
-                      </tr>
-                      <tr>
-                        <td>Tubería Secundaria</td>
-                        <td>{{ designForm.get('secondaryPipeDiameter')?.value || 0 }} mm</td>
-                      </tr>
-                      <tr>
-                        <td>Tubería Lateral</td>
-                        <td>{{ designForm.get('lateralPipeDiameter')?.value || 0 }} mm</td>
-                      </tr>
-                      <tr>
-                        <td>Material</td>
-                        <td>{{ designForm.get('pipelineMaterial')?.value || 'N/A' }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+              <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" (click)="setActiveTab('validation')">
+                  <i class="bi bi-arrow-left"></i>
+                  Volver a Validación
+                </button>
+                <div>
+                  <button type="button" class="btn btn-primary me-2" [disabled]="!canPerformOptimization"
+                    (click)="performOptimization()">
+                    <i class="bi bi-lightning"></i>
+                    {{ optimizationResults ? 'Reoptimizar' : 'Optimizar' }} Diseño
+                  </button>
+                  <button type="button" class="btn btn-success" [disabled]="!optimizationResults"
+                    (click)="setActiveTab('results')">
+                    <i class="bi bi-arrow-right"></i>
+                    Ver Resultados Finales
+                  </button>
                 </div>
-                <div class="col-md-6">
-                  <h6>Configuración de Emisores</h6>
-                  <table class="table table-sm">
-                    <tbody>
-                      <tr>
-                        <td>Tipo</td>
-                        <td>{{ designForm.get('emitterType')?.value || 'N/A' }}</td>
-                      </tr>
-                      <tr>
-                        <td>Caudal por Emisor</td>
-                        <td>{{ designForm.get('emitterFlowRate')?.value || 0 }} L/h</td>
-                      </tr>
-                      <tr>
-                        <td>Emisores por Planta</td>
-                        <td>{{ designForm.get('emittersPerPlant')?.value || 0 }}</td>
-                      </tr>
-                      <tr>
-                        <td>Presión de Operación</td>
-                        <td>{{ formatPressure(designForm.get('operatingPressure')?.value || 0) }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Results Tab -->
+      <div class="tab-pane" [class.show]="activeTab === 'results'" [class.active]="activeTab === 'results'">
+
+        <!-- Summary Dashboard -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="card border-success">
+              <div class="card-header bg-success text-white">
+                <h4><i class="bi bi-trophy"></i> Resumen Ejecutivo del Diseño</h4>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-8">
+                    <h5>{{ designForm.get('name')?.value || 'Diseño de Riego' }}</h5>
+                    <p class="text-muted">{{ designForm.get('description')?.value || 'Sistema de riego optimizado con
+                      datos IoT en tiempo real' }}</p>
+
+                    <div class="row mt-3">
+                      <div class="col-md-6">
+                        <strong>Área Total:</strong> {{ formatArea(designForm.get('totalArea')?.value || 0) }}<br>
+                        <strong>Número de Plantas:</strong> {{ designForm.get('numberOfPlants')?.value || 0 }}<br>
+                        <strong>Tipo de Emisor:</strong> {{ designForm.get('emitterType')?.value || 'N/A' }}
+                      </div>
+                      <div class="col-md-6">
+                        <strong>Presión de Operación:</strong> {{
+                        formatPressure(hydraulicForm.get('operatingPressure')?.value || 0) }}<br>
+                        <strong>Caudal Total:</strong> {{ formatFlowRate(hydraulicForm.get('maxFlowRate')?.value || 0)
+                        }}<br>
+                        <strong>Material de Tubería:</strong> {{ designForm.get('pipelineMaterial')?.value || 'N/A' }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="text-center">
+                      <h6>Estado del Diseño</h6>
+                      <div class="status-badge" [class.bg-success]="validationResults?.isValid"
+                        [class.bg-warning]="!validationResults?.isValid">
+                        <i class="bi" [class.bi-check-circle-fill]="validationResults?.isValid"
+                          [class.bi-exclamation-triangle-fill]="!validationResults?.isValid"></i>
+                        {{ validationResults?.isValid ? 'VALIDADO' : 'PENDIENTE' }}
+                      </div>
+                      <small class="text-muted d-block mt-2">
+                        Puntuación: {{ validationResults?.overallScore || 0 }}/100
+                      </small>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Action Buttons -->
-      <div class="card">
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
-            <button type="button" class="btn btn-outline-secondary" (click)="setActiveTab('optimization')">
-              <i class="bi bi-arrow-left"></i>
-              Volver a Optimización
-            </button>
-            <div>
-              <button type="button" class="btn btn-primary me-2" (click)="exportDesign()">
-                <i class="bi bi-download"></i>
-                Exportar Diseño
+        <!-- Performance Metrics -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="bi bi-droplet-fill text-primary fs-1"></i>
+                <h5 class="card-title mt-2">Uniformidad</h5>
+                <h3 class="text-primary">{{ formatPercentage(uniformityAchieved) }}</h3>
+                <small class="text-muted">Objetivo: {{ hydraulicForm.get('targetUniformity')?.value || 90 }}%</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="bi bi-speedometer2 text-success fs-1"></i>
+                <h5 class="card-title mt-2">Eficiencia</h5>
+                <h3 class="text-success">{{ formatPercentage(efficiencyAchieved) }}</h3>
+                <small class="text-muted">Objetivo: {{ hydraulicForm.get('targetEfficiency')?.value || 85 }}%</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="bi bi-graph-down text-info fs-1"></i>
+                <h5 class="card-title mt-2">Pérdida de Presión</h5>
+                <h3 class="text-info">{{ formatPressure(totalPressureLoss) }}</h3>
+                <small class="text-muted">Máximo: {{ formatPressure((hydraulicForm.get('operatingPressure')?.value || 0)
+                  *
+                  0.2) }}</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="bi bi-shield-check text-warning fs-1"></i>
+                <h5 class="card-title mt-2">Confiabilidad</h5>
+                <h3 class="text-warning">{{ formatPercentage(systemReliabilityScore) }}</h3>
+                <small class="text-muted">Puntuación compuesta</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Integration Summary -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="card border-info">
+              <div class="card-header bg-info text-white">
+                <h5><i class="bi bi-wifi"></i> Integración de Datos IoT en Tiempo Real</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>Datos Ambientales Utilizados</h6>
+                    <ul class="list-unstyled">
+                      <li><i class="bi bi-thermometer-half text-danger"></i> <strong>Temperatura:</strong> {{
+                        formatTemperature(realTimeTemperature) }}</li>
+                      <li><i class="bi bi-moisture text-info"></i> <strong>Humedad:</strong> {{
+                        formatPercentage(realTimeHumidity) }}</li>
+                      <li><i class="bi bi-speedometer2 text-warning"></i> <strong>Presión del Sistema:</strong> {{
+                        formatPressure(realTimePressure) }}</li>
+                      <li><i class="bi bi-droplet text-primary"></i> <strong>Flujo Total:</strong> {{
+                        formatFlowRate(realTimeFlowRate) }}</li>
+                    </ul>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>Calidad del Agua Monitoreada</h6>
+                    <ul class="list-unstyled">
+                      <li><i class="bi bi-patch-check text-success"></i> <strong>pH del Suelo:</strong> {{
+                        realTimeSoilPH.toFixed(2) }}</li>
+                      <li><i class="bi bi-activity text-info"></i> <strong>Estado del Sistema:</strong> {{
+                        systemStatusText }}</li>
+                      <li><i class="bi bi-router text-warning"></i> <strong>Dispositivos Activos:</strong> {{
+                        activeDevicesCount }}/{{ totalDevicesCount }}</li>
+                      <li><i class="bi bi-clock text-muted"></i> <strong>Última Actualización:</strong> {{
+                        lastUpdateTime
+                        }}</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="alert alert-success mt-3" *ngIf="hasRealTimeData">
+                  <i class="bi bi-check-circle"></i>
+                  <strong>Conexión Activa:</strong> El diseño se ha optimizado utilizando datos en tiempo real de {{
+                  activeDevicesCount }} sensores IoT activos.
+                  Los parámetros se actualizan automáticamente cada 30 segundos para mantener la precisión del diseño.
+                </div>
+
+                <div class="alert alert-warning mt-3" *ngIf="!hasRealTimeData">
+                  <i class="bi bi-exclamation-triangle"></i>
+                  <strong>Sin Conexión IoT:</strong> El diseño utiliza valores por defecto. Conecte los sensores IoT
+                  para
+                  obtener
+                  datos en tiempo real y mejorar la precisión del diseño.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Economic Analysis -->
+        <div class="row mb-4" *ngIf="optimizationResults">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h5><i class="bi bi-currency-dollar"></i> Análisis Económico</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="economic-metric">
+                      <h6>Costo Total Estimado</h6>
+                      <h4 class="text-primary">{{ formatCurrency(estimatedCost) }}</h4>
+                      <small class="text-muted">Incluye materiales, instalación y configuración</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="economic-metric">
+                      <h6>Ahorro Anual de Agua</h6>
+                      <h4 class="text-success">{{ formatPercentage(waterSavings) }}</h4>
+                      <small class="text-muted">Comparado con sistema convencional</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="economic-metric">
+                      <h6>Ahorro Energético</h6>
+                      <h4 class="text-warning">{{ formatPercentage(energySavings) }}</h4>
+                      <small class="text-muted">Reducción en consumo eléctrico</small>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row mt-4">
+                  <div class="col-md-6">
+                    <h6>Costos Operativos Anuales</h6>
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr>
+                          <td>Agua</td>
+                          <td class="text-end">{{ formatCurrency(0) }}</td>
+                        </tr>
+                        <tr>
+                          <td>Energía</td>
+                          <td class="text-end">{{ formatCurrency(0) }}</td>
+                        </tr>
+                        <tr>
+                          <td>Mantenimiento</td>
+                          <td class="text-end">{{ formatCurrency(0) }}</td>
+                        </tr>
+                        <tr class="table-primary">
+                          <td><strong>Total Anual</strong></td>
+                          <td class="text-end"><strong>{{ formatCurrency(0) }}</strong></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>Período de Retorno de Inversión</h6>
+                    <div class="text-center">
+                      <h3 class="text-success">{{ (0).toFixed(1) }} años</h3>
+                      <small class="text-muted">Basado en ahorros proyectados</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Technical Specifications -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h5><i class="bi bi-gear"></i> Especificaciones Técnicas</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>Configuración de Tuberías</h6>
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr>
+                          <td>Tubería Principal</td>
+                          <td>{{ designForm.get('mainPipeDiameter')?.value || 0 }} mm</td>
+                        </tr>
+                        <tr>
+                          <td>Tubería Secundaria</td>
+                          <td>{{ designForm.get('secondaryPipeDiameter')?.value || 0 }} mm</td>
+                        </tr>
+                        <tr>
+                          <td>Tubería Lateral</td>
+                          <td>{{ designForm.get('lateralPipeDiameter')?.value || 0 }} mm</td>
+                        </tr>
+                        <tr>
+                          <td>Material</td>
+                          <td>{{ designForm.get('pipelineMaterial')?.value || 'N/A' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>Configuración de Emisores</h6>
+                    <table class="table table-sm">
+                      <tbody>
+                        <tr>
+                          <td>Tipo</td>
+                          <td>{{ designForm.get('emitterType')?.value || 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                          <td>Caudal por Emisor</td>
+                          <td>{{ designForm.get('emitterFlowRate')?.value || 0 }} L/h</td>
+                        </tr>
+                        <tr>
+                          <td>Emisores por Planta</td>
+                          <td>{{ designForm.get('emittersPerPlant')?.value || 0 }}</td>
+                        </tr>
+                        <tr>
+                          <td>Presión de Operación</td>
+                          <td>{{ formatPressure(designForm.get('operatingPressure')?.value || 0) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <button type="button" class="btn btn-outline-secondary" (click)="setActiveTab('optimization')">
+                <i class="bi bi-arrow-left"></i>
+                Volver a Optimización
               </button>
-              <button type="button" class="btn btn-outline-info" (click)="resetDesign()">
-                <i class="bi bi-arrow-counterclockwise"></i>
-                Nuevo Diseño
-              </button>
+              <div>
+                <button type="button" class="btn btn-primary me-2" (click)="exportDesign()">
+                  <i class="bi bi-download"></i>
+                  Exportar Diseño
+                </button>
+                <button type="button" class="btn btn-outline-info" (click)="resetDesign()">
+                  <i class="bi bi-arrow-counterclockwise"></i>
+                  Nuevo Diseño
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Loading Overlay -->
-  <div class="loading-overlay" *ngIf="isLoading">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Cargando...</span>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" *ngIf="isLoading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2">Cargando datos del sistema...</p>
     </div>
-    <p class="mt-2">Cargando datos del sistema...</p>
-  </div>
 
-  <!-- Error Messages -->
-  <div class="alert alert-danger alert-dismissible fade show" *ngIf="errorMessage" role="alert">
-    <i class="bi bi-exclamation-triangle"></i>
-    {{ errorMessage }}
-    <button type="button" class="btn-close" (click)="errorMessage = ''" aria-label="Close"></button>
-  </div>
+    <!-- Error Messages -->
+    <div class="alert alert-danger alert-dismissible fade show" *ngIf="errorMessage" role="alert">
+      <i class="bi bi-exclamation-triangle"></i>
+      {{ errorMessage }}
+      <button type="button" class="btn-close" (click)="errorMessage = ''" aria-label="Close"></button>
+    </div>
 
-  <!-- Success Messages -->
-  <div class="alert alert-success alert-dismissible fade show" *ngIf="successMessage" role="alert">
-    <i class="bi bi-check-circle"></i>
-    {{ successMessage }}
-    <button type="button" class="btn-close" (click)="successMessage = ''" aria-label="Close"></button>
+    <!-- Success Messages -->
+    <div class="alert alert-success alert-dismissible fade show" *ngIf="successMessage" role="alert">
+      <i class="bi bi-check-circle"></i>
+      {{ successMessage }}
+      <button type="button" class="btn-close" (click)="successMessage = ''" aria-label="Close"></button>
+    </div>
   </div>
 </div>

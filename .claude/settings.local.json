@@ -54,7 +54,9 @@
       "Bash(dir \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\Agrismart-main\\AgriSmart.Application.Agronomic\\Validators\\Queries\")",
       "Bash(del fix_nullable_bool.py)",
       "Bash(dir:*)",
-      "Bash(dotnet restore:*)"
+      "Bash(dotnet restore:*)",
+      "Bash(git checkout:*)",
+      "Bash(del \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\fix_irrigation_component.py\")"
     ],
     "deny": [],
     "ask": []
