@@ -47,6 +47,10 @@ builder.Services.AddDbContext<AgriSmartContext>(options =>
     options.UseNpgsql(builder.Configuration.GetSection("AgriSmartDbConfiguration").GetSection("ConnectionString").Value);
 });
 
+builder.Services.AddScoped<IIrrigationPlanEntryHistoryCommandRepository, IrrigationPlanEntryHistoryCommandRepository>();
+builder.Services.AddScoped<IIrrigationPlanEntryHistoryQueryRepository, IrrigationPlanEntryHistoryQueryRepository>();
+
+
 //ILogger to file
 builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>());
 LoggerProviderOptions.RegisterProviderOptions<FileLoggingConfiguration, FileLoggerProvider>(builder.Services);

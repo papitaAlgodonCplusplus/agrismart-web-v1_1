@@ -1,4 +1,6 @@
-// src/app/features/irrigation/on-demand-irrigation.component.ts
+// src/app/features/irrigation/on-demand-irrigation.component.ts (UPDATED VERSION)
+// This is the updated version that uses IrrigationPlanEntryHistory instead of IrrigationPlanEntry for execution history
+
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, Subject } from 'rxjs';
@@ -15,8 +17,12 @@ import {
     IrrigationPlan,
     IrrigationPlanEntry,
     CreateIrrigationPlanEntryCommand,
-    UpdateIrrigationPlanEntryCommand
 } from '../services/irrigation-scheduling.service';
+import { 
+    IrrigationPlanEntryHistoryService,
+    IrrigationPlanEntryHistory,
+    CreateIrrigationPlanEntryHistoryCommand
+} from '../services/irrigation-plan-entry-history.service';
 import { AlertService } from '../../core/services/alert.service';
 
 // Models
@@ -35,7 +41,8 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     // Core Data
     onDemandMode: IrrigationMode | null = null;
     irrigationPlans: IrrigationPlan[] = [];
-    onDemandEntries: IrrigationPlanEntry[] = [];
+    onDemandEntries: IrrigationPlanEntry[] = []; // Available schedules/durations
+    executionHistory: IrrigationPlanEntryHistory[] = []; // Actual execution history
 
     // Reference Data
     farms: Farm[] = [];
@@ -49,7 +56,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     isLoading = false;
     isExecuting = false;
     showExecutionForm = false;
-    selectedEntry: IrrigationPlanEntry | null = null;
+    selectedHistory: IrrigationPlanEntryHistory | null = null;
 
     // Messages
     errorMessage = '';
@@ -58,6 +65,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     constructor(
         private fb: FormBuilder,
         private schedulingService: IrrigationSchedulingService,
+        private historyService: IrrigationPlanEntryHistoryService,
         private sectorService: IrrigationSectorService,
         private cropProductionService: CropProductionService,
         private farmService: FarmService,
@@ -104,7 +112,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
                     if (mode) {
                         this.onDemandMode = mode;
                         this.loadIrrigationPlans();
-                        // this.loadOnDemandEntries();
+                        this.loadExecutionHistory(); // Load execution history instead of entries
                     } else {
                         this.showError('OnDemand irrigation mode not found in the system');
                         this.isLoading = false;
@@ -143,73 +151,26 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             });
     }
 
-    // ==================== NEW METHODS FOR DYNAMIC DURATIONS ====================
-
-    /**
-     * Get unique duration values for a specific irrigation plan's on-demand entries
-     * @param planId - The irrigation plan ID
-     * @returns Sorted array of unique duration values in minutes
-     */
-    getPlanDurations(planId: number): number[] {
-        // Filter entries for this specific plan that are OnDemand mode
-        const planEntries = this.onDemandEntries.filter(
-            entry => entry.irrigationPlanId === planId && entry.duration != null
-        );
-
-        // Extract unique durations
-        const durations = [...new Set(planEntries.map(entry => entry.duration))];
-
-        // Sort in ascending order
-        return durations.sort((a, b) => a - b);
-    }
-
-    /**
-     * Check if a plan has any on-demand entries with durations
-     * @param planId - The irrigation plan ID
-     * @returns true if the plan has entries with durations
-     */
-    hasPlanDurations(planId: number): boolean {
-        return this.getPlanDurations(planId).length > 0;
-    }
-
-    /**
-     * Format duration for button display
-     * @param minutes - Duration in minutes
-     * @returns Formatted string (e.g., "15 min", "1 hora", "1h 30m")
-     */
-    formatDurationForButton(minutes: number): string {
-        if (minutes < 60) {
-            return `${minutes} min`;
-        } else if (minutes === 60) {
-            return '1 hora';
-        } else if (minutes % 60 === 0) {
-            return `${minutes / 60} horas`;
-        } else {
-            const hours = Math.floor(minutes / 60);
-            const mins = minutes % 60;
-            return `${hours}h ${mins}m`;
-        }
-    }
-
     loadIrrigationPlans(): void {
+        if (!this.onDemandMode) return;
+
         this.schedulingService.getAllIrrigationPlansWithEntries()
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: (plans: any) => {
-                    console.log('Irrigation Plans:', plans.irrigationPlans);
-                    console.log('Irrigation Plans Entries:', plans.irrigationPlanEntries);
+                next: (plans) => {
                     const plansArray = Array.isArray(plans.irrigationPlans) ? plans.irrigationPlans : [];
                     this.irrigationPlans = plansArray.filter((p: { active: any; }) => p.active);
 
+                    // Load available entries (schedules/durations) for the on-demand mode
                     const entriesArray = Array.isArray(plans.irrigationPlanEntries) ? plans.irrigationPlanEntries : [];
-                    console.log('Filtered Active Irrigation Plans:', this.irrigationPlans);
-                    console.log('All Irrigation Plan Entries:', entriesArray);
-                    this.onDemandEntries = entriesArray.filter(((e: { irrigationModeId: number; }) => e.irrigationModeId === this.onDemandMode!.id));
+                    this.onDemandEntries = entriesArray.filter((e: { irrigationModeId: number; }) => 
+                        e.irrigationModeId === this.onDemandMode!.id
+                    );
 
-                    console.log("irrigationPlans: ", this.irrigationPlans, "onDemandEntries: ", this.onDemandEntries)
+                    console.log('Active Irrigation Plans:', this.irrigationPlans);
+                    console.log('OnDemand Entries (Available Schedules):', this.onDemandEntries);
 
                     this.isLoading = false;
-
                 },
                 error: (error) => {
                     this.showError('Failed to load irrigation plans');
@@ -219,20 +180,22 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             });
     }
 
-    loadOnDemandEntries(): void {
+    loadExecutionHistory(): void {
         if (!this.onDemandMode) return;
 
-        this.schedulingService.getAllIrrigationPlanEntries(undefined, this.onDemandMode.id)
+        // Load execution history by mode ID
+        this.historyService.getByModeId(this.onDemandMode.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: (entries) => {
-                    // Sort by date created, most recent first
-                    this.onDemandEntries = entries.sort((a, b) =>
-                        new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime()
+                next: (histories) => {
+                    // Sort by execution start time, most recent first
+                    this.executionHistory = histories.sort((a, b) =>
+                        new Date(b.executionStartTime).getTime() - new Date(a.executionStartTime).getTime()
                     );
+                    console.log('Execution History:', this.executionHistory);
                 },
                 error: (error) => {
-                    console.error('Error loading on-demand entries:', error);
+                    console.error('Error loading execution history:', error);
                 }
             });
     }
@@ -252,14 +215,13 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
 
     getProductionUnitFarmId(productionUnitId: number): number | null {
         // This would need to be implemented based on your ProductionUnit service
-        // For now, returning null as placeholder
         return null;
     }
 
     // ==================== EXECUTION METHODS ====================
 
     showExecutionDialog(): void {
-        this.selectedEntry = null;
+        this.selectedHistory = null;
         this.executionForm.reset({
             irrigationPlanId: null,
             farmId: null,
@@ -275,7 +237,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
 
     cancelExecution(): void {
         this.showExecutionForm = false;
-        this.selectedEntry = null;
+        this.selectedHistory = null;
     }
 
     executeOnDemandIrrigation(): void {
@@ -293,10 +255,10 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             formValue.startMinutes
         );
 
-        // Get current user ID (you'll need to get this from your auth service)
         const userId = 1; // Placeholder - replace with actual user ID
 
-        const command: any = {
+        // First, get or create an irrigation plan entry for this configuration
+        const entryCommand: any = {
             irrigationPlanId: formValue.irrigationPlanId,
             irrigationModeId: this.onDemandMode.id,
             startTime: startTime,
@@ -309,19 +271,43 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             createdBy: userId
         };
 
-        this.schedulingService.createIrrigationPlanEntry(command)
+        // Create or use existing entry, then create history record
+        this.schedulingService.createIrrigationPlanEntry(entryCommand)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: (response) => {
-                    this.showSuccess('On-demand irrigation executed successfully');
-                    this.showExecutionForm = false;
-                    this.loadOnDemandEntries();
-                    this.isExecuting = false;
+                next: (entryResponse) => {
+                    // Now create the execution history record
+                    const executionStartTime = new Date();
+                    executionStartTime.setHours(formValue.startHours, formValue.startMinutes, 0, 0);
 
-                    // Check if it should execute immediately
-                    const scheduledTime = new Date();
-                    scheduledTime.setHours(formValue.startHours, formValue.startMinutes, 0, 0);
-                    const now = new Date();
+                    const historyCommand: CreateIrrigationPlanEntryHistoryCommand = {
+                        irrigationPlanEntryId: entryResponse.data.id,
+                        irrigationPlanId: formValue.irrigationPlanId,
+                        irrigationModeId: this.onDemandMode!.id,
+                        executionStartTime: executionStartTime,
+                        plannedDuration: formValue.duration,
+                        executionStatus: 'InProgress',
+                        sequence: formValue.sequence,
+                        notes: formValue.notes,
+                        isManualExecution: true,
+                        createdBy: userId
+                    };
+
+                    this.historyService.create(historyCommand)
+                        .pipe(takeUntil(this.destroy$))
+                        .subscribe({
+                            next: () => {
+                                this.showSuccess('On-demand irrigation executed successfully');
+                                this.showExecutionForm = false;
+                                this.loadExecutionHistory();
+                                this.isExecuting = false;
+                            },
+                            error: (error) => {
+                                this.showError('Failed to create execution history');
+                                console.error('Error creating history:', error);
+                                this.isExecuting = false;
+                            }
+                        });
                 },
                 error: (error) => {
                     this.showError('Failed to execute on-demand irrigation');
@@ -358,10 +344,34 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         this.schedulingService.createIrrigationPlanEntry(command)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: () => {
-                    this.showSuccess(`Quick irrigation started for ${durationMinutes} minutes`);
-                    this.loadOnDemandEntries();
-                    this.isExecuting = false;
+                next: (entryResponse) => {
+                    // Create execution history
+                    console.log("entryResponse: ", entryResponse)
+                    const historyCommand: CreateIrrigationPlanEntryHistoryCommand = {
+                        irrigationPlanEntryId: entryResponse.id,
+                        irrigationPlanId: planId,
+                        irrigationModeId: this.onDemandMode!.id,
+                        executionStartTime: now,
+                        plannedDuration: durationMinutes,
+                        executionStatus: 'InProgress',
+                        isManualExecution: true,
+                        createdBy: userId
+                    };
+
+                    this.historyService.create(historyCommand)
+                        .pipe(takeUntil(this.destroy$))
+                        .subscribe({
+                            next: () => {
+                                this.showSuccess(`Quick irrigation started for ${durationMinutes} minutes`);
+                                this.loadExecutionHistory();
+                                this.isExecuting = false;
+                            },
+                            error: (error) => {
+                                this.showError('Failed to create execution history');
+                                console.error('Error:', error);
+                                this.isExecuting = false;
+                            }
+                        });
                 },
                 error: (error) => {
                     this.showError('Failed to start quick irrigation');
@@ -371,19 +381,19 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             });
     }
 
-    // ==================== ENTRY MANAGEMENT ====================
+    // ==================== HISTORY MANAGEMENT ====================
 
-    deleteEntry(entry: IrrigationPlanEntry): void {
+    deleteHistory(history: IrrigationPlanEntryHistory): void {
         if (!confirm('Are you sure you want to delete this execution record?')) {
             return;
         }
 
-        this.schedulingService.deleteIrrigationPlanEntry(entry.id)
+        this.historyService.delete(history.id)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: () => {
                     this.showSuccess('Execution record deleted');
-                    this.loadOnDemandEntries();
+                    this.loadExecutionHistory();
                 },
                 error: (error) => {
                     this.showError('Failed to delete execution record');
@@ -392,12 +402,12 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             });
     }
 
-    viewEntryDetails(entry: IrrigationPlanEntry): void {
-        this.selectedEntry = entry;
+    viewHistoryDetails(history: IrrigationPlanEntryHistory): void {
+        this.selectedHistory = history;
     }
 
-    closeEntryDetails(): void {
-        this.selectedEntry = null;
+    closeHistoryDetails(): void {
+        this.selectedHistory = null;
     }
 
     // ==================== HELPER METHODS ====================
@@ -435,44 +445,59 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
     }
 
-    getEntryStatus(entry: IrrigationPlanEntry): string {
+    getHistoryStatus(history: IrrigationPlanEntryHistory): string {
         const now = new Date();
-        const createdDate = new Date(entry.dateCreated);
-        const startTime = this.parseTimeSpan(entry.startTime);
-
-        // Calculate execution start time
-        const executionStart = new Date(createdDate);
-        executionStart.setHours(startTime.hours, startTime.minutes, 0, 0);
-
-        // Calculate execution end time
-        const executionEnd = new Date(executionStart);
-        executionEnd.setMinutes(executionEnd.getMinutes() + entry.duration);
-
-        if (now < executionStart) {
-            return 'Scheduled';
-        } else if (now >= executionStart && now <= executionEnd) {
-            const remaining = Math.floor((executionEnd.getTime() - now.getTime()) / 60000);
-            return `Active (${remaining} min remaining)`;
-        } else {
+        const executionStart = new Date(history.executionStartTime);
+        
+        if (history.executionStatus === 'Completed') {
             return 'Completed';
+        } else if (history.executionStatus === 'Failed') {
+            return 'Failed';
+        } else if (history.executionStatus === 'Cancelled') {
+            return 'Cancelled';
+        } else if (history.executionStatus === 'InProgress') {
+            if (history.executionEndTime) {
+                return 'Completed';
+            }
+            // Calculate execution end time
+            const executionEnd = new Date(executionStart);
+            executionEnd.setMinutes(executionEnd.getMinutes() + history.plannedDuration);
+            
+            if (now >= executionStart && now <= executionEnd) {
+                const remaining = Math.floor((executionEnd.getTime() - now.getTime()) / 60000);
+                return `Active (${remaining} min remaining)`;
+            } else if (now > executionEnd) {
+                return 'Completed (needs update)';
+            }
+        } else if (history.executionStatus === 'Scheduled') {
+            if (now < executionStart) {
+                return 'Scheduled';
+            } else {
+                return 'In Progress';
+            }
         }
+        
+        return history.executionStatus;
     }
 
-    getStatusClass(entry: IrrigationPlanEntry): string {
-        const status = this.getEntryStatus(entry);
-        if (status.includes('Active')) return 'status-active';
-        if (status === 'Scheduled') return 'status-scheduled';
-        return 'status-completed';
+    getStatusClass(history: IrrigationPlanEntryHistory): string {
+        const status = this.getHistoryStatus(history);
+        if (status.includes('Active') || status.includes('Progress')) return 'status-active';
+        if (status.includes('Scheduled')) return 'status-scheduled';
+        if (status.includes('Completed')) return 'status-completed';
+        if (status.includes('Failed')) return 'status-failed';
+        if (status.includes('Cancelled')) return 'status-cancelled';
+        return '';
     }
 
     getTodayExecutionCount(): number {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        return this.onDemandEntries.filter(entry => {
-            const entryDate = new Date(entry.dateCreated);
-            entryDate.setHours(0, 0, 0, 0);
-            return entryDate.getTime() === today.getTime();
+        return this.executionHistory.filter(history => {
+            const executionDate = new Date(history.executionStartTime);
+            executionDate.setHours(0, 0, 0, 0);
+            return executionDate.getTime() === today.getTime();
         }).length;
     }
 
@@ -480,27 +505,27 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        return this.onDemandEntries
-            .filter(entry => {
-                const entryDate = new Date(entry.dateCreated);
-                entryDate.setHours(0, 0, 0, 0);
-                return entryDate.getTime() === today.getTime();
+        return this.executionHistory
+            .filter(history => {
+                const executionDate = new Date(history.executionStartTime);
+                executionDate.setHours(0, 0, 0, 0);
+                return executionDate.getTime() === today.getTime();
             })
-            .reduce((total, entry) => total + entry.duration, 0);
+            .reduce((total, history) => total + (history.actualDuration || history.plannedDuration), 0);
     }
 
-    getActiveExecutions(): IrrigationPlanEntry[] {
-        return this.onDemandEntries.filter(entry =>
-            this.getEntryStatus(entry).includes('Active')
+    getActiveExecutions(): IrrigationPlanEntryHistory[] {
+        return this.executionHistory.filter(history =>
+            this.getHistoryStatus(history).includes('Active') || this.getHistoryStatus(history).includes('InProgress')
         );
     }
 
-    parseTimeSpan(timeSpan: string): { hours: number; minutes: number } {
-        const parts = timeSpan.split(':');
-        return {
-            hours: parseInt(parts[0], 10),
-            minutes: parseInt(parts[1], 10)
-        };
+    getPlanDurations(planId: number): number[] {
+        const durations = this.onDemandEntries
+            .filter(entry => entry.irrigationPlanId === planId)
+            .map(entry => entry.duration);
+        
+        return Array.from(new Set(durations)).sort((a, b) => a - b);
     }
 
     // ==================== MESSAGE HELPERS ====================

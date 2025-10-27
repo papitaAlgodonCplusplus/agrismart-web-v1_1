@@ -74,6 +74,8 @@ namespace AgriSmart.Infrastructure.Data
                     .HasForeignKey(e => e.FertilizerId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+        
+            modelBuilder.ConfigureIrrigationPlanEntryHistory();
         }
         public DbSet<IrrigationEngineeringDesign> IrrigationEngineeringDesigns { get; set; }
 
@@ -85,6 +87,7 @@ namespace AgriSmart.Infrastructure.Data
         public DbSet<IrrigationPlan> IrrigationPlans { get; set; }
         public DbSet<IrrigationMode> IrrigationModes { get; set; }
         public DbSet<IrrigationPlanEntry> IrrigationPlanEntries { get; set; }
+        public DbSet<IrrigationPlanEntryHistory> IrrigationPlanEntryHistory { get; set; }
         public DbSet<UserFarm> UserFarm { get; set; }
         public DbSet<UserStatus> UserStatus { get; set; }
         public DbSet<Farm> Farm { get; set; }
@@ -130,6 +133,7 @@ namespace AgriSmart.Infrastructure.Data
         public DbSet<IrrigationTemplate> IrrigationTemplates { get; set; }
         public DbSet<NutrientFormulationRecipe> NutrientFormulationRecipes { get; set; }
         public DbSet<NutrientFormulationRecipeFertilizer> NutrientFormulationRecipeFertilizers { get; set; }
+        public DbSet<IrrigationPlanEntryHistory> IrrigationPlanEntryHistories { get; set; }
 
     }
 }

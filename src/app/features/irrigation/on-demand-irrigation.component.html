@@ -1,118 +1,415 @@
 <!-- src/app/features/irrigation/on-demand-irrigation.component.html -->
 <div class="on-demand-irrigation-container">
-  <!-- Page Header -->
+  <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
-      <h1><i class="fas fa-tint"></i> Riego Bajo Demanda</h1>
-      <p class="lead">Ejecute planes de riego inmediatamente o programe para horarios específicos</p>
+      <h1>
+        <i class="bi bi-droplet-fill"></i>
+        Riego OnDemand
+      </h1>
+      <p class="subtitle">Gestión y monitoreo de riego a demanda</p>
     </div>
+    <button 
+      class="btn btn-primary btn-execute"
+      (click)="showExecutionDialog()"
+      [disabled]="!onDemandMode || irrigationPlans.length === 0"
+      *ngIf="!showExecutionForm">
+      <i class="bi bi-play-circle-fill"></i>
+      Ejecutar Riego
+    </button>
   </div>
 
-  <!-- Messages -->
-  <div class="messages" *ngIf="errorMessage || successMessage">
-    <div class="alert alert-success" *ngIf="successMessage">
-      <i class="fas fa-check-circle"></i>
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p>Cargando datos...</p>
+  </div>
+
+  <!-- Alert Messages -->
+  <div class="alerts-container">
+    <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="bi bi-check-circle-fill"></i>
       {{ successMessage }}
+      <button type="button" class="btn-close" (click)="clearMessages()"></button>
     </div>
-    <div class="alert alert-danger" *ngIf="errorMessage">
-      <i class="fas fa-exclamation-circle"></i>
+    <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle-fill"></i>
       {{ errorMessage }}
+      <button type="button" class="btn-close" (click)="clearMessages()"></button>
     </div>
-  </div>
-
-  <!-- Loading State -->
-  <div class="loading-container" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>Cargando datos de riego bajo demanda...</p>
   </div>
 
   <!-- Main Content -->
-  <div class="content-wrapper" *ngIf="!isLoading">
-
-    <!-- Statistics Cards -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-icon blue">
-          <i class="fas fa-clipboard-list"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ onDemandEntries.length }}</h3>
-          <p>Total de Ejecuciones</p>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon green">
-          <i class="fas fa-play-circle"></i>
-        </div>
-        <div class="stat-content">
-          <h3>{{ getActiveExecutions().length }}</h3>
-          <p>Activas Ahora</p>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon orange">
-          <i class="fas fa-calendar-day"></i>
+  <div *ngIf="!isLoading" class="main-content">
+    
+    <!-- Statistics Dashboard -->
+    <div class="statistics-row">
+      <div class="stat-card stat-today">
+        <div class="stat-icon">
+          <i class="bi bi-calendar-day"></i>
         </div>
         <div class="stat-content">
           <h3>{{ getTodayExecutionCount() }}</h3>
-          <p>Ejecuciones de Hoy</p>
+          <p>Ejecuciones Hoy</p>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon purple">
-          <i class="fas fa-clock"></i>
+      <div class="stat-card stat-duration">
+        <div class="stat-icon">
+          <i class="bi bi-clock-fill"></i>
         </div>
         <div class="stat-content">
           <h3>{{ formatDuration(getTodayTotalDuration()) }}</h3>
           <p>Duración Total Hoy</p>
         </div>
       </div>
+
+      <div class="stat-card stat-active">
+        <div class="stat-icon">
+          <i class="bi bi-play-fill"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ getActiveExecutions().length }}</h3>
+          <p>Ejecuciones Activas</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-plans">
+        <div class="stat-icon">
+          <i class="bi bi-diagram-3-fill"></i>
+        </div>
+        <div class="stat-content">
+          <h3>{{ irrigationPlans.length }}</h3>
+          <p>Planes Disponibles</p>
+        </div>
+      </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="card quick-actions-card">
-      <div class="card-header">
-        <h5><i class="fas fa-bolt"></i> Acciones Rápidas</h5>
+    <!-- Execution Form (Modal Style) -->
+    <div *ngIf="showExecutionForm" class="execution-form-overlay">
+      <div class="execution-form-modal">
+        <div class="modal-header">
+          <h2>
+            <i class="bi bi-play-circle"></i>
+            Nueva Ejecución de Riego
+          </h2>
+          <button class="btn-close-modal" (click)="cancelExecution()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <form [formGroup]="executionForm" (ngSubmit)="executeOnDemandIrrigation()">
+          <div class="modal-body">
+            <!-- Irrigation Plan Selection -->
+            <div class="form-group">
+              <label for="irrigationPlanId">
+                <i class="bi bi-diagram-3"></i>
+                Plan de Riego *
+              </label>
+              <select 
+                id="irrigationPlanId"
+                class="form-control"
+                formControlName="irrigationPlanId"
+                [class.is-invalid]="executionForm.get('irrigationPlanId')?.invalid && executionForm.get('irrigationPlanId')?.touched">
+                <option [value]="null">Seleccione un plan</option>
+                <option *ngFor="let plan of irrigationPlans" [value]="plan.id">
+                  {{ plan.name }}
+                </option>
+              </select>
+              <div class="invalid-feedback">
+                Por favor seleccione un plan de riego
+              </div>
+            </div>
+
+            <!-- Farm Selection (Optional) -->
+            <div class="form-group">
+              <label for="farmId">
+                <i class="bi bi-geo-alt"></i>
+                Finca (Opcional)
+              </label>
+              <select 
+                id="farmId"
+                class="form-control"
+                formControlName="farmId"
+                (change)="onFarmChange($any($event.target).value)">
+                <option [value]="null">Todas las fincas</option>
+                <option *ngFor="let farm of farms" [value]="farm.id">
+                  {{ farm.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Crop Production Selection (Optional) -->
+            <div class="form-group">
+              <label for="cropProductionId">
+                <i class="bi bi-flower1"></i>
+                Producción de Cultivo (Opcional)
+              </label>
+              <select 
+                id="cropProductionId"
+                class="form-control"
+                formControlName="cropProductionId">
+                <option [value]="null">Todas las producciones</option>
+                <option *ngFor="let production of filteredCropProductions" [value]="production.id">
+                  {{ production.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Start Time -->
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="startHours">
+                  <i class="bi bi-clock"></i>
+                  Hora de Inicio *
+                </label>
+                <div class="time-inputs">
+                  <input 
+                    type="number"
+                    id="startHours"
+                    class="form-control time-input"
+                    formControlName="startHours"
+                    min="0"
+                    max="23"
+                    placeholder="HH">
+                  <span class="time-separator">:</span>
+                  <input 
+                    type="number"
+                    class="form-control time-input"
+                    formControlName="startMinutes"
+                    min="0"
+                    max="59"
+                    placeholder="MM">
+                </div>
+              </div>
+
+              <div class="form-group flex-1">
+                <label for="duration">
+                  <i class="bi bi-hourglass-split"></i>
+                  Duración (minutos) *
+                </label>
+                <input 
+                  type="number"
+                  id="duration"
+                  class="form-control"
+                  formControlName="duration"
+                  min="1"
+                  max="240"
+                  placeholder="Ej: 30">
+              </div>
+            </div>
+
+            <!-- Sequence -->
+            <div class="form-group">
+              <label for="sequence">
+                <i class="bi bi-list-ol"></i>
+                Secuencia
+              </label>
+              <input 
+                type="number"
+                id="sequence"
+                class="form-control"
+                formControlName="sequence"
+                min="1">
+            </div>
+
+            <!-- Notes -->
+            <div class="form-group">
+              <label for="notes">
+                <i class="bi bi-pencil"></i>
+                Notas (Opcional)
+              </label>
+              <textarea 
+                id="notes"
+                class="form-control"
+                formControlName="notes"
+                rows="3"
+                placeholder="Agregar notas sobre esta ejecución..."></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button 
+              type="button"
+              class="btn btn-secondary"
+              (click)="cancelExecution()">
+              <i class="bi bi-x-circle"></i>
+              Cancelar
+            </button>
+            <button 
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="executionForm.invalid || isExecuting">
+              <span *ngIf="isExecuting" class="spinner-border spinner-border-sm me-2"></span>
+              <i *ngIf="!isExecuting" class="bi bi-play-fill"></i>
+              {{ isExecuting ? 'Ejecutando...' : 'Ejecutar Riego' }}
+            </button>
+          </div>
+        </form>
       </div>
-      <div class="card-body">
-        <p class="text-muted mb-3">Seleccione un plan de riego e inicie inmediatamente:</p>
-        <div class="quick-action-buttons">
-          <div class="plan-quick-actions" *ngFor="let plan of irrigationPlans">
-            <div class="plan-name">{{ plan.name }}</div>
-            <div class="duration-buttons">
-              <!-- New -->
-              <button *ngFor="let duration of getPlanDurations(plan.id)" (click)="quickExecute(plan.id, duration)">
-                {{ formatDurationForButton(duration) }}
+    </div>
+
+    <!-- Quick Actions Grid -->
+    <div class="quick-actions-section">
+      <h2 class="section-title">
+        <i class="bi bi-lightning-charge-fill"></i>
+        Acciones Rápidas
+      </h2>
+      
+      <div *ngIf="irrigationPlans.length === 0" class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>No hay planes de riego disponi   bles</p>
+      </div>
+
+      <div class="quick-actions-grid">
+        <div *ngFor="let plan of irrigationPlans" class="quick-action-card">
+          <div class="plan-header">
+            <h3>{{ plan.name }}</h3>
+            <span class="badge badge-success">Activo</span>
+          </div>
+          <div class="plan-info" *ngIf="plan.name">
+            <p>
+              <i class="bi bi-flower1"></i>
+              {{ plan.name || 'Sin producción' }}
+            </p>
+          </div>
+
+          <div class="duration-buttons">
+            <button 
+              *ngFor="let duration of getPlanDurations(plan.id)"
+              class="btn btn-duration"
+              (click)="quickExecute(plan.id, duration)"
+              [disabled]="isExecuting">
+              <i class="bi bi-play-circle"></i>
+              {{ formatDuration(duration) }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Execution History Section -->
+    <div class="execution-history-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <i class="bi bi-clock-history"></i>
+          Historial de Ejecuciones
+        </h2>
+        <button 
+          class="btn btn-secondary btn-sm"
+          (click)="loadExecutionHistory()">
+          <i class="bi bi-arrow-clockwise"></i>
+          Actualizar
+        </button>
+      </div>
+
+      <div *ngIf="executionHistory.length === 0" class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>No hay registros de ejecución</p>
+        <small>Las ejecuciones aparecerán aquí una vez que se ejecuten los riegos</small>
+      </div>
+
+      <div class="history-grid">
+        <div 
+          *ngFor="let history of executionHistory"
+          class="history-card"
+          [class]="getStatusClass(history)">
+          
+          <div class="history-header">
+            <div class="history-title">
+              <h4>{{ getIrrigationPlanName(history.irrigationPlanId) }}</h4>
+              <span class="history-badge" [class]="getStatusClass(history)">
+                {{ getHistoryStatus(history) }}
+              </span>
+            </div>
+            <div class="history-actions">
+              <button 
+                class="btn-icon"
+                (click)="viewHistoryDetails(history)"
+                title="Ver detalles">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button 
+                class="btn-icon btn-icon-danger"
+                (click)="deleteHistory(history)"
+                title="Eliminar">
+                <i class="bi bi-trash"></i>
               </button>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Active Executions -->
-    <div class="card active-executions-card" *ngIf="getActiveExecutions().length > 0">
-      <div class="card-header bg-success text-white">
-        <h5><i class="fas fa-water"></i> Riegos Activos</h5>
-      </div>
-      <div class="card-body">
-        <div class="active-execution-list">
-          <div class="active-execution-item" *ngFor="let entry of getActiveExecutions()">
-            <div class="execution-info">
-              <h6>{{ getIrrigationPlanName(entry.irrigationPlanId) }}</h6>
-              <p class="mb-1">
-                <i class="fas fa-clock"></i> Iniciado: {{ formatTime(entry.startTime) }}
-              </p>
-              <p class="mb-0">
-                <i class="fas fa-hourglass-half"></i> {{ getEntryStatus(entry) }}
-              </p>
+          <div class="history-content">
+            <div class="history-row">
+              <div class="history-item">
+                <i class="bi bi-calendar3"></i>
+                <span class="label">Inicio:</span>
+                <span class="value">{{ formatDateTime(history.executionStartTime) }}</span>
+              </div>
             </div>
-            <div class="execution-badge">
-              <span class="badge badge-success">
-                <i class="fas fa-play"></i> En Ejecución
+
+            <div class="history-row">
+              <div class="history-item">
+                <i class="bi bi-hourglass-split"></i>
+                <span class="label">Duración Planificada:</span>
+                <span class="value">{{ formatDuration(history.plannedDuration) }}</span>
+              </div>
+              <div class="history-item" *ngIf="history.actualDuration">
+                <i class="bi bi-hourglass-bottom"></i>
+                <span class="label">Duración Real:</span>
+                <span class="value">{{ formatDuration(history.actualDuration) }}</span>
+              </div>
+            </div>
+
+            <div class="history-row" *ngIf="history.executionEndTime">
+              <div class="history-item">
+                <i class="bi bi-calendar-check"></i>
+                <span class="label">Fin:</span>
+                <span class="value">{{ formatDateTime(history.executionEndTime) }}</span>
+              </div>
+            </div>
+
+            <div class="history-row" *ngIf="history.waterVolumeDelivered">
+              <div class="history-item">
+                <i class="bi bi-droplet"></i>
+                <span class="label">Volumen:</span>
+                <span class="value">{{ history.waterVolumeDelivered }} L</span>
+              </div>
+            </div>
+
+            <div class="history-row" *ngIf="history.notes">
+              <div class="history-item full-width">
+                <i class="bi bi-chat-left-text"></i>
+                <span class="label">Notas:</span>
+                <span class="value">{{ history.notes }}</span>
+              </div>
+            </div>
+
+            <div class="history-row" *ngIf="history.errorMessage">
+              <div class="history-item full-width error-message">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span class="label">Error:</span>
+                <span class="value">{{ history.errorMessage }}</span>
+              </div>
+            </div>
+
+            <div class="history-meta">
+              <span class="meta-item">
+                <i class="bi bi-person"></i>
+                Usuario #{{ history.createdBy }}
+              </span>
+              <span class="meta-item" *ngIf="history.isManualExecution">
+                <i class="bi bi-hand-index"></i>
+                Manual
+              </span>
+              <span class="meta-item" *ngIf="!history.isManualExecution">
+                <i class="bi bi-gear"></i>
+                Automático
+              </span>
+              <span class="meta-item" *ngIf="history.deviceId">
+                <i class="bi bi-cpu"></i>
+                {{ history.deviceId }}
               </span>
             </div>
           </div>
@@ -120,283 +417,142 @@
       </div>
     </div>
 
-    <!-- Execution History -->
-    <div class="card history-card">
-      <div class="card-header">
-        <h5><i class="fas fa-history"></i> Historial de Ejecuciones</h5>
-      </div>
-      <div class="card-body">
-        <div class="table-responsive" *ngIf="onDemandEntries.length > 0; else noEntries">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Plan de Riego</th>
-                <th>Hora de Inicio</th>
-                <th>Duración</th>
-                <th>Ejecutado En</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let entry of onDemandEntries">
-                <td>
-                  <strong>{{ getIrrigationPlanName(entry.irrigationPlanId) }}</strong>
-                </td>
-                <td>
-                  <i class="fas fa-clock"></i> {{ formatTime(entry.startTime) }}
-                </td>
-                <td>
-                  <span class="badge badge-info">{{ formatDuration(entry.duration) }}</span>
-                </td>
-                <td>{{ formatDateTime(entry.dateCreated) }}</td>
-                <td>
-                  <span class="badge" [ngClass]="getStatusClass(entry)">
-                    {{ getEntryStatus(entry) }}
-                  </span>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <button class="btn btn-sm btn-outline-info" (click)="viewEntryDetails(entry)" title="Ver Detalles">
-                      <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" (click)="deleteEntry(entry)"
-                      [disabled]="getEntryStatus(entry).includes('Active')" title="Eliminar">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <ng-template #noEntries>
-          <div class="no-data">
-            <i class="fas fa-inbox"></i>
-            <p>No hay historial de ejecuciones disponible</p>
-            <button class="btn btn-primary" (click)="showExecutionDialog()">
-              <i class="fas fa-play"></i> Ejecutar Primer Riego
-            </button>
-          </div>
-        </ng-template>
-      </div>
-    </div>
   </div>
 
-  <!-- Execution Form Modal -->
-  <div class="modal-backdrop" *ngIf="showExecutionForm" (click)="cancelExecution()"></div>
-  <div class="modal-dialog" *ngIf="showExecutionForm">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+  <!-- History Details Modal -->
+  <div *ngIf="selectedHistory" class="details-overlay" (click)="closeHistoryDetails()">
+    <div class="details-modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h5 class="modal-title">
-          <i class="fas fa-play-circle"></i> Ejecutar Riego Bajo Demanda
-        </h5>
-        <button type="button" class="close-btn" (click)="cancelExecution()">
-          <i class="fas fa-times"></i>
+        <h2>
+          <i class="bi bi-info-circle"></i>
+          Detalles de Ejecución
+        </h2>
+        <button class="btn-close-modal" (click)="closeHistoryDetails()">
+          <i class="bi bi-x-lg"></i>
         </button>
       </div>
 
-      <form [formGroup]="executionForm" (ngSubmit)="executeOnDemandIrrigation()">
-        <div class="modal-body">
-
-          <!-- Irrigation Plan Selection -->
-          <div class="form-group">
-            <label for="irrigationPlanId">
-              <i class="fas fa-clipboard-list"></i> Plan de Riego *
-            </label>
-            <select class="form-control" id="irrigationPlanId" formControlName="irrigationPlanId" required>
-              <option value="">Seleccione un plan de riego</option>
-              <option *ngFor="let plan of irrigationPlans" [value]="plan.id">
-                {{ plan.name }}
-              </option>
-            </select>
-            <div class="invalid-feedback"
-              *ngIf="executionForm.get('irrigationPlanId')?.invalid && executionForm.get('irrigationPlanId')?.touched">
-              Por favor seleccione un plan de riego
+      <div class="modal-body details-body">
+        <div class="detail-section">
+          <h3>Información General</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Plan de Riego:</label>
+              <span>{{ getIrrigationPlanName(selectedHistory.irrigationPlanId) }}</span>
             </div>
-          </div>
-
-          <!-- Farm Filter (Optional) -->
-          <div class="form-group">
-            <label for="farmId">
-              <i class="fas fa-map-marked-alt"></i> Finca (Filtro Opcional)
-            </label>
-            <select class="form-control" id="farmId" formControlName="farmId"
-              (change)="onFarmChange($any($event.target).value)">
-              <option [value]="null">Todas las Fincas</option>
-              <option *ngFor="let farm of farms" [value]="farm.id">
-                {{ farm.name }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Crop Production Filter (Optional) -->
-          <div class="form-group">
-            <label for="cropProductionId">
-              <i class="fas fa-seedling"></i> Producción de Cultivo (Filtro Opcional)
-            </label>
-            <select class="form-control" id="cropProductionId" formControlName="cropProductionId">
-              <option [value]="null">Todas las Producciones</option>
-              <option *ngFor="let production of filteredCropProductions" [value]="production.id">
-                {{ production.name || 'Producción #' + production.id }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Start Time -->
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="startHours">
-                  <i class="fas fa-clock"></i> Hora de Inicio *
-                </label>
-                <input type="number" class="form-control" id="startHours" formControlName="startHours" min="0" max="23"
-                  placeholder="0-23">
-                <div class="invalid-feedback"
-                  *ngIf="executionForm.get('startHours')?.invalid && executionForm.get('startHours')?.touched">
-                  La hora debe estar entre 0 y 23
-                </div>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="startMinutes">
-                  <i class="fas fa-clock"></i> Minuto de Inicio *
-                </label>
-                <input type="number" class="form-control" id="startMinutes" formControlName="startMinutes" min="0"
-                  max="59" placeholder="0-59">
-                <div class="invalid-feedback"
-                  *ngIf="executionForm.get('startMinutes')?.invalid && executionForm.get('startMinutes')?.touched">
-                  El minuto debe estar entre 0 y 59
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Duration -->
-          <div class="form-group">
-            <label for="duration">
-              <i class="fas fa-hourglass-half"></i> Duración (minutos) *
-            </label>
-            <input type="number" class="form-control" id="duration" formControlName="duration" min="1" max="240"
-              placeholder="Ingrese la duración en minutos">
-            <small class="form-text text-muted">
-              Actual: {{ formatDuration(executionForm.get('duration')?.value || 0) }}
-            </small>
-            <div class="invalid-feedback"
-              *ngIf="executionForm.get('duration')?.invalid && executionForm.get('duration')?.touched">
-              La duración debe estar entre 1 y 240 minutos
-            </div>
-          </div>
-
-          <!-- Sequence -->
-          <div class="form-group">
-            <label for="sequence">
-              <i class="fas fa-sort-numeric-up"></i> Secuencia *
-            </label>
-            <input type="number" class="form-control" id="sequence" formControlName="sequence" min="1"
-              placeholder="Secuencia de ejecución">
-            <small class="form-text text-muted">
-              Orden de ejecución si existen múltiples entradas
-            </small>
-          </div>
-
-          <!-- Notes -->
-          <div class="form-group">
-            <label for="notes">
-              <i class="fas fa-sticky-note"></i> Notas (Opcional)
-            </label>
-            <textarea class="form-control" id="notes" formControlName="notes" rows="3"
-              placeholder="Agregue cualquier nota sobre esta ejecución..."></textarea>
-          </div>
-
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="cancelExecution()" [disabled]="isExecuting">
-            <i class="fas fa-times"></i> Cancelar
-          </button>
-          <button type="submit" class="btn btn-primary" [disabled]="executionForm.invalid || isExecuting">
-            <i class="fas fa-spinner fa-spin" *ngIf="isExecuting"></i>
-            <i class="fas fa-play" *ngIf="!isExecuting"></i>
-            {{ isExecuting ? 'Ejecutando...' : 'Ejecutar Ahora' }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Entry Details Modal -->
-  <div class="modal-backdrop" *ngIf="selectedEntry" (click)="closeEntryDetails()"></div>
-  <div class="modal-dialog" *ngIf="selectedEntry">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h5 class="modal-title">
-          <i class="fas fa-info-circle"></i> Detalles de Ejecución
-        </h5>
-        <button type="button" class="close-btn" (click)="closeEntryDetails()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <div class="detail-grid">
-          <div class="detail-item">
-            <label><i class="fas fa-clipboard-list"></i> Plan de Riego:</label>
-            <span>{{ getIrrigationPlanName(selectedEntry.irrigationPlanId) }}</span>
-          </div>
-
-          <div class="detail-item">
-            <label><i class="fas fa-clock"></i> Hora de Inicio:</label>
-            <span>{{ formatTime(selectedEntry.startTime) }}</span>
-          </div>
-
-          <div class="detail-item">
-            <label><i class="fas fa-hourglass-half"></i> Duración:</label>
-            <span>{{ formatDuration(selectedEntry.duration) }}</span>
-          </div>
-
-          <div class="detail-item">
-            <label><i class="fas fa-calendar-alt"></i> Ejecutado En:</label>
-            <span>{{ formatDateTime(selectedEntry.dateCreated) }}</span>
-          </div>
-
-          <div class="detail-item">
-            <label><i class="fas fa-info-circle"></i> Estado:</label>
-            <span class="badge" [ngClass]="getStatusClass(selectedEntry)">
-              {{ getEntryStatus(selectedEntry) }}
-            </span>
-          </div>
-
-          <div class="detail-item">
-            <label><i class="fas fa-sort-numeric-up"></i> Secuencia:</label>
-            <span>{{ selectedEntry.sequence }}</span>
-          </div>
-
-          <div class="detail-item">
-            <label><i class="fas fa-toggle-on"></i> Activo:</label>
-            <span>
-              <span class="badge" [class.badge-success]="selectedEntry.active"
-                [class.badge-secondary]="!selectedEntry.active">
-                {{ selectedEntry.active ? 'Sí' : 'No' }}
+            <div class="detail-item">
+              <label>Estado:</label>
+              <span [class]="getStatusClass(selectedHistory)">
+                {{ getHistoryStatus(selectedHistory) }}
               </span>
-            </span>
+            </div>
+            <div class="detail-item">
+              <label>Tipo de Ejecución:</label>
+              <span>{{ selectedHistory.isManualExecution ? 'Manual' : 'Automático' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedHistory.sequence">
+              <label>Secuencia:</label>
+              <span>#{{ selectedHistory.sequence }}</span>
+            </div>
           </div>
+        </div>
 
-          <div class="detail-item" *ngIf="selectedEntry.dateUpdated">
-            <label><i class="fas fa-calendar-check"></i> Última Actualización:</label>
-            <span>{{ formatDateTime(selectedEntry.dateUpdated) }}</span>
+        <div class="detail-section">
+          <h3>Tiempos</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Inicio de Ejecución:</label>
+              <span>{{ formatDateTime(selectedHistory.executionStartTime) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedHistory.executionEndTime">
+              <label>Fin de Ejecución:</label>
+              <span>{{ formatDateTime(selectedHistory.executionEndTime) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Duración Planificada:</label>
+              <span>{{ formatDuration(selectedHistory.plannedDuration) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedHistory.actualDuration">
+              <label>Duración Real:</label>
+              <span>{{ formatDuration(selectedHistory.actualDuration) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedHistory.waterVolumeDelivered || selectedHistory.flowRate || selectedHistory.pressure || selectedHistory.temperature">
+          <h3>Mediciones</h3>
+          <div class="detail-grid">
+            <div class="detail-item" *ngIf="selectedHistory.waterVolumeDelivered">
+              <label>Volumen de Agua:</label>
+              <span>{{ selectedHistory.waterVolumeDelivered }} L</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedHistory.flowRate">
+              <label>Caudal:</label>
+              <span>{{ selectedHistory.flowRate }} L/min</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedHistory.pressure">
+              <label>Presión:</label>
+              <span>{{ selectedHistory.pressure }} bar</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedHistory.temperature">
+              <label>Temperatura:</label>
+              <span>{{ selectedHistory.temperature }} °C</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedHistory.deviceId">
+          <h3>Dispositivo</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>ID del Dispositivo:</label>
+              <span>{{ selectedHistory.deviceId }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedHistory.notes">
+          <h3>Notas</h3>
+          <p class="notes-content">{{ selectedHistory.notes }}</p>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedHistory.errorMessage">
+          <h3>Mensaje de Error</h3>
+          <div class="error-content">
+            <i class="bi bi-exclamation-triangle"></i>
+            {{ selectedHistory.errorMessage }}
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Auditoría</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Creado Por:</label>
+              <span>Usuario #{{ selectedHistory.createdBy }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Fecha de Creación:</label>
+              <span>{{ formatDateTime(selectedHistory.dateCreated) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedHistory.updatedBy">
+              <label>Actualizado Por:</label>
+              <span>Usuario #{{ selectedHistory.updatedBy }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedHistory.dateUpdated">
+              <label>Fecha de Actualización:</label>
+              <span>{{ formatDateTime(selectedHistory.dateUpdated) }}</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeEntryDetails()">
-          <i class="fas fa-times"></i> Cerrar
+        <button class="btn btn-primary" (click)="closeHistoryDetails()">
+          <i class="bi bi-check-circle"></i>
+          Cerrar
         </button>
       </div>
     </div>
   </div>
-
 </div>

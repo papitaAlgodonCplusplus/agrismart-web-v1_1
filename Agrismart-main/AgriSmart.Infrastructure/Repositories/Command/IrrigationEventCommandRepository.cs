@@ -15,7 +15,7 @@ namespace AgriSmart.Infrastructure.Repositories.Command
 
         }
 
-        public async Task<IrrigationEvent> CreateAsync(IrrigationEvent irrigationEvent)
+        public new async Task<IrrigationEvent> CreateAsync(IrrigationEvent irrigationEvent)
         {
             var transaction = _context.Database.BeginTransaction();
 

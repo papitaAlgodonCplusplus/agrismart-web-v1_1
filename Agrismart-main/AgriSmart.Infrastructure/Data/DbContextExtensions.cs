@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AgriSmart.Infrastructure.Data
 {
-    public static class DbContextExtensions
+    public static partial class DbContextExtensions
     {
         public static void ConfigureIrrigationDesignEntities(this ModelBuilder modelBuilder)
         {
