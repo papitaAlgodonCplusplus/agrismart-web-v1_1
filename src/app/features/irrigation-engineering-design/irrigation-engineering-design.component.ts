@@ -1,10 +1,9 @@
-// src/app/features/irrigation-scheduling/irrigation-engineering-design.component.ts
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
+// src/app/features/irrigation-engineering-design/irrigation-engineering-design.component.ts
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { Subject, forkJoin, of } from 'rxjs';
-import { takeUntil, catchError, finalize } from 'rxjs/operators';
+import { Subject, forkJoin } from 'rxjs';
+import { takeUntil, finalize } from 'rxjs/operators';
 
 // Services
 import {
@@ -17,11 +16,15 @@ import {
   CreateIrrigationPlanEntryCommand,
   UpdateIrrigationPlanEntryCommand
 } from '../services/irrigation-scheduling.service';
+import { 
+  IrrigationPlanEntryHistoryService,
+  IrrigationPlanEntryHistory
+} from '../services/irrigation-plan-entry-history.service';
 import { AlertService } from '../../core/services/alert.service';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
-  selector: 'app-irrigation-scheduling',
+  selector: 'app-irrigation-engineering-design',
   templateUrl: './irrigation-engineering-design.component.html',
   styleUrls: ['./irrigation-engineering-design.component.css'],
   standalone: true,
@@ -33,9 +36,10 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private currentUserId!: number;
 
-  // UI State
-  activeTab: 'plans' | 'entries' | 'modes' = 'plans';
+  // ==================== UI STATE ====================
+  activeTab: 'plans' | 'entries' | 'modes' | 'history' = 'plans';
   isLoading = false;
   isSaving = false;
 
@@ -43,63 +47,64 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   showPlanModal = false;
   showEntryModal = false;
   showModeModal = false;
+  showHistoryDetailsModal = false;
 
   // Edit Mode
   isEditMode = false;
 
-  // Data Collections
+  // ==================== DATA COLLECTIONS ====================
+  // Plans and Configuration
   irrigationPlans: IrrigationPlan[] = [];
   irrigationModes: IrrigationMode[] = [];
-  irrigationEntries: IrrigationPlanEntry[] = [];
-  filteredEntries: IrrigationPlanEntry[] = [];
+  irrigationEntries: IrrigationPlanEntry[] = []; // These are the TEMPLATES/SCHEDULES
+  
+  // Execution History
+  executionHistory: IrrigationPlanEntryHistory[] = []; // These are the ACTUAL EXECUTIONS
 
-  // Selected Items
+  // Filtered Data
+  filteredEntries: IrrigationPlanEntry[] = [];
+  filteredHistory: IrrigationPlanEntryHistory[] = [];
+
+  // ==================== SELECTED ITEMS ====================
   selectedPlan: IrrigationPlan | null = null;
   selectedEntry: IrrigationPlanEntry | null = null;
   selectedMode: IrrigationMode | null = null;
+  selectedHistoryRecord: IrrigationPlanEntryHistory | null = null;
 
-  // Forms
+  // ==================== FORMS ====================
   planForm!: FormGroup;
   entryForm!: FormGroup;
   modeForm!: FormGroup;
 
-  // Filters
+  // ==================== FILTERS ====================
   filterPlanId: number | null = null;
   filterModeId: number | null = null;
-  filterActive: boolean | null = null;
+  filterStatus: string = '';
+  filterDateFrom: string = '';
+  filterDateTo: string = '';
 
-  // Days of week for dayMask
+  // ==================== DAYS OF WEEK ====================
   daysOfWeek = [
-    { name: 'Lunes', value: 1, checked: false },
-    { name: 'Martes', value: 2, checked: false },
-    { name: 'Miércoles', value: 4, checked: false },
-    { name: 'Jueves', value: 8, checked: false },
-    { name: 'Viernes', value: 16, checked: false },
-    { name: 'Sábado', value: 32, checked: false },
-    { name: 'Domingo', value: 64, checked: false }
+    { bit: 1, name: 'Domingo', abbr: 'Dom' },
+    { bit: 2, name: 'Lunes', abbr: 'Lun' },
+    { bit: 4, name: 'Martes', abbr: 'Mar' },
+    { bit: 8, name: 'Miércoles', abbr: 'Mié' },
+    { bit: 16, name: 'Jueves', abbr: 'Jue' },
+    { bit: 32, name: 'Viernes', abbr: 'Vie' },
+    { bit: 64, name: 'Sábado', abbr: 'Sáb' }
   ];
-
-  // Sorting
-  sortField = '';
-  sortDirection: 'asc' | 'desc' = 'asc';
-
-  // Pagination
-  currentPage = 1;
-  pageSize = 10;
-  totalPages = 1;
 
   constructor(
     private fb: FormBuilder,
-    private schedulingService: IrrigationSchedulingService,
+    private irrigationSchedulingService: IrrigationSchedulingService,
+    private irrigationHistoryService: IrrigationPlanEntryHistoryService,
     private alertService: AlertService,
-    private authService: AuthService,
-    private router: Router,
-    private cdr: ChangeDetectorRef
-  ) {
-    this.initializeForms();
-  }
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
+    this.getCurrentUser();
+    this.initializeForms();
     this.loadAllData();
   }
 
@@ -109,86 +114,88 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   }
 
   // ==================== INITIALIZATION ====================
+  private getCurrentUser(): void {
+    const user = this.authService.getCurrentUser();
+    if (user?.id) {
+      this.currentUserId = user.id;
+    }
+  }
 
   private initializeForms(): void {
     this.planForm = this.fb.group({
-      id: [0],
-      name: ['', [Validators.required, Validators.maxLength(100)]],
+      name: ['', [Validators.required, Validators.maxLength(200)]],
       dayMask: [0, [Validators.required, Validators.min(0)]],
       active: [true]
     });
 
     this.entryForm = this.fb.group({
-      id: [0],
       irrigationPlanId: [null, Validators.required],
       irrigationModeId: [null, Validators.required],
-      startTime: ['', Validators.required],
+      startTime: ['08:00', [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
       duration: [30, [Validators.required, Validators.min(1)]],
       wStart: [null, [Validators.min(1), Validators.max(52)]],
       wEnd: [null, [Validators.min(1), Validators.max(52)]],
-      frequency: [null, [Validators.min(1)]],
+      frequency: [null, Validators.min(1)],
       sequence: [1, [Validators.required, Validators.min(1)]],
       active: [true]
     });
 
     this.modeForm = this.fb.group({
-      id: [0],
-      name: ['', [Validators.required, Validators.maxLength(50)]],
+      name: ['', [Validators.required, Validators.maxLength(100)]],
       active: [true]
     });
   }
 
   private loadAllData(): void {
     this.isLoading = true;
-
     forkJoin({
-      plans: this.schedulingService.getAllIrrigationPlansWithEntries().pipe(catchError(() => of([]))),
-      modes: this.schedulingService.getAllIrrigationModes().pipe(catchError(() => of([]))),
-      entries: this.schedulingService.getAllIrrigationPlanEntries().pipe(catchError(() => of([])))
+      plansAndEntries: this.irrigationSchedulingService.getAllIrrigationPlansWithEntries(),
+      modes: this.irrigationSchedulingService.getAllIrrigationModes(),
+      history: this.irrigationHistoryService.getAll()
     })
       .pipe(
         takeUntil(this.destroy$),
-        finalize(() => {
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        })
+        finalize(() => this.isLoading = false)
       )
       .subscribe({
-        next: (data: any) => {
-          console.log('Data loaded: ', data);
-          this.irrigationPlans = Array.isArray(data.plans.irrigationPlans) ? data.plans.irrigationPlans : [];
-          this.irrigationModes = Array.isArray(data.modes.irrigationModes) ? data.modes.irrigationModes : [];
-          this.irrigationEntries = Array.isArray(data.entries.irrigationPlanEntries) ? data.entries.irrigationPlanEntries : [];
-          this.applyFilters();
+        next: (data:any) => {
+          this.irrigationPlans = data.plansAndEntries.irrigationPlans || [];
+          this.irrigationEntries = data.plansAndEntries.irrigationPlanEntries || [];
+          this.irrigationModes = data.modes.irrigationModes || [];
+          this.executionHistory = data.history || [];
+          
+          this.filteredEntries = [...this.irrigationEntries];
+          this.filteredHistory = [...this.executionHistory];
         },
         error: (error) => {
           console.error('Error loading data:', error);
-          this.irrigationPlans = [];
-          this.irrigationModes = [];
-          this.irrigationEntries = [];
+          
         }
       });
   }
 
-  // ==================== TAB MANAGEMENT ====================
-
-  setActiveTab(tab: 'plans' | 'entries' | 'modes'): void {
+  // ==================== TAB NAVIGATION ====================
+  setActiveTab(tab: 'plans' | 'entries' | 'modes' | 'history'): void {
     this.activeTab = tab;
+    
+    if (tab === 'history') {
+      this.loadExecutionHistory();
+    }
   }
 
-  // ==================== IRRIGATION PLAN METHODS ====================
-
+  // ==================== PLAN OPERATIONS ====================
   openPlanModal(plan?: IrrigationPlan): void {
     this.isEditMode = !!plan;
+    this.selectedPlan = plan || null;
 
     if (plan) {
-      this.selectedPlan = plan;
-      this.planForm.patchValue(plan);
-      this.updateDaysFromMask(plan.dayMask);
+      this.planForm.patchValue({
+        name: plan.name,
+        dayMask: plan.dayMask,
+        active: plan.active
+      });
     } else {
-      this.selectedPlan = null;
-      this.planForm.reset({ id: 0, active: true, dayMask: 0 });
-      this.resetDays();
+      this.planForm.reset({ dayMask: 0, active: true });
     }
 
     this.showPlanModal = true;
@@ -196,119 +203,116 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
 
   closePlanModal(): void {
     this.showPlanModal = false;
-    this.planForm.reset();
     this.selectedPlan = null;
-    this.resetDays();
+    this.planForm.reset({ dayMask: 0, active: true });
   }
 
   savePlan(): void {
     if (this.planForm.invalid) {
-      console.error('Plan form is invalid: ', this.planForm.errors);
+      this.planForm.markAllAsTouched();
       return;
     }
 
-    const dayMask = this.calculateDayMask();
-    const formValue = this.planForm.value;
-    const userId = this.getCurrentUserId();
-
     this.isSaving = true;
+    const formValue = this.planForm.value;
 
-    if (this.isEditMode && formValue.id) {
-      // Update existing plan
-      const command: UpdateIrrigationPlanCommand = {
-        id: formValue.id,
+    if (this.isEditMode && this.selectedPlan) {
+      const updateCommand: UpdateIrrigationPlanCommand = {
+        id: this.selectedPlan.id,
         name: formValue.name,
-        dayMask: dayMask,
+        dayMask: formValue.dayMask,
         active: formValue.active,
-        updatedBy: userId
+        updatedBy: this.currentUserId
       };
 
-      console.log('Updating plan with command:', command);
-      this.schedulingService.updateIrrigationPlan(command)
+      this.irrigationSchedulingService.updateIrrigationPlan(updateCommand)
         .pipe(
           takeUntil(this.destroy$),
-          finalize(() => {
-            this.isSaving = false;
-            this.cdr.detectChanges();
-          })
+          finalize(() => this.isSaving = false)
         )
         .subscribe({
-          next: (response) => {
-            console.log('Plan updated successfully: ', response);
+          next: () => {
+            
             this.closePlanModal();
             this.loadAllData();
           },
           error: (error) => {
             console.error('Error updating plan:', error);
-
+            
           }
         });
     } else {
-      // Create new plan
-      const command: CreateIrrigationPlanCommand = {
+      const createCommand: CreateIrrigationPlanCommand = {
         name: formValue.name,
-        dayMask: dayMask,
+        dayMask: formValue.dayMask,
         active: formValue.active,
-        createdBy: userId
+        createdBy: this.currentUserId
       };
 
-      console.log('Creating plan with command:', command);
-      this.schedulingService.createIrrigationPlan(command)
+      this.irrigationSchedulingService.createIrrigationPlan(createCommand)
         .pipe(
           takeUntil(this.destroy$),
-          finalize(() => {
-            this.isSaving = false;
-            this.cdr.detectChanges();
-          })
+          finalize(() => this.isSaving = false)
         )
         .subscribe({
-          next: (response) => {
-            console.log('Plan created successfully: ', response);
+          next: () => {
+            
             this.closePlanModal();
             this.loadAllData();
           },
           error: (error) => {
             console.error('Error creating plan:', error);
-
+            
           }
         });
     }
   }
 
   deletePlan(plan: IrrigationPlan): void {
-    if (!confirm(`¿Está seguro de que desea eliminar el plan "${plan.name}"?`)) {
+    if (!confirm(`¿Está seguro de eliminar el plan "${plan.name}"?`)) {
       return;
     }
 
-    this.schedulingService.deleteIrrigationPlan(plan.id)
-      .pipe(takeUntil(this.destroy$))
+    this.isLoading = true;
+    this.irrigationSchedulingService.deleteIrrigationPlan(plan.id)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isLoading = false)
+      )
       .subscribe({
         next: () => {
-
+          
           this.loadAllData();
         },
         error: (error) => {
           console.error('Error deleting plan:', error);
-
+          
         }
       });
   }
 
-  // ==================== IRRIGATION PLAN ENTRY METHODS ====================
-
+  // ==================== ENTRY OPERATIONS ====================
   openEntryModal(entry?: IrrigationPlanEntry): void {
     this.isEditMode = !!entry;
+    this.selectedEntry = entry || null;
 
     if (entry) {
-      this.selectedEntry = entry;
+      const timeString = entry.startTime.substring(0, 5); // "HH:mm:ss" -> "HH:mm"
+      
       this.entryForm.patchValue({
-        ...entry,
-        startTime: this.formatTimeForInput(entry.startTime)
+        irrigationPlanId: entry.irrigationPlanId,
+        irrigationModeId: entry.irrigationModeId,
+        startTime: timeString,
+        duration: entry.duration,
+        wStart: entry.wStart,
+        wEnd: entry.wEnd,
+        frequency: entry.frequency,
+        sequence: entry.sequence,
+        active: entry.active
       });
     } else {
-      this.selectedEntry = null;
       this.entryForm.reset({
-        id: 0,
+        startTime: '08:00',
         duration: 30,
         sequence: 1,
         active: true
@@ -320,126 +324,124 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
 
   closeEntryModal(): void {
     this.showEntryModal = false;
-    this.entryForm.reset();
     this.selectedEntry = null;
+    this.entryForm.reset({
+      startTime: '08:00',
+      duration: 30,
+      sequence: 1,
+      active: true
+    });
   }
 
   saveEntry(): void {
     if (this.entryForm.invalid) {
-
+      this.entryForm.markAllAsTouched();
       return;
     }
 
-    const formValue = this.entryForm.value;
-    const userId = this.getCurrentUserId();
-    const startTime = this.convertToTimeSpan(formValue.startTime);
-
     this.isSaving = true;
+    const formValue = this.entryForm.value;
+    const startTimeString = `${formValue.startTime}:00`;
 
-    if (this.isEditMode && formValue.id) {
-      // Update existing entry
-      const command: UpdateIrrigationPlanEntryCommand = {
-        id: formValue.id,
+    if (this.isEditMode && this.selectedEntry) {
+      const updateCommand: UpdateIrrigationPlanEntryCommand = {
+        id: this.selectedEntry.id,
         irrigationPlanId: formValue.irrigationPlanId,
         irrigationModeId: formValue.irrigationModeId,
-        startTime: startTime,
+        startTime: startTimeString,
         duration: formValue.duration,
         wStart: formValue.wStart,
         wEnd: formValue.wEnd,
         frequency: formValue.frequency,
         sequence: formValue.sequence,
         active: formValue.active,
-        updatedBy: userId
+        updatedBy: this.currentUserId
       };
 
-      console.log('Updating entry with command:', command);
-      this.schedulingService.updateIrrigationPlanEntry(command)
+      this.irrigationSchedulingService.updateIrrigationPlanEntry(updateCommand)
         .pipe(
           takeUntil(this.destroy$),
-          finalize(() => {
-            this.isSaving = false;
-            this.cdr.detectChanges();
-          })
+          finalize(() => this.isSaving = false)
         )
         .subscribe({
-          next: (res) => {
-            console.log('Entry updated successfully: ', res);
+          next: () => {
+            
             this.closeEntryModal();
             this.loadAllData();
           },
           error: (error) => {
             console.error('Error updating entry:', error);
-
+            
           }
         });
     } else {
-      // Create new entry
-      const command: CreateIrrigationPlanEntryCommand = {
+      const createCommand: CreateIrrigationPlanEntryCommand = {
         irrigationPlanId: formValue.irrigationPlanId,
         irrigationModeId: formValue.irrigationModeId,
-        startTime: startTime,
+        startTime: startTimeString,
         duration: formValue.duration,
         wStart: formValue.wStart,
         wEnd: formValue.wEnd,
         frequency: formValue.frequency,
         sequence: formValue.sequence,
         active: formValue.active,
-        createdBy: userId
+        createdBy: this.currentUserId
       };
 
-      console.log('Creating entry with command:', command);
-      this.schedulingService.createIrrigationPlanEntry(command)
+      this.irrigationSchedulingService.createIrrigationPlanEntry(createCommand)
         .pipe(
           takeUntil(this.destroy$),
-          finalize(() => {
-            this.isSaving = false;
-            this.cdr.detectChanges();
-          })
+          finalize(() => this.isSaving = false)
         )
         .subscribe({
-          next: (response) => {
-            console.log('Entry created successfully: ', response);
+          next: () => {
+            
             this.closeEntryModal();
             this.loadAllData();
           },
           error: (error) => {
             console.error('Error creating entry:', error);
-
+            
           }
         });
     }
   }
 
   deleteEntry(entry: IrrigationPlanEntry): void {
-    if (!confirm(`¿Está seguro de que desea eliminar esta entrada de programación?`)) {
+    if (!confirm(`¿Está seguro de eliminar esta entrada de programación?`)) {
       return;
     }
 
-    this.schedulingService.deleteIrrigationPlanEntry(entry.id)
-      .pipe(takeUntil(this.destroy$))
+    this.isLoading = true;
+    this.irrigationSchedulingService.deleteIrrigationPlanEntry(entry.id)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isLoading = false)
+      )
       .subscribe({
         next: () => {
-
+          
           this.loadAllData();
         },
         error: (error) => {
           console.error('Error deleting entry:', error);
-
+          
         }
       });
   }
 
-  // ==================== IRRIGATION MODE METHODS ====================
-
+  // ==================== MODE OPERATIONS ====================
   openModeModal(mode?: IrrigationMode): void {
     this.isEditMode = !!mode;
+    this.selectedMode = mode || null;
 
     if (mode) {
-      this.selectedMode = mode;
-      this.modeForm.patchValue(mode);
+      this.modeForm.patchValue({
+        name: mode.name,
+        active: mode.active
+      });
     } else {
-      this.selectedMode = null;
-      this.modeForm.reset({ id: 0, active: true });
+      this.modeForm.reset({ active: true });
     }
 
     this.showModeModal = true;
@@ -447,136 +449,187 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
 
   closeModeModal(): void {
     this.showModeModal = false;
-    this.modeForm.reset();
     this.selectedMode = null;
+    this.modeForm.reset({ active: true });
   }
 
   saveMode(): void {
     if (this.modeForm.invalid) {
-
+      this.modeForm.markAllAsTouched();
       return;
     }
 
-    const formValue = this.modeForm.value;
-    const userId = this.getCurrentUserId();
-
     this.isSaving = true;
+    const formValue = this.modeForm.value;
 
-    if (this.isEditMode && formValue.id) {
-      // Note: The service doesn't have update/create mode methods yet
-      // You'll need to add these to IrrigationSchedulingService
+    if (this.isEditMode && this.selectedMode) {
+      const updateCommand = {
+        id: this.selectedMode.id,
+        name: formValue.name,
+        active: formValue.active,
+        updatedBy: this.currentUserId
+      };
 
-      this.closeModeModal();
-      this.isSaving = false;
+      // this.irrigationSchedulingService.updateIrrigationMode(updateCommand)
+      //   .pipe(
+      //     takeUntil(this.destroy$),
+      //     finalize(() => this.isSaving = false)
+      //   )
+      //   .subscribe({
+      //     next: () => {
+            
+      //       this.closeModeModal();
+      //       this.loadAllData();
+      //     },
+      //     error: (error) => {
+      //       console.error('Error updating mode:', error);
+            
+      //     }
+      //   });
     } else {
+      const createCommand = {
+        name: formValue.name,
+        active: formValue.active,
+        createdBy: this.currentUserId
+      };
 
-      this.closeModeModal();
-      this.isSaving = false;
+      // this.irrigationSchedulingService.createIrrigationMode(createCommand)
+      //   .pipe(
+      //     takeUntil(this.destroy$),
+      //     finalize(() => this.isSaving = false)
+      //   )
+      //   .subscribe({
+      //     next: () => {
+            
+      //       this.closeModeModal();
+      //       this.loadAllData();
+      //     },
+      //     error: (error) => {
+      //       console.error('Error creating mode:', error);
+            
+      //     }
+      //   });
     }
   }
 
-  // ==================== FILTER METHODS ====================
-
-  applyFilters(): void {
-    let filtered = [...this.irrigationEntries];
-
-    if (this.filterPlanId) {
-      filtered = filtered.filter(e => e.irrigationPlanId === this.filterPlanId);
+  deleteMode(mode: IrrigationMode): void {
+    if (!confirm(`¿Está seguro de eliminar el modo "${mode.name}"?`)) {
+      return;
     }
 
-    if (this.filterModeId) {
-      filtered = filtered.filter(e => e.irrigationModeId === this.filterModeId);
-    }
+    this.isLoading = true;
+    // this.irrigationSchedulingService.deleteIrrigationMode(mode.id)
+    //   .pipe(
+    //     takeUntil(this.destroy$),
+    //     finalize(() => this.isLoading = false)
+    //   )
+    //   .subscribe({
+    //     next: () => {
+          
+    //       this.loadAllData();
+    //     },
+    //     error: (error) => {
+    //       console.error('Error deleting mode:', error);
+          
+    //     }
+    //   });
+  }
 
-    if (this.filterActive !== null) {
-      filtered = filtered.filter(e => e.active === this.filterActive);
-    }
+  // ==================== EXECUTION HISTORY OPERATIONS ====================
+  loadExecutionHistory(): void {
+    this.isLoading = true;
+    this.irrigationHistoryService.getAll()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.isLoading = false)
+      )
+      .subscribe({
+        next: (history) => {
+          this.executionHistory = history || [];
+          this.applyHistoryFilters();
+        },
+        error: (error) => {
+          console.error('Error loading execution history:', error);
+          
+        }
+      });
+  }
 
-    this.filteredEntries = filtered;
-    this.totalPages = Math.ceil(filtered.length / this.pageSize);
+  viewHistoryDetails(historyRecord: IrrigationPlanEntryHistory): void {
+    this.selectedHistoryRecord = historyRecord;
+    this.showHistoryDetailsModal = true;
+  }
+
+  closeHistoryDetailsModal(): void {
+    this.showHistoryDetailsModal = false;
+    this.selectedHistoryRecord = null;
+  }
+
+  // ==================== FILTERS ====================
+  applyEntryFilters(): void {
+    this.filteredEntries = this.irrigationEntries.filter(entry => {
+      let matches = true;
+
+      if (this.filterPlanId) {
+        matches = matches && entry.irrigationPlanId === this.filterPlanId;
+      }
+
+      if (this.filterModeId) {
+        matches = matches && entry.irrigationModeId === this.filterModeId;
+      }
+
+      return matches;
+    });
+  }
+
+  applyHistoryFilters(): void {
+    this.filteredHistory = this.executionHistory.filter(record => {
+      let matches = true;
+
+      if (this.filterPlanId) {
+        matches = matches && record.irrigationPlanId === this.filterPlanId;
+      }
+
+      if (this.filterModeId) {
+        matches = matches && record.irrigationModeId === this.filterModeId;
+      }
+
+      if (this.filterStatus) {
+        matches = matches && record.executionStatus === this.filterStatus;
+      }
+
+      if (this.filterDateFrom) {
+        const recordDate = new Date(record.executionStartTime);
+        const filterDate = new Date(this.filterDateFrom);
+        matches = matches && recordDate >= filterDate;
+      }
+
+      if (this.filterDateTo) {
+        const recordDate = new Date(record.executionStartTime);
+        const filterDate = new Date(this.filterDateTo);
+        filterDate.setHours(23, 59, 59, 999);
+        matches = matches && recordDate <= filterDate;
+      }
+
+      return matches;
+    });
   }
 
   clearFilters(): void {
     this.filterPlanId = null;
     this.filterModeId = null;
-    this.filterActive = null;
-    this.applyFilters();
-  }
-
-  // ==================== UTILITY METHODS ====================
-
-  private getCurrentUserId(): number {
-    // Get from auth service or return default
-    return 1; // TODO: Get from AuthService
-  }
-
-  private calculateDayMask(): number {
-    return this.daysOfWeek
-      .filter(day => day.checked)
-      .reduce((mask, day) => mask | day.value, 0);
-  }
-
-  getEntriesCountByMode(modeId: number): number {
-    return this.irrigationEntries
-      ? this.irrigationEntries.filter((entry: any) => entry.irrigationModeId === modeId).length
-      : 0;
-  }
-
-  private updateDaysFromMask(dayMask: number): void {
-    this.daysOfWeek.forEach(day => {
-      day.checked = (dayMask & day.value) !== 0;
-    });
-  }
-
-  private resetDays(): void {
-    this.daysOfWeek.forEach(day => day.checked = false);
-  }
-
-  getDaysDisplay(dayMask: number): string {
-    const days = this.schedulingService.dayMaskToDays(dayMask);
-    const daysInSpanish: { [key: string]: string } = {
-      'Monday': 'Lun',
-      'Tuesday': 'Mar',
-      'Wednesday': 'Mié',
-      'Thursday': 'Jue',
-      'Friday': 'Vie',
-      'Saturday': 'Sáb',
-      'Sunday': 'Dom'
-    };
-
-    return days.map(d => daysInSpanish[d] || d).join(', ') || 'Ninguno';
-  }
-
-  formatTimeDisplay(timeSpan: string): string {
-    return this.schedulingService.formatTime(timeSpan);
-  }
-
-  private formatTimeForInput(timeSpan: string): string {
-    // Convert "HH:mm:ss" to "HH:mm" for input type="time"
-    const parts = timeSpan.split(':');
-    if (parts.length >= 2) {
-      return `${parts[0]}:${parts[1]}`;
+    this.filterStatus = '';
+    this.filterDateFrom = '';
+    this.filterDateTo = '';
+    
+    if (this.activeTab === 'entries') {
+      this.filteredEntries = [...this.irrigationEntries];
+    } else if (this.activeTab === 'history') {
+      this.filteredHistory = [...this.executionHistory];
     }
-    return timeSpan;
   }
 
-  private convertToTimeSpan(time: string): string {
-    // Convert "HH:mm" to "HH:mm:ss"
-    const parts = time.split(':');
-    if (parts.length === 2) {
-      return `${parts[0]}:${parts[1]}:00`;
-    }
-    return time;
-  }
-
-  getStatusBadgeClass(active: boolean): string {
-    return active ? 'badge bg-success' : 'badge bg-secondary';
-  }
-
-  getStatusText(active: boolean): string {
-    return active ? 'Activo' : 'Inactivo';
-  }
-
+  // ==================== HELPER METHODS ====================
   getPlanName(planId: number): string {
     const plan = this.irrigationPlans.find(p => p.id === planId);
     return plan ? plan.name : 'N/A';
@@ -587,45 +640,130 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     return mode ? mode.name : 'N/A';
   }
 
-  // ==================== PAGINATION ====================
-
-  get paginatedEntries(): IrrigationPlanEntry[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    const end = start + this.pageSize;
-    return this.filteredEntries.slice(start, end);
+  getDaysFromMask(dayMask: number): string {
+    const selectedDays = this.daysOfWeek
+      .filter(day => (dayMask & day.bit) === day.bit)
+      .map(day => day.abbr);
+    
+    return selectedDays.length > 0 ? selectedDays.join(', ') : 'Ninguno';
   }
 
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
+  toggleDay(event: any): void {
+    const dayBit = parseInt(event.target.value);
+    const currentMask = this.planForm.get('dayMask')?.value || 0;
+    
+    if (event.target.checked) {
+      this.planForm.patchValue({ dayMask: currentMask | dayBit });
+    } else {
+      this.planForm.patchValue({ dayMask: currentMask & ~dayBit });
     }
   }
 
-  getPageNumbers(): number[] {
-    const pages: number[] = [];
-    for (let i = 1; i <= this.totalPages; i++) {
-      pages.push(i);
-    }
-    return pages;
+  isDaySelected(dayBit: number): boolean {
+    const currentMask = this.planForm.get('dayMask')?.value || 0;
+    return (currentMask & dayBit) === dayBit;
+  }
+
+  formatTime(timeString: string): string {
+    if (!timeString) return 'N/A';
+    return timeString.substring(0, 5); // "HH:mm:ss" -> "HH:mm"
+  }
+
+  formatDateTime(dateTime: string | Date): string {
+    if (!dateTime) return 'N/A';
+    const date = new Date(dateTime);
+    return date.toLocaleString('es-ES');
+  }
+
+  formatDate(date: string | Date): string {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    return d.toLocaleDateString('es-ES');
+  }
+
+  getStatusClass(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'Scheduled': 'bg-info',
+      'InProgress': 'bg-warning',
+      'Completed': 'bg-success',
+      'Failed': 'bg-danger',
+      'Cancelled': 'bg-secondary'
+    };
+    return statusMap[status] || 'bg-secondary';
+  }
+
+  getStatusLabel(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'Scheduled': 'Programado',
+      'InProgress': 'En Progreso',
+      'Completed': 'Completado',
+      'Failed': 'Fallido',
+      'Cancelled': 'Cancelado'
+    };
+    return statusMap[status] || status;
   }
 
   // ==================== EXPORT ====================
+  exportToCSV(): void {
+    let data: any[] = [];
+    let filename = '';
+    let headers: string[] = [];
 
-  exportToExcel(): void {
-    // Generate CSV for entries
-    const headers = ['Plan', 'Modo', 'Hora Inicio', 'Duración (min)', 'Secuencia', 'Activo'];
-    const rows = this.filteredEntries.map(entry => [
-      this.getPlanName(entry.irrigationPlanId),
-      this.getModeName(entry.irrigationModeId),
-      this.formatTimeDisplay(entry.startTime),
-      entry.duration.toString(),
-      entry.sequence.toString(),
-      entry.active ? 'Sí' : 'No'
-    ]);
+    if (this.activeTab === 'plans') {
+      headers = ['ID', 'Nombre', 'Días', 'Activo', 'Fecha Creación'];
+      data = this.irrigationPlans.map(plan => [
+        plan.id,
+        plan.name,
+        this.getDaysFromMask(plan.dayMask),
+        plan.active ? 'Sí' : 'No',
+        this.formatDate(plan.dateCreated)
+      ]);
+      filename = 'planes-riego.csv';
+    } else if (this.activeTab === 'entries') {
+      headers = ['ID', 'Plan', 'Modo', 'Hora Inicio', 'Duración (min)', 'Secuencia', 'Activo'];
+      data = this.filteredEntries.map(entry => [
+        entry.id,
+        this.getPlanName(entry.irrigationPlanId),
+        this.getModeName(entry.irrigationModeId),
+        this.formatTime(entry.startTime),
+        entry.duration,
+        entry.sequence,
+        entry.active ? 'Sí' : 'No'
+      ]);
+      filename = 'entradas-programacion.csv';
+    } else if (this.activeTab === 'modes') {
+      headers = ['ID', 'Nombre', 'Activo', 'Fecha Creación'];
+      data = this.irrigationModes.map(mode => [
+        mode.id,
+        mode.name,
+        mode.active ? 'Sí' : 'No',
+        this.formatDate(mode.dateCreated)
+      ]);
+      filename = 'modos-riego.csv';
+    } else if (this.activeTab === 'history') {
+      headers = ['ID', 'Plan', 'Modo', 'Inicio Ejecución', 'Fin Ejecución', 'Duración Planificada', 'Duración Real', 'Estado', 'Manual'];
+      data = this.filteredHistory.map(record => [
+        record.id,
+        this.getPlanName(record.irrigationPlanId),
+        this.getModeName(record.irrigationModeId),
+        this.formatDateTime(record.executionStartTime),
+        record.executionEndTime ? this.formatDateTime(record.executionEndTime) : 'N/A',
+        record.plannedDuration,
+        record.actualDuration || 'N/A',
+        this.getStatusLabel(record.executionStatus),
+        record.isManualExecution ? 'Sí' : 'No'
+      ]);
+      filename = 'historial-ejecuciones.csv';
+    }
+
+    if (data.length === 0) {
+      
+      return;
+    }
 
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.join(','))
+      ...data.map(row => row.map((cell: any) => `"${cell}"`).join(','))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -633,12 +771,10 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     const url = URL.createObjectURL(blob);
 
     link.setAttribute('href', url);
-    link.setAttribute('download', 'programacion-riego.csv');
+    link.setAttribute('download', filename);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-
   }
 }

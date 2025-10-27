@@ -1,359 +1,463 @@
-<!-- src/app/features/irrigation-scheduling/irrigation-scheduling.component.html -->
+<!-- src/app/features/irrigation-engineering-design/irrigation-engineering-design.component.html -->
 <div class="irrigation-scheduling-container">
-
-  <!-- Header Section -->
+  
+  <!-- ==================== PAGE HEADER ==================== -->
   <div class="page-header">
     <div class="header-content">
       <h1 class="page-title">
-        <i class="bi bi-calendar-check"></i>
-        Programación de Riego
+        <i class="bi bi-gear"></i>
+        Diseño de Ingeniería de Riego
       </h1>
-      <p class="lead text-muted">Gestión de planes, entradas y modos de riego</p>
+      <p class="lead">Gestione planes, modos, programaciones y revise el historial de ejecuciones</p>
     </div>
     <div class="header-actions">
-      <button class="btn btn-success" (click)="exportToExcel()">
-        <i class="bi bi-file-earmark-excel"></i>
+      <button 
+        class="btn btn-success" 
+        (click)="exportToCSV()"
+        [disabled]="isLoading">
+        <i class="bi bi-download"></i>
         Exportar
       </button>
     </div>
   </div>
 
-  <!-- Navigation Tabs -->
-  <ul class="nav nav-tabs mb-4" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button 
+  <!-- ==================== NAVIGATION TABS ==================== -->
+  <ul class="nav nav-tabs">
+    <li class="nav-item">
+      <a 
         class="nav-link" 
-        [class.active]="activeTab === 'plans'" 
-        (click)="setActiveTab('plans')" 
-        type="button">
-        <i class="bi bi-calendar3"></i>
+        [class.active]="activeTab === 'plans'"
+        (click)="setActiveTab('plans')">
+        <i class="bi bi-calendar-check"></i>
         Planes de Riego
-        <span class="badge bg-primary ms-2">{{ irrigationPlans.length }}</span>
-      </button>
+      </a>
     </li>
-    <li class="nav-item" role="presentation">
-      <button 
+    <li class="nav-item">
+      <a 
         class="nav-link" 
-        [class.active]="activeTab === 'entries'" 
-        (click)="setActiveTab('entries')" 
-        type="button">
+        [class.active]="activeTab === 'entries'"
+        (click)="setActiveTab('entries')">
         <i class="bi bi-clock-history"></i>
         Entradas de Programación
-        <span class="badge bg-info ms-2">{{ irrigationEntries.length }}</span>
-      </button>
+      </a>
     </li>
-    <li class="nav-item" role="presentation">
-      <button 
+    <li class="nav-item">
+      <a 
         class="nav-link" 
-        [class.active]="activeTab === 'modes'" 
-        (click)="setActiveTab('modes')" 
-        type="button">
-        <i class="bi bi-gear"></i>
+        [class.active]="activeTab === 'modes'"
+        (click)="setActiveTab('modes')">
+        <i class="bi bi-water"></i>
         Modos de Riego
-        <span class="badge bg-secondary ms-2">{{ irrigationModes.length }}</span>
-      </button>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a 
+        class="nav-link" 
+        [class.active]="activeTab === 'history'"
+        (click)="setActiveTab('history')">
+        <i class="bi bi-clock-history"></i>
+        Historial de Ejecuciones
+      </a>
     </li>
   </ul>
 
-  <!-- Loading Spinner -->
-  <div class="loading-container" *ngIf="isLoading">
+  <!-- ==================== LOADING STATE ==================== -->
+  <div *ngIf="isLoading" class="text-center py-5">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Cargando...</span>
     </div>
     <p class="mt-3 text-muted">Cargando datos...</p>
   </div>
 
-  <!-- Tab Content -->
-  <div class="tab-content" *ngIf="!isLoading">
-
-    <!-- ==================== PLANS TAB ==================== -->
-    <div class="tab-pane" [class.show]="activeTab === 'plans'" [class.active]="activeTab === 'plans'">
-      <div class="card">
-        <div class="card-header">
-          <div class="d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">
-              <i class="bi bi-calendar3"></i>
-              Planes de Riego
-            </h4>
-            <button class="btn btn-primary" (click)="openPlanModal()">
-              <i class="bi bi-plus-circle"></i>
-              Nuevo Plan
-            </button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead class="table-header">
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Días de la Semana</th>
-                  <th>Estado</th>
-                  <th>Fecha Creación</th>
-                  <th class="text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let plan of irrigationPlans">
-                  <td>{{ plan.id }}</td>
-                  <td>
-                    <strong>{{ plan.name }}</strong>
-                  </td>
-                  <td>
-                    <span class="badge bg-light text-dark">
-                      {{ getDaysDisplay(plan.dayMask) }}
-                    </span>
-                  </td>
-                  <td>
-                    <span [class]="getStatusBadgeClass(plan.active)">
-                      {{ getStatusText(plan.active) }}
-                    </span>
-                  </td>
-                  <td>{{ plan.dateCreated | date:'short' }}</td>
-                  <td class="text-center">
-                    <div class="btn-group btn-group-sm">
-                      <button 
-                        class="btn btn-outline-primary" 
-                        (click)="openPlanModal(plan)"
-                        title="Editar">
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                      <button 
-                        class="btn btn-outline-danger" 
-                        (click)="deletePlan(plan)"
-                        title="Eliminar">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr *ngIf="irrigationPlans.length === 0">
-                  <td colspan="6" class="text-center text-muted py-4">
-                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                    No hay planes de riego registrados
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+  <!-- ==================== PLANS TAB ==================== -->
+  <div *ngIf="activeTab === 'plans' && !isLoading">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-calendar-check"></i>
+          Planes de Riego
+        </h5>
+        <button class="btn btn-primary" (click)="openPlanModal()">
+          <i class="bi bi-plus-circle"></i>
+          Nuevo Plan
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover" *ngIf="irrigationPlans.length > 0; else emptyPlans">
+            <thead class="table-header">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Días de la Semana</th>
+                <th>Estado</th>
+                <th>Fecha Creación</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let plan of irrigationPlans">
+                <td>{{ plan.id }}</td>
+                <td><strong>{{ plan.name }}</strong></td>
+                <td>{{ getDaysFromMask(plan.dayMask) }}</td>
+                <td>
+                  <span class="badge" [class.bg-success]="plan.active" [class.bg-secondary]="!plan.active">
+                    {{ plan.active ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>{{ formatDate(plan.dateCreated) }}</td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button 
+                      class="btn btn-outline-primary" 
+                      (click)="openPlanModal(plan)"
+                      title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button 
+                      class="btn btn-outline-danger" 
+                      (click)="deletePlan(plan)"
+                      title="Eliminar">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #emptyPlans>
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-calendar-x" style="font-size: 3rem;"></i>
+              <p class="mt-3">No hay planes de riego registrados</p>
+            </div>
+          </ng-template>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- ==================== ENTRIES TAB ==================== -->
-    <div class="tab-pane" [class.show]="activeTab === 'entries'" [class.active]="activeTab === 'entries'">
-      
-      <!-- Filters Section -->
-      <div class="card mb-3">
-        <div class="card-header">
-          <h5 class="mb-0">
-            <i class="bi bi-funnel"></i>
-            Filtros
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label">Plan de Riego</label>
-              <select class="form-select" [(ngModel)]="filterPlanId" (change)="applyFilters()">
-                <option [ngValue]="null">Todos los planes</option>
-                <option *ngFor="let plan of irrigationPlans" [ngValue]="plan.id">
-                  {{ plan.name }}
-                </option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Modo de Riego</label>
-              <select class="form-select" [(ngModel)]="filterModeId" (change)="applyFilters()">
-                <option [ngValue]="null">Todos los modos</option>
-                <option *ngFor="let mode of irrigationModes" [ngValue]="mode.id">
-                  {{ mode.name }}
-                </option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Estado</label>
-              <select class="form-select" [(ngModel)]="filterActive" (change)="applyFilters()">
-                <option [ngValue]="null">Todos</option>
-                <option [ngValue]="true">Activos</option>
-                <option [ngValue]="false">Inactivos</option>
-              </select>
-            </div>
+  <!-- ==================== ENTRIES TAB (SCHEDULE TEMPLATES) ==================== -->
+  <div *ngIf="activeTab === 'entries' && !isLoading">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-clock-history"></i>
+          Entradas de Programación (Plantillas)
+        </h5>
+        <button class="btn btn-primary" (click)="openEntryModal()">
+          <i class="bi bi-plus-circle"></i>
+          Nueva Entrada
+        </button>
+      </div>
+      <div class="card-body">
+        <!-- Filters -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label">Filtrar por Plan</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="filterPlanId"
+              (change)="applyEntryFilters()">
+              <option [ngValue]="null">Todos los planes</option>
+              <option *ngFor="let plan of irrigationPlans" [ngValue]="plan.id">
+                {{ plan.name }}
+              </option>
+            </select>
           </div>
-          <div class="mt-3">
-            <button class="btn btn-secondary btn-sm" (click)="clearFilters()">
+          <div class="col-md-4">
+            <label class="form-label">Filtrar por Modo</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="filterModeId"
+              (change)="applyEntryFilters()">
+              <option [ngValue]="null">Todos los modos</option>
+              <option *ngFor="let mode of irrigationModes" [ngValue]="mode.id">
+                {{ mode.name }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <button 
+              class="btn btn-secondary w-100" 
+              (click)="clearFilters()">
               <i class="bi bi-x-circle"></i>
               Limpiar Filtros
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Entries Table -->
-      <div class="card">
-        <div class="card-header">
-          <div class="d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">
-              <i class="bi bi-clock-history"></i>
-              Entradas de Programación
-            </h4>
-            <button class="btn btn-primary" (click)="openEntryModal()">
-              <i class="bi bi-plus-circle"></i>
-              Nueva Entrada
-            </button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead class="table-header">
-                <tr>
-                  <th>ID</th>
-                  <th>Plan</th>
-                  <th>Modo</th>
-                  <th>Hora Inicio</th>
-                  <th>Duración (min)</th>
-                  <th>Secuencia</th>
-                  <th>Estado</th>
-                  <th class="text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let entry of paginatedEntries">
-                  <td>{{ entry.id }}</td>
-                  <td>
-                    <span class="badge bg-info">{{ entry.irrigationPlanName }}</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-primary">{{ entry.irrigationModeName }}</span>
-                  </td>
-                  <td>
-                    <i class="bi bi-clock"></i>
-                    {{ formatTimeDisplay(entry.startTime) }}
-                  </td>
-                  <td>
-                    <strong>{{ entry.duration }}</strong> min
-                  </td>
-                  <td>
-                    <span class="badge bg-secondary">{{ entry.sequence }}</span>
-                  </td>
-                  <td>
-                    <span [class]="getStatusBadgeClass(entry.active)">
-                      {{ getStatusText(entry.active) }}
-                    </span>
-                  </td>
-                  <td class="text-center">
-                    <div class="btn-group btn-group-sm">
-                      <button 
-                        class="btn btn-outline-primary" 
-                        (click)="openEntryModal(entry)"
-                        title="Editar">
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                      <button 
-                        class="btn btn-outline-danger" 
-                        (click)="deleteEntry(entry)"
-                        title="Eliminar">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr *ngIf="paginatedEntries.length === 0">
-                  <td colspan="8" class="text-center text-muted py-4">
-                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                    No hay entradas de programación
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Pagination -->
-          <nav aria-label="Paginación" *ngIf="totalPages > 1">
-            <ul class="pagination justify-content-center mb-0">
-              <li class="page-item" [class.disabled]="currentPage === 1">
-                <a class="page-link" (click)="goToPage(currentPage - 1)">
-                  <span>&laquo;</span>
-                </a>
-              </li>
-              <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
-                <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
-              </li>
-              <li class="page-item" [class.disabled]="currentPage === totalPages">
-                <a class="page-link" (click)="goToPage(currentPage + 1)">
-                  <span>&raquo;</span>
-                </a>
-              </li>
-            </ul>
-          </nav>
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table table-hover" *ngIf="filteredEntries.length > 0; else emptyEntries">
+            <thead class="table-header">
+              <tr>
+                <th>ID</th>
+                <th>Plan</th>
+                <th>Modo</th>
+                <th>Hora Inicio</th>
+                <th>Duración (min)</th>
+                <th>Semana Inicio</th>
+                <th>Semana Fin</th>
+                <th>Frecuencia</th>
+                <th>Secuencia</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let entry of filteredEntries">
+                <td>{{ entry.id }}</td>
+                <td><strong>{{ getPlanName(entry.irrigationPlanId) }}</strong></td>
+                <td>
+                  <span class="badge bg-primary">{{ getModeName(entry.irrigationModeId) }}</span>
+                </td>
+                <td>{{ formatTime(entry.startTime) }}</td>
+                <td>{{ entry.duration }}</td>
+                <td>{{ entry.wStart || 'N/A' }}</td>
+                <td>{{ entry.wEnd || 'N/A' }}</td>
+                <td>{{ entry.frequency || 'N/A' }}</td>
+                <td>{{ entry.sequence }}</td>
+                <td>
+                  <span class="badge" [class.bg-success]="entry.active" [class.bg-secondary]="!entry.active">
+                    {{ entry.active ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button 
+                      class="btn btn-outline-primary" 
+                      (click)="openEntryModal(entry)"
+                      title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button 
+                      class="btn btn-outline-danger" 
+                      (click)="deleteEntry(entry)"
+                      title="Eliminar">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #emptyEntries>
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-clock-history" style="font-size: 3rem;"></i>
+              <p class="mt-3">No hay entradas de programación registradas</p>
+            </div>
+          </ng-template>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- ==================== MODES TAB ==================== -->
-    <div class="tab-pane" [class.show]="activeTab === 'modes'" [class.active]="activeTab === 'modes'">
-      <div class="card">
-        <div class="card-header">
-          <div class="d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">
-              <i class="bi bi-gear"></i>
-              Modos de Riego
-            </h4>
-            <button class="btn btn-primary" (click)="openModeModal()" disabled>
-              <i class="bi bi-plus-circle"></i>
-              Nuevo Modo
-            </button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i>
-            Los modos de riego son configuraciones predefinidas del sistema. Actualmente: <strong>Planned</strong> (Programado) y <strong>OnDemand</strong> (Bajo Demanda).
-          </div>
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead class="table-header">
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Estado</th>
-                  <th>Fecha Creación</th>
-                  <th class="text-center">Entradas Asociadas</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let mode of irrigationModes">
-                  <td>{{ mode.id }}</td>
-                  <td>
-                    <strong>{{ mode.name }}</strong>
-                  </td>
-                  <td>
-                    <span [class]="getStatusBadgeClass(mode.active)">
-                      {{ getStatusText(mode.active) }}
-                    </span>
-                  </td>
-                  <td>{{ mode.dateCreated | date:'short' }}</td>
-                  <td class="text-center">
-                    <span class="badge bg-primary">
-                      {{ getEntriesCountByMode(mode.id) }}
-                    </span>
-                  </td>
-                </tr>
-                <tr *ngIf="irrigationModes.length === 0">
-                  <td colspan="5" class="text-center text-muted py-4">
-                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                    No hay modos de riego registrados
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+  <!-- ==================== MODES TAB ==================== -->
+  <div *ngIf="activeTab === 'modes' && !isLoading">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-water"></i>
+          Modos de Riego
+        </h5>
+        <button class="btn btn-primary" (click)="openModeModal()">
+          <i class="bi bi-plus-circle"></i>
+          Nuevo Modo
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover" *ngIf="irrigationModes.length > 0; else emptyModes">
+            <thead class="table-header">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Fecha Creación</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let mode of irrigationModes">
+                <td>{{ mode.id }}</td>
+                <td><strong>{{ mode.name }}</strong></td>
+                <td>
+                  <span class="badge" [class.bg-success]="mode.active" [class.bg-secondary]="!mode.active">
+                    {{ mode.active ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>{{ formatDate(mode.dateCreated) }}</td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button 
+                      class="btn btn-outline-primary" 
+                      (click)="openModeModal(mode)"
+                      title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button 
+                      class="btn btn-outline-danger" 
+                      (click)="deleteMode(mode)"
+                      title="Eliminar">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #emptyModes>
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-water" style="font-size: 3rem;"></i>
+              <p class="mt-3">No hay modos de riego registrados</p>
+            </div>
+          </ng-template>
         </div>
       </div>
     </div>
+  </div>
 
+  <!-- ==================== EXECUTION HISTORY TAB ==================== -->
+  <div *ngIf="activeTab === 'history' && !isLoading">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-clock-history"></i>
+          Historial de Ejecuciones (Registros Reales)
+        </h5>
+        <button class="btn btn-secondary" (click)="loadExecutionHistory()">
+          <i class="bi bi-arrow-clockwise"></i>
+          Refrescar
+        </button>
+      </div>
+      <div class="card-body">
+        <!-- Filters -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <label class="form-label">Filtrar por Plan</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="filterPlanId"
+              (change)="applyHistoryFilters()">
+              <option [ngValue]="null">Todos los planes</option>
+              <option *ngFor="let plan of irrigationPlans" [ngValue]="plan.id">
+                {{ plan.name }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Filtrar por Modo</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="filterModeId"
+              (change)="applyHistoryFilters()">
+              <option [ngValue]="null">Todos los modos</option>
+              <option *ngFor="let mode of irrigationModes" [ngValue]="mode.id">
+                {{ mode.name }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Estado</label>
+            <select 
+              class="form-select" 
+              [(ngModel)]="filterStatus"
+              (change)="applyHistoryFilters()">
+              <option value="">Todos</option>
+              <option value="Scheduled">Programado</option>
+              <option value="InProgress">En Progreso</option>
+              <option value="Completed">Completado</option>
+              <option value="Failed">Fallido</option>
+              <option value="Cancelled">Cancelado</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Desde</label>
+            <input 
+              type="date" 
+              class="form-control" 
+              [(ngModel)]="filterDateFrom"
+              (change)="applyHistoryFilters()">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Hasta</label>
+            <input 
+              type="date" 
+              class="form-control" 
+              [(ngModel)]="filterDateTo"
+              (change)="applyHistoryFilters()">
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-12">
+            <button 
+              class="btn btn-secondary" 
+              (click)="clearFilters()">
+              <i class="bi bi-x-circle"></i>
+              Limpiar Filtros
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table class="table table-hover" *ngIf="filteredHistory.length > 0; else emptyHistory">
+            <thead class="table-header">
+              <tr>
+                <th>ID</th>
+                <th>Plan</th>
+                <th>Modo</th>
+                <th>Inicio Ejecución</th>
+                <th>Fin Ejecución</th>
+                <th>Duración Plan.</th>
+                <th>Duración Real</th>
+                <th>Estado</th>
+                <th>Tipo</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let record of filteredHistory">
+                <td>{{ record.id }}</td>
+                <td><strong>{{ getPlanName(record.irrigationPlanId) }}</strong></td>
+                <td>
+                  <span class="badge bg-primary">{{ getModeName(record.irrigationModeId) }}</span>
+                </td>
+                <td>{{ formatDateTime(record.executionStartTime) }}</td>
+                <td>{{ record.executionEndTime ? formatDateTime(record.executionEndTime) : 'N/A' }}</td>
+                <td>{{ record.plannedDuration }} min</td>
+                <td>{{ record.actualDuration ? (record.actualDuration + ' min') : 'N/A' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getStatusClass(record.executionStatus)">
+                    {{ getStatusLabel(record.executionStatus) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" [class.bg-warning]="record.isManualExecution" [class.bg-info]="!record.isManualExecution">
+                    {{ record.isManualExecution ? 'Manual' : 'Automático' }}
+                  </span>
+                </td>
+                <td>
+                  <button 
+                    class="btn btn-sm btn-outline-primary" 
+                    (click)="viewHistoryDetails(record)"
+                    title="Ver Detalles">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #emptyHistory>
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-clock-history" style="font-size: 3rem;"></i>
+              <p class="mt-3">No hay registros de ejecución</p>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -364,7 +468,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          <i class="bi bi-calendar3"></i>
+          <i class="bi bi-calendar-check"></i>
           {{ isEditMode ? 'Editar Plan de Riego' : 'Nuevo Plan de Riego' }}
         </h5>
         <button type="button" class="btn-close" (click)="closePlanModal()"></button>
@@ -379,7 +483,7 @@
               type="text" 
               class="form-control" 
               formControlName="name"
-              placeholder="Ej: Plan Semanal de Verano"
+              placeholder="Ingrese el nombre del plan"
               [class.is-invalid]="planForm.get('name')?.invalid && planForm.get('name')?.touched">
             <div class="invalid-feedback">
               El nombre es requerido
@@ -390,21 +494,22 @@
           <div class="mb-3">
             <label class="form-label">Días de la Semana <span class="text-danger">*</span></label>
             <div class="row g-2">
-              <div class="col-6 col-md-3" *ngFor="let day of daysOfWeek">
+              <div class="col-md-6 col-lg-4" *ngFor="let day of daysOfWeek">
                 <div class="form-check">
                   <input 
                     class="form-check-input" 
                     type="checkbox" 
-                    [id]="'day-' + day.value"
-                    [(ngModel)]="day.checked"
-                    [ngModelOptions]="{standalone: true}">
-                  <label class="form-check-label" [for]="'day-' + day.value">
+                    [value]="day.bit"
+                    [checked]="isDaySelected(day.bit)"
+                    (change)="toggleDay($event)"
+                    [id]="'day-' + day.bit">
+                  <label class="form-check-label" [for]="'day-' + day.bit">
                     {{ day.name }}
                   </label>
                 </div>
               </div>
             </div>
-            <small class="text-muted">Seleccione los días en que este plan estará activo</small>
+            <small class="text-muted">Seleccione los días en que se ejecutará el plan</small>
           </div>
 
           <!-- Active Status -->
@@ -499,7 +604,7 @@
                 formControlName="startTime"
                 [class.is-invalid]="entryForm.get('startTime')?.invalid && entryForm.get('startTime')?.touched">
               <div class="invalid-feedback">
-                La hora de inicio es requerida
+                Hora de inicio inválida
               </div>
             </div>
 
@@ -603,3 +708,165 @@
   </div>
 </div>
 <div class="modal-backdrop fade" [class.show]="showEntryModal" *ngIf="showEntryModal"></div>
+
+<!-- ==================== MODE MODAL ==================== -->
+<div class="modal" [class.show]="showModeModal" [style.display]="showModeModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-water"></i>
+          {{ isEditMode ? 'Editar Modo de Riego' : 'Nuevo Modo de Riego' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModeModal()"></button>
+      </div>
+      <form [formGroup]="modeForm" (ngSubmit)="saveMode()">
+        <div class="modal-body">
+          
+          <!-- Name -->
+          <div class="mb-3">
+            <label class="form-label">Nombre del Modo <span class="text-danger">*</span></label>
+            <input 
+              type="text" 
+              class="form-control" 
+              formControlName="name"
+              placeholder="Ingrese el nombre del modo"
+              [class.is-invalid]="modeForm.get('name')?.invalid && modeForm.get('name')?.touched">
+            <div class="invalid-feedback">
+              El nombre es requerido
+            </div>
+          </div>
+
+          <!-- Active Status -->
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                id="modeActive"
+                formControlName="active">
+              <label class="form-check-label" for="modeActive">
+                Modo Activo
+              </label>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModeModal()">
+            <i class="bi bi-x-circle"></i>
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="modeForm.invalid || isSaving">
+            <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+            <i class="bi bi-save" *ngIf="!isSaving"></i>
+            {{ isEditMode ? 'Actualizar' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showModeModal" *ngIf="showModeModal"></div>
+
+<!-- ==================== HISTORY DETAILS MODAL ==================== -->
+<div class="modal" [class.show]="showHistoryDetailsModal" [style.display]="showHistoryDetailsModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-info-circle"></i>
+          Detalles de Ejecución
+        </h5>
+        <button type="button" class="btn-close" (click)="closeHistoryDetailsModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedHistoryRecord">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <strong>ID de Registro:</strong>
+            <p>{{ selectedHistoryRecord.id }}</p>
+          </div>
+          <div class="col-md-6">
+            <strong>Plan de Riego:</strong>
+            <p>{{ getPlanName(selectedHistoryRecord.irrigationPlanId) }}</p>
+          </div>
+          <div class="col-md-6">
+            <strong>Modo de Riego:</strong>
+            <p>{{ getModeName(selectedHistoryRecord.irrigationModeId) }}</p>
+          </div>
+          <div class="col-md-6">
+            <strong>Estado:</strong>
+            <p>
+              <span class="badge" [ngClass]="getStatusClass(selectedHistoryRecord.executionStatus)">
+                {{ getStatusLabel(selectedHistoryRecord.executionStatus) }}
+              </span>
+            </p>
+          </div>
+          <div class="col-md-6">
+            <strong>Inicio de Ejecución:</strong>
+            <p>{{ formatDateTime(selectedHistoryRecord.executionStartTime) }}</p>
+          </div>
+          <div class="col-md-6">
+            <strong>Fin de Ejecución:</strong>
+            <p>{{ selectedHistoryRecord.executionEndTime ? formatDateTime(selectedHistoryRecord.executionEndTime) : 'N/A' }}</p>
+          </div>
+          <div class="col-md-6">
+            <strong>Duración Planificada:</strong>
+            <p>{{ selectedHistoryRecord.plannedDuration }} minutos</p>
+          </div>
+          <div class="col-md-6">
+            <strong>Duración Real:</strong>
+            <p>{{ selectedHistoryRecord.actualDuration ? (selectedHistoryRecord.actualDuration + ' minutos') : 'N/A' }}</p>
+          </div>
+          <div class="col-md-6">
+            <strong>Tipo de Ejecución:</strong>
+            <p>
+              <span class="badge" [class.bg-warning]="selectedHistoryRecord.isManualExecution" [class.bg-info]="!selectedHistoryRecord.isManualExecution">
+                {{ selectedHistoryRecord.isManualExecution ? 'Manual' : 'Automático' }}
+              </span>
+            </p>
+          </div>
+          <div class="col-md-6">
+            <strong>Secuencia:</strong>
+            <p>{{ selectedHistoryRecord.sequence || 'N/A' }}</p>
+          </div>
+          <div class="col-md-6" *ngIf="selectedHistoryRecord.waterVolumeDelivered">
+            <strong>Volumen de Agua:</strong>
+            <p>{{ selectedHistoryRecord.waterVolumeDelivered }} litros</p>
+          </div>
+          <div class="col-md-6" *ngIf="selectedHistoryRecord.flowRate">
+            <strong>Caudal:</strong>
+            <p>{{ selectedHistoryRecord.flowRate }} L/min</p>
+          </div>
+          <div class="col-md-6" *ngIf="selectedHistoryRecord.pressure">
+            <strong>Presión:</strong>
+            <p>{{ selectedHistoryRecord.pressure }} bar</p>
+          </div>
+          <div class="col-md-6" *ngIf="selectedHistoryRecord.temperature">
+            <strong>Temperatura:</strong>
+            <p>{{ selectedHistoryRecord.temperature }} °C</p>
+          </div>
+          <div class="col-md-6" *ngIf="selectedHistoryRecord.deviceId">
+            <strong>ID de Dispositivo:</strong>
+            <p>{{ selectedHistoryRecord.deviceId }}</p>
+          </div>
+          <div class="col-12" *ngIf="selectedHistoryRecord.notes">
+            <strong>Notas:</strong>
+            <p>{{ selectedHistoryRecord.notes }}</p>
+          </div>
+          <div class="col-12" *ngIf="selectedHistoryRecord.errorMessage">
+            <strong>Mensaje de Error:</strong>
+            <p class="text-danger">{{ selectedHistoryRecord.errorMessage }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeHistoryDetailsModal()">
+          <i class="bi bi-x-circle"></i>
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showHistoryDetailsModal" *ngIf="showHistoryDetailsModal"></div>
