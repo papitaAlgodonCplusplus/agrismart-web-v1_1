@@ -512,12 +512,6 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   getDeviceStatus(device: DeviceData): string {
     if (!device.isActive) return 'inactive';
     
-    const lastUpdate = new Date(device.lastUpdate);
-    const now = new Date();
-    const diffMinutes = (now.getTime() - lastUpdate.getTime()) / (1000 * 60);
-
-    if (diffMinutes > 30) return 'offline';
-    if (diffMinutes > 5) return 'warning';
     return 'online';
   }
 

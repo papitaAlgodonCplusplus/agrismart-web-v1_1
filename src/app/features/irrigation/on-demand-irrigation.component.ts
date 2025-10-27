@@ -104,7 +104,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
                     if (mode) {
                         this.onDemandMode = mode;
                         this.loadIrrigationPlans();
-                       // this.loadOnDemandEntries();
+                        // this.loadOnDemandEntries();
                     } else {
                         this.showError('OnDemand irrigation mode not found in the system');
                         this.isLoading = false;
@@ -143,6 +143,54 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
             });
     }
 
+    // ==================== NEW METHODS FOR DYNAMIC DURATIONS ====================
+
+    /**
+     * Get unique duration values for a specific irrigation plan's on-demand entries
+     * @param planId - The irrigation plan ID
+     * @returns Sorted array of unique duration values in minutes
+     */
+    getPlanDurations(planId: number): number[] {
+        // Filter entries for this specific plan that are OnDemand mode
+        const planEntries = this.onDemandEntries.filter(
+            entry => entry.irrigationPlanId === planId && entry.duration != null
+        );
+
+        // Extract unique durations
+        const durations = [...new Set(planEntries.map(entry => entry.duration))];
+
+        // Sort in ascending order
+        return durations.sort((a, b) => a - b);
+    }
+
+    /**
+     * Check if a plan has any on-demand entries with durations
+     * @param planId - The irrigation plan ID
+     * @returns true if the plan has entries with durations
+     */
+    hasPlanDurations(planId: number): boolean {
+        return this.getPlanDurations(planId).length > 0;
+    }
+
+    /**
+     * Format duration for button display
+     * @param minutes - Duration in minutes
+     * @returns Formatted string (e.g., "15 min", "1 hora", "1h 30m")
+     */
+    formatDurationForButton(minutes: number): string {
+        if (minutes < 60) {
+            return `${minutes} min`;
+        } else if (minutes === 60) {
+            return '1 hora';
+        } else if (minutes % 60 === 0) {
+            return `${minutes / 60} horas`;
+        } else {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${hours}h ${mins}m`;
+        }
+    }
+
     loadIrrigationPlans(): void {
         this.schedulingService.getAllIrrigationPlansWithEntries()
             .pipe(takeUntil(this.destroy$))
@@ -158,8 +206,10 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
                     console.log('All Irrigation Plan Entries:', entriesArray);
                     this.onDemandEntries = entriesArray.filter(((e: { irrigationModeId: number; }) => e.irrigationModeId === this.onDemandMode!.id));
 
+                    console.log("irrigationPlans: ", this.irrigationPlans, "onDemandEntries: ", this.onDemandEntries)
+
                     this.isLoading = false;
-                    
+
                 },
                 error: (error) => {
                     this.showError('Failed to load irrigation plans');

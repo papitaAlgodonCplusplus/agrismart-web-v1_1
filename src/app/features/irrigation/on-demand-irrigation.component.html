@@ -6,20 +6,6 @@
       <h1><i class="fas fa-tint"></i> Riego Bajo Demanda</h1>
       <p class="lead">Ejecute planes de riego inmediatamente o programe para horarios específicos</p>
     </div>
-    <div class="header-actions">
-      <button 
-        class="btn btn-primary"
-        (click)="showExecutionDialog()"
-        [disabled]="isLoading || !onDemandMode">
-        <i class="fas fa-play"></i> Ejecutar Riego
-      </button>
-      <button 
-        class="btn btn-secondary"
-        (click)="loadOnDemandEntries()"
-        [disabled]="isLoading">
-        <i class="fas fa-sync-alt"></i> Actualizar
-      </button>
-    </div>
   </div>
 
   <!-- Messages -->
@@ -42,7 +28,7 @@
 
   <!-- Main Content -->
   <div class="content-wrapper" *ngIf="!isLoading">
-    
+
     <!-- Statistics Cards -->
     <div class="stats-row">
       <div class="stat-card">
@@ -97,23 +83,9 @@
           <div class="plan-quick-actions" *ngFor="let plan of irrigationPlans">
             <div class="plan-name">{{ plan.name }}</div>
             <div class="duration-buttons">
-              <button 
-                class="btn btn-sm btn-outline-primary"
-                (click)="quickExecute(plan.id, 15)"
-                [disabled]="isExecuting">
-                15 min
-              </button>
-              <button 
-                class="btn btn-sm btn-outline-primary"
-                (click)="quickExecute(plan.id, 30)"
-                [disabled]="isExecuting">
-                30 min
-              </button>
-              <button 
-                class="btn btn-sm btn-outline-primary"
-                (click)="quickExecute(plan.id, 60)"
-                [disabled]="isExecuting">
-                1 hora
+              <!-- New -->
+              <button *ngFor="let duration of getPlanDurations(plan.id)" (click)="quickExecute(plan.id, duration)">
+                {{ formatDurationForButton(duration) }}
               </button>
             </div>
           </div>
@@ -185,17 +157,11 @@
                 </td>
                 <td>
                   <div class="action-buttons">
-                    <button 
-                      class="btn btn-sm btn-outline-info"
-                      (click)="viewEntryDetails(entry)"
-                      title="Ver Detalles">
+                    <button class="btn btn-sm btn-outline-info" (click)="viewEntryDetails(entry)" title="Ver Detalles">
                       <i class="fas fa-eye"></i>
                     </button>
-                    <button 
-                      class="btn btn-sm btn-outline-danger"
-                      (click)="deleteEntry(entry)"
-                      [disabled]="getEntryStatus(entry).includes('Active')"
-                      title="Eliminar">
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteEntry(entry)"
+                      [disabled]="getEntryStatus(entry).includes('Active')" title="Eliminar">
                       <i class="fas fa-trash"></i>
                     </button>
                   </div>
@@ -233,23 +199,20 @@
 
       <form [formGroup]="executionForm" (ngSubmit)="executeOnDemandIrrigation()">
         <div class="modal-body">
-          
+
           <!-- Irrigation Plan Selection -->
           <div class="form-group">
             <label for="irrigationPlanId">
               <i class="fas fa-clipboard-list"></i> Plan de Riego *
             </label>
-            <select 
-              class="form-control"
-              id="irrigationPlanId"
-              formControlName="irrigationPlanId"
-              required>
+            <select class="form-control" id="irrigationPlanId" formControlName="irrigationPlanId" required>
               <option value="">Seleccione un plan de riego</option>
               <option *ngFor="let plan of irrigationPlans" [value]="plan.id">
                 {{ plan.name }}
               </option>
             </select>
-            <div class="invalid-feedback" *ngIf="executionForm.get('irrigationPlanId')?.invalid && executionForm.get('irrigationPlanId')?.touched">
+            <div class="invalid-feedback"
+              *ngIf="executionForm.get('irrigationPlanId')?.invalid && executionForm.get('irrigationPlanId')?.touched">
               Por favor seleccione un plan de riego
             </div>
           </div>
@@ -259,10 +222,7 @@
             <label for="farmId">
               <i class="fas fa-map-marked-alt"></i> Finca (Filtro Opcional)
             </label>
-            <select 
-              class="form-control"
-              id="farmId"
-              formControlName="farmId"
+            <select class="form-control" id="farmId" formControlName="farmId"
               (change)="onFarmChange($any($event.target).value)">
               <option [value]="null">Todas las Fincas</option>
               <option *ngFor="let farm of farms" [value]="farm.id">
@@ -276,10 +236,7 @@
             <label for="cropProductionId">
               <i class="fas fa-seedling"></i> Producción de Cultivo (Filtro Opcional)
             </label>
-            <select 
-              class="form-control"
-              id="cropProductionId"
-              formControlName="cropProductionId">
+            <select class="form-control" id="cropProductionId" formControlName="cropProductionId">
               <option [value]="null">Todas las Producciones</option>
               <option *ngFor="let production of filteredCropProductions" [value]="production.id">
                 {{ production.name || 'Producción #' + production.id }}
@@ -294,15 +251,10 @@
                 <label for="startHours">
                   <i class="fas fa-clock"></i> Hora de Inicio *
                 </label>
-                <input 
-                  type="number"
-                  class="form-control"
-                  id="startHours"
-                  formControlName="startHours"
-                  min="0"
-                  max="23"
+                <input type="number" class="form-control" id="startHours" formControlName="startHours" min="0" max="23"
                   placeholder="0-23">
-                <div class="invalid-feedback" *ngIf="executionForm.get('startHours')?.invalid && executionForm.get('startHours')?.touched">
+                <div class="invalid-feedback"
+                  *ngIf="executionForm.get('startHours')?.invalid && executionForm.get('startHours')?.touched">
                   La hora debe estar entre 0 y 23
                 </div>
               </div>
@@ -312,15 +264,10 @@
                 <label for="startMinutes">
                   <i class="fas fa-clock"></i> Minuto de Inicio *
                 </label>
-                <input 
-                  type="number"
-                  class="form-control"
-                  id="startMinutes"
-                  formControlName="startMinutes"
-                  min="0"
-                  max="59"
-                  placeholder="0-59">
-                <div class="invalid-feedback" *ngIf="executionForm.get('startMinutes')?.invalid && executionForm.get('startMinutes')?.touched">
+                <input type="number" class="form-control" id="startMinutes" formControlName="startMinutes" min="0"
+                  max="59" placeholder="0-59">
+                <div class="invalid-feedback"
+                  *ngIf="executionForm.get('startMinutes')?.invalid && executionForm.get('startMinutes')?.touched">
                   El minuto debe estar entre 0 y 59
                 </div>
               </div>
@@ -332,18 +279,13 @@
             <label for="duration">
               <i class="fas fa-hourglass-half"></i> Duración (minutos) *
             </label>
-            <input 
-              type="number"
-              class="form-control"
-              id="duration"
-              formControlName="duration"
-              min="1"
-              max="240"
+            <input type="number" class="form-control" id="duration" formControlName="duration" min="1" max="240"
               placeholder="Ingrese la duración en minutos">
             <small class="form-text text-muted">
               Actual: {{ formatDuration(executionForm.get('duration')?.value || 0) }}
             </small>
-            <div class="invalid-feedback" *ngIf="executionForm.get('duration')?.invalid && executionForm.get('duration')?.touched">
+            <div class="invalid-feedback"
+              *ngIf="executionForm.get('duration')?.invalid && executionForm.get('duration')?.touched">
               La duración debe estar entre 1 y 240 minutos
             </div>
           </div>
@@ -353,12 +295,7 @@
             <label for="sequence">
               <i class="fas fa-sort-numeric-up"></i> Secuencia *
             </label>
-            <input 
-              type="number"
-              class="form-control"
-              id="sequence"
-              formControlName="sequence"
-              min="1"
+            <input type="number" class="form-control" id="sequence" formControlName="sequence" min="1"
               placeholder="Secuencia de ejecución">
             <small class="form-text text-muted">
               Orden de ejecución si existen múltiples entradas
@@ -370,28 +307,17 @@
             <label for="notes">
               <i class="fas fa-sticky-note"></i> Notas (Opcional)
             </label>
-            <textarea 
-              class="form-control"
-              id="notes"
-              formControlName="notes"
-              rows="3"
+            <textarea class="form-control" id="notes" formControlName="notes" rows="3"
               placeholder="Agregue cualquier nota sobre esta ejecución..."></textarea>
           </div>
 
         </div>
 
         <div class="modal-footer">
-          <button 
-            type="button" 
-            class="btn btn-secondary"
-            (click)="cancelExecution()"
-            [disabled]="isExecuting">
+          <button type="button" class="btn btn-secondary" (click)="cancelExecution()" [disabled]="isExecuting">
             <i class="fas fa-times"></i> Cancelar
           </button>
-          <button 
-            type="submit" 
-            class="btn btn-primary"
-            [disabled]="executionForm.invalid || isExecuting">
+          <button type="submit" class="btn btn-primary" [disabled]="executionForm.invalid || isExecuting">
             <i class="fas fa-spinner fa-spin" *ngIf="isExecuting"></i>
             <i class="fas fa-play" *ngIf="!isExecuting"></i>
             {{ isExecuting ? 'Ejecutando...' : 'Ejecutar Ahora' }}
@@ -451,7 +377,8 @@
           <div class="detail-item">
             <label><i class="fas fa-toggle-on"></i> Activo:</label>
             <span>
-              <span class="badge" [class.badge-success]="selectedEntry.active" [class.badge-secondary]="!selectedEntry.active">
+              <span class="badge" [class.badge-success]="selectedEntry.active"
+                [class.badge-secondary]="!selectedEntry.active">
                 {{ selectedEntry.active ? 'Sí' : 'No' }}
               </span>
             </span>
@@ -465,10 +392,7 @@
       </div>
 
       <div class="modal-footer">
-        <button 
-          type="button" 
-          class="btn btn-secondary"
-          (click)="closeEntryDetails()">
+        <button type="button" class="btn btn-secondary" (click)="closeEntryDetails()">
           <i class="fas fa-times"></i> Cerrar
         </button>
       </div>

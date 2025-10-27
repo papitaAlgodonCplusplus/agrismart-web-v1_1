@@ -911,3 +911,338 @@ textarea.form-control {
   padding-right: 0.5rem;
   padding-left: 0.5rem;
 }
+
+/* src/app/features/irrigation/on-demand-irrigation.component.css */
+
+/* ==================== DYNAMIC DURATION BUTTONS ==================== */
+
+/* Container for duration buttons */
+.duration-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  min-height: 36px;
+}
+
+/* Individual duration button styling */
+.duration-buttons button {
+  padding: 6px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1.5px solid #0d6efd;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #0d6efd;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  min-width: 70px;
+  text-align: center;
+}
+
+/* Hover effect */
+.duration-buttons button:hover:not(:disabled) {
+  background-color: #0d6efd;
+  color: #ffffff;
+  border-color: #0d6efd;
+  box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Active/Click effect */
+.duration-buttons button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(13, 110, 253, 0.3);
+}
+
+/* Focus effect for accessibility */
+.duration-buttons button:focus {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+/* Disabled state */
+.duration-buttons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+  color: #6c757d;
+  box-shadow: none;
+}
+
+/* Loading/executing state */
+.duration-buttons button:disabled:active {
+  transform: none;
+}
+
+/* Alternative color schemes for different button styles */
+
+/* Success variant (green) */
+.duration-buttons button.btn-success {
+  border-color: #198754;
+  color: #198754;
+}
+
+.duration-buttons button.btn-success:hover:not(:disabled) {
+  background-color: #198754;
+  color: #ffffff;
+  border-color: #198754;
+}
+
+/* Warning variant (orange) */
+.duration-buttons button.btn-warning {
+  border-color: #ffc107;
+  color: #000000;
+}
+
+.duration-buttons button.btn-warning:hover:not(:disabled) {
+  background-color: #ffc107;
+  color: #000000;
+  border-color: #ffc107;
+}
+
+/* Info variant (cyan) */
+.duration-buttons button.btn-info {
+  border-color: #0dcaf0;
+  color: #0dcaf0;
+}
+
+.duration-buttons button.btn-info:hover:not(:disabled) {
+  background-color: #0dcaf0;
+  color: #000000;
+  border-color: #0dcaf0;
+}
+
+/* ==================== QUICK ACTIONS LAYOUT ==================== */
+
+/* Plan quick actions container */
+.plan-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #dee2e6;
+  transition: box-shadow 0.2s ease;
+}
+
+.plan-quick-actions:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Plan name styling */
+.plan-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #212529;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-name::before {
+  content: "💧";
+  font-size: 1.2rem;
+}
+
+/* No durations fallback message */
+.duration-buttons small.text-muted {
+  font-style: italic;
+  color: #6c757d;
+  padding: 8px 12px;
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+/* Tablet and below */
+@media (max-width: 768px) {
+  .duration-buttons {
+    gap: 6px;
+  }
+
+  .duration-buttons button {
+    padding: 5px 12px;
+    font-size: 0.8125rem;
+    min-width: 60px;
+  }
+
+  .plan-quick-actions {
+    padding: 12px;
+  }
+
+  .plan-name {
+    font-size: 0.9375rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .duration-buttons {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .duration-buttons button {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .plan-quick-actions {
+    padding: 10px;
+  }
+}
+
+/* ==================== ANIMATION ENHANCEMENTS ==================== */
+
+/* Pulse animation for active executions */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.duration-buttons button.executing {
+  animation: pulse 1.5s ease-in-out infinite;
+  background-color: #0d6efd;
+  color: #ffffff;
+  pointer-events: none;
+}
+
+/* Slide in animation for buttons */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.duration-buttons button {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Stagger animation for multiple buttons */
+.duration-buttons button:nth-child(1) { animation-delay: 0s; }
+.duration-buttons button:nth-child(2) { animation-delay: 0.05s; }
+.duration-buttons button:nth-child(3) { animation-delay: 0.1s; }
+.duration-buttons button:nth-child(4) { animation-delay: 0.15s; }
+.duration-buttons button:nth-child(5) { animation-delay: 0.2s; }
+.duration-buttons button:nth-child(6) { animation-delay: 0.25s; }
+
+/* ==================== ACCESSIBILITY ==================== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .duration-buttons button {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .duration-buttons button {
+    animation: none;
+    transition: none;
+  }
+  
+  .duration-buttons button:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ==================== DARK MODE SUPPORT (Optional) ==================== */
+
+@media (prefers-color-scheme: dark) {
+  .duration-buttons button {
+    background-color: #1a1a1a;
+    border-color: #4dabf7;
+    color: #4dabf7;
+  }
+
+  .duration-buttons button:hover:not(:disabled) {
+    background-color: #4dabf7;
+    color: #1a1a1a;
+  }
+
+  .duration-buttons button:disabled {
+    background-color: #2d2d2d;
+    border-color: #404040;
+    color: #666666;
+  }
+
+  .plan-quick-actions {
+    background-color: #2d2d2d;
+    border-color: #404040;
+  }
+
+  .plan-name {
+    color: #e9ecef;
+  }
+}
+
+/* ==================== ICON SUPPORT ==================== */
+
+/* If you want to add icons to buttons */
+.duration-buttons button i {
+  margin-right: 6px;
+  font-size: 0.875rem;
+}
+
+/* ==================== BADGE STYLE VARIANT (Optional Alternative) ==================== */
+
+/* Uncomment this section if you prefer a more compact badge-style look */
+/*
+.duration-buttons button {
+  padding: 4px 12px;
+  font-size: 0.8125rem;
+  border-radius: 12px;
+  min-width: 60px;
+  border-width: 1px;
+}
+
+.duration-buttons button:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+*/
+
+/* ==================== LOADING STATE WITH SPINNER ==================== */
+
+.duration-buttons button.loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.duration-buttons button.loading::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  top: 50%;
+  left: 50%;
+  margin-left: -7px;
+  margin-top: -7px;
+  border: 2px solid #0d6efd;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
