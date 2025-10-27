@@ -12,6 +12,8 @@ import { CatalogService, Catalog } from '../catalogs/services/catalog.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { RealDataSimpleFormulationService, SimpleFormulationRequest, SimpleFormulationResult } from './real-data-simple-formulation.service';
 import { Chart, registerables } from 'chart.js';
+import { AfterViewInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { NgZone } from '@angular/core';
 
 import { NutrientRecipeService, CreateRecipeRequest, NutrientRecipe } from '../../core/services/nutrient-recipe.service';
 
@@ -512,6 +514,8 @@ export class NutrientFormulationComponent implements OnInit {
 
     constructor(
         public fb: FormBuilder,
+        private ngZone: NgZone,
+        private cdr: ChangeDetectorRef,
         private nutrientRecipeService: NutrientRecipeService,
         public http: HttpClient,
         public router: Router,
@@ -2367,6 +2371,43 @@ export class NutrientFormulationComponent implements OnInit {
         };
     }
 
+    ngAfterViewInit(): void {
+        // This lifecycle hook ensures the view is fully initialized
+        // Charts will be rendered here if data is already available
+        if (this.fertilizerUsageData.length > 0) {
+            this.initializeCharts();
+        }
+    }
+
+
+    private destroyCharts(): void {
+        if (this.dosageChart) {
+            this.dosageChart.destroy();
+            this.dosageChart = null;
+        }
+        if (this.costDistributionChart) {
+            this.costDistributionChart.destroy();
+            this.costDistributionChart = null;
+        }
+    }
+
+    // Call this method whenever you need to render/update charts
+    // For example, after receiving API data
+    private initializeCharts(): void {
+        // Destroy existing charts to prevent memory leaks
+        this.destroyCharts();
+
+        this.ngZone.runOutsideAngular(() => {
+            setTimeout(() => {
+                this.renderDosageChart();
+                setTimeout(() => {
+                    this.renderCostDistributionChart();
+                    this.ngZone.run(() => this.cdr.detectChanges());
+                }, 50);
+            }, 0);
+        });
+    }
+
     /**
  * Render fertilizer usage charts
  */
@@ -2384,10 +2425,18 @@ export class NutrientFormulationComponent implements OnInit {
         }
 
         // Wait for DOM to be ready
-        setTimeout(() => {
-            this.renderDosageChart();
-            this.renderCostDistributionChart();
-        }, 100);
+        console.log("Rendering fertilizer charts...");
+        this.ngZone.runOutsideAngular(() => {
+            setTimeout(() => {
+                this.renderDosageChart();
+                console.log("Dosage chart rendered.");
+                setTimeout(() => {
+                    this.renderCostDistributionChart();
+                    console.log("Cost distribution chart rendered.");
+                    this.ngZone.run(() => this.cdr.detectChanges());
+                }, 50);
+            }, 0);
+        });
     }
 
     /**
@@ -2431,6 +2480,7 @@ export class NutrientFormulationComponent implements OnInit {
                 ]
             },
             options: {
+                animation: false,
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: {
@@ -2517,6 +2567,7 @@ export class NutrientFormulationComponent implements OnInit {
                 }]
             },
             options: {
+                animation: false,
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
@@ -3212,12 +3263,14 @@ export class NutrientFormulationComponent implements OnInit {
         } else {
             // Keep existing advanced calculation logic
             this.calculateAdvancedFormulation();
+            console.log("finished advanced calculation")
         }
     }
 
     // Alias for template compatibility
     calculate(): void {
         this.calculateFormulation();
+        console.log("calculation triggered")
     }
 
     /**
