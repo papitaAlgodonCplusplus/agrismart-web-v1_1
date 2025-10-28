@@ -510,4 +510,8 @@ export class CropPhaseComponent implements OnInit {
       this.cropPhaseForm.patchValue({ sequence: maxSequence + 1 });
     }
   }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
 }

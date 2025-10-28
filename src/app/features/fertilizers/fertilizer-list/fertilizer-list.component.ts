@@ -631,4 +631,8 @@ export class FertilizerListComponent implements OnInit {
     this.successMessage = '';
     this.errorMessage = '';
   }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
 }

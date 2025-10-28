@@ -745,4 +745,8 @@ export class DeviceListComponent implements OnInit, OnDestroy {
       this.applyFilters();
     }
   }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
 }

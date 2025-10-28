@@ -12,6 +12,10 @@
       </p>
     </div>
     <div class="header-actions">
+      <button class="btn btn-secondary me-2" (click)="goToDashboard()">
+        <i class="fas fa-arrow-left"></i>
+        Regresar al Dashboard
+      </button>
       <button class="btn btn-light" (click)="refreshData()" [disabled]="isLoading">
         <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
         Actualizar

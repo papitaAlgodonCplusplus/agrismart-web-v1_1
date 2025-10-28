@@ -3,6 +3,10 @@
   <div class="dashboard-header">
     <h1>Panel de Control del Sistema de Riego</h1>
     <div class="header-controls">
+      <button class="btn btn-secondary me-2" (click)="goToDashboard()">
+        <i class="bi bi-arrow-left"></i>
+        Regresar al Dashboard
+      </button>
       <button class="chart-toggle-btn" (click)="toggleCharts()">
         {{ showCharts ? 'Ocultar Gráficos' : 'Mostrar Gráficos' }}
       </button>

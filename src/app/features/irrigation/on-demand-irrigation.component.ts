@@ -3,6 +3,7 @@
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
@@ -69,7 +70,8 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         private sectorService: IrrigationSectorService,
         private cropProductionService: CropProductionService,
         private farmService: FarmService,
-        private alertService: AlertService
+        private alertService: AlertService,
+        private router: Router
     ) {
         this.initializeForm();
     }
@@ -545,5 +547,9 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     clearMessages(): void {
         this.errorMessage = '';
         this.successMessage = '';
+    }
+
+    goToDashboard(): void {
+        this.router.navigate(['/dashboard']);
     }
 }

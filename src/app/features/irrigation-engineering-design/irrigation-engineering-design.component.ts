@@ -2,6 +2,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Subject, forkJoin } from 'rxjs';
 import { takeUntil, finalize } from 'rxjs/operators';
 
@@ -99,7 +100,8 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     private irrigationSchedulingService: IrrigationSchedulingService,
     private irrigationHistoryService: IrrigationPlanEntryHistoryService,
     private alertService: AlertService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -776,5 +778,9 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
   }
 }

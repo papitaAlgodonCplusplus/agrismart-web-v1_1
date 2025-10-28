@@ -758,4 +758,8 @@ export class PhaseRequirementsComponent implements OnInit {
       createdBy: Number(currentUser?.id) || 1
     };
   }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
 }

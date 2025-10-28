@@ -1,5 +1,6 @@
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import Chart from 'chart.js/auto';
 import {
   IrrigationSectorService,
@@ -139,7 +140,8 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   constructor(
     private irrigationService: IrrigationSectorService,
-    private deviceService: DeviceService
+    private deviceService: DeviceService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -701,5 +703,9 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   getInactiveDevicesByType(deviceType: string): DeviceData[] {
     return this.inactiveDevices.filter(device => device.deviceId.includes(deviceType));
+  }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
   }
 }

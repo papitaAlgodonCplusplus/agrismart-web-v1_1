@@ -52,19 +52,23 @@
     </div>
     <div class="col-lg-6">
       <div class="action-buttons">
-        <button class="btn btn-success" 
+        <button class="btn btn-secondary" (click)="goToDashboard()">
+          <i class="bi bi-arrow-left"></i>
+          Regresar al Dashboard
+        </button>
+        <button class="btn btn-success"
                 (click)="createNew()"
                 [disabled]="!selectedCatalogId">
           <i class="bi bi-plus-lg"></i>
           Nuevo Fertilizante
         </button>
-        <button class="btn btn-outline-info" 
+        <button class="btn btn-outline-info"
                 (click)="exportToCSV()"
                 [disabled]="filteredFertilizers.length === 0">
           <i class="bi bi-download"></i>
           Exportar CSV
         </button>
-        <button class="btn btn-outline-secondary" 
+        <button class="btn btn-outline-secondary"
                 (click)="toggleView()">
           <i class="bi" [class.bi-table]="currentView === 'cards'" [class.bi-grid]="currentView === 'table'"></i>
           {{ currentView === 'table' ? 'Vista Tarjetas' : 'Vista Tabla' }}

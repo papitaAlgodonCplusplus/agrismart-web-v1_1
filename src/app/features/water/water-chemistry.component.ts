@@ -485,4 +485,8 @@ export class WaterChemistryComponent implements OnInit {
   get isFormReadyToSubmit(): boolean {
     return this.waterChemistryForm.valid && !this.isLoading && !this.isLoadingCatalogs;
   }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
 }

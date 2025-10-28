@@ -9,14 +9,22 @@
       </h1>
       <p class="subtitle">Gestión y monitoreo de riego a demanda</p>
     </div>
-    <button 
-      class="btn btn-primary btn-execute"
-      (click)="showExecutionDialog()"
-      [disabled]="!onDemandMode || irrigationPlans.length === 0"
-      *ngIf="!showExecutionForm">
-      <i class="bi bi-play-circle-fill"></i>
-      Ejecutar Riego
-    </button>
+    <div>
+      <button
+        class="btn btn-secondary me-2"
+        (click)="goToDashboard()">
+        <i class="bi bi-arrow-left"></i>
+        Regresar al Dashboard
+      </button>
+      <button
+        class="btn btn-primary btn-execute"
+        (click)="showExecutionDialog()"
+        [disabled]="!onDemandMode || irrigationPlans.length === 0"
+        *ngIf="!showExecutionForm">
+        <i class="bi bi-play-circle-fill"></i>
+        Ejecutar Riego
+      </button>
+    </div>
   </div>
 
   <!-- Loading Spinner -->

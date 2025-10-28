@@ -407,4 +407,8 @@ export class CropListComponent implements OnInit {
   trackByIndex(index: number, item: any): number {
     return index;
   }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
+  }
 }
