@@ -510,7 +510,8 @@ export class NutrientFormulationComponent implements OnInit {
     // Simple formulation specific properties
     simpleFormulationResult: SimpleFormulationResult | null = null;
     isCalculatingSimple = false;
-
+    // Enhanced formulation results (includes Ca, Mg, pH, EC estimates)
+    enhancedFormulationResults: any[] = [];
 
     constructor(
         public fb: FormBuilder,
@@ -967,45 +968,14 @@ export class NutrientFormulationComponent implements OnInit {
         const estimatedPh = this.estimatePh(waterSource, recipe.fertilizers);
         const estimatedEc = this.estimateEc(waterSource, recipe.fertilizers);
         return [
-            {
-                parameter: 'Nitrógeno Total',
-                target: recipe.targetNitrogen,
-                achieved: Math.round(achievedN * 10) / 10,
-                unit: 'ppm',
-                difference: Math.round((achievedN - recipe.targetNitrogen) * 10) / 10,
-                status: this.getStatus(achievedN, recipe.targetNitrogen, 25)
-            },
-            {
-                parameter: 'Fósforo',
-                target: recipe.targetPhosphorus,
-                achieved: Math.round(achievedP * 10) / 10,
-                unit: 'ppm',
-                difference: Math.round((achievedP - recipe.targetPhosphorus) * 10) / 10,
-                status: this.getStatus(achievedP, recipe.targetPhosphorus, 15)
-            },
-            {
-                parameter: 'Potasio',
-                target: recipe.targetPotassium,
-                achieved: Math.round(achievedK * 10) / 10,
-                unit: 'ppm',
-                difference: Math.round((achievedK - recipe.targetPotassium) * 10) / 10,
-                status: this.getStatus(achievedK, recipe.targetPotassium, 35)
-            },
-            {
-                parameter: 'Calcio',
-                target: recipe.targetCalcium || 150,
-                achieved: Math.round(achievedCa * 10) / 10,
-                unit: 'ppm',
-                difference: Math.round((achievedCa - (recipe.targetCalcium || 150)) * 10) / 10,
-                status: this.getStatus(achievedCa, recipe.targetCalcium || 150, 20)
-            },
+            
             {
                 parameter: 'pH',
                 target: recipe.targetPh,
                 achieved: estimatedPh,
                 unit: '',
                 difference: Math.round((estimatedPh - recipe.targetPh) * 10) / 10,
-                status: this.getStatus(estimatedPh, recipe.targetPh, 0.3)
+                status: this.getStatus(estimatedPh, recipe.targetPh, 3)
             },
             {
                 parameter: 'EC',
@@ -1013,7 +983,7 @@ export class NutrientFormulationComponent implements OnInit {
                 achieved: estimatedEc,
                 unit: 'dS/m',
                 difference: Math.round((estimatedEc - recipe.targetEc) * 100) / 100,
-                status: this.getStatus(estimatedEc, recipe.targetEc, 0.2)
+                status: this.getStatus(estimatedEc, recipe.targetEc, 2)
             }
         ];
     }
@@ -3045,6 +3015,14 @@ export class NutrientFormulationComponent implements OnInit {
         ).subscribe({
             next: (result) => {
                 this.simpleFormulationResult = result;
+                // ✅ NUEVO: Generar resultados mejorados
+                const recipe = this.convertSimpleResultToRecipe(result);
+                const waterSource = this.waterSources.find(w => w.id === formValue.waterSourceId);
+                if (waterSource) {
+                    this.enhancedFormulationResults = this.generateEnhancedFormulationResults(recipe, waterSource);
+                    console.log('Enhanced results generated:', this.enhancedFormulationResults);
+                }
+
                 this.currentRecipe = this.convertSimpleResultToRecipe(result);
                 this.successMessage = 'Formulación calculada exitosamente';
                 this.isCalculatingSimple = false;
@@ -3380,6 +3358,19 @@ export class NutrientFormulationComponent implements OnInit {
                 if (response) {
                     console.log('Calculation successful:', response);
                     this.calculationResults = response;
+                    this.currentRecipe = this.convertAdvancedResultToRecipe(response);
+                    // Después de recibir calculationResults
+                    if (this.calculationResults && this.currentRecipe) {
+                        console.log("this.calculationResults && this.currentRecipe", this.calculationResults, this.currentRecipe)
+                        const waterSource = this.waterSources.find(w => w?.id?.toString() === this.currentRecipe.waterSourceId.toString());
+                        if (waterSource) {
+                            console.log("waterSource", waterSource)
+                            this.enhancedFormulationResults = this.generateEnhancedFormulationResults(
+                                this.currentRecipe,
+                                waterSource
+                            );
+                        }
+                    }
                     this.processResults();
                     this.showResults = true;
                     this.successMessage = 'Cálculo completado exitosamente';
@@ -3393,6 +3384,182 @@ export class NutrientFormulationComponent implements OnInit {
             }
         });
     }
+
+    public convertAdvancedResultToRecipe(response: CalculationResponse): FormulationRecipe {
+        // Extract form values
+        const formValue = this.calculationForm.value;
+
+        // Get crop and phase names
+        const selectedCrop = this.crops.find(c => c.id === formValue.cropId);
+        const selectedPhase = this.cropPhases.find(p => p.id === formValue.cropPhaseId);
+
+        // Extract target concentrations from calculation_data_used
+        const targets = response.calculation_data_used?.target_concentrations || {};
+
+        // Extract achieved concentrations from calculation_results
+        const achieved = response.calculation_results?.achieved_concentrations || {};
+
+        // Build fertilizers array from active fertilizers
+        const fertilizers: RecipeFertilizer[] = [];
+
+        if (response.calculation_results?.fertilizer_dosages) {
+            Object.entries(response.calculation_results.fertilizer_dosages).forEach(([name, dosage]) => {
+                if (dosage.dosage_g_per_L > 0) {
+                    // Find the fertilizer in the raw data
+                    const rawFert = response.calculation_data_used?.api_fertilizers_raw?.find(
+                        (f: any) => f.name === name
+                    );
+
+                    // Find the fertilizer in the component's fertilizers array
+                    const fertilizer = this.fertilizers.find(f => f.name === name);
+
+                    if (fertilizer) {
+                        // Calculate cost for this fertilizer
+                        const fertilizerCost = response.cost_analysis?.fertilizer_costs?.[name] || 0;
+                        const costPercentage = response.cost_analysis?.cost_percentages?.[name] || 0;
+
+                        fertilizers.push({
+                            fertilizerId: fertilizer.id,
+                            fertilizer: fertilizer,
+                            concentration: dosage.dosage_g_per_L,
+                            percentageOfN: this.calculateNutrientPercentage2(rawFert, 'N', response, name),
+                            percentageOfP: this.calculateNutrientPercentage2(rawFert, 'P', response, name),
+                            percentageOfK: this.calculateNutrientPercentage2(rawFert, 'K', response, name),
+                            costPortion: fertilizerCost,
+                            fertilizerName: name,
+                            concentrationGramsPerLiter: dosage.dosage_g_per_L,
+                            totalGrams: dosage.dosage_g_per_L * (formValue.volumeLiters || 1000),
+                            totalCost: fertilizerCost
+                        });
+                    }
+                }
+            });
+        }
+
+        // Create the recipe object
+        const recipe: FormulationRecipe = {
+            name: `Receta Avanzada - ${selectedCrop?.name || 'Cultivo'} - ${selectedPhase?.name || 'Fase'}`,
+            description: `Calculada con ${response.optimization_method} el ${new Date().toLocaleDateString()}`,
+            waterSourceId: formValue.waterSourceId || 0,
+            cropId: formValue.cropId,
+            cropPhaseId: formValue.cropPhaseId,
+            cropName: selectedCrop?.name,
+            cropPhaseName: selectedPhase?.name,
+            volumeLiters: formValue.volumeLiters || 1000,
+
+            // pH and EC targets
+            targetPh: formValue.targetPh || 6.5,
+            targetEc: formValue.targetEc || 1.5,
+
+            // Primary nutrients - from target_concentrations or form values
+            targetNitrogen: targets.N || formValue.targetNitrogen || 200,
+            targetPhosphorus: targets.P || formValue.targetPhosphorus || 50,
+            targetPotassium: targets.K || formValue.targetPotassium || 250,
+
+            // Secondary nutrients - from target_concentrations or defaults
+            targetCalcium: targets.Ca || formValue.targetCalcium || 150,
+            targetMagnesium: targets.Mg || formValue.targetMagnesium || 50,
+            targetSulfur: targets.S || formValue.targetSulfur || 100,
+            targetIron: targets.Fe || formValue.targetIron || 3,
+
+            // Fertilizers array
+            fertilizers: fertilizers,
+
+            // Cost information
+            totalCost: response.cost_analysis?.total_cost_crc || 0,
+            costPerLiter: response.cost_analysis?.cost_per_liter_crc || 0,
+
+            // Nutrient profile - achieved values
+            nutrientProfile: {
+                nitrogen: achieved['N'] || 0,
+                phosphorus: achieved['P'] || 0,
+                potassium: achieved['K'] || 0,
+                calcium: achieved['Ca'] || 0,
+                magnesium: achieved['Mg'] || 0
+            },
+
+            // Instructions (optional)
+            instructions: this.generateInstructionsFromAdvanced(response),
+
+            // Warnings (optional)
+            warnings: response.calculation_results?.calculation_status?.warnings || [],
+
+            // Recipe metadata
+            recipeType: 'Advanced',
+            dateCreated: new Date()
+        };
+
+        return recipe;
+    }
+
+
+    /**
+     * Helper method to calculate nutrient percentage contribution
+     */
+    private calculateNutrientPercentage2(
+        rawFert: any,
+        nutrient: string,
+        response: CalculationResponse,
+        fertilizerName: string
+    ): number {
+        if (!rawFert || !response.calculation_results) return 0;
+
+        const dosage = response.calculation_results.fertilizer_dosages[fertilizerName];
+        if (!dosage) return 0;
+
+        const volumeLiters = response.calculation_data_used?.volume_liters || 1000;
+        const nutrientContribution = this.calculateNutrientContribution(
+            rawFert,
+            dosage.dosage_g_per_L,
+            volumeLiters
+        );
+
+        const totalNutrient = response.calculation_results.achieved_concentrations[nutrient] || 1;
+
+        if (totalNutrient === 0) return 0;
+
+        return (nutrientContribution[nutrient] / totalNutrient) * 100;
+    }
+
+
+    /**
+     * Generate instructions from advanced calculation response
+     */
+    private generateInstructionsFromAdvanced(response: CalculationResponse): string[] {
+        const instructions: string[] = [];
+        const volumeLiters = response.calculation_data_used?.volume_liters || 1000;
+
+        instructions.push(`Preparación para ${volumeLiters}L de solución nutritiva:`);
+        instructions.push('');
+        instructions.push('Orden de mezcla recomendado:');
+
+        if (response.calculation_results?.fertilizer_dosages) {
+            let order = 1;
+            Object.entries(response.calculation_results.fertilizer_dosages)
+                .filter(([_, dosage]) => dosage.dosage_g_per_L > 0)
+                .forEach(([name, dosage]) => {
+                    const totalGrams = dosage.dosage_g_per_L * volumeLiters;
+                    instructions.push(
+                        `${order}. Agregar ${totalGrams.toFixed(2)}g de ${name} (${dosage.dosage_g_per_L.toFixed(3)} g/L)`
+                    );
+                    order++;
+                });
+        }
+
+        instructions.push('');
+        instructions.push('Notas importantes:');
+        instructions.push('- Disolver cada fertilizante completamente antes de agregar el siguiente');
+        instructions.push('- Ajustar pH después de disolver todos los fertilizantes');
+        instructions.push(`- Verificar que la EC final esté cerca de ${response.calculation_data_used?.target_concentrations?.EC || 1.5} dS/m`);
+
+        // Add optimization method info
+        if (response.optimization_method) {
+            instructions.push(`- Formulación optimizada con: ${response.optimization_method}`);
+        }
+
+        return instructions;
+    }
+
 
     /**
      * Reset simple formulation results
@@ -3593,90 +3760,6 @@ export class NutrientFormulationComponent implements OnInit {
             const reqData = this.getRealCropPhaseRequirements(cropPhaseId);
             console.log(`Has requirements: ${hasReq}`);
             console.log('Requirement data:', reqData);
-        }
-    }
-
-    /**
-     * Replace the calculateWithRealDataFixed method with this improved version
-     */
-    calculateWithRealDataFixed(formValue: any, selectedWaterSource: any): void {
-        console.log('=== STARTING REAL DATA CALCULATION ===');
-        console.log('Form value:', formValue);
-        console.log('Selected water source:', selectedWaterSource);
-
-        this.isLoading = true;
-        this.errorMessage = '';
-        this.successMessage = '';
-
-        try {
-            // Get real requirements for the selected crop phase
-            const realRequirement = this.getRealCropPhaseRequirements(formValue.cropPhaseId);
-
-            if (!realRequirement) {
-                this.errorMessage = `No se encontraron requerimientos nutricionales reales para la fase seleccionada (ID: ${formValue.cropPhaseId})`;
-                this.isLoading = false;
-                return;
-            }
-
-            console.log('Real requirement found:', realRequirement);
-
-            // Get real fertilizers with compositions
-            const realFertilizers = this.getRealFertilizersWithCompositions();
-
-            if (realFertilizers.length === 0) {
-                this.errorMessage = 'No se encontraron fertilizantes con composiciones reales en la base de datos';
-                this.isLoading = false;
-                return;
-            }
-
-            console.log(`Found ${realFertilizers.length} valid fertilizers with compositions`);
-
-            // Prepare formulation request
-            const formRequest = {
-                recipeName: formValue.recipeName || `Formulación ${new Date().toLocaleDateString()}`,
-                volumeLiters: formValue.volumeLiters,
-                cropId: formValue.cropId,
-                cropPhaseId: formValue.cropPhaseId,
-                waterSourceId: formValue.waterSourceId,
-                targetPh: formValue.targetPh,
-                targetEc: formValue.targetEc
-            };
-
-            console.log('Formulation request:', formRequest);
-
-            // Use the FIXED service to calculate formulation
-            this.fixedFormulationService.calculateSimpleFormulation(
-                formRequest,
-                realRequirement,
-                realFertilizers
-            ).subscribe({
-                next: (result) => {
-                    console.log('=== FORMULATION SUCCESS ===');
-                    console.log('Result:', result);
-
-                    this.simpleFormulationResult = result;
-                    this.successMessage = 'Formulación calculada exitosamente';
-                    this.isLoading = false;
-
-                    // Log nutrient achievement summary
-                    const balance = result.nutrientBalance;
-                    console.log('Nutrient Achievement Summary:');
-                    console.log(`N: ${balance.nitrogen.achieved.toFixed(1)}/${balance.nitrogen.target} ppm (${(balance.nitrogen.ratio * 100).toFixed(1)}%)`);
-                    console.log(`P: ${balance.phosphorus.achieved.toFixed(1)}/${balance.phosphorus.target} ppm (${(balance.phosphorus.ratio * 100).toFixed(1)}%)`);
-                    console.log(`K: ${balance.potassium.achieved.toFixed(1)}/${balance.potassium.target} ppm (${(balance.potassium.ratio * 100).toFixed(1)}%)`);
-                },
-                error: (error) => {
-                    console.error('=== FORMULATION ERROR ===');
-                    console.error(error);
-                    this.errorMessage = `Error en el cálculo de formulación: ${error.message || error}`;
-                    this.isLoading = false;
-                }
-            });
-
-        } catch (error) {
-            console.error('Unexpected error in calculateWithRealDataFixed:', error);
-            this.errorMessage = `Error inesperado: ${error}`;
-            this.isLoading = false;
         }
     }
 

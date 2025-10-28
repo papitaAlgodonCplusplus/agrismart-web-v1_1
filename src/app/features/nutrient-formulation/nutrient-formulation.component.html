@@ -383,6 +383,48 @@
                       </div>
                     </div>
 
+                    <!-- Enhanced Parameters (Ca, Mg, pH, EC) -->
+                    <div class="row mb-4" *ngIf="enhancedFormulationResults && enhancedFormulationResults.length > 0">
+                      <div class="col-12">
+                        <h6><i class="fas fa-flask me-2"></i>Parámetros Adicionales</h6>
+                        <div class="table-responsive">
+                          <table class="table table-hover">
+                            <thead class="table-light">
+                              <tr>
+                                <th>Parámetro</th>
+                                <th>Objetivo</th>
+                                <th>Logrado</th>
+                                <th>Unidad</th>
+                                <th>Diferencia</th>
+                                <th>Estado</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let result of enhancedFormulationResults">
+                                <td><strong>{{ result.parameter }}</strong></td>
+                                <td>{{ result.target?.toFixed(2) || 'N/A' }}</td>
+                                <td>{{ result.achieved?.toFixed(2) || 'N/A' }}</td>
+                                <td>{{ result.unit }}</td>
+                                <td [class.text-success]="Math.abs(result.difference) < 0.1"
+                                  [class.text-warning]="Math.abs(result.difference) >= 0.1 && Math.abs(result.difference) < 0.5"
+                                  [class.text-danger]="Math.abs(result.difference) >= 0.5">
+                                  {{ result.difference > 0 ? '+' : '' }}{{ result.difference?.toFixed(2) }}
+                                </td>
+                                <td>
+                                  <span class="badge" [class.bg-success]="result.status === 'optimal'"
+                                    [class.bg-warning]="result.status === 'acceptable'"
+                                    [class.bg-danger]="result.status === 'critical'">
+                                    {{ result.status === 'optimal' ? 'Óptimo' :
+                                    result.status === 'acceptable' ? 'Aceptable' : 'Crítico' }}
+                                  </span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
                     <!-- Action Buttons -->
                     <div class="row">
                       <div class="col-12">
@@ -1238,9 +1280,9 @@
                           <div class="col-md-2 col-sm-4" *ngFor="let nutrient of getWaterAnalysisKeys()">
                             <div class="card border">
                               <div class="card-body p-2 text-center">
-                                  <small class="text-muted d-block">{{ nutrient }}</small>
-                                  <strong>{{ $any(waterAnalysisDisplay)[nutrient].toFixed(2) }}</strong>
-                                </div>
+                                <small class="text-muted d-block">{{ nutrient }}</small>
+                                <strong>{{ $any(waterAnalysisDisplay)[nutrient].toFixed(2) }}</strong>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1321,6 +1363,52 @@
                               </table>
                             </div>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Enhanced Parameters for Advanced Calculation -->
+                    <div class="row mb-4" *ngIf="enhancedFormulationResults && enhancedFormulationResults.length > 0">
+                      <div class="col-12">
+                        <h6><i class="bi bi-beaker me-2"></i>Análisis Completo de Parámetros</h6>
+                        <div class="table-responsive">
+                          <table class="table table-striped">
+                            <thead class="table-dark">
+                              <tr>
+                                <th>Parámetro</th>
+                                <th>Objetivo</th>
+                                <th>Logrado</th>
+                                <th>Unidad</th>
+                                <th>Desviación</th>
+                                <th>Estado</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr *ngFor="let param of enhancedFormulationResults">
+                                <td><strong>{{ param.parameter }}</strong></td>
+                                <td class="text-end">{{ param.target | number:'1.1-2' }}</td>
+                                <td class="text-end">{{ param.achieved | number:'1.1-2' }}</td>
+                                <td>{{ param.unit }}</td>
+                                <td class="text-end" [class.text-success]="param.status === 'optimal'"
+                                  [class.text-warning]="param.status === 'acceptable'"
+                                  [class.text-danger]="param.status === 'critical'">
+                                  {{ param.difference > 0 ? '+' : '' }}{{ param.difference | number:'1.1-2' }}
+                                </td>
+                                <td class="text-center">
+                                  <span class="badge" [class.bg-success]="param.status === 'optimal'"
+                                    [class.bg-warning]="param.status === 'acceptable'"
+                                    [class.bg-danger]="param.status === 'critical'">
+                                    <i class="bi" [class.bi-check-circle]="param.status === 'optimal'"
+                                      [class.bi-exclamation-triangle]="param.status === 'acceptable'"
+                                      [class.bi-x-circle]="param.status === 'critical'">
+                                    </i>
+                                    {{ param.status === 'optimal' ? 'Óptimo' :
+                                    param.status === 'acceptable' ? 'Aceptable' : 'Crítico' }}
+                                  </span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     </div>
