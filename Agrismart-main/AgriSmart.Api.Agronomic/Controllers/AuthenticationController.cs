@@ -26,6 +26,32 @@ namespace AgriSmart.API.Agronomic.Controllers
 
 
         /// <summary>
+        /// User registration endpoint
+        /// </summary>
+        /// <param name="command">Registration details</param>
+        /// <returns>Registration response</returns>
+        [HttpPost("Register")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Response<RegisterResponse>>> Register(RegisterCommand command)
+        {
+            try
+            {
+                var response = await _mediator.Send(command);
+                return response.Success ? Ok(response) : BadRequest(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new Response<RegisterResponse>
+                {
+                    Success = false,
+                    Exception = ex.Message
+                });
+            }
+        }
+
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="command"></param>

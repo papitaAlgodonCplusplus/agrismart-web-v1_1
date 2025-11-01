@@ -60,7 +60,8 @@
       "Bash(ng serve:*)",
       "Bash(npm install:*)",
       "Bash(npx playwright:*)",
-      "WebFetch(domain:localhost)"
+      "WebFetch(domain:localhost)",
+      "Bash(build_output.txt)"
     ],
     "deny": [],
     "ask": []

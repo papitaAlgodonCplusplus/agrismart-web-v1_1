@@ -36,14 +36,23 @@ export class AuthGuard implements CanActivate, CanActivateChild {
 
   private checkAuth(url: string): boolean {
     const isAuthenticated = this.authService.isAuthenticated();
-    
+
     console.log(`DEBUG AuthGuard - URL: ${url}, Authenticated: ${isAuthenticated}`);
-    
+
+    // Important: This guard should NOT block public routes like /login or /register
+    const publicRoutes = ['/login', '/register'];
+    const isPublicRoute = publicRoutes.some(route => url.startsWith(route));
+
+    if (isPublicRoute) {
+      console.log(`DEBUG AuthGuard - ${url} is a public route, allowing access`);
+      return true;
+    }
+
     if (isAuthenticated) {
       return true;
     } else {
       console.log('Access denied. Redirecting to login...');
-      this.router.navigate(['/login'], { 
+      this.router.navigate(['/login'], {
         queryParams: { returnUrl: url }
       });
       return false;

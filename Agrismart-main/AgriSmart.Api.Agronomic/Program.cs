@@ -59,6 +59,7 @@ builder.Services.AddAutoMapper(typeof(Program));
 //Command Handlers
 builder.Services.AddMediatR(cfg =>
 {
+    cfg.RegisterServicesFromAssembly(typeof(RegisterCommandHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(GetAllCatalogsHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(GetAllClientsHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(GetClientByIdHandler).Assembly);

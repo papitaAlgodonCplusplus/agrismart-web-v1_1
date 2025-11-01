@@ -1,9 +1,9 @@
 // src/app/app.component.ts
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, filter } from 'rxjs/operators';
 import { AuthService } from './core/auth/auth.service';
 
 declare var bootstrap: any; // For Bootstrap 5 JavaScript components
@@ -48,15 +48,27 @@ export class AppComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router
   ) {
+    console.log('AppComponent constructor - Initial URL:', this.router.url);
     this.setupPWAEventListeners();
-    this.initializeApp();
+    // Don't call initializeApp() here - the router hasn't processed the URL yet
   }
 
   ngOnInit(): void {
+    console.log('AppComponent ngOnInit - Current URL:', this.router.url);
+    console.log('AppComponent ngOnInit - Is Authenticated:', this.authService.isAuthenticated());
+
     this.setupConnectionStatusMonitoring();
     this.setupKeyboardShortcuts();
     this.checkForUpdates();
-    
+
+    // Subscribe to router events to log all navigations
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      takeUntil(this.destroy$)
+    ).subscribe((event: any) => {
+      console.log('Navigation completed to:', event.urlAfterRedirects);
+    });
+
     // Initialize application after a brief delay to show loading screen
     setTimeout(() => {
       this.isInitializing = false;
@@ -72,17 +84,9 @@ export class AppComponent implements OnInit, OnDestroy {
    * Initialize the application
    */
   private initializeApp(): void {
-    // Check authentication status
-    if (this.authService.isAuthenticated()) {
-      // User is logged in, stay on current route or redirect to dashboard
-      const currentUrl = this.router.url;
-      if (currentUrl === '/' || currentUrl === '/login') {
-        this.router.navigate(['/dashboard']);
-      }
-    } else {
-      // User is not logged in, redirect to login
-      this.router.navigate(['/login']);
-    }
+    // Removed automatic redirection logic
+    // The router configuration and AuthGuard handle routing properly
+    // This prevents conflicts with public routes like /register
   }
 
   /**

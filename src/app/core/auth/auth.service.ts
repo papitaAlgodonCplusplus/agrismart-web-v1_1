@@ -26,6 +26,30 @@ export interface BackendLoginResponse {
   };
 }
 
+export interface RegisterRequest {
+  UserEmail: string;
+  Password: string;
+  ConfirmPassword: string;
+  ClientId: number;
+  ProfileId: number;
+}
+
+
+// Backend response structure
+interface BackendRegisterResponse {
+  success: boolean;
+  exception: any;
+  result: RegisterResponse;
+}
+
+export interface RegisterResponse {
+  userId: number;
+  userEmail: string;
+  clientId: number;
+  profileId: number;
+  message: string;
+}
+
 // Normalized frontend interface
 export interface LoginResponse {
   token: string;
@@ -52,6 +76,28 @@ export class AuthService {
       this.setCurrentUser(this.decodeToken(token));
     }
   }
+
+
+  /**
+   * Register a new user
+   */
+  register(credentials: RegisterRequest): Observable<RegisterResponse> {
+    return this.http.post<BackendRegisterResponse>(
+      `${this.apiConfig.agronomicApiUrl}/Authentication/Register`,
+      credentials
+    ).pipe(
+      map(backendResponse => {
+        console.log('Register response:', backendResponse);
+
+        if (backendResponse.success && backendResponse.result) {
+          return backendResponse.result;
+        }
+
+        throw new Error(backendResponse.exception || 'Registration failed');
+      })
+    );
+  }
+
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<any>( // Changed to 'any' to see raw response
