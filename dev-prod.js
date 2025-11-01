@@ -26,18 +26,30 @@ function updateFiles(isDev) {
 function updateWindowsServiceCalls(isDev) {
   const findCsFiles = (dir, files = []) => {
     const items = fs.readdirSync(dir);
-    
+    const skipDirs = ['node_modules', 'playwright-report', 'e2e', 'test-results', 'dist', 'bin', 'obj'];
+
     for (const item of items) {
       const fullPath = path.join(dir, item);
-      const stat = fs.statSync(fullPath);
-      
-      if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
-        findCsFiles(fullPath, files);
-      } else if (item.endsWith('.cs')) {
-        files.push(fullPath);
+
+      // Skip directories that should not be processed
+      if (skipDirs.includes(item) || item.startsWith('.')) {
+        continue;
+      }
+
+      try {
+        const stat = fs.statSync(fullPath);
+
+        if (stat.isDirectory()) {
+          findCsFiles(fullPath, files);
+        } else if (item.endsWith('.cs')) {
+          files.push(fullPath);
+        }
+      } catch (error) {
+        // Skip files/folders with permission issues
+        console.warn(`Warning: Could not access ${fullPath}: ${error.message}`);
       }
     }
-    
+
     return files;
   };
 

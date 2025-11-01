@@ -57,7 +57,10 @@
       "Bash(dotnet restore:*)",
       "Bash(git checkout:*)",
       "Bash(del \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\fix_irrigation_component.py\")",
-      "Bash(ng serve:*)"
+      "Bash(ng serve:*)",
+      "Bash(npm install:*)",
+      "Bash(npx playwright:*)",
+      "WebFetch(domain:localhost)"
     ],
     "deny": [],
     "ask": []
