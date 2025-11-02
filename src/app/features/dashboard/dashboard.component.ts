@@ -105,12 +105,13 @@ export class DashboardComponent implements OnInit {
     const crops = this.rawData.crops?.crops || [];
     const cropProductions = this.rawData.cropProductions?.cropProductions || [];
     const users = this.rawData.users?.users || [];
+    const userId = this.authService.getCurrentUser()?.id;
 
     this.stats = {
       totalFarms: farms.length,
       totalDevices: devices.length,
       activeDevices: devices.filter((d: any) => d.isActive || d.active).length,
-      totalCrops: crops.length,
+      totalCrops: crops.filter((c: any) => c.createdBy.toString() === userId.toString()).length,
       activeCropProductions: cropProductions.filter((cp: any) => cp.isActive || cp.active).length,
       totalUsers: users.length,
       alertsCount: this.calculateAlerts(devices, cropProductions)

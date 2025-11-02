@@ -374,7 +374,7 @@ export class PhaseRequirementsComponent implements OnInit {
       console.error('Invalid cropPhaseId:', cropPhaseId);
       return 'N/A';
     }
-    const phase = this.availableCropPhases.find(p => p.id.toString() === cropPhaseId.toString());
+    const phase = this.availableCropPhases.find(p => p.cropPhaseId.toString() === cropPhaseId.toString());
     if (!phase) {
       console.error('Crop phase not found for id:', cropPhaseId);
       return 'N/A';

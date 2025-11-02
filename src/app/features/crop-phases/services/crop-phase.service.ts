@@ -21,6 +21,7 @@ temperatureRange: any;
     dateUpdated?: Date;
     createdBy?: number;
     updatedBy?: number;
+    cropPhaseId: number;
     cropId: number;
     catalogId: number;
     name: string;
@@ -116,20 +117,20 @@ export class CropPhaseService {
         let params = new HttpParams();
         const headers = this.getAuthHeaders();
 
-        if (filters) {
-            if (filters.cropId !== undefined) {
-                params = params.set('CropId', filters.cropId.toString());
-            }
-            if (filters.catalogId !== undefined) {
-                params = params.set('CatalogId', filters.catalogId.toString());
-            }
-            if (filters.includeInactives !== undefined) {
-                params = params.set('IncludeInactives', filters.includeInactives.toString());
-            }
-            if (filters.onlyActive !== undefined) {
-                params = params.set('IncludeInactives', (!filters.onlyActive).toString());
-            }
-        }
+        // if (filters) {
+        //     if (filters.cropId !== undefined) {
+        //         params = params.set('CropId', filters.cropId.toString());
+        //     }
+        //     if (filters.catalogId !== undefined) {
+        //         params = params.set('CatalogId', filters.catalogId.toString());
+        //     }
+        //     if (filters.includeInactives !== undefined) {
+        //         params = params.set('IncludeInactives', filters.includeInactives.toString());
+        //     }
+        //     if (filters.onlyActive !== undefined) {
+        //         params = params.set('IncludeInactives', (!filters.onlyActive).toString());
+        //     }
+        // }
 
         const url = `${this.apiConfig.agronomicApiUrl}/CropPhase`;
 
