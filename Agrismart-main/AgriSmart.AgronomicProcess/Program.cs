@@ -17,7 +17,7 @@ IHost host = Host.CreateDefaultBuilder(args)
             options.SourceName = "AgrismartAgronomicProcess";
         });
     })
-    //.UseWindowsService()
+    .UseWindowsService()
     .Build();
 
 await host.RunAsync();

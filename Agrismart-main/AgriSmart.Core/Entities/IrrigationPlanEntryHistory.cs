@@ -78,7 +78,7 @@ namespace AgriSmart.Core.Entities
         /// <summary>
         /// Whether the execution was triggered manually or automatically
         /// </summary>
-        public bool IsManualExecution { get; set; } = true;
+        public bool? IsManualExecution { get; set; } = true;
 
         /// <summary>
         /// Water volume delivered (in liters) if available

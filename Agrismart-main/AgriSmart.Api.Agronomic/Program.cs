@@ -23,7 +23,6 @@ using AgriSmart.Infrastructure.Mappings; // Commented out due to build issues
 using AgriSmart.Application.Agronomic.Commands;
 
 var builder = WebApplication.CreateBuilder(args);
-AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 // Register Calculator Services
 builder.Services.AddScoped<IIrrigationDesignCalculator, IrrigationDesignCalculator>();
@@ -44,7 +43,7 @@ builder.Services.Configure<JWTConfiguration>(builder.Configuration.GetSection("J
 
 builder.Services.AddDbContext<AgriSmartContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetSection("AgriSmartDbConfiguration").GetSection("ConnectionString").Value);
+    options.UseSqlServer(builder.Configuration.GetSection("AgriSmartDbConfiguration").GetSection("ConnectionString").Value);
 });
 
 builder.Services.AddScoped<IIrrigationPlanEntryHistoryCommandRepository, IrrigationPlanEntryHistoryCommandRepository>();
