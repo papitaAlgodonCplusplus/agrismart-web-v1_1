@@ -87,6 +87,8 @@ export class FarmService {
    * Get all farms with optional filters - Backend: GET /Farm (REQUIRES AUTH)
    */
   getAll(onlyActive?: boolean, filters?: FarmFilters): Observable<Farm[]> {
+    // here
+
     // Check authentication
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -135,6 +137,7 @@ export class FarmService {
     const url = `${this.apiConfig.agronomicApiUrl}/Farm`;
     const headers = this.getAuthHeaders();
 
+    console.log('FarmService.getAll request URL:', url, 'Params:', params.toString());
     return this.http.get<BackendResponse<{farms: Farm[]}>>(url, { params, headers })
       .pipe(
         map(response => {

@@ -158,7 +158,7 @@ export class FarmListComponent implements OnInit {
           return of([]);
         })
       ),
-      farms: this.farmService.getAll(undefined, this.filters).pipe(
+      farms: this.farmService.getAll(true).pipe(
         catchError(error => {
           console.error('Error loading farms:', error);
           return of([]);

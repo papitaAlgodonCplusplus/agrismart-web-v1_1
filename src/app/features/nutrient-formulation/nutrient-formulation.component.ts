@@ -3326,10 +3326,11 @@ export class NutrientFormulationComponent implements OnInit {
 
         const formData = this.calculationForm.value;
         console.log('Form Data:', formData);
-        formData.user_id = this.authService.getCurrentUser()['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid'] || 1;
+        console.log('Current User:', this.authService.getCurrentUser());
+        formData.user_id = this.authService.getCurrentUser()[2] || 6;
 
         // Build the API URL with query parameters
-        const apiUrl = 'https://agrismart-web-v1-1-2.onrender.com/swagger-integrated-calculation';
+        const apiUrl = 'http://163.178.171.144:5002/swagger-integrated-calculation';
 
         let params = new HttpParams()
             .set('user_id', formData.user_id.toString())

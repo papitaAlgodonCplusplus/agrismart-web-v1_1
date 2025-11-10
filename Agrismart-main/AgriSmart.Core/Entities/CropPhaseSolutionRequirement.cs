@@ -117,7 +117,7 @@ namespace AgriSmart.Core.Entities
         public DateTime? LastUsedAt { get; set; }
 
         // Navigation Properties
-        public virtual CropPhase? CropPhase { get; set; }
+        public CropPhase? CropPhase { get; set; }
 
         // ENHANCED: Constructor
         public CropPhaseSolutionRequirement()

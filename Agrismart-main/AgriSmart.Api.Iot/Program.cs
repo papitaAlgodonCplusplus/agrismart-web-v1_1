@@ -107,7 +107,11 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularApp", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://agrismart-web-v1-1-6yb7.onrender.com")
+        policy.WithOrigins(
+                "http://localhost:4200",
+                "https://agrismart-web-v1-1-6yb7.onrender.com",
+                "http://163.178.171.146",
+                "http://163.178.171.146:80")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // Add if you need credentials

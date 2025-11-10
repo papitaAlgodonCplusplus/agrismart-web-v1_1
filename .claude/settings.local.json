@@ -61,7 +61,8 @@
       "Bash(npm install:*)",
       "Bash(npx playwright:*)",
       "WebFetch(domain:localhost)",
-      "Bash(build_output.txt)"
+      "Bash(build_output.txt)",
+      "Bash(dotnet ef migrations add:*)"
     ],
     "deny": [],
     "ask": []

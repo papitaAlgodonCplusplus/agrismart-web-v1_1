@@ -165,6 +165,7 @@ export class AdminComponent implements OnInit {
       fields: [
         { key: 'name', label: 'Nombre', type: 'text', required: true },
         { key: 'description', label: 'Descripción', type: 'textarea' },
+        { key: 'clientId', label: 'Cliente', type: 'select', required: true, options: [] },
         { key: 'active', label: 'Activo', type: 'boolean' }
       ]
     },
@@ -619,6 +620,7 @@ export class AdminComponent implements OnInit {
           // Store users for catalog dropdown
           this.availableUsers = data;
           this.updateCatalogUserOptions();
+          this.updateCompanyClientOptions();
         }),
         // Here each data.users i has userStatusId in it, this would be mapped to "Admin" or "Client" in html table
         catchError(error => {
@@ -663,9 +665,10 @@ export class AdminComponent implements OnInit {
       switchMap((basicData) => {
         this.rawData = basicData;
         this.loadedUsers = basicData.users || [];
+        console.log('this.loadedUsers', this.loadedUsers);
 
         // Get unique client IDs from users
-        const clientIds = [...new Set(this.loadedUsers.map(user => user.clientId).filter(id => id))];
+        const clientIds = [...new Set(this.loadedUsers.map(user => user.id).filter(id => id))];
         console.log('Found client IDs:', clientIds);
 
         if (clientIds.length === 0) {
@@ -2183,7 +2186,21 @@ export class AdminComponent implements OnInit {
       active: true
     };
   }
-
+  /**
+   * Update company client field options
+   */
+  private updateCompanyClientOptions(): void {
+    const companyConfig = this.entityConfigs.find(config => config.name === 'company');
+    if (companyConfig) {
+      const clientField = companyConfig.fields.find(field => field.key === 'clientId');
+      if (clientField) {
+        clientField.options = this.availableUsers.map((user: any) => ({
+          value: user.id,
+          label: user.userEmail || `Usuario ${user.id}`
+        }));
+      }
+    }
+  }
 
 
   // 4. Add method to update catalog user options

@@ -106,6 +106,8 @@ export class CompanyService {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
+    console.log('CompanyService.create payload:', data);
+
     return this.http.post<BackendResponse<any>>(url, data, { headers })
       .pipe(
         map(response => {

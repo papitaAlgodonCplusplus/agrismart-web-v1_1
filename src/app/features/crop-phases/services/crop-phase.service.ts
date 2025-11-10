@@ -17,6 +17,7 @@ export interface CropPhase {
 durationWeeks: any;
 temperatureRange: any;
     id: number;
+    Id: number;
     dateCreated?: Date;
     dateUpdated?: Date;
     createdBy?: number;

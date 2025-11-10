@@ -374,7 +374,7 @@ export class PhaseRequirementsComponent implements OnInit {
       console.error('Invalid cropPhaseId:', cropPhaseId);
       return 'N/A';
     }
-    const phase = this.availableCropPhases.find(p => p.cropPhaseId.toString() === cropPhaseId.toString());
+    const phase = this.availableCropPhases.find(p => p.id.toString() === cropPhaseId.toString());
     if (!phase) {
       console.error('Crop phase not found for id:', cropPhaseId);
       return 'N/A';
@@ -529,6 +529,7 @@ export class PhaseRequirementsComponent implements OnInit {
 
   // Update the getRequirements method to handle the response structure correctly:
   private getRequirements(): Observable<any> {
+    console.log('Fetching requirements from API...');
     return this.apiService.get<any>('/CropPhaseSolutionRequirement').pipe(
       tap(response => {
         console.log('Raw API response:', response);

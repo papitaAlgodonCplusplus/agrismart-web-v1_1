@@ -12,6 +12,29 @@ namespace AgriSmart.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // Configure Catalog
+            modelBuilder.Entity<Catalog>()
+                .Property(e => e.Active)
+                .HasDefaultValue(true);
+
+            // Configure Crop
+            modelBuilder.Entity<Crop>()
+                .Property(e => e.CropBaseTemperature)
+                .HasColumnType("decimal(18,2)");
+
+            // Configure Farm decimal columns
+            modelBuilder.Entity<Farm>()
+                .Property(e => e.Area)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Farm>()
+                .Property(e => e.Latitude)
+                .HasColumnType("decimal(18,6)");
+
+            modelBuilder.Entity<Farm>()
+                .Property(e => e.Longitude)
+                .HasColumnType("decimal(18,6)");
+
             // Configure CropPhaseSolutionRequirement decimal columns
             var entity = modelBuilder.Entity<CropPhaseSolutionRequirement>();
 
@@ -34,6 +57,9 @@ namespace AgriSmart.Infrastructure.Data
             entity.Property(e => e.Mo).HasColumnType("decimal(18,6)");
             entity.Property(e => e.pH).HasColumnType("decimal(18,2)");
             entity.Property(e => e.Temperature).HasColumnType("decimal(18,2)");
+
+            // Configure Active column with default value
+            entity.Property(e => e.Active).HasDefaultValue(true);
 
 
             // Configure NutrientFormulationRecipe

@@ -577,7 +577,7 @@ async def test_swagger_integration():
     print("[TEST] Testing Swagger API Integration...")
     
     try:
-        async with SwaggerAPIClient("https://agrismart-agronomic-latest.onrender.com") as client:
+        async with SwaggerAPIClient("http://163.178.171.144:80/") as client:
             # Test connection
             if not await client.test_connection():
                 print("[ERROR] Connection test failed")
