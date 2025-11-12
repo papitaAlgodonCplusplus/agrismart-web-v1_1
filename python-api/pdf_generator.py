@@ -841,322 +841,207 @@ class EnhancedPDFReportGenerator:
                 print(f"Error applying unused fertilizer styling: {e}")
         print(
             f"Applied unused fertilizer styling to {fertilizer_rows_added} rows")
-
+ 
     def _create_enhanced_summary_tables(self, calculation_data: Dict[str, Any]) -> List:
-        """Create enhanced summary and analysis tables with micronutrient support"""
-        if not REPORTLAB_AVAILABLE:
-            return []
-
-        elements = []
-        print("DEBUG: calculation_data: ", calculation_data)  # Debugging line
+        """
+        Create enhanced summary tables with correct data structure adaptation
+        
+        Args:
+            calculation_data: The complete calculation data dictionary
+            
+        Returns:
+            List of ReportLab table objects
+        """
+        tables = []
+        
+        # Extract the nested calculation_results
         calc_results = calculation_data.get('calculation_results', {})
-
-        # Enhanced Verification Results Table including micronutrients
-        verification_results = calc_results.get('verification_results')
-        if not verification_results:
-            achieved = calc_results.get('achieved_concentrations', {})
-            deviations = calc_results.get('deviations_percent', {})
-
-            verification_results = []
-
-            for param, actual in achieved.items():
-                deviation = deviations.get(param)
-                if deviation is None:
-                    continue  # Can't calculate target
-
-                # Reverse-engineer the target: actual = target * (1 + deviation)
-                try:
-                    target = actual / (1 + deviation)
-                except ZeroDivisionError:
-                    continue  # Extremely rare, but let's be graceful
-
-                verification_results.append({
-                    'parameter': param,
-                    'target_value': target,
-                    'actual_value': actual,
-                    'percentage_deviation': deviation * 100,
-                    # Or call your logic
-                    'status': self._evaluate_status(param, deviation)
-                })
-
-        # Optionally store it for reuse
-        calc_results['verification_results'] = verification_results
-
-        # Debugging line
-        print(f"DEBUG: Verification Results: {verification_results}")
-        if verification_results:
-            elements.append(Spacer(1, 20))
-            elements.append(Paragraph("<b>RESULTADOS DE VERIFICACIÓN NUTRICIONAL COMPLETA</b>",
-                                      ParagraphStyle('SectionTitle', parent=self.styles['Heading2'],
-                                                     fontSize=14, textColor=colors.darkblue)))
-            elements.append(Spacer(1, 10))
-
-            verification_data = [
-                ['Parámetro', 'Objetivo (mg/L)', 'Actual (mg/L)', 'Desviación (%)', 'Estado', 'Tipo']]
-
-            # Separate macro and micronutrients in verification
-            macro_results = []
-            micro_results = []
-
-            for result in verification_results:
-                parameter = result.get('parameter', '')
-                if parameter in self.micro_elements:
-                    micro_results.append(result)
-                else:
-                    macro_results.append(result)
-
-            # Add macronutrients first
-            for result in macro_results:
-                status = result.get('status', '')
-                status_color = self._get_status_color(status)
-
-                verification_data.append([
-                    result.get('parameter', ''),
-                    f"{result.get('target_value', 0):.1f}",
-                    f"{result.get('actual_value', 0):.1f}",
-                    f"{result.get('percentage_deviation', 0):+.1f}%",
-                    status,
-                    'Macro'
-                ])
-
-            # Add micronutrients
-            for result in micro_results:
-                status = result.get('status', '')
-
-                verification_data.append([
-                    result.get('parameter', ''),
-                    # More precision for micros
-                    f"{result.get('target_value', 0):.3f}",
-                    f"{result.get('actual_value', 0):.3f}",
-                    f"{result.get('percentage_deviation', 0):+.1f}%",
-                    status,
-                    'Micro'
-                ])
-
-            verification_table = Table(verification_data, colWidths=[
-                                       1.2*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1.2*inch, 0.8*inch])
-
-            # Enhanced styling with micronutrient differentiation
-            table_style = [
-                ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 8),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1),
-                 [colors.white, colors.lightgrey]),
-            ]
-
-            # Color-code micronutrient rows
-            for i, result in enumerate(verification_results, 1):
-                parameter = result.get('parameter', '')
-                if parameter in self.micro_elements:
-                    table_style.append(
-                        ('BACKGROUND', (5, i), (5, i), colors.orange))
-                    table_style.append(
-                        ('TEXTCOLOR', (5, i), (5, i), colors.white))
-                    table_style.append(
-                        ('FONTNAME', (5, i), (5, i), 'Helvetica-Bold'))
-                else:
-                    table_style.append(
-                        ('BACKGROUND', (5, i), (5, i), colors.lightblue))
-
-            verification_table.setStyle(TableStyle(table_style))
-            elements.append(verification_table)
-
-        # Enhanced Ionic Balance Analysis
-        ionic_balance = calc_results.get('ionic_balance', {})
-        if ionic_balance:
-            elements.append(Spacer(1, 20))
-            elements.append(Paragraph("<b>ANÁLISIS DE BALANCE IÓNICO MEJORADO</b>",
-                                      ParagraphStyle('SectionTitle', parent=self.styles['Heading2'],
-                                                     fontSize=14, textColor=colors.darkblue)))
-            elements.append(Spacer(1, 10))
-
-            balance_data = [
-                ['Parámetro', 'Valor', 'Unidad', 'Estado'],
-                ['Suma de Cationes',
-                    f"{ionic_balance.get('cation_sum', 0):.2f}", 'meq/L',
-                    ionic_balance.get('balance_status', 'Unknown')],
-                ['Suma de Aniones',
-                    f"{ionic_balance.get('anion_sum', 0):.2f}", 'meq/L', ''],
-                ['Diferencia Absoluta',
-                    f"{ionic_balance.get('difference', 0):.2f}", 'meq/L', ''],
-                ['Error de Balance',
-                    f"{ionic_balance.get('difference_percentage', 0):.1f}", '%', '']
-            ]
-
-            balance_table = Table(balance_data, colWidths=[
-                                  2.5*inch, 1.5*inch, 1*inch, 1.5*inch])
-            balance_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1),
-                 [colors.white, colors.lightgrey]),
-                ('TEXTCOLOR', (3, 1), (3, 1),
-                 colors.green if ionic_balance.get('is_balanced') == 1 else colors.red),
-                ('FONTNAME', (3, 1), (3, 1), 'Helvetica-Bold'),
-            ]))
-
-            elements.append(balance_table)
-
-        # Enhanced Cost Analysis with micronutrient breakdown
-        cost_analysis = calc_results.get('cost_analysis', {})
-        if cost_analysis and cost_analysis.get('fertilizer_costs'):
-            elements.append(Spacer(1, 20))
-            elements.append(Paragraph("<b>ANÁLISIS ECONÓMICO DETALLADO</b>",
-                                      ParagraphStyle('SectionTitle', parent=self.styles['Heading2'],
-                                                     fontSize=14, textColor=colors.darkblue)))
-            elements.append(Spacer(1, 10))
-
-            # Add cost summary section
-            cost_summary_data = [
-                ['Métrica', 'Valor', 'Unidad'],
-                ['Costo Total CRC', f"₡{cost_analysis.get('total_cost_crc', 0):.2f}", 'CRC'],
-                ['Costo por Litro', f"₡{cost_analysis.get('cost_per_liter_crc', 0):.4f}", 'CRC/L'],
-                ['Costo por m³', f"₡{cost_analysis.get('cost_per_m3_crc', 0):.2f}", 'CRC/m³'],
-                ['Cobertura API Precios', f"{cost_analysis.get('api_price_coverage_percent', 0):.1f}%", '%'],
-                ['Factor Regional', f"{cost_analysis.get('regional_factor', 1.0):.2f}", ''],
-                ['Región', cost_analysis.get('region', 'N/A'), '']
-            ]
-
-            cost_summary_table = Table(cost_summary_data, colWidths=[2*inch, 1.5*inch, 1*inch])
-            cost_summary_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.darkgreen),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 9),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
-            ]))
-            elements.append(cost_summary_table)
-            elements.append(Spacer(1, 15))
-
-            # Pricing sources information
-            pricing_sources = cost_analysis.get('pricing_sources', {})
-            if pricing_sources:
-                pricing_info = f"Fuentes de Precios: API ({pricing_sources.get('api_prices_used', 0)} precios) | " \
-                              f"Fallback ({pricing_sources.get('fallback_prices_used', 0)} precios)"
-                elements.append(Paragraph(pricing_info, 
-                                        ParagraphStyle('PricingInfo', parent=self.styles['Normal'],
-                                                     fontSize=8, textColor=colors.grey)))
-                elements.append(Spacer(1, 10))
-
-            # Detailed fertilizer costs table
-            cost_data = [
-                ['Fertilizante', 'Costo por 1000L (₡)', 'Porcentaje (%)', 'Tipo', 'Dosificación (g/L)', 'Total L Usado']
-            ]
-
-            fertilizer_costs = cost_analysis.get('fertilizer_costs', {})
-            cost_percentages = cost_analysis.get('cost_percentages', {})
-            fertilizer_dosages = calc_results.get('fertilizer_dosages', {})
-
-            # Separate costs by type
-            macro_costs = []
-            micro_costs = []
-
-            for fert, cost in fertilizer_costs.items():
-                if cost > 0:
-                    percentage = cost_percentages.get(fert, 0)
-                    dosage_info = fertilizer_dosages.get(fert, {})
-                    dosage_g_l = self._extract_dosage_value(dosage_info)
-
-                    is_micro_fert = any(micro in fert.lower()
-                                        for micro in ['hierro', 'iron', 'manganeso', 'zinc', 'cobre', 'copper', 'borico', 'molibdato'])
-
-                    fert_type = 'Micronutriente' if is_micro_fert else 'Macronutriente'
-
-                    cost_row = [
-                        fert, f"₡{cost:.3f}", f"{percentage:.1f}%", fert_type, f"{dosage_g_l:.4f}", f"{dosage_g_l * 1000:.2f} L"
-                    ]
-
-                    if is_micro_fert:
-                        micro_costs.append(cost_row)
-                    else:
-                        macro_costs.append(cost_row)
-
-            # Add macro costs first, then micro costs
-            for cost_row in macro_costs:
-                cost_data.append(cost_row)
-            for cost_row in micro_costs:
-                cost_data.append(cost_row)
-
-            # Add totals
-            total_cost = cost_analysis.get('total_cost_crc', 0)
-            macro_total = sum(cost for fert, cost in fertilizer_costs.items()
-                              if not any(micro in fert.lower() for micro in ['hierro', 'iron', 'manganeso', 'zinc', 'cobre', 'copper', 'borico', 'molibdato']))
-            micro_total = total_cost - macro_total
-
-            cost_data.append(
-                ['SUBTOTAL MACRONUTRIENTES', f"₡{macro_total:.3f}", f"{macro_total/total_cost*100:.1f}%", 'Subtotal', ''])
-            cost_data.append(
-                ['SUBTOTAL MICRONUTRIENTES', f"₡{micro_total:.3f}", f"{micro_total/total_cost*100:.1f}%", 'Subtotal', ''])
-            cost_data.append(
-                ['TOTAL GENERAL', f"₡{total_cost:.2f}", '100.0%', 'Total', ''])
-
-            cost_table = Table(cost_data, colWidths=[
-                               2.5*inch, 1.5*inch, 1.2*inch, 1.5*inch, 1.2*inch])
-
-            # Enhanced cost table styling
-            cost_style = [
-                ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTNAME', (0, 1), (-1, -4), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 8),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -4),
-                 [colors.white, colors.lightgrey]),
-
-                # Subtotal rows
-                ('BACKGROUND', (0, -3), (-1, -2), colors.lightyellow),
-                ('FONTNAME', (0, -3), (-1, -2), 'Helvetica-Bold'),
-
-                # Total row
-                ('BACKGROUND', (0, -1), (-1, -1), colors.darkgreen),
-                ('TEXTCOLOR', (0, -1), (-1, -1), colors.white),
-                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ]
-
-            # Color-code micronutrient rows
-            row_index = 1
-            for fert, cost in fertilizer_costs.items():
-                if cost > 0:
-                    is_micro_fert = any(micro in fert.lower()
-                                        for micro in ['hierro', 'iron', 'manganeso', 'zinc', 'cobre', 'copper', 'borico', 'molibdato'])
-                    if is_micro_fert:
-                        cost_style.append(
-                            ('BACKGROUND', (3, row_index), (3, row_index), colors.orange))
-                        cost_style.append(
-                            ('TEXTCOLOR', (3, row_index), (3, row_index), colors.white))
-                        cost_style.append(
-                            ('FONTNAME', (3, row_index), (3, row_index), 'Helvetica-Bold'))
-                    row_index += 1
-
-            cost_table.setStyle(TableStyle(cost_style))
-            elements.append(cost_table)
+        
+        # ===== TABLE 1: NUTRIENT VERIFICATION =====
+        # Build verification results from achieved_concentrations, target_concentrations, and deviations_percent
+        target_concentrations = calculation_data.get('target_concentrations', {})
+        achieved_concentrations = calc_results.get('achieved_concentrations', {})
+        deviations_percent = calc_results.get('deviations_percent', {})
+        
+        verification_data = [['Parámetro', 'Objetivo', 'Logrado', 'Desviación %', 'Estado']]
+        
+        # Process all nutrients that appear in achieved_concentrations
+        for param, achieved_value in achieved_concentrations.items():
+            # Skip non-nutrient parameters like 'Cl', 'NH4' unless they're in targets
+            if param not in target_concentrations:
+                continue
                 
-            # Pie graph for cost distribution
-            print("Creating cost distribution pie chart")
-            elements.append(Spacer(1, 20))
-            print("DEBUG: Cost analysis data:", cost_analysis)
-            cost_pie_graph = self._create_cost_distribution_pie_chart(cost_analysis, fertilizer_costs, cost_percentages)
-            if cost_pie_graph:
-                print("Cost distribution pie chart created successfully")
-                elements.append(cost_pie_graph)
-
-        return elements
-
+            target_value = target_concentrations.get(param, 0)
+            deviation_pct = deviations_percent.get(param, 0)
+            
+            # Determine status based on deviation
+            if abs(deviation_pct) <= 5:
+                status = 'Excellent'
+            elif abs(deviation_pct) <= 15:
+                status = 'Good'
+            elif abs(deviation_pct) <= 30:
+                status = 'Acceptable'
+            else:
+                status = 'Low'
+            
+            verification_data.append([
+                param,
+                f"{target_value:.2f}",
+                f"{achieved_value:.2f}",
+                f"{deviation_pct:.2f}%",
+                status
+            ])
+        
+        if len(verification_data) > 1:  # Has data beyond header
+            verification_table = Table(verification_data, colWidths=[80, 80, 80, 80, 80])
+            verification_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ]))
+            tables.append(verification_table)
+        
+        # ===== TABLE 2: OPTIMIZATION SUMMARY =====
+        optimization_data = [
+            ['Métrica', 'Valor'],
+            ['Método de Optimización', calc_results.get('optimization_method', 'N/A')],
+            ['Estado de Optimización', calc_results.get('optimization_status', 'N/A')],
+            ['Fertilizantes Activos', str(calc_results.get('active_fertilizers', 0))],
+            ['Dosificación Total (g/L)', f"{calc_results.get('total_dosage_g_per_L', 0):.4f}"],
+            ['Error de Balance Iónico', f"{calc_results.get('ionic_balance_error', 0):.2f}"],
+            ['Tiempo de Resolución (s)', f"{calc_results.get('solver_time_seconds', 0):.4f}"],
+            ['Valor Objetivo', f"{calc_results.get('objective_value', 0):.4f}"],
+        ]
+        
+        optimization_table = Table(optimization_data, colWidths=[200, 200])
+        optimization_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ]))
+        tables.append(optimization_table)
+        
+        # ===== TABLE 3: COST ANALYSIS =====
+        cost_analysis = calc_results.get('cost_analysis', {})
+        
+        cost_data = [
+            ['Concepto', 'Valor (CRC)'],
+            ['Costo Total', f"₡{cost_analysis.get('total_cost_crc', 0):,.2f}"],
+            ['Costo por Litro', f"₡{cost_analysis.get('cost_per_liter_crc', 0):,.2f}"],
+            ['Costo por m³', f"₡{cost_analysis.get('cost_per_m3_crc', 0):,.2f}"],
+            ['Cobertura Precios API', f"{cost_analysis.get('api_price_coverage_percent', 0):.1f}%"],
+        ]
+        
+        pricing_sources = cost_analysis.get('pricing_sources', {})
+        if pricing_sources:
+            cost_data.append(['Precios API Usados', str(pricing_sources.get('api_prices_used', 0))])
+            cost_data.append(['Precios Fallback Usados', str(pricing_sources.get('fallback_prices_used', 0))])
+        
+        cost_table = Table(cost_data, colWidths=[200, 200])
+        cost_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ]))
+        tables.append(cost_table)
+        
+        # ===== TABLE 4: ACTIVE FERTILIZERS WITH DOSAGES =====
+        fertilizer_dosages = calc_results.get('fertilizer_dosages', {})
+        fertilizer_costs = cost_analysis.get('fertilizer_costs', {})
+        cost_percentages = cost_analysis.get('cost_percentages', {})
+        
+        # Filter active fertilizers (dosage > 0)
+        active_fertilizers = {
+            name: dosage for name, dosage in fertilizer_dosages.items()
+            if dosage.get('dosage_g_per_L', 0) > 0
+        }
+        
+        if active_fertilizers:
+            fertilizer_data = [['Fertilizante', 'Dosis (g/L)', 'Dosis (ml/L)', 'Costo (CRC)', '% Costo']]
+            
+            for name, dosage in active_fertilizers.items():
+                g_per_L = dosage.get('dosage_g_per_L', 0)
+                ml_per_L = dosage.get('dosage_ml_per_L', 0)
+                cost = fertilizer_costs.get(name, 0)
+                cost_pct = cost_percentages.get(name, 0)
+                
+                fertilizer_data.append([
+                    name,
+                    f"{g_per_L:.4f}",
+                    f"{ml_per_L:.4f}",
+                    f"₡{cost:,.2f}",
+                    f"{cost_pct:.1f}%"
+                ])
+            
+            fertilizer_table = Table(fertilizer_data, colWidths=[120, 70, 70, 80, 60])
+            fertilizer_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('ALIGN', (0, 1), (0, -1), 'LEFT'),  # Left align fertilizer names
+            ]))
+            tables.append(fertilizer_table)
+        
+        # ===== TABLE 5: WATER ANALYSIS =====
+        water_analysis = calculation_data.get('water_analysis', {})
+        
+        if water_analysis:
+            water_data = [['Parámetro', 'Concentración']]
+            
+            # Common water parameters
+            water_params = ['Ca', 'K', 'N', 'P', 'Mg', 'S', 'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo']
+            
+            for param in water_params:
+                if param in water_analysis:
+                    value = water_analysis[param]
+                    water_data.append([param, f"{value:.4f}"])
+            
+            if len(water_data) > 1:  # Has data beyond header
+                water_table = Table(water_data, colWidths=[200, 200])
+                water_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 10),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ]))
+                tables.append(water_table)
+        
+        return tables
+    
     def _create_cost_distribution_pie_chart(self, cost_analysis: Dict[str, Any], fertilizer_costs: Dict[str, float], cost_percentages: Dict[str, float]) -> Optional[object]:
         """Create a pie chart for cost distribution of fertilizers"""
         if not REPORTLAB_AVAILABLE:

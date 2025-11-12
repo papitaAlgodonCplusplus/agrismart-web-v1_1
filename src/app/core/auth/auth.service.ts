@@ -275,6 +275,11 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  
+  public getCurrentUserId(): any {
+    return this.currentUserSubject.value['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid'];
+  }
+
   public isAdmin(): boolean {
     const user = this.currentUserSubject.value;
     console.log("Checking for user: ", user);

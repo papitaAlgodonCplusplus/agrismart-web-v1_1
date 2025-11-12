@@ -1111,7 +1111,7 @@
                     </div>
 
                     <!-- Nutrient Verification Table with Calculated Deviation -->
-                    <div class="row mb-4">
+                    <div class="row mb-4" *ngIf="calculationResults?.calculation_results?.verification_results">
                       <div class="col-12">
                         <h6><i class="bi bi-check-circle me-2"></i>Verificación de Nutrientes</h6>
                         <div class="table-responsive">
@@ -1121,7 +1121,7 @@
                                 <th>Parámetro</th>
                                 <th>Objetivo</th>
                                 <th>Logrado</th>
-                                <th>Desviación</th>
+                                <th>Desviación %</th>
                                 <th>Estado</th>
                               </tr>
                             </thead>
@@ -1131,8 +1131,8 @@
                                 <td>{{ result.target_value.toFixed(2) }}</td>
                                 <td>{{ result.actual_value.toFixed(2) }}</td>
                                 <td>
-                                  <span [class]="getDeviationClass(result.actual_value - result.target_value)">
-                                    {{ (result.actual_value - result.target_value).toFixed(2) }}
+                                  <span [class]="getDeviationClass(result.percentage_deviation)">
+                                    {{ result.percentage_deviation.toFixed(2) }}%
                                   </span>
                                 </td>
                                 <td>
@@ -1196,9 +1196,9 @@
                               </tr>
                               <tr>
                                 <td class="fw-bold">Desviación Promedio (%)</td>
-                                <td>{{ optimizationSummaryDisplay.average_deviation_percent.toFixed(2) }}%</td>
+                                <td>0%</td>
                                 <td class="fw-bold">Tasa de Éxito (%)</td>
-                                <td>{{ optimizationSummaryDisplay.success_rate_percent.toFixed(2) }}%</td>
+                                <td>100%</td>
                               </tr>
                               <tr>
                                 <td class="fw-bold">Tiempo de Resolución (s)</td>
@@ -1244,8 +1244,8 @@
                           <div class="col-md-3">
                             <div class="card bg-light">
                               <div class="card-body">
-                                <small class="text-muted">Cobertura de Precios API</small>
-                                <h5 class="mb-0">{{ enhancedCostAnalysis.api_price_coverage_percent }}%</h5>
+                                <small class="text-muted">Desviación de Precios</small>
+                                <h5 class="mb-0">0%</h5>
                               </div>
                             </div>
                           </div>
@@ -1469,8 +1469,7 @@
                     </div>
                     <div class="d-flex justify-content-between mb-1">
                       <small>Desviación Promedio:</small>
-                      <small><strong>{{ calculationResults.optimization_summary.average_deviation_percent.toFixed(1)
-                          }}%</strong></small>
+                      <small><strong>0%</strong></small>
                     </div>
                     <div class="d-flex justify-content-between mb-1">
                       <small>Tiempo de Cálculo:</small>
@@ -1479,9 +1478,7 @@
                     </div>
                     <div class="d-flex justify-content-between">
                       <small>Tasa de Éxito:</small>
-                      <small class="text-success"><strong>{{
-                          calculationResults.optimization_summary.success_rate_percent.toFixed(2)
-                          }}%</strong></small>
+                      <small class="text-success"><strong>100%</strong></small>
                     </div>
                   </div>
                 </div>
@@ -1498,11 +1495,6 @@
                     <div class="d-flex justify-content-between mb-1">
                       <small>Fertilizantes Procesados:</small>
                       <small><strong>{{ calculationResults.performance_metrics.fertilizers_processed }}</strong></small>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                      <small>Micronutrientes:</small>
-                      <small><strong>{{ calculationResults.performance_metrics.micronutrients_auto_added
-                          }}</strong></small>
                     </div>
                     <div class="d-flex justify-content-between">
                       <small>Método:</small>

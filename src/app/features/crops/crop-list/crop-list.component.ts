@@ -121,6 +121,7 @@ export class CropListComponent implements OnInit {
     this.isLoadingCatalogs = true;
     this.catalogService.getAll().subscribe({
       next: (catalogs) => {
+        console.log('Catalogs loaded:', catalogs);
         this.availableCatalogs = catalogs.filter(c => c.isActive);
         if (this.availableCatalogs.length > 0) {
           this.selectedCatalogId = this.availableCatalogs[0].id;
@@ -144,7 +145,8 @@ export class CropListComponent implements OnInit {
     this.cropService.getAll(this.filters.onlyActive, this.filters).subscribe({
       next: (crops) => {
         console.log('Crops loaded:', crops);
-        const userId = this.authService.getCurrentUser()?.id;
+        const userId = this.authService.getCurrentUserId();
+        console.log('Current user ID:', userId);
         this.crops = crops.filter((c: any) => c.createdBy.toString() === userId.toString());
         this.applyClientFilters();
         this.isLoading = false;

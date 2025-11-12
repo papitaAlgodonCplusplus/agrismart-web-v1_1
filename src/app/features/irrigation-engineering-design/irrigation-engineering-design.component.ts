@@ -117,10 +117,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
 
   // ==================== INITIALIZATION ====================
   private getCurrentUser(): void {
-    const user = this.authService.getCurrentUser();
-    if (user?.id) {
-      this.currentUserId = user.id;
-    }
+    this.currentUserId = this.authService.getCurrentUserId();
   }
 
   private initializeForms(): void {

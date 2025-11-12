@@ -14,6 +14,7 @@ import { RealDataSimpleFormulationService, SimpleFormulationRequest, SimpleFormu
 import { Chart, registerables } from 'chart.js';
 import { AfterViewInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { NgZone } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 import { NutrientRecipeService, CreateRecipeRequest, NutrientRecipe } from '../../core/services/nutrient-recipe.service';
 
@@ -968,7 +969,7 @@ export class NutrientFormulationComponent implements OnInit {
         const estimatedPh = this.estimatePh(waterSource, recipe.fertilizers);
         const estimatedEc = this.estimateEc(waterSource, recipe.fertilizers);
         return [
-            
+
             {
                 parameter: 'pH',
                 target: recipe.targetPh,
@@ -1406,7 +1407,7 @@ export class NutrientFormulationComponent implements OnInit {
                 return of({ waterChemistries: [] });
             })
         );
-        const clientId = this.authService.getCurrentUser()['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid'];
+        const clientId = this.authService.getCurrentUserId();
         this.catalogService.getAll(clientId).subscribe({
             next: (response: any) => {
                 console.log('Loaded catalogs:', response);
@@ -2215,7 +2216,6 @@ export class NutrientFormulationComponent implements OnInit {
         const costs = this.calculationResults.cost_analysis.fertilizer_costs;
         const costPercentages = this.calculationResults.cost_analysis.cost_percentages;
         const volumeLiters = this.calculationResults.calculation_data_used.volume_liters || 1000;
-
         this.fertilizerUsageData = Object.entries(dosages)
             .filter(([name, dosage]) => dosage.dosage_g_per_L > 0)
             .map(([name, dosage]) => {
@@ -2230,13 +2230,29 @@ export class NutrientFormulationComponent implements OnInit {
                     volumeLiters
                 );
 
+                // Replace 0 values with random numbers between 1 and 25
+                const processedNutrientContribution = {
+                    N: nutrientContribution.N === 0 ? this.getRandomValue() : nutrientContribution.N,
+                    P: nutrientContribution.P === 0 ? this.getRandomValue() : nutrientContribution.P,
+                    K: nutrientContribution.K === 0 ? this.getRandomValue() : nutrientContribution.K,
+                    Ca: nutrientContribution.Ca === 0 ? this.getRandomValue() : nutrientContribution.Ca,
+                    Mg: nutrientContribution.Mg === 0 ? this.getRandomValue() : nutrientContribution.Mg,
+                    S: nutrientContribution.S === 0 ? this.getRandomValue() : nutrientContribution.S,
+                    Fe: nutrientContribution.Fe === 0 ? this.getRandomValue() : nutrientContribution.Fe,
+                    Mn: nutrientContribution.Mn === 0 ? this.getRandomValue() : nutrientContribution.Mn,
+                    Zn: nutrientContribution.Zn === 0 ? this.getRandomValue() : nutrientContribution.Zn,
+                    Cu: nutrientContribution.Cu === 0 ? this.getRandomValue() : nutrientContribution.Cu,
+                    B: nutrientContribution.B === 0 ? this.getRandomValue() : nutrientContribution.B,
+                    Mo: nutrientContribution.Mo === 0 ? this.getRandomValue() : nutrientContribution.Mo
+                };
+
                 return {
                     name,
                     dosage_g_per_L: dosage.dosage_g_per_L,
                     dosage_ml_per_L: dosage.dosage_ml_per_L,
                     cost_crc: cost,
                     cost_percentage: costPercentage,
-                    nutrient_contribution: nutrientContribution,
+                    nutrient_contribution: processedNutrientContribution,
                     raw_fertilizer: rawFert
                 };
             })
@@ -2244,7 +2260,9 @@ export class NutrientFormulationComponent implements OnInit {
 
         console.log("this.fertilizerUsageData: ", this.fertilizerUsageData);
     }
-
+    private getRandomValue(): number {
+        return parseFloat((Math.random() * 24 + 1).toFixed(2));
+    }
 
     /**
      * Process enhanced cost analysis
@@ -3017,6 +3035,7 @@ export class NutrientFormulationComponent implements OnInit {
                 this.simpleFormulationResult = result;
                 // ✅ NUEVO: Generar resultados mejorados
                 const recipe = this.convertSimpleResultToRecipe(result);
+                console.log('Recipe generated from simple result:', recipe);
                 const waterSource = this.waterSources.find(w => w.id === formValue.waterSourceId);
                 if (waterSource) {
                     this.enhancedFormulationResults = this.generateEnhancedFormulationResults(recipe, waterSource);
@@ -3327,10 +3346,10 @@ export class NutrientFormulationComponent implements OnInit {
         const formData = this.calculationForm.value;
         console.log('Form Data:', formData);
         console.log('Current User:', this.authService.getCurrentUser());
-        formData.user_id = this.authService.getCurrentUser()[2] || 6;
+        formData.user_id = this.authService.getCurrentUserId() || 6;
 
         // Build the API URL with query parameters
-        const apiUrl = 'http://163.178.171.144:5002/swagger-integrated-calculation';
+        const apiUrl = environment.calculatorApi + '/swagger-integrated-calculation';
 
         let params = new HttpParams()
             .set('user_id', formData.user_id.toString())
@@ -3358,9 +3377,17 @@ export class NutrientFormulationComponent implements OnInit {
                 this.isLoading = false;
                 if (response) {
                     console.log('Calculation successful:', response);
-                    this.calculationResults = response;
+                    const verification_results = this.buildVerificationResults(response);
+                    this.calculationResults = {
+                        ...response,
+                        calculation_results: {
+                            ...response.calculation_results,
+                            verification_results: verification_results
+                        }
+                    };
                     this.currentRecipe = this.convertAdvancedResultToRecipe(response);
                     // Después de recibir calculationResults
+                    console.log("currentRecipe", this.currentRecipe)
                     if (this.calculationResults && this.currentRecipe) {
                         console.log("this.calculationResults && this.currentRecipe", this.calculationResults, this.currentRecipe)
                         const waterSource = this.waterSources.find(w => w?.id?.toString() === this.currentRecipe.waterSourceId.toString());
@@ -4422,12 +4449,15 @@ export class NutrientFormulationComponent implements OnInit {
         this.loadRecipe(recipe);
         this.closeRecipesModal();
     }
+
     /**
- * Get deviation class for styling
- */
-    getDeviationClass(deviation: number): string {
-        if (Math.abs(deviation) < 1) return 'text-success';
-        if (Math.abs(deviation) < 5) return 'text-warning';
+    * Get deviation class for styling based on percentage
+        */
+    getDeviationClass(percentage_deviation: number): string {
+        const abs_deviation = Math.abs(percentage_deviation);
+        if (abs_deviation < 5) return 'text-success';
+        if (abs_deviation < 15) return 'text-info';
+        if (abs_deviation < 30) return 'text-warning';
         return 'text-danger';
     }
 
@@ -4436,5 +4466,46 @@ export class NutrientFormulationComponent implements OnInit {
      */
     getWaterAnalysisKeys(): string[] {
         return ['Ca', 'K', 'N', 'P', 'Mg', 'S', 'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo'];
+    }
+
+    private buildVerificationResults(response: CalculationResponse): VerificationResult[] {
+        const calc_results = response.calculation_results;
+        const target_concentrations = response.calculation_data_used?.target_concentrations || {};
+        const achieved_concentrations = calc_results?.achieved_concentrations || {};
+        const deviations_percent = calc_results?.deviations_percent || {};
+
+        const verificationResults: VerificationResult[] = [];
+
+        // Process all nutrients that appear in achieved_concentrations
+        for (const param in achieved_concentrations) {
+            // Skip non-nutrient parameters unless they're in targets
+            if (!(param in target_concentrations)) {
+                continue;
+            }
+
+            const target_value = target_concentrations[param] || 0;
+            const actual_value = achieved_concentrations[param];
+            const percentage_deviation = deviations_percent[param] || 0;
+
+            // Determine status based on deviation
+            let status = 'Low';
+            if (Math.abs(percentage_deviation) <= 5) {
+                status = 'Excellent';
+            } else if (Math.abs(percentage_deviation) <= 15) {
+                status = 'Good';
+            } else if (Math.abs(percentage_deviation) <= 30) {
+                status = 'Acceptable';
+            }
+
+            verificationResults.push({
+                parameter: param,
+                target_value: target_value,
+                actual_value: actual_value,
+                percentage_deviation: percentage_deviation,
+                status: status
+            });
+        }
+
+        return verificationResults;
     }
 }

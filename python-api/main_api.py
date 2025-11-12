@@ -740,7 +740,7 @@ async def swagger_integrated_calculation_with_linear_programming(
             
             print(f"[INFO] Fetched: {len(fertilizers_data)} fertilizers")
             print(f"[PRICE] Fetched: {len(fertilizer_inputs_data)} fertilizer inputs with pricing")  # 🆕 NEW
-            print(f"[TARGET] Fetched: {len(requirements_data) if requirements_data else 0} requirements")
+            print(f"[TARGET] Fetched: {len(requirements_data) if requirements_data else 0} requirements: {requirements_data}")
             print(f"[WATER] Fetched: {len(water_data) if water_data else 0} water parameters")
             
             
@@ -832,6 +832,7 @@ async def swagger_integrated_calculation_with_linear_programming(
             print(f"\n[INFO] Mapping API data to calculation format...")
             target_concentrations = swagger_client.map_requirements_to_targets(
                 requirements_data)
+            print(f"\n[DEBUG]  Mapped target concentrations: {target_concentrations}")
             water_analysis = swagger_client.map_water_to_analysis(water_data)
 
             # Use intelligent defaults if API data unavailable
@@ -890,6 +891,7 @@ async def swagger_integrated_calculation_with_linear_programming(
                     target_concentrations, water_analysis)
                 # Extract the fertilizer targets dict from tuple
                 adjusted_targets = adjusted_targets_tuple[0]
+                print(f"\n[DEBUG] Adjusted target concentrations: {adjusted_targets}")
 
                 # Use Linear Programming Optimizer
                 lp_result = lp_optimizer.optimize_fertilizer_solution(

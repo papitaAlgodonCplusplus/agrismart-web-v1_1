@@ -346,7 +346,7 @@ export class PhaseRequirementsComponent implements OnInit {
         ...requirement,
         isValidated: true,
         validatedAt: new Date(),
-        validatedBy: this.authService.getCurrentUser()?.id
+        validatedBy: this.authService.getCurrentUserId()
       };
 
       this.apiService.put<CropPhaseSolutionRequirement>('/CropPhaseSolutionRequirement', updateData).subscribe({
@@ -714,7 +714,7 @@ export class PhaseRequirementsComponent implements OnInit {
 
   // Update the mapFormDataToApiRequest method to fix the API field mapping:
   private mapFormDataToApiRequest(formData: any): any {
-    const currentUser = this.authService.getCurrentUser();
+    const currentUser = this.authService.getCurrentUserId();
 
     // Get the selected crop phase to extract the phaseId
     const selectedCropPhase = this.availableCropPhases.find(phase =>
@@ -756,7 +756,7 @@ export class PhaseRequirementsComponent implements OnInit {
 
       // Status fields - ensure proper types
       active: Boolean(formData.active),
-      createdBy: Number(currentUser?.id) || 1
+      createdBy: Number(currentUser) || 1
     };
   }
 
