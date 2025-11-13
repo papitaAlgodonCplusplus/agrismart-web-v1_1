@@ -725,35 +725,50 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
 
-  // Add this method to prepare wind rose data
+ // Add this method to prepare wind rose data
   prepareWindRoseData(): void {
     const windData: { direction: number; speed: number }[] = [];
 
     console.log("rawData for wind rose: ", this.rawData);
-    this.rawData.forEach(item => {
+    const windRawData = this.rawData.filter(item =>
+      item.sensor === 'wind_speed' ||
+      item.sensor === 'wind_speed_level' ||
+      item.sensor === 'wind_direction_angle'
+    );
+    console.log("Filtered wind raw data count: ", windRawData.length);
+    
+    // Create an efficient lookup map grouped by deviceId and recordDate
+    const dataMap = new Map<string, Map<string, RawDeviceData>>();
+    
+     windRawData.forEach(item => {
+      const key = `${item.deviceId}_${item.recordDate}`;
+      if (!dataMap.has(key)) {
+        dataMap.set(key, new Map());
+      }
+      dataMap.get(key)!.set(item.sensor, item);
+    });
+
+    console.log("dataMap size: ", dataMap.size);
+    console.log("dataMap sample: ", Array.from(dataMap.entries()).slice(0,5));
+    // Process each unique deviceId + recordDate combination
+    dataMap.forEach((sensors, key) => {
       let windSpeed = 0;
       let windDirection = 0;
 
-      // First, try to get wind_speed (m/s) - primary data source
-      const speedReading = this.rawData.find(
-        r => r.deviceId === item.deviceId && r.sensor === 'wind_speed' && r.recordDate === item.recordDate
-      );
-      console.log("speedReading: ", speedReading)
+      // Try to get wind_speed (m/s) - primary data source
+      const speedReading = sensors.get('wind_speed');
+      console.log("speedReading: ", speedReading);
 
       // If wind_speed is missing or zero, fall back to wind_speed_level
-      if (!speedReading || !speedReading.payload || parseInt(speedReading.payload) === 0) {
-        const levelReading = this.rawData.find(
-          r => r.deviceId === item.deviceId && r.sensor === 'wind_speed_level' && r.recordDate === item.recordDate
-        );
+      if (!speedReading || !speedReading.payload || parseFloat(speedReading.payload) === 0) {
+        const levelReading = sensors.get('wind_speed_level');
         windSpeed = parseFloat(levelReading?.payload ?? '') || 0;
       } else {
         windSpeed = parseFloat(speedReading.payload) || 0;
       }
 
       // Get wind direction
-      const directionReading = this.rawData.find(
-        r => r.deviceId === item.deviceId && r.sensor === 'wind_direction_angle' && r.recordDate === item.recordDate
-      );
+      const directionReading = sensors.get('wind_direction_angle');
       console.log("directionReading: ", directionReading);
       windDirection = parseFloat(directionReading?.payload ?? '') || 0;
 
@@ -766,6 +781,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       }
     });
 
+    console.log("Valid wind data points: ", windData.length);
     this.windRoseData = this.aggregateWindRoseData(windData);
     this.windDataLoaded = true;
   }
@@ -847,6 +863,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       });
     });
 
+    console.log("Wind rose traces prepared: ", traces);
     return traces;
   }
 
