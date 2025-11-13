@@ -317,7 +317,7 @@
 }
 
 .chart-content {
-  height: 300px;
+  height: 900px;
   position: relative;
 }
 
@@ -1020,7 +1020,7 @@
 /* Wind Rose Card */
 .wind-rose-card {
   grid-column: span 2;
-  min-height: 600px;
+  min-height: 900px;
 }
 
 .chart-footer {
@@ -1091,5 +1091,189 @@
   
   .wind-rose-card .chart-content {
     height: 350px !important;
+  }
+}
+
+/* Wind Rose Card */
+.wind-rose-card {
+  grid-column: span 2;
+  min-height: 900px; 
+  position: relative;
+  overflow: hidden;
+}
+
+.wind-rose-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wind-rose-card .chart-header {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 3px solid #667eea;
+}
+
+.wind-rose-card .chart-header h3 {
+  color: #2c3e50;
+  font-size: 1.5rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wind-rose-card .chart-header i {
+  color: #667eea;
+  font-size: 1.8rem;
+  animation: windBlow 3s ease-in-out infinite;
+}
+
+@keyframes windBlow {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+}
+
+.wind-rose-card .chart-info small {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  margin-top: 8px;
+  display: block;
+}
+
+.custom-wind-rose-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 0 0 12px 12px;
+}
+
+.wind-rose-svg {
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.2));
+  transition: transform 0.3s ease;
+}
+
+.wind-rose-svg:hover {
+  transform: scale(1.02);
+}
+
+/* Grid circles with glow effect */
+.grid-circles circle {
+  stroke: rgba(102, 126, 234, 0.3);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+  animation: dashMove 20s linear infinite;
+}
+
+@keyframes dashMove {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+.grid-circles text {
+  fill: #667eea;
+  font-weight: 600;
+  font-size: 12px;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+}
+
+/* Wind segments with gradient and glow */
+.wind-segment {
+  transition: all 0.3s ease;
+  cursor: pointer;
+  filter: brightness(1);
+}
+
+.wind-segment:hover {
+  filter: brightness(1.2) drop-shadow(0 0 15px currentColor);
+  transform-origin: center;
+  animation: pulse-segment 0.6s ease-in-out;
+}
+
+@keyframes pulse-segment {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.wind-segment.hovered {
+  filter: brightness(1.3) drop-shadow(0 0 20px currentColor);
+  stroke-width: 3 !important;
+  stroke: #ffffff !important;
+}
+
+/* Direction labels with modern styling */
+.direction-labels text {
+  fill: #2c3e50;
+  font-size: 16px;
+  font-weight: 700;
+  text-shadow: 
+    0 0 10px rgba(255, 255, 255, 1),
+    0 0 20px rgba(102, 126, 234, 0.5);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.direction-labels text:hover {
+  fill: #667eea;
+  font-size: 18px;
+  text-shadow: 
+    0 0 15px rgba(255, 255, 255, 1),
+    0 0 30px rgba(102, 126, 234, 0.8);
+}
+
+/* Center circle with gradient */
+.wind-rose-svg > circle[fill="white"] {
+  fill: url(#centerGradient);
+  stroke: #667eea;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5));
+}
+
+/* North indicator with pulsing animation */
+.wind-rose-svg > line[stroke="#e74c3c"] {
+  stroke: #e74c3c;
+  stroke-width: 4;
+  filter: drop-shadow(0 0 5px #e74c3c);
+  animation: northPulse 2s ease-in-out infinite;
+}
+
+@keyframes northPulse {
+  0%, 100% {
+    opacity: 1;
+    stroke-width: 4;
+  }
+  50% {
+    opacity: 0.7;
+    stroke-width: 5;
   }
 }

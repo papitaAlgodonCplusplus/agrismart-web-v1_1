@@ -417,7 +417,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       }
     });
   }
- 
+
   initializeCharts(): void {
     // Destroy existing charts
     Object.values(this.chartInstances).forEach(chart => {
@@ -742,17 +742,17 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
-      'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+      'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO'];
     const directionAngles = [0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5,
       180, 202.5, 225, 247.5, 270, 292.5, 315, 337.5];
 
     // Speed categories (Beaufort scale in m/s) - FIXED: inclusive upper bounds
     const speedRanges = [
-      { label: '0-2 m/s (Calm)', min: 0, max: 2, color: '#4ecdc4' },
-      { label: '2-5 m/s (Light)', min: 2, max: 5, color: '#45b7d1' },
-      { label: '5-8 m/s (Moderate)', min: 5, max: 8, color: '#f7b731' },
-      { label: '8-11 m/s (Fresh)', min: 8, max: 11, color: '#fd9644' },
-      { label: '>11 m/s (Strong)', min: 11, max: Infinity, color: '#e74c3c' }
+      { label: '0-2 m/s (Calma)', min: 0, max: 2, color: '#4ecdc4' },
+      { label: '2-5 m/s (Ligero)', min: 2, max: 5, color: '#45b7d1' },
+      { label: '5-8 m/s (Moderado)', min: 5, max: 8, color: '#f7b731' },
+      { label: '8-11 m/s (Fuerte)', min: 8, max: 11, color: '#fd9644' },
+      { label: '>11 m/s (Muy Fuerte)', min: 11, max: Infinity, color: '#e74c3c' }
     ];
 
     // Initialize frequency counts
@@ -927,7 +927,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
     console.log("=== WIND ROSE DEBUG END ===");
   }
- 
+
   // ADD these NEW trackBy methods (they don't exist yet)
   trackBySegmentId(index: number, segment: any): string {
     return segment.segmentId;

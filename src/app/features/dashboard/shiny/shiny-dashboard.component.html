@@ -125,13 +125,28 @@
         <svg [attr.width]="windRoseConfig.size" [attr.height]="windRoseConfig.size"
           [attr.viewBox]="'0 0 ' + windRoseConfig.size + ' ' + windRoseConfig.size" class="wind-rose-svg">
 
+          <!-- Gradients definitions -->
+          <defs>
+            <radialGradient id="centerGradient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#e8eaf6;stop-opacity:1" />
+            </radialGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
           <!-- Grid circles -->
           <g class="grid-circles">
             <ng-container *ngFor="let circle of getGridCircles(); trackBy: trackByCircleRadius">
               <circle [attr.cx]="windRoseConfig.center" [attr.cy]="windRoseConfig.center" [attr.r]="circle.radius"
-                fill="none" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 4" />
-              <text [attr.x]="windRoseConfig.center + 5" [attr.y]="windRoseConfig.center - circle.radius" font-size="10"
-                fill="#999">
+                fill="none" stroke="rgba(102, 126, 234, 0.3)" stroke-width="1.5" stroke-dasharray="5 5" />
+              <text [attr.x]="windRoseConfig.center + 5" [attr.y]="windRoseConfig.center - circle.radius" font-size="12"
+                fill="#667eea" font-weight="600">
                 {{circle.percentage}}%
               </text>
             </ng-container>
@@ -140,7 +155,8 @@
           <!-- Wind segments -->
           <g class="wind-segments">
             <path *ngFor="let segment of windRoseSegments; trackBy: trackBySegmentId" [attr.d]="segment.path"
-              [attr.fill]="segment.color" [attr.stroke]="'white'" [attr.stroke-width]="2"
+              [attr.fill]="segment.color" [attr.stroke]="hoveredSegment === segment.segmentId ? '#ffffff' : 'white'"
+              [attr.stroke-width]="hoveredSegment === segment.segmentId ? 3 : 2"
               [class.hovered]="hoveredSegment === segment.segmentId" (mouseenter)="onSegmentHover(segment.segmentId)"
               (mouseleave)="onSegmentHover(null)" class="wind-segment">
               <title>{{segment.direction}}: {{segment.speedRange}} - {{segment.frequency | number:'1.1-1'}}%</title>
@@ -149,13 +165,14 @@
 
           <!-- Center circle -->
           <circle [attr.cx]="windRoseConfig.center" [attr.cy]="windRoseConfig.center"
-            [attr.r]="windRoseConfig.innerRadius" fill="white" stroke="#2c3e50" stroke-width="2" />
+            [attr.r]="windRoseConfig.innerRadius" fill="url(#centerGradient)" stroke="#667eea" stroke-width="3"
+            filter="url(#glow)" />
 
-          <!-- Direction labels - FIXED: Use component property instead of inline array -->
+          <!-- Direction labels -->
           <g class="direction-labels">
             <text *ngFor="let direction of directions; let i = index; trackBy: trackByDirection"
               [attr.x]="getDirectionLabelPosition(direction).x" [attr.y]="getDirectionLabelPosition(direction).y"
-              text-anchor="middle" dominant-baseline="middle" fill="#2c3e50" font-size="14" font-weight="600">
+              text-anchor="middle" dominant-baseline="middle" fill="#2c3e50" font-size="16" font-weight="700">
               {{direction}}
             </text>
           </g>
@@ -165,7 +182,7 @@
             [attr.y1]="windRoseConfig.center - windRoseConfig.maxRadius - windRoseConfig.innerRadius - 15"
             [attr.x2]="windRoseConfig.center"
             [attr.y2]="windRoseConfig.center - windRoseConfig.maxRadius - windRoseConfig.innerRadius - 25"
-            stroke="#e74c3c" stroke-width="3" />
+            stroke="#e74c3c" stroke-width="4" filter="url(#glow)" />
         </svg>
       </div>
 
