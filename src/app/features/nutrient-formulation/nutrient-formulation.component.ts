@@ -719,13 +719,25 @@ export class NutrientFormulationComponent implements OnInit {
     onPhaseChange(event?: any): void {
         this.onCropPhaseChange();
     }
-    getStatusClass(status: string): string {
-        const classes = {
-            'optimal': 'text-success',
-            'acceptable': 'text-warning',
-            'critical': 'text-danger'
-        };
-        return classes[status as keyof typeof classes] || 'text-muted';
+    getStatusClass(target: number, achieved: number): string {
+        const difference = Math.abs(target - achieved);
+        if (difference < target * 0.1) {
+            return 'status-optimal';
+        } else if (difference < target * 0.3) {
+            return 'text-warning';
+        } else {    
+            return 'status-critical';
+        }
+    }
+    getStatusText(target: number, achieved: number): string {
+        const difference = Math.abs(target - achieved);
+        if (difference < target * 0.1) {
+            return 'Óptimo';
+        } else if (difference < target * 0.3) {
+            return 'Aceptable';
+        } else {    
+            return 'Crítico';
+        }
     }
     getStatusIcon(status: string): string {
         const icons = {
@@ -2157,7 +2169,7 @@ export class NutrientFormulationComponent implements OnInit {
             parameter: result.parameter,
             target: result.target_value,
             actual: result.actual_value,
-            deviation: this.calculateDeviation(result.actual_value, result.target_value), // MODIFIED
+            deviation: this.calculateDeviation(result.actual_value.toString(), result.target_value.toString()), // MODIFIED
             status: result.status
         }));
 
@@ -2194,13 +2206,7 @@ export class NutrientFormulationComponent implements OnInit {
         this.renderFertilizerCharts();
         console.log("finished renderFertilizerCharts")
     }
-
-    /**
- * Calculate deviation as difference between achieved and target
- */
-    private calculateDeviation(actual: number, target: number): number {
-        return actual - target;
-    }
+ 
 
     /**
      * Process fertilizer usage data from api_fertilizers_raw
@@ -2229,30 +2235,14 @@ export class NutrientFormulationComponent implements OnInit {
                     dosage.dosage_g_per_L,
                     volumeLiters
                 );
-
-                // Replace 0 values with random numbers between 1 and 25
-                const processedNutrientContribution = {
-                    N: nutrientContribution.N === 0 ? this.getRandomValue() : nutrientContribution.N,
-                    P: nutrientContribution.P === 0 ? this.getRandomValue() : nutrientContribution.P,
-                    K: nutrientContribution.K === 0 ? this.getRandomValue() : nutrientContribution.K,
-                    Ca: nutrientContribution.Ca === 0 ? this.getRandomValue() : nutrientContribution.Ca,
-                    Mg: nutrientContribution.Mg === 0 ? this.getRandomValue() : nutrientContribution.Mg,
-                    S: nutrientContribution.S === 0 ? this.getRandomValue() : nutrientContribution.S,
-                    Fe: nutrientContribution.Fe === 0 ? this.getRandomValue() : nutrientContribution.Fe,
-                    Mn: nutrientContribution.Mn === 0 ? this.getRandomValue() : nutrientContribution.Mn,
-                    Zn: nutrientContribution.Zn === 0 ? this.getRandomValue() : nutrientContribution.Zn,
-                    Cu: nutrientContribution.Cu === 0 ? this.getRandomValue() : nutrientContribution.Cu,
-                    B: nutrientContribution.B === 0 ? this.getRandomValue() : nutrientContribution.B,
-                    Mo: nutrientContribution.Mo === 0 ? this.getRandomValue() : nutrientContribution.Mo
-                };
-
+  
                 return {
                     name,
                     dosage_g_per_L: dosage.dosage_g_per_L,
                     dosage_ml_per_L: dosage.dosage_ml_per_L,
                     cost_crc: cost,
                     cost_percentage: costPercentage,
-                    nutrient_contribution: processedNutrientContribution,
+                    nutrient_contribution: nutrientContribution,
                     raw_fertilizer: rawFert
                 };
             })
@@ -4453,12 +4443,30 @@ export class NutrientFormulationComponent implements OnInit {
     /**
     * Get deviation class for styling based on percentage
         */
-    getDeviationClass(percentage_deviation: number): string {
-        const abs_deviation = Math.abs(percentage_deviation);
-        if (abs_deviation < 5) return 'text-success';
-        if (abs_deviation < 15) return 'text-info';
-        if (abs_deviation < 30) return 'text-warning';
-        return 'text-danger';
+    getDeviationClass(target: any, actual: any): string {
+        const targetNum = parseFloat(target);
+        const actualNum = parseFloat(actual);
+        if (isNaN(targetNum) || isNaN(actualNum) || targetNum === 0) {
+            return 'text-muted'; // or some default class
+        }
+        const deviation = ((actualNum - targetNum) / targetNum) * 100;
+        if (Math.abs(deviation) <= 5) {
+            return 'text-success'; // Green
+        } else if (Math.abs(deviation) <= 15) {
+            return 'text-warning'; // Yellow
+        } else {
+            return 'text-danger'; // Red
+        }
+    }
+
+    calculateDeviation(target: any, actual: any): string {
+        const targetNum = parseFloat(target);
+        const actualNum = parseFloat(actual);
+        if (isNaN(targetNum) || isNaN(actualNum) || targetNum === 0) {
+            return 'N/A';
+        }
+        const deviation = ((actualNum - targetNum) / targetNum) * 100;
+        return deviation.toFixed(2);
     }
 
     /**

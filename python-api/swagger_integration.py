@@ -226,7 +226,7 @@ class SwaggerAPIClient:
                     requirements = data.get('result', {}).get('cropPhaseRequirements')
                     
                     if requirements:
-                        print(f"[SUCCESS] Found crop requirements")
+                        print(f"[SUCCESS] Found crop requirements {requirements}")
                         # Log some key requirements
                         for key in ['n', 'p', 'k', 'ca', 'mg']:
                             if key in requirements:

@@ -1131,16 +1131,14 @@
                                 <td>{{ result.target_value.toFixed(2) }}</td>
                                 <td>{{ result.actual_value.toFixed(2) }}</td>
                                 <td>
-                                  <span [class]="getDeviationClass(result.percentage_deviation)">
-                                    {{ result.percentage_deviation.toFixed(2) }}%
+                                  <span [class]="getDeviationClass(result.target_value, result.actual_value)">
+                                    {{ calculateDeviation(result.target_value.toFixed(2),
+                                    result.actual_value.toFixed(2)) }}%
                                   </span>
                                 </td>
                                 <td>
-                                  <span class="badge" [class.bg-success]="result.status === 'Excellent'"
-                                    [class.bg-info]="result.status === 'Good'"
-                                    [class.bg-warning]="result.status === 'Acceptable'"
-                                    [class.bg-danger]="result.status === 'Low'">
-                                    {{ result.status }}
+                                  <span [class]="getStatusClass(result.target_value, result.actual_value)">
+                                    {{ getStatusText(result.target_value, result.actual_value) }}
                                   </span>
                                 </td>
                               </tr>
@@ -1370,7 +1368,7 @@
                     <!-- Enhanced Parameters for Advanced Calculation -->
                     <div class="row mb-4" *ngIf="enhancedFormulationResults && enhancedFormulationResults.length > 0">
                       <div class="col-12">
-                        <h6><i class="bi bi-beaker me-2"></i>Análisis Completo de Parámetros</h6>
+                        <h6><i class="bi bi-beaker me-2"></i>Análisis Parámetros Adicionales</h6>
                         <div class="table-responsive">
                           <table class="table table-striped">
                             <thead class="table-dark">

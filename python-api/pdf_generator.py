@@ -974,7 +974,7 @@ class EnhancedPDFReportGenerator:
         # Filter active fertilizers (dosage > 0)
         active_fertilizers = {
             name: dosage for name, dosage in fertilizer_dosages.items()
-            if dosage.get('dosage_g_per_L', 0) > 0
+            if getattr(dosage, 'dosage_g_per_L', 0) > 0
         }
         
         if active_fertilizers:

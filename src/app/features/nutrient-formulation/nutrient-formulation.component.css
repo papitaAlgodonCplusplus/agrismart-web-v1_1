@@ -1399,3 +1399,18 @@ body.modal-open {
   transform: scale(0.95);
 }
 
+.status-optimal {
+  color: #28a745;
+  background-color: linear-gradient(135deg, rgba(40, 167, 69, 0.15) 0%, rgba(40, 167, 69, 0.05) 100%);
+  font-weight: 600;
+}
+.status-warning {
+  color: #ffc107;
+  background-color: linear-gradient(135deg, rgba(255, 193, 7, 0.15) 0%, rgba(255, 193, 7, 0.05) 100%);
+  font-weight: 600;
+}
+.status-critical {
+  color: #dc3545;
+  background-color: linear-gradient(135deg, rgba(220, 53, 69, 0.15) 0%, rgba(220, 53, 69, 0.05) 100%);
+  font-weight: 600;
+}
