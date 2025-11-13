@@ -111,8 +111,6 @@
       </div>
     </div>
 
-
-    <!-- 
     <div class="chart-card wind-rose-card">
       <div class="chart-header">
         <h3>
@@ -122,83 +120,62 @@
           <small>Distribución de velocidad y dirección del viento</small>
         </div>
       </div>
-       <div class="chart-content custom-wind-rose-container" *ngIf="windRoseSegments.length > 0">
+
+      <div class="chart-content custom-wind-rose-container" *ngIf="windRoseSegments.length > 0">
         <svg [attr.width]="windRoseConfig.size" [attr.height]="windRoseConfig.size"
           [attr.viewBox]="'0 0 ' + windRoseConfig.size + ' ' + windRoseConfig.size" class="wind-rose-svg">
 
-           
+          <!-- Grid circles -->
           <g class="grid-circles">
-            <circle *ngFor="let circle of getGridCircles()" [attr.cx]="windRoseConfig.center"
-              [attr.cy]="windRoseConfig.center" [attr.r]="circle.radius" fill="none" stroke="#e0e0e0" stroke-width="1"
-              stroke-dasharray="4 4" />
-            <text *ngFor="let circle of getGridCircles()" [attr.x]="windRoseConfig.center + 5"
-              [attr.y]="windRoseConfig.center - circle.radius" font-size="10" fill="#999">
-              {{circle.percentage}}%
-            </text>
+            <ng-container *ngFor="let circle of getGridCircles(); trackBy: trackByCircleRadius">
+              <circle [attr.cx]="windRoseConfig.center" [attr.cy]="windRoseConfig.center" [attr.r]="circle.radius"
+                fill="none" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="4 4" />
+              <text [attr.x]="windRoseConfig.center + 5" [attr.y]="windRoseConfig.center - circle.radius" font-size="10"
+                fill="#999">
+                {{circle.percentage}}%
+              </text>
+            </ng-container>
           </g>
- 
+
+          <!-- Wind segments -->
           <g class="wind-segments">
-            <path *ngFor="let segment of windRoseSegments" [attr.d]="segment.path" [attr.fill]="segment.color"
-              [attr.stroke]="'white'" [attr.stroke-width]="2" [class.hovered]="hoveredSegment === segment.segmentId"
-              (mouseenter)="onSegmentHover(segment.segmentId)" (mouseleave)="onSegmentHover(null)" class="wind-segment">
+            <path *ngFor="let segment of windRoseSegments; trackBy: trackBySegmentId" [attr.d]="segment.path"
+              [attr.fill]="segment.color" [attr.stroke]="'white'" [attr.stroke-width]="2"
+              [class.hovered]="hoveredSegment === segment.segmentId" (mouseenter)="onSegmentHover(segment.segmentId)"
+              (mouseleave)="onSegmentHover(null)" class="wind-segment">
               <title>{{segment.direction}}: {{segment.speedRange}} - {{segment.frequency | number:'1.1-1'}}%</title>
             </path>
-          </g> 
- 
+          </g>
+
+          <!-- Center circle -->
           <circle [attr.cx]="windRoseConfig.center" [attr.cy]="windRoseConfig.center"
             [attr.r]="windRoseConfig.innerRadius" fill="white" stroke="#2c3e50" stroke-width="2" />
- 
+
+          <!-- Direction labels - FIXED: Use component property instead of inline array -->
           <g class="direction-labels">
-            <text
-              *ngFor="let direction of ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']; let i = index"
-              [attr.x]="getDirectionLabelPosition(direction, i).x" [attr.y]="getDirectionLabelPosition(direction, i).y"
+            <text *ngFor="let direction of directions; let i = index; trackBy: trackByDirection"
+              [attr.x]="getDirectionLabelPosition(direction).x" [attr.y]="getDirectionLabelPosition(direction).y"
               text-anchor="middle" dominant-baseline="middle" fill="#2c3e50" font-size="14" font-weight="600">
               {{direction}}
             </text>
           </g>
- 
+
+          <!-- North indicator arrow -->
           <line [attr.x1]="windRoseConfig.center"
             [attr.y1]="windRoseConfig.center - windRoseConfig.maxRadius - windRoseConfig.innerRadius - 15"
             [attr.x2]="windRoseConfig.center"
             [attr.y2]="windRoseConfig.center - windRoseConfig.maxRadius - windRoseConfig.innerRadius - 25"
             stroke="#e74c3c" stroke-width="3" />
         </svg>
-
-         <div class="wind-rose-legend">
-          <div *ngFor="let trace of windRoseData" class="legend-item" [style.border-color]="trace.marker.color + '40'">
-            <div class="legend-color" [style.background-color]="trace.marker.color">
-            </div>
-            <span class="legend-label">{{trace.name}}</span>
-          </div>
-        </div>
-
-         <div class="wind-rose-summary">
-          <div class="summary-item">
-            <div class="summary-value">1,239</div>
-            <div class="summary-label">Lecturas</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-value">16</div>
-            <div class="summary-label">Direcciones</div>
-          </div>
-          <div class="summary-item">
-            <div class="summary-value">{{getMaxFrequency() | number:'1.1-1'}}%</div>
-            <div class="summary-label">Max Frecuencia</div>
-          </div>
-        </div>
-
-        <p class="wind-rose-hint">
-          💡 Pasa el cursor sobre los segmentos para ver detalles
-        </p>
       </div>
 
-       <div class="no-data-message" *ngIf="windRoseSegments.length === 0">
+      <!-- No data message -->
+      <div class="no-data-message" *ngIf="windRoseSegments.length === 0">
         <i class="fas fa-wind"></i>
         <p>No hay datos de viento disponibles</p>
         <small>Esperando lecturas de los sensores de viento</small>
       </div>
     </div>
--->
   </div>
   <!-- Dashboard Content -->
   <div *ngIf="!isLoading && !error" class="dashboard-content">

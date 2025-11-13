@@ -76,6 +76,14 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   // Chart instances for cleanup
   private chartInstances: { [key: string]: Chart } = {};
 
+  // NEW PROPERTY - Add this one!
+  readonly directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+    'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+
+  // NEW CACHE PROPERTIES - Add these too!
+  private _gridCircles: { radius: number; percentage: number }[] | null = null;
+  private _directionLabelPositions: Map<string, { x: number, y: number }> = new Map();
+
   // Grouped data for display (now includes inactive devices)
   flowDevices: DeviceData[] = [];
   soilDevices: DeviceData[] = [];
@@ -409,7 +417,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       }
     });
   }
-
+ 
   initializeCharts(): void {
     // Destroy existing charts
     Object.values(this.chartInstances).forEach(chart => {
@@ -919,13 +927,68 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
     console.log("=== WIND ROSE DEBUG END ===");
   }
+ 
+  // ADD these NEW trackBy methods (they don't exist yet)
+  trackBySegmentId(index: number, segment: any): string {
+    return segment.segmentId;
+  }
 
-  // 3. ADD this new method to generate SVG segments
+  trackByCircleRadius(index: number, circle: any): number {
+    return circle.radius;
+  }
+
+  trackByDirection(index: number, direction: string): string {
+    return direction;
+  }
+
+  trackByTrace(index: number, trace: any): string {
+    return trace.name;
+  }
+
+  // REPLACE existing onSegmentHover method
+  onSegmentHover(segmentId: string | null) {
+    this.hoveredSegment = segmentId;
+  }
+
+  getDirectionLabelPosition(direction: string): { x: number, y: number } {
+    if (this._directionLabelPositions.has(direction)) {
+      return this._directionLabelPositions.get(direction)!;
+    }
+    const dirIndex = this.directions.indexOf(direction);
+    const angleStep = (2 * Math.PI) / 16;
+    const angle = -Math.PI / 2 + dirIndex * angleStep;
+    const radius = this.windRoseConfig.maxRadius + 20;
+    const x = this.windRoseConfig.center + radius * Math.cos(angle);
+    const y = this.windRoseConfig.center + radius * Math.sin(angle);
+    const position = { x, y };
+    this._directionLabelPositions.set(direction, position);
+    return position;
+  }
+
+  getGridCircles(): { radius: number; percentage: number }[] {
+    if (this._gridCircles) {
+      return this._gridCircles;
+    }
+    const maxFrequency = this.getMaxFrequency();
+    const circles = [];
+    for (let i = 1; i <= 5; i++) {
+      const percentage = (i / 5) * 100;
+      const radius = (percentage / 100) * this.windRoseConfig.maxRadius;
+      circles.push({ radius, percentage });
+    }
+    this._gridCircles = circles;
+    return circles;
+  }
+
+  // REPLACE existing generateWindRoseSegments method
   generateWindRoseSegments(): void {
     if (!this.windRoseData || this.windRoseData.length === 0) {
       this.windRoseSegments = [];
       return;
     }
+
+    // Clear position cache when regenerating
+    this._directionLabelPositions.clear();
 
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
       'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
@@ -989,37 +1052,5 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     });
 
     console.log("Generated", this.windRoseSegments.length, "wind rose segments");
-  }
-
-  // 4. ADD helper methods for the template
-  getDirectionLabelPosition(direction: string, index: number) {
-    const { center, maxRadius, innerRadius } = this.windRoseConfig;
-    const angleStep = (2 * Math.PI) / 16;
-    const startAngle = -Math.PI / 2;
-    const angle = startAngle + index * angleStep;
-    const labelRadius = maxRadius + innerRadius + 35;
-
-    return {
-      x: center + labelRadius * Math.cos(angle),
-      y: center + labelRadius * Math.sin(angle)
-    };
-  }
-
-  getGridCircles() {
-    const { innerRadius, maxRadius } = this.windRoseConfig;
-    const numCircles = 4;
-    const circles = [];
-
-    for (let i = 1; i <= numCircles; i++) {
-      const radius = innerRadius + (maxRadius / numCircles) * i;
-      const percentage = (100 / numCircles) * i;
-      circles.push({ radius, percentage });
-    }
-
-    return circles;
-  }
-
-  onSegmentHover(segmentId: string | null) {
-    this.hoveredSegment = segmentId;
   }
 }
