@@ -6,7 +6,6 @@ import {
   IrrigationSectorService,
   ProcessedDeviceData
 } from '../../services/irrigation-sector.service';
-import * as Plotly from 'plotly.js-dist-min';
 import { DeviceService } from '../../devices/services/device.service';
 
 interface RawDeviceData {
@@ -83,6 +82,15 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   climateDevices: DeviceData[] = [];
   pressureDevices: DeviceData[] = [];
   phDevices: DeviceData[] = [];
+
+  hoveredSegment: string | null = null;
+  windRoseSegments: any[] = [];
+  windRoseConfig = {
+    size: 600,
+    center: 300,
+    maxRadius: 220,
+    innerRadius: 30
+  };
 
   // Historical data for charts
   historicalData: { [key: string]: HistoricalData[] } = {};
@@ -163,14 +171,6 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
         chart.destroy();
       }
     });
-
-    // Clean up Plotly chart
-    if (this.windRoseChartInstance) {
-      const chartElement = document.getElementById('windRoseChart');
-      if (chartElement) {
-        Plotly.purge('windRoseChart');
-      }
-    }
   }
 
   loadDeviceData(): void {
@@ -186,9 +186,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
       this.allRegisteredDevices = registeredDevices || [];
       this.rawData = rawData || [];
-      if (!this.windDataLoaded) {
-        this.createWindRoseChart();
-      }
+      this.prepareWindRoseData();
 
       // Track which devices are sending data
       this.activeDeviceIds = new Set(rawData?.map(item => item.deviceId));
@@ -725,76 +723,22 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
 
- // Add this method to prepare wind rose data
-  prepareWindRoseData(): void {
-    const windData: { direction: number; speed: number }[] = [];
-
-    console.log("rawData for wind rose: ", this.rawData);
-    const windRawData = this.rawData.filter(item =>
-      item.sensor === 'wind_speed' ||
-      item.sensor === 'wind_speed_level' ||
-      item.sensor === 'wind_direction_angle'
-    );
-    console.log("Filtered wind raw data count: ", windRawData.length);
-    
-    // Create an efficient lookup map grouped by deviceId and recordDate
-    const dataMap = new Map<string, Map<string, RawDeviceData>>();
-    
-     windRawData.forEach(item => {
-      const key = `${item.deviceId}_${item.recordDate}`;
-      if (!dataMap.has(key)) {
-        dataMap.set(key, new Map());
-      }
-      dataMap.get(key)!.set(item.sensor, item);
-    });
-
-    console.log("dataMap size: ", dataMap.size);
-    console.log("dataMap sample: ", Array.from(dataMap.entries()).slice(0,5));
-    // Process each unique deviceId + recordDate combination
-    dataMap.forEach((sensors, key) => {
-      let windSpeed = 0;
-      let windDirection = 0;
-
-      // Try to get wind_speed (m/s) - primary data source
-      const speedReading = sensors.get('wind_speed');
-      console.log("speedReading: ", speedReading);
-
-      // If wind_speed is missing or zero, fall back to wind_speed_level
-      if (!speedReading || !speedReading.payload || parseFloat(speedReading.payload) === 0) {
-        const levelReading = sensors.get('wind_speed_level');
-        windSpeed = parseFloat(levelReading?.payload ?? '') || 0;
-      } else {
-        windSpeed = parseFloat(speedReading.payload) || 0;
-      }
-
-      // Get wind direction
-      const directionReading = sensors.get('wind_direction_angle');
-      console.log("directionReading: ", directionReading);
-      windDirection = parseFloat(directionReading?.payload ?? '') || 0;
-
-      // Only add valid data points
-      if (windSpeed > 0 && windDirection >= 0 && windDirection <= 360) {
-        windData.push({
-          direction: windDirection,
-          speed: windSpeed
-        });
-      }
-    });
-
-    console.log("Valid wind data points: ", windData.length);
-    this.windRoseData = this.aggregateWindRoseData(windData);
-    this.windDataLoaded = true;
-  }
-
   // Aggregate wind data into directional bins
   private aggregateWindRoseData(windData: { direction: number; speed: number }[]): any[] {
     console.log("windData: ", windData)
+
+    // Handle empty dataset
+    if (windData.length === 0) {
+      console.warn("No valid wind data points to aggregate");
+      return [];
+    }
+
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
       'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
     const directionAngles = [0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5,
       180, 202.5, 225, 247.5, 270, 292.5, 315, 337.5];
 
-    // Speed categories (Beaufort scale in m/s)
+    // Speed categories (Beaufort scale in m/s) - FIXED: inclusive upper bounds
     const speedRanges = [
       { label: '0-2 m/s (Calm)', min: 0, max: 2, color: '#4ecdc4' },
       { label: '2-5 m/s (Light)', min: 2, max: 5, color: '#45b7d1' },
@@ -827,12 +771,19 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
         }
       });
 
-      // Find speed range
-      const speedIndex = speedRanges.findIndex(
-        range => speed >= range.min && speed < range.max
-      );
+      // Find speed range - FIXED: use <= for upper bound to be inclusive
+      let speedIndex = -1;
+      for (let i = 0; i < speedRanges.length; i++) {
+        if (speed >= speedRanges[i].min && speed <= speedRanges[i].max) {
+          speedIndex = i;
+          break;
+        }
+      }
+
       if (speedIndex !== -1) {
         frequencyMatrix[closestDirIndex][speedIndex]++;
+      } else {
+        console.warn(`Speed ${speed} m/s did not fall into any category`);
       }
     });
 
@@ -841,6 +792,9 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     const percentageMatrix = frequencyMatrix.map(row =>
       row.map(count => (count / total) * 100)
     );
+
+    console.log("Frequency matrix (before percentage):", frequencyMatrix);
+    console.log("Percentage matrix:", percentageMatrix);
 
     // Prepare data for Plotly
     const traces: any[] = [];
@@ -867,58 +821,205 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     return traces;
   }
 
-  // Create the wind rose chart
-  createWindRoseChart(): void {
-    this.prepareWindRoseData();
-
-    const chartElement = document.getElementById('windRoseChart');
-    if (!chartElement) return;
-
-    const layout: Partial<Plotly.Layout> = {
-      title: {
-        text: 'Rosa de Vientos',
-        font: { size: 18, color: '#2c3e50' }
-      },
-      polar: {
-        radialaxis: {
-          title: { text: 'Frecuencia (%)' },
-          angle: 90,
-          ticksuffix: '%'
-        },
-        angularaxis: {
-          direction: 'clockwise',
-          rotation: 90
-        }
-      },
-      bargap: 0,
-      legend: {
-        orientation: 'v',
-        x: 1.1,
-        y: 0.5,
-        font: { size: 11 }
-      },
-      showlegend: true,
-      hovermode: 'closest',
-      paper_bgcolor: 'white',
-      plot_bgcolor: 'white',
-      margin: { t: 80, b: 60, l: 60, r: 180 }
-    };
-
-    const config: Partial<Plotly.Config> = {
-      responsive: true,
-      displayModeBar: true,
-      displaylogo: false,
-      // modeBarButtonsToRemove expects a narrow union type in the typings;
-      // cast to any to avoid the string[] -> ModeBarDefaultButtons[] type error
-      modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'] as any
-    };
-
-    // Create or update the chart
-    if (this.windRoseChartInstance) {
-      Plotly.react('windRoseChart', this.windRoseData, layout, config);
-    } else {
-      Plotly.newPlot('windRoseChart', this.windRoseData, layout, config);
-      this.windRoseChartInstance = true;
+  getMaxFrequency(): number {
+    if (!this.windRoseData || this.windRoseData.length === 0) {
+      return 0;
     }
+
+    const allFrequencies = this.windRoseData.flatMap(trace => trace.r || []);
+    return allFrequencies.length > 0 ? Math.max(...allFrequencies) : 0;
+  }
+
+  prepareWindRoseData(): void {
+    const windData: { direction: number; speed: number }[] = [];
+
+    console.log("=== WIND ROSE DEBUG START ===");
+    console.log("Total rawData count:", this.rawData.length);
+
+    const windRawData = this.rawData.filter(item =>
+      item.sensor === 'wind_speed' ||
+      item.sensor === 'wind_speed_level' ||
+      item.sensor === 'wind_direction_angle'
+    );
+    console.log("Filtered wind raw data count:", windRawData.length);
+
+    const sensorCounts = windRawData.reduce((acc, item) => {
+      acc[item.sensor] = (acc[item.sensor] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    console.log("Sensor counts:", sensorCounts);
+
+    const dataMap = new Map<string, Map<string, RawDeviceData>>();
+
+    windRawData.forEach(item => {
+      const key = `${item.deviceId}_${item.recordDate}`;
+      if (!dataMap.has(key)) {
+        dataMap.set(key, new Map());
+      }
+      dataMap.get(key)!.set(item.sensor, item);
+    });
+
+    console.log("Unique device+time combinations:", dataMap.size);
+
+    let validDataCount = 0;
+    let zeroSpeedCount = 0;
+    let nosensorCount = 0;
+
+    dataMap.forEach((sensors, key) => {
+      let windSpeed = 0;
+      let windDirection = 0;
+
+      const speedReading = sensors.get('wind_speed');
+      const isValidSpeed = speedReading?.payload &&
+        speedReading.payload !== 'Nosensor' &&
+        speedReading.payload !== 'null' &&
+        !isNaN(parseFloat(speedReading.payload));
+
+      if (speedReading?.payload === 'Nosensor') nosensorCount++;
+
+      if (!isValidSpeed || parseFloat(speedReading!.payload) === 0) {
+        const levelReading = sensors.get('wind_speed_level');
+        const isValidLevel = levelReading?.payload &&
+          levelReading.payload !== 'Nosensor' &&
+          levelReading.payload !== 'null' &&
+          !isNaN(parseFloat(levelReading.payload));
+
+        windSpeed = isValidLevel ? parseFloat(levelReading!.payload) : 0;
+      } else {
+        windSpeed = parseFloat(speedReading!.payload);
+      }
+
+      const directionReading = sensors.get('wind_direction_angle');
+      const isValidDirection = directionReading?.payload &&
+        directionReading.payload !== 'Nosensor' &&
+        directionReading.payload !== 'null' &&
+        !isNaN(parseFloat(directionReading.payload));
+
+      windDirection = isValidDirection ? parseFloat(directionReading!.payload) : -1;
+
+      if (windSpeed === 0) zeroSpeedCount++;
+
+      if (windSpeed >= 0 && windDirection >= 0 && windDirection <= 360 && isValidDirection) {
+        windData.push({
+          direction: windDirection,
+          speed: windSpeed
+        });
+        validDataCount++;
+      }
+    });
+
+    console.log("Processing summary:");
+    console.log("  - Valid data points:", validDataCount);
+    console.log("  - Zero speed readings:", zeroSpeedCount);
+    console.log("  - 'Nosensor' readings:", nosensorCount);
+
+    this.windRoseData = this.aggregateWindRoseData(windData);
+    this.generateWindRoseSegments(); // Generate SVG segments
+    this.windDataLoaded = true;
+
+    console.log("=== WIND ROSE DEBUG END ===");
+  }
+
+  // 3. ADD this new method to generate SVG segments
+  generateWindRoseSegments(): void {
+    if (!this.windRoseData || this.windRoseData.length === 0) {
+      this.windRoseSegments = [];
+      return;
+    }
+
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+      'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+
+    // Calculate totals for each direction
+    const totals = new Array(16).fill(0);
+    this.windRoseData.forEach(trace => {
+      trace.r.forEach((freq: number, idx: number) => {
+        totals[idx] += freq;
+      });
+    });
+
+    const maxTotal = Math.max(...totals);
+    const angleStep = (2 * Math.PI) / 16;
+    const startAngle = -Math.PI / 2;
+
+    const { size, center, maxRadius, innerRadius } = this.windRoseConfig;
+
+    const polarToCartesian = (angle: number, radius: number) => {
+      return {
+        x: center + radius * Math.cos(angle),
+        y: center + radius * Math.sin(angle)
+      };
+    };
+
+    const createSegmentPath = (directionIndex: number, innerR: number, outerR: number) => {
+      const angle1 = startAngle + directionIndex * angleStep - angleStep / 2;
+      const angle2 = startAngle + directionIndex * angleStep + angleStep / 2;
+
+      const p1 = polarToCartesian(angle1, innerR);
+      const p2 = polarToCartesian(angle2, innerR);
+      const p3 = polarToCartesian(angle2, outerR);
+      const p4 = polarToCartesian(angle1, outerR);
+
+      return `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y} L ${p4.x} ${p4.y} Z`;
+    };
+
+    this.windRoseSegments = [];
+
+    directions.forEach((direction, dirIdx) => {
+      let currentRadius = innerRadius;
+
+      this.windRoseData.forEach((trace, rangeIdx) => {
+        const frequency = trace.r[dirIdx];
+        if (frequency > 0) {
+          const segmentHeight = (frequency / maxTotal) * maxRadius;
+          const outerRadius = currentRadius + segmentHeight;
+
+          this.windRoseSegments.push({
+            path: createSegmentPath(dirIdx, currentRadius, outerRadius),
+            color: trace.marker.color,
+            direction: direction,
+            speedRange: trace.name,
+            frequency: frequency,
+            segmentId: `${dirIdx}-${rangeIdx}`
+          });
+
+          currentRadius = outerRadius;
+        }
+      });
+    });
+
+    console.log("Generated", this.windRoseSegments.length, "wind rose segments");
+  }
+
+  // 4. ADD helper methods for the template
+  getDirectionLabelPosition(direction: string, index: number) {
+    const { center, maxRadius, innerRadius } = this.windRoseConfig;
+    const angleStep = (2 * Math.PI) / 16;
+    const startAngle = -Math.PI / 2;
+    const angle = startAngle + index * angleStep;
+    const labelRadius = maxRadius + innerRadius + 35;
+
+    return {
+      x: center + labelRadius * Math.cos(angle),
+      y: center + labelRadius * Math.sin(angle)
+    };
+  }
+
+  getGridCircles() {
+    const { innerRadius, maxRadius } = this.windRoseConfig;
+    const numCircles = 4;
+    const circles = [];
+
+    for (let i = 1; i <= numCircles; i++) {
+      const radius = innerRadius + (maxRadius / numCircles) * i;
+      const percentage = (100 / numCircles) * i;
+      circles.push({ radius, percentage });
+    }
+
+    return circles;
+  }
+
+  onSegmentHover(segmentId: string | null) {
+    this.hoveredSegment = segmentId;
   }
 }
