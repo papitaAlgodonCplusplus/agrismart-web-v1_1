@@ -1014,3 +1014,82 @@
     min-width: 35px;
   }
 }
+
+/* Add these styles to your shiny-dashboard.component.css */
+
+/* Wind Rose Card */
+.wind-rose-card {
+  grid-column: span 2;
+  min-height: 600px;
+}
+
+.chart-footer {
+  padding: 12px 20px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  border-radius: 0 0 12px 12px;
+  text-align: center;
+}
+
+.chart-footer small {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.no-data-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #95a5a6;
+}
+
+.no-data-message i {
+  font-size: 3rem;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
+
+.no-data-message p {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #7f8c8d;
+}
+
+.no-data-message small {
+  font-size: 0.9rem;
+  color: #adb5bd;
+}
+
+/* Responsive adjustments for wind rose */
+@media (max-width: 1200px) {
+  .wind-rose-card {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .wind-rose-card {
+    min-height: 450px;
+  }
+  
+  .wind-rose-card .chart-content {
+    height: 400px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .wind-rose-card {
+    min-height: 400px;
+  }
+  
+  .wind-rose-card .chart-content {
+    height: 350px !important;
+  }
+}

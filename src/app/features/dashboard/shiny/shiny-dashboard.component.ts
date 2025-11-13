@@ -6,6 +6,7 @@ import {
   IrrigationSectorService,
   ProcessedDeviceData
 } from '../../services/irrigation-sector.service';
+import * as Plotly from 'plotly.js-dist-min';
 import { DeviceService } from '../../devices/services/device.service';
 
 interface RawDeviceData {
@@ -70,6 +71,8 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   error: string | null = null;
   showCharts = false;
   selectedChartType = 'flow';
+  private windRoseChartInstance: any = null;
+  windRoseData: any[] = [];
 
   // Chart instances for cleanup
   private chartInstances: { [key: string]: Chart } = {};
@@ -90,7 +93,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   // Device activity tracking
   activeDeviceIds: Set<string> = new Set();
   inactiveDevices: DeviceData[] = [];
-
+  windDataLoaded = false;
   // Sensor units mapping
   private sensorUnits: { [key: string]: string } = {
     // pH sensors
@@ -153,17 +156,26 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   ngOnDestroy(): void {
-    // Clean up chart instances
+
+    // Clean up Chart.js instances
     Object.values(this.chartInstances).forEach(chart => {
       if (chart) {
         chart.destroy();
       }
     });
+
+    // Clean up Plotly chart
+    if (this.windRoseChartInstance) {
+      const chartElement = document.getElementById('windRoseChart');
+      if (chartElement) {
+        Plotly.purge('windRoseChart');
+      }
+    }
   }
 
   loadDeviceData(): void {
     this.isLoading = true;
-    
+
     // Load both registered devices and raw data
     Promise.all([
       this.deviceService.getAll().toPromise(),
@@ -171,13 +183,16 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     ]).then(([registeredDevices, rawData]: [any[] | undefined, any[] | undefined]) => {
       console.log('Registered devices loaded:', registeredDevices);
       console.log('Raw device data loaded:', rawData);
-      
+
       this.allRegisteredDevices = registeredDevices || [];
       this.rawData = rawData || [];
-      
+      if (!this.windDataLoaded) {
+        this.createWindRoseChart();
+      }
+
       // Track which devices are sending data
       this.activeDeviceIds = new Set(rawData?.map(item => item.deviceId));
-      
+
       this.processRawData();
       this.processHistoricalData();
       this.createInactiveDevices();
@@ -354,7 +369,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
               const adjustedDate = new Date(date.getTime() - (6 * 60 * 60 * 1000));
               return adjustedDate.toLocaleTimeString();
             });
-            
+
             // Group by device for multiple series
             const deviceGroups: { [key: string]: any[] } = {};
             recentValues.forEach(value => {
@@ -513,7 +528,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   getDeviceStatus(device: DeviceData): string {
     if (!device.isActive) return 'inactive';
-    
+
     return 'online';
   }
 
@@ -707,5 +722,186 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   goToDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+
+  // Add this method to prepare wind rose data
+  prepareWindRoseData(): void {
+    const windData: { direction: number; speed: number }[] = [];
+
+    console.log("rawData for wind rose: ", this.rawData);
+    this.rawData.forEach(item => {
+      let windSpeed = 0;
+      let windDirection = 0;
+
+      // First, try to get wind_speed (m/s) - primary data source
+      const speedReading = this.rawData.find(
+        r => r.deviceId === item.deviceId && r.sensor === 'wind_speed' && r.recordDate === item.recordDate
+      );
+      console.log("speedReading: ", speedReading)
+
+      // If wind_speed is missing or zero, fall back to wind_speed_level
+      if (!speedReading || !speedReading.payload || parseInt(speedReading.payload) === 0) {
+        const levelReading = this.rawData.find(
+          r => r.deviceId === item.deviceId && r.sensor === 'wind_speed_level' && r.recordDate === item.recordDate
+        );
+        windSpeed = parseFloat(levelReading?.payload ?? '') || 0;
+      } else {
+        windSpeed = parseFloat(speedReading.payload) || 0;
+      }
+
+      // Get wind direction
+      const directionReading = this.rawData.find(
+        r => r.deviceId === item.deviceId && r.sensor === 'wind_direction_angle' && r.recordDate === item.recordDate
+      );
+      console.log("directionReading: ", directionReading);
+      windDirection = parseFloat(directionReading?.payload ?? '') || 0;
+
+      // Only add valid data points
+      if (windSpeed > 0 && windDirection >= 0 && windDirection <= 360) {
+        windData.push({
+          direction: windDirection,
+          speed: windSpeed
+        });
+      }
+    });
+
+    this.windRoseData = this.aggregateWindRoseData(windData);
+    this.windDataLoaded = true;
+  }
+
+  // Aggregate wind data into directional bins
+  private aggregateWindRoseData(windData: { direction: number; speed: number }[]): any[] {
+    console.log("windData: ", windData)
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+      'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const directionAngles = [0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5,
+      180, 202.5, 225, 247.5, 270, 292.5, 315, 337.5];
+
+    // Speed categories (Beaufort scale in m/s)
+    const speedRanges = [
+      { label: '0-2 m/s (Calm)', min: 0, max: 2, color: '#4ecdc4' },
+      { label: '2-5 m/s (Light)', min: 2, max: 5, color: '#45b7d1' },
+      { label: '5-8 m/s (Moderate)', min: 5, max: 8, color: '#f7b731' },
+      { label: '8-11 m/s (Fresh)', min: 8, max: 11, color: '#fd9644' },
+      { label: '>11 m/s (Strong)', min: 11, max: Infinity, color: '#e74c3c' }
+    ];
+
+    // Initialize frequency counts
+    const frequencyMatrix: number[][] = [];
+    directions.forEach(() => {
+      frequencyMatrix.push(new Array(speedRanges.length).fill(0));
+    });
+
+    // Categorize each wind reading
+    windData.forEach(({ direction, speed }) => {
+      // Find closest direction bin
+      let closestDirIndex = 0;
+      let minDiff = Math.abs(direction - directionAngles[0]);
+
+      directionAngles.forEach((angle, index) => {
+        const diff = Math.min(
+          Math.abs(direction - angle),
+          Math.abs(direction - angle + 360),
+          Math.abs(direction - angle - 360)
+        );
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestDirIndex = index;
+        }
+      });
+
+      // Find speed range
+      const speedIndex = speedRanges.findIndex(
+        range => speed >= range.min && speed < range.max
+      );
+      if (speedIndex !== -1) {
+        frequencyMatrix[closestDirIndex][speedIndex]++;
+      }
+    });
+
+    // Convert to percentage
+    const total = windData.length || 1;
+    const percentageMatrix = frequencyMatrix.map(row =>
+      row.map(count => (count / total) * 100)
+    );
+
+    // Prepare data for Plotly
+    const traces: any[] = [];
+    speedRanges.forEach((range, speedIndex) => {
+      traces.push({
+        type: 'barpolar',
+        name: range.label,
+        r: percentageMatrix.map(row => row[speedIndex]),
+        theta: directions,
+        marker: {
+          color: range.color,
+          line: {
+            color: 'white',
+            width: 1
+          }
+        },
+        hovertemplate: '<b>%{theta}</b><br>' +
+          'Frecuencia: %{r:.1f}%<br>' +
+          '<extra></extra>'
+      });
+    });
+
+    return traces;
+  }
+
+  // Create the wind rose chart
+  createWindRoseChart(): void {
+    this.prepareWindRoseData();
+
+    const chartElement = document.getElementById('windRoseChart');
+    if (!chartElement) return;
+
+    const layout: Partial<Plotly.Layout> = {
+      title: {
+        text: 'Rosa de Vientos',
+        font: { size: 18, color: '#2c3e50' }
+      },
+      polar: {
+        radialaxis: {
+          title: { text: 'Frecuencia (%)' },
+          angle: 90,
+          ticksuffix: '%'
+        },
+        angularaxis: {
+          direction: 'clockwise',
+          rotation: 90
+        }
+      },
+      bargap: 0,
+      legend: {
+        orientation: 'v',
+        x: 1.1,
+        y: 0.5,
+        font: { size: 11 }
+      },
+      showlegend: true,
+      hovermode: 'closest',
+      paper_bgcolor: 'white',
+      plot_bgcolor: 'white',
+      margin: { t: 80, b: 60, l: 60, r: 180 }
+    };
+
+    const config: Partial<Plotly.Config> = {
+      responsive: true,
+      displayModeBar: true,
+      displaylogo: false,
+      // modeBarButtonsToRemove expects a narrow union type in the typings;
+      // cast to any to avoid the string[] -> ModeBarDefaultButtons[] type error
+      modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'] as any
+    };
+
+    // Create or update the chart
+    if (this.windRoseChartInstance) {
+      Plotly.react('windRoseChart', this.windRoseData, layout, config);
+    } else {
+      Plotly.newPlot('windRoseChart', this.windRoseData, layout, config);
+      this.windRoseChartInstance = true;
+    }
   }
 }
