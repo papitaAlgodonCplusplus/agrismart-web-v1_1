@@ -26,6 +26,22 @@ interface ThermostatReading {
   color: string;
 }
 
+// 1. ADD INTERFACE (after ThermostatReading interface)
+interface TSRDataPoint {
+  timestamp: string;
+  tsrMax: number;
+  tsrMean: number;
+  tsrMin: number;
+  deviceId: string;
+}
+
+interface TSRChartData {
+  dataPoints: TSRDataPoint[];
+  dligMax: number;
+  dligMean: number;
+  dligMin: number;
+  timeRange: { start: string; end: string };
+}
 interface CropTemperatureData {
   cropName: string;
   baseTemperature: number;
@@ -95,7 +111,29 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   selectedChartType = 'flow';
   private windRoseChartInstance: any = null;
   windRoseData: any[] = [];
+  tsrChartData: TSRChartData = {
+    dataPoints: [],
+    dligMax: 0,
+    dligMean: 0,
+    dligMin: 0,
+    timeRange: { start: '', end: '' }
+  };
 
+  tsrChartConfig = {
+    width: 1200,
+    height: 600,
+    padding: { top: 40, right: 80, bottom: 80, left: 80 },
+    flameColors: {
+      max: { start: '#ff4500', end: '#ff8c00' },
+      mean: { start: '#ffa500', end: '#ffd700' },
+      min: { start: '#ffb347', end: '#ffe4b5' }
+    }
+  };
+
+  hoveredTSRPoint: TSRDataPoint | null = null;
+  hoveredTSRIndex: number = -1;
+
+  // 3. ADD METHOD to
   // Chart instances for cleanup
   private chartInstances: { [key: string]: Chart } = {};
 
@@ -227,6 +265,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       this.processRawData();
       this.processHistoricalData();
       this.prepareThermostatData();
+      this.prepareTSRData();
       this.createInactiveDevices();
       this.isLoading = false;
 
@@ -1350,5 +1389,269 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   trackByTickIndex(index: number): number {
     return index;
   }
- 
+
+
+
+  private calculateDLIg(radiationValues: number[]): number {
+    // DLIg = (Sum of hourly radiation in W/m²) / 1000 × 3.6
+    const sum = radiationValues.reduce((acc, val) => acc + val, 0);
+    return (sum / 1000) * 3.6;
+  }
+
+  // 4. ADD METHOD to prepare TSR data (call this in loadDeviceData after prepareThermostatData)
+  prepareTSRData(): void {
+    console.log("=== TSR DATA PREPARATION START ===");
+
+    // TSR sensor types to track - based on your system
+    const tsrSensors = [
+      'TSR',
+      'TotalSolarRadiation',
+      'TotalSolarRadiationMin',
+      'TotalSolarRadiationMax',
+      'TotalSolarRadiationAvg',
+      'solar_radiation',
+      'PAR'
+    ];
+
+    // Filter TSR data from rawData - only from climate/meteorological devices
+    const tsrRawData = this.rawData.filter(item =>
+      item.deviceId.includes('estacion-metereologica') &&
+      tsrSensors.some(sensor => item.sensor.includes(sensor) || item.sensor.toLowerCase().includes('radiation'))
+    );
+
+    console.log("TSR readings found:", tsrRawData.length);
+    console.log("TSR sensors detected:", [...new Set(tsrRawData.map(d => d.sensor))]);
+
+    if (tsrRawData.length === 0) {
+      console.warn("No TSR data found");
+      return;
+    }
+
+    // Group by timestamp (hour) to get max, mean, min
+    const timeGroups = new Map<string, { values: number[]; deviceId: string }>();
+
+    tsrRawData.forEach(item => {
+      const timestamp = new Date(item.recordDate);
+      // Round to nearest hour for grouping
+      timestamp.setMinutes(0, 0, 0);
+      const hourKey = timestamp.toISOString();
+
+      const value = this.extractNumericValue(item.payload);
+      if (value !== null && value >= 0) { // Only valid positive values
+        if (!timeGroups.has(hourKey)) {
+          timeGroups.set(hourKey, { values: [], deviceId: item.deviceId });
+        }
+        timeGroups.get(hourKey)!.values.push(value);
+      }
+    });
+
+    console.log("TSR time groups:", timeGroups.size);
+
+    // Calculate max, mean, min for each hour
+    const dataPoints: TSRDataPoint[] = [];
+
+    timeGroups.forEach((group, timestamp) => {
+      const values = group.values;
+      if (values.length > 0) {
+        dataPoints.push({
+          timestamp: timestamp,
+          tsrMax: Math.max(...values),
+          tsrMean: values.reduce((a, b) => a + b, 0) / values.length,
+          tsrMin: Math.min(...values),
+          deviceId: group.deviceId
+        });
+      }
+    });
+
+    // Sort by timestamp
+    dataPoints.sort((a, b) =>
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+
+    console.log("TSR data points created:", dataPoints.length);
+
+    // Calculate DLIg values
+    const dligMax = this.calculateDLIg(dataPoints.map(d => d.tsrMax));
+    const dligMean = this.calculateDLIg(dataPoints.map(d => d.tsrMean));
+    const dligMin = this.calculateDLIg(dataPoints.map(d => d.tsrMin));
+
+    // Get time range
+    const timeRange = dataPoints.length > 0 ? {
+      start: dataPoints[0].timestamp,
+      end: dataPoints[dataPoints.length - 1].timestamp
+    } : { start: '', end: '' };
+
+    this.tsrChartData = {
+      dataPoints,
+      dligMax,
+      dligMean,
+      dligMin,
+      timeRange
+    };
+
+    console.log("TSR Chart Data prepared:", {
+      dataPoints: this.tsrChartData.dataPoints.length,
+      dligMax: this.tsrChartData.dligMax.toFixed(2),
+      dligMean: this.tsrChartData.dligMean.toFixed(2),
+      dligMin: this.tsrChartData.dligMin.toFixed(2)
+    });
+  }
+
+  // 5. ADD SVG HELPER METHODS for TSR chart
+  getTSRChartDimensions() {
+    return {
+      chartWidth: this.tsrChartConfig.width - this.tsrChartConfig.padding.left - this.tsrChartConfig.padding.right,
+      chartHeight: this.tsrChartConfig.height - this.tsrChartConfig.padding.top - this.tsrChartConfig.padding.bottom
+    };
+  }
+
+  getTSRMaxValue(): number {
+    if (this.tsrChartData.dataPoints.length === 0) return 1000;
+    return Math.max(
+      ...this.tsrChartData.dataPoints.flatMap(d => [d.tsrMax, d.tsrMean, d.tsrMin])
+    );
+  }
+
+  getTSRXScale(index: number): number {
+    const { chartWidth } = this.getTSRChartDimensions();
+    const length = this.tsrChartData.dataPoints.length;
+    if (length <= 1) return 0;
+    return (index / (length - 1)) * chartWidth;
+  }
+
+  getTSRYScale(value: number): number {
+    const { chartHeight } = this.getTSRChartDimensions();
+    const maxValue = this.getTSRMaxValue();
+    return chartHeight - (value / maxValue) * chartHeight;
+  }
+
+  // Generate SVG path for area chart
+  generateTSRAreaPath(dataKey: 'tsrMin' | 'tsrMean' | 'tsrMax'): string {
+    if (this.tsrChartData.dataPoints.length === 0) return '';
+
+    const { chartWidth, chartHeight } = this.getTSRChartDimensions();
+    const pad = this.tsrChartConfig.padding;
+    const points = this.tsrChartData.dataPoints.map((d, i) => ({
+      x: this.getTSRXScale(i),
+      y: this.getTSRYScale(d[dataKey])
+    }));
+
+    let path = `M ${pad.left} ${pad.top + chartHeight} `;
+    path += `L ${pad.left + points[0].x} ${pad.top + points[0].y} `;
+
+    for (let i = 1; i < points.length; i++) {
+      const prevPoint = points[i - 1];
+      const currPoint = points[i];
+      const cpx = (prevPoint.x + currPoint.x) / 2;
+
+      path += `Q ${pad.left + cpx} ${pad.top + prevPoint.y}, `;
+      path += `${pad.left + currPoint.x} ${pad.top + currPoint.y} `;
+    }
+
+    path += `L ${pad.left + points[points.length - 1].x} ${pad.top + chartHeight} Z`;
+
+    return path;
+  }
+
+  // Generate SVG path for line
+  generateTSRLinePath(dataKey: 'tsrMin' | 'tsrMean' | 'tsrMax'): string {
+    if (this.tsrChartData.dataPoints.length === 0) return '';
+
+    const pad = this.tsrChartConfig.padding;
+    const points = this.tsrChartData.dataPoints.map((d, i) => ({
+      x: this.getTSRXScale(i),
+      y: this.getTSRYScale(d[dataKey])
+    }));
+
+    let path = `M ${pad.left + points[0].x} ${pad.top + points[0].y} `;
+
+    for (let i = 1; i < points.length; i++) {
+      const prevPoint = points[i - 1];
+      const currPoint = points[i];
+      const cpx = (prevPoint.x + currPoint.x) / 2;
+
+      path += `Q ${pad.left + cpx} ${pad.top + prevPoint.y}, `;
+      path += `${pad.left + currPoint.x} ${pad.top + currPoint.y} `;
+    }
+
+    return path;
+  }
+
+  // Get grid circles for Y-axis
+  getTSRGridLines(): { y: number; label: string }[] {
+    const { chartHeight } = this.getTSRChartDimensions();
+    const maxValue = this.getTSRMaxValue();
+    const pad = this.tsrChartConfig.padding;
+
+    return [0, 0.25, 0.5, 0.75, 1].map(ratio => ({
+      y: pad.top + chartHeight * ratio,
+      label: (maxValue * (1 - ratio)).toFixed(0)
+    }));
+  }
+
+  // Get X-axis labels (show every 4th point)
+  getTSRXAxisLabels(): { x: number; label: string; dataPoint: TSRDataPoint }[] {
+    return this.tsrChartData.dataPoints
+      .filter((_, i) => i % 4 === 0)
+      .map((d, i) => {
+        const index = i * 4;
+        return {
+          x: this.tsrChartConfig.padding.left + this.getTSRXScale(index),
+          label: this.formatTSRTime(d.timestamp),
+          dataPoint: d
+        };
+      });
+  }
+
+  // Format time for display
+  formatTSRTime(timestamp: string): string {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Format date for display
+  formatTSRDate(timestamp: string): string {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+  }
+
+  // Handle TSR chart hover
+  onTSRChartHover(event: MouseEvent, svgElement: SVGSVGElement): void {
+    if (this.tsrChartData.dataPoints.length === 0) return;
+
+    const rect = svgElement.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left - this.tsrChartConfig.padding.left;
+
+    const { chartWidth } = this.getTSRChartDimensions();
+
+    if (mouseX < 0 || mouseX > chartWidth) {
+      this.hoveredTSRPoint = null;
+      this.hoveredTSRIndex = -1;
+      return;
+    }
+
+    const index = Math.round((mouseX / chartWidth) * (this.tsrChartData.dataPoints.length - 1));
+    this.hoveredTSRIndex = index;
+    this.hoveredTSRPoint = this.tsrChartData.dataPoints[index];
+  }
+
+  onTSRChartLeave(): void {
+    this.hoveredTSRPoint = null;
+    this.hoveredTSRIndex = -1;
+  }
+
+  // Get tooltip position
+  getTSRTooltipX(): number {
+    if (this.hoveredTSRIndex < 0) return 0;
+    return this.tsrChartConfig.padding.left + this.getTSRXScale(this.hoveredTSRIndex) + 15;
+  }
+
+  getTSRTooltipY(): number {
+    return this.tsrChartConfig.padding.top + 20;
+  }
+
+  // TrackBy for performance
+  trackByTSRIndex(index: number): number {
+    return index;
+  } 
 }

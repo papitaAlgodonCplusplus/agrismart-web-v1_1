@@ -244,8 +244,8 @@
                 [attr.r]="thermostatConfig.outerRadius + 10" fill="none" stroke="#e9ecef" stroke-width="2" />
 
               <!-- Temperature Scale Arc (Background) -->
-              <path [attr.d]="getThermostatArcPath(reading)"
-                [attr.fill]="'url(#tempGradient-' + reading.deviceId + ')'" opacity="0.2" />
+              <path [attr.d]="getThermostatArcPath(reading)" [attr.fill]="'url(#tempGradient-' + reading.deviceId + ')'"
+                opacity="0.2" />
 
               <!-- Current Temperature Arc -->
               <path [attr.d]="getThermostatArcPath(reading)" [attr.fill]="reading.color"
@@ -370,7 +370,7 @@
               </div>
             </div>
           </div>
-        </div> 
+        </div>
       </div>
 
       <!-- No data message -->
@@ -378,7 +378,219 @@
         <i class="fas fa-thermometer-half"></i>
         <p>No hay datos de temperatura disponibles</p>
         <small>Esperando lecturas de los sensores de temperatura</small>
-      </div> 
+      </div>
+    </div>
+
+    <!-- ============================================================================
+     TSR DLIg CHART - COMPLETE HTML
+     Add to shiny-dashboard.component.html after the thermostat-card section
+     ============================================================================ -->
+
+    <!-- TSR DLIg CHART CARD -->
+    <div class="chart-card tsr-dlig-card">
+      <div class="chart-header">
+        <h3>
+          <i class="fas fa-sun"></i> Radiación Solar Total (TSR) - DLIg
+        </h3>
+        <div class="chart-info">
+          <small>Daily Light Integral - Global | Período: {{ tsrChartData.dataPoints.length }} horas</small>
+        </div>
+      </div>
+
+      <!-- DLIg Summary Cards -->
+      <div class="dlig-summary-cards">
+        <div class="dlig-card dlig-max">
+          <div class="dlig-card-header">
+            <span class="dlig-icon">🔥</span>
+            <span class="dlig-label">DLIg Máximo</span>
+          </div>
+          <div class="dlig-value">
+            {{ tsrChartData.dligMax.toFixed(2) }}
+            <span class="dlig-unit">MJ/m²</span>
+          </div>
+        </div>
+
+        <div class="dlig-card dlig-mean">
+          <div class="dlig-card-header">
+            <span class="dlig-icon">☀️</span>
+            <span class="dlig-label">DLIg Promedio</span>
+          </div>
+          <div class="dlig-value">
+            {{ tsrChartData.dligMean.toFixed(2) }}
+            <span class="dlig-unit">MJ/m²</span>
+          </div>
+        </div>
+
+        <div class="dlig-card dlig-min">
+          <div class="dlig-card-header">
+            <span class="dlig-icon">🌤️</span>
+            <span class="dlig-label">DLIg Mínimo</span>
+          </div>
+          <div class="dlig-value">
+            {{ tsrChartData.dligMin.toFixed(2) }}
+            <span class="dlig-unit">MJ/m²</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart Container -->
+      <div class="tsr-chart-container" *ngIf="tsrChartData.dataPoints.length > 0">
+        <svg #tsrChartSvg [attr.width]="tsrChartConfig.width" [attr.height]="tsrChartConfig.height"
+          [attr.viewBox]="'0 0 ' + tsrChartConfig.width + ' ' + tsrChartConfig.height" class="tsr-chart-svg"
+          (mousemove)="onTSRChartHover($event, $any(tsrChartSvg))" (mouseleave)="onTSRChartLeave()">
+
+          <!-- Definitions -->
+          <defs>
+            <!-- Gradients for areas -->
+            <linearGradient id="tsrGradientMax" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" [attr.stop-color]="tsrChartConfig.flameColors.max.start" stop-opacity="0.8" />
+              <stop offset="100%" [attr.stop-color]="tsrChartConfig.flameColors.max.start" stop-opacity="0.1" />
+            </linearGradient>
+
+            <linearGradient id="tsrGradientMean" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" [attr.stop-color]="tsrChartConfig.flameColors.mean.start" stop-opacity="0.7" />
+              <stop offset="100%" [attr.stop-color]="tsrChartConfig.flameColors.mean.start" stop-opacity="0.1" />
+            </linearGradient>
+
+            <linearGradient id="tsrGradientMin" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" [attr.stop-color]="tsrChartConfig.flameColors.min.start" stop-opacity="0.6" />
+              <stop offset="100%" [attr.stop-color]="tsrChartConfig.flameColors.min.start" stop-opacity="0.1" />
+            </linearGradient>
+
+            <!-- Glow filter -->
+            <filter id="tsrGlow">
+              <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          <!-- Grid lines -->
+          <g class="tsr-grid-lines" opacity="0.2">
+            <line *ngFor="let gridLine of getTSRGridLines(); trackBy: trackByTSRIndex"
+              [attr.x1]="tsrChartConfig.padding.left" [attr.y1]="gridLine.y"
+              [attr.x2]="tsrChartConfig.padding.left + getTSRChartDimensions().chartWidth" [attr.y2]="gridLine.y"
+              stroke="rgba(255, 255, 255, 0.3)" stroke-width="1" stroke-dasharray="5,5" />
+          </g>
+
+          <!-- Y-axis labels -->
+          <g class="tsr-y-axis-labels">
+            <text *ngFor="let gridLine of getTSRGridLines(); trackBy: trackByTSRIndex"
+              [attr.x]="tsrChartConfig.padding.left - 15" [attr.y]="gridLine.y + 5" text-anchor="end"
+              fill="rgba(255, 255, 255, 0.7)" font-size="12" font-weight="500">
+              {{ gridLine.label }} W/m²
+            </text>
+          </g>
+
+          <!-- Area charts - stacked from bottom to top -->
+
+          <!-- Min area -->
+          <path [attr.d]="generateTSRAreaPath('tsrMin')" fill="url(#tsrGradientMin)" opacity="0.9"
+            class="tsr-area tsr-area-min" />
+          <path [attr.d]="generateTSRLinePath('tsrMin')" fill="none" [attr.stroke]="tsrChartConfig.flameColors.min.end"
+            stroke-width="2" filter="url(#tsrGlow)" class="tsr-line tsr-line-min" />
+
+          <!-- Mean area -->
+          <path [attr.d]="generateTSRAreaPath('tsrMean')" fill="url(#tsrGradientMean)" opacity="0.8"
+            class="tsr-area tsr-area-mean" />
+          <path [attr.d]="generateTSRLinePath('tsrMean')" fill="none"
+            [attr.stroke]="tsrChartConfig.flameColors.mean.end" stroke-width="2" filter="url(#tsrGlow)"
+            class="tsr-line tsr-line-mean" />
+
+          <!-- Max area -->
+          <path [attr.d]="generateTSRAreaPath('tsrMax')" fill="url(#tsrGradientMax)" opacity="0.7"
+            class="tsr-area tsr-area-max" />
+          <path [attr.d]="generateTSRLinePath('tsrMax')" fill="none" [attr.stroke]="tsrChartConfig.flameColors.max.end"
+            stroke-width="3" filter="url(#tsrGlow)" class="tsr-line tsr-line-max" />
+
+          <!-- X-axis labels -->
+          <g class="tsr-x-axis-labels">
+            <text *ngFor="let label of getTSRXAxisLabels(); trackBy: trackByTSRIndex" [attr.x]="label.x"
+              [attr.y]="tsrChartConfig.height - tsrChartConfig.padding.bottom + 25" text-anchor="middle"
+              fill="rgba(255, 255, 255, 0.7)" font-size="11" font-weight="500">
+              {{ label.label }}
+            </text>
+          </g>
+
+          <!-- Hover indicator and tooltip -->
+          <g *ngIf="hoveredTSRPoint && hoveredTSRIndex >= 0" class="tsr-hover-group">
+            <!-- Vertical indicator line -->
+            <line [attr.x1]="tsrChartConfig.padding.left + getTSRXScale(hoveredTSRIndex)"
+              [attr.y1]="tsrChartConfig.padding.top"
+              [attr.x2]="tsrChartConfig.padding.left + getTSRXScale(hoveredTSRIndex)"
+              [attr.y2]="tsrChartConfig.padding.top + getTSRChartDimensions().chartHeight"
+              stroke="rgba(255, 255, 255, 0.5)" stroke-width="2" stroke-dasharray="5,5" filter="url(#tsrGlow)" />
+
+            <!-- Tooltip background -->
+            <rect [attr.x]="getTSRTooltipX()" [attr.y]="getTSRTooltipY()" width="180" height="120"
+              fill="rgba(0, 0, 0, 0.9)" rx="8" stroke="rgba(255, 140, 0, 0.5)" stroke-width="2" filter="url(#tsrGlow)"
+              class="tsr-tooltip-bg" />
+
+            <!-- Tooltip content -->
+            <text [attr.x]="getTSRTooltipX() + 10" [attr.y]="getTSRTooltipY() + 25" fill="rgba(255, 255, 255, 0.9)"
+              font-size="12" font-weight="600">
+              {{ formatTSRTime(hoveredTSRPoint.timestamp) }}
+            </text>
+
+            <text [attr.x]="getTSRTooltipX() + 10" [attr.y]="getTSRTooltipY() + 45" fill="rgba(255, 255, 255, 0.6)"
+              font-size="10">
+              {{ formatTSRDate(hoveredTSRPoint.timestamp) }}
+            </text>
+
+            <text [attr.x]="getTSRTooltipX() + 10" [attr.y]="getTSRTooltipY() + 65"
+              [attr.fill]="tsrChartConfig.flameColors.max.start" font-size="11" font-weight="500">
+              🔥 Max: {{ hoveredTSRPoint.tsrMax.toFixed(1) }} W/m²
+            </text>
+
+            <text [attr.x]="getTSRTooltipX() + 10" [attr.y]="getTSRTooltipY() + 85"
+              [attr.fill]="tsrChartConfig.flameColors.mean.start" font-size="11" font-weight="500">
+              ☀️ Mean: {{ hoveredTSRPoint.tsrMean.toFixed(1) }} W/m²
+            </text>
+
+            <text [attr.x]="getTSRTooltipX() + 10" [attr.y]="getTSRTooltipY() + 105"
+              [attr.fill]="tsrChartConfig.flameColors.min.start" font-size="11" font-weight="500">
+              🌤️ Min: {{ hoveredTSRPoint.tsrMin.toFixed(1) }} W/m²
+            </text>
+          </g>
+        </svg>
+
+        <!-- Legend -->
+        <div class="tsr-legend">
+          <div class="tsr-legend-item tsr-legend-max">
+            <span class="tsr-legend-icon">🔥</span>
+            <div class="tsr-legend-color"></div>
+            <span class="tsr-legend-label">TSR Máximo</span>
+          </div>
+          <div class="tsr-legend-item tsr-legend-mean">
+            <span class="tsr-legend-icon">☀️</span>
+            <div class="tsr-legend-color"></div>
+            <span class="tsr-legend-label">TSR Promedio</span>
+          </div>
+          <div class="tsr-legend-item tsr-legend-min">
+            <span class="tsr-legend-icon">🌤️</span>
+            <div class="tsr-legend-color"></div>
+            <span class="tsr-legend-label">TSR Mínimo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- No data message -->
+      <div class="no-data-message" *ngIf="tsrChartData.dataPoints.length === 0">
+        <i class="fas fa-sun"></i>
+        <p>No hay datos de radiación solar disponibles</p>
+        <small>Esperando lecturas del sensor TSR</small>
+      </div>
+
+      <!-- Footer -->
+      <div class="chart-footer tsr-footer">
+        <small>
+          <i class="fas fa-calculator"></i>
+          Fórmula DLIg: (Σ radiación horaria W/m²) / 1000 × 3.6 = MJ/m²
+          <span class="tsr-footer-badge">Rango típico: 10-50 MJ/m²/día</span>
+        </small>
+      </div>
     </div>
   </div>
   <!-- Dashboard Content -->
