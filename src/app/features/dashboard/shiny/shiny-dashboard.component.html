@@ -193,6 +193,193 @@
         <small>Esperando lecturas de los sensores de viento</small>
       </div>
     </div>
+
+    <!-- Add this AFTER the wind-rose-card section in shiny-dashboard.component.html -->
+
+    <!-- THERMOSTAT TEMPERATURE CARD -->
+    <div class="chart-card thermostat-card">
+      <div class="chart-header">
+        <h3>
+          <i class="fas fa-thermometer-half"></i> Monitoreo de Temperatura
+        </h3>
+        <div class="chart-info">
+          <small>Lecturas en tiempo real con rangos óptimos y normales para Costa Rica</small>
+        </div>
+      </div>
+
+      <div class="chart-content thermostat-container" *ngIf="thermostatData.length > 0">
+        <!-- Main Thermostats Grid -->
+        <div class="thermostats-grid">
+          <div *ngFor="let reading of thermostatData; trackBy: trackByThermostatId" class="thermostat-gauge"
+            [class]="getTempStatusClass(reading)">
+
+            <!-- SVG Gauge -->
+            <svg [attr.width]="thermostatConfig.size" [attr.height]="thermostatConfig.size"
+              [attr.viewBox]="'0 0 ' + thermostatConfig.size + ' ' + thermostatConfig.size" class="thermostat-svg">
+
+              <!-- Gradient Definitions -->
+              <defs>
+                <linearGradient id="tempGradient-{{reading.deviceId}}" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" style="stop-color:#4facfe;stop-opacity:1" />
+                  <stop offset="50%" style="stop-color:#43e97b;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#fa709a;stop-opacity:1" />
+                </linearGradient>
+
+                <radialGradient id="centerGlow-{{reading.deviceId}}" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" [style.stop-color]="reading.color" style="stop-opacity:0.3" />
+                  <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+                </radialGradient>
+
+                <filter id="glow-{{reading.deviceId}}">
+                  <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                  <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
+              <!-- Background Circle -->
+              <circle [attr.cx]="thermostatConfig.center" [attr.cy]="thermostatConfig.center"
+                [attr.r]="thermostatConfig.outerRadius + 10" fill="none" stroke="#e9ecef" stroke-width="2" />
+
+              <!-- Temperature Scale Arc (Background) -->
+              <path [attr.d]="getThermostatArcPath(reading)"
+                [attr.fill]="'url(#tempGradient-' + reading.deviceId + ')'" opacity="0.2" />
+
+              <!-- Current Temperature Arc -->
+              <path [attr.d]="getThermostatArcPath(reading)" [attr.fill]="reading.color"
+                [attr.filter]="'url(#glow-' + reading.deviceId + ')'" class="temp-arc" />
+
+              <!-- Normal Range Indicator -->
+              <path [attr.d]="getThermostatRangeIndicator(reading.normalRange.min, reading.normalRange.max, '#27ae60')"
+                stroke="#27ae60" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.6"
+                class="normal-range-indicator" />
+
+              <!-- Optimal Range Indicator -->
+              <path [attr.d]="getThermostatRangeIndicator(reading.tMinOpt, reading.tMaxOpt, '#667eea')" stroke="#667eea"
+                stroke-width="6" fill="none" stroke-linecap="round" opacity="0.6" class="optimal-range-indicator" />
+
+              <!-- Tick Marks -->
+              <g class="tick-marks">
+                <g *ngFor="let tick of getThermostatTickMarks(); trackBy: trackByTickIndex">
+                  <line [attr.x1]="tick.x1" [attr.y1]="tick.y1" [attr.x2]="tick.x2" [attr.y2]="tick.y2" stroke="#95a5a6"
+                    stroke-width="2" />
+                  <text [attr.x]="tick.x1 - 25" [attr.y]="tick.y1 + 5" fill="#7f8c8d" font-size="12"
+                    font-weight="600">{{tick.label}}</text>
+                </g>
+              </g>
+
+              <!-- Center Display Circle -->
+              <circle [attr.cx]="thermostatConfig.center" [attr.cy]="thermostatConfig.center"
+                [attr.r]="thermostatConfig.innerRadius - 20" fill="#ffffff" stroke="#e9ecef" stroke-width="3"
+                [attr.filter]="'url(#glow-' + reading.deviceId + ')'" />
+
+              <!-- Glow Effect Behind Text -->
+              <circle [attr.cx]="thermostatConfig.center" [attr.cy]="thermostatConfig.center"
+                [attr.r]="thermostatConfig.innerRadius" [attr.fill]="'url(#centerGlow-' + reading.deviceId + ')'" />
+
+              <!-- Current Temperature Text -->
+              <text [attr.x]="thermostatConfig.center" [attr.y]="thermostatConfig.center - 20" text-anchor="middle"
+                font-size="48" font-weight="700" [attr.fill]="reading.color"
+                class="current-temp">{{reading.currentTemp}}°</text>
+
+              <!-- Sensor Type Label -->
+              <text [attr.x]="thermostatConfig.center" [attr.y]="thermostatConfig.center + 20" text-anchor="middle"
+                font-size="14" fill="#7f8c8d" font-weight="500">{{reading.sensorType}}</text>
+
+              <!-- Device ID Label -->
+              <text [attr.x]="thermostatConfig.center" [attr.y]="thermostatConfig.center + 40" text-anchor="middle"
+                font-size="11" fill="#95a5a6">{{reading.deviceId}}</text>
+
+              <!-- Needle/Pointer -->
+              <g
+                [attr.transform]="'rotate(' + getThermostatNeedlePosition(reading.currentTemp).angle + ' ' + thermostatConfig.center + ' ' + thermostatConfig.center + ')'">
+                <line [attr.x1]="thermostatConfig.center" [attr.y1]="thermostatConfig.center"
+                  [attr.x2]="getThermostatNeedlePosition(reading.currentTemp).x"
+                  [attr.y2]="getThermostatNeedlePosition(reading.currentTemp).y" [attr.stroke]="reading.color"
+                  stroke-width="4" stroke-linecap="round" class="temp-needle" />
+                <circle [attr.cx]="thermostatConfig.center" [attr.cy]="thermostatConfig.center" r="10"
+                  [attr.fill]="reading.color" class="needle-center" />
+              </g>
+            </svg>
+
+            <!-- Statistics Panel -->
+            <div class="thermostat-stats">
+              <div class="stat-row">
+                <div class="stat-item">
+                  <i class="fas fa-arrow-up"></i>
+                  <span class="stat-label">Máxima</span>
+                  <span class="stat-value">{{reading.max}}°C</span>
+                </div>
+                <div class="stat-item">
+                  <i class="fas fa-arrow-down"></i>
+                  <span class="stat-label">Mínima</span>
+                  <span class="stat-value">{{reading.min}}°C</span>
+                </div>
+              </div>
+
+              <div class="stat-row">
+                <div class="stat-item">
+                  <i class="fas fa-chart-line"></i>
+                  <span class="stat-label">Promedio</span>
+                  <span class="stat-value">{{reading.mean}}°C</span>
+                </div>
+                <div class="stat-item">
+                  <i class="fas fa-seedling"></i>
+                  <span class="stat-label">T Min Ópt</span>
+                  <span class="stat-value">{{reading.tMinOpt}}°C</span>
+                </div>
+              </div>
+
+              <div class="stat-row">
+                <div class="stat-item full-width">
+                  <i class="fas fa-leaf"></i>
+                  <span class="stat-label">T Max Ópt</span>
+                  <span class="stat-value">{{reading.tMaxOpt}}°C</span>
+                </div>
+              </div>
+
+              <!-- Status Indicator -->
+              <div class="status-badge" [class]="getTempStatusClass(reading)">
+                <i class="fas" [class.fa-check-circle]="reading.isWithinNormal"
+                  [class.fa-exclamation-triangle]="!reading.isWithinNormal"></i>
+                <span>{{getTempStatusText(reading)}}</span>
+              </div>
+
+              <!-- Normal Range Info -->
+              <div class="range-info">
+                <div class="range-item">
+                  <span class="range-label">
+                    <i class="fas fa-map-marker-alt"></i> Rango Normal CR ({{getCurrentMonthName()}})
+                  </span>
+                  <span class="range-value">{{reading.normalRange.min}}°C - {{reading.normalRange.max}}°C</span>
+                </div>
+                <div class="range-item optimal">
+                  <span class="range-label">
+                    <i class="fas fa-bullseye"></i> Rango Óptimo Cultivo
+                  </span>
+                  <span class="range-value">{{reading.tMinOpt}}°C - {{reading.tMaxOpt}}°C</span>
+                </div>
+              </div>
+
+              <!-- Last Update -->
+              <div class="last-update">
+                <i class="fas fa-clock"></i>
+                <small>Última actualización: {{reading.lastUpdate | date:'short'}}</small>
+              </div>
+            </div>
+          </div>
+        </div> 
+      </div>
+
+      <!-- No data message -->
+      <div class="no-data-message" *ngIf="thermostatData.length === 0">
+        <i class="fas fa-thermometer-half"></i>
+        <p>No hay datos de temperatura disponibles</p>
+        <small>Esperando lecturas de los sensores de temperatura</small>
+      </div> 
+    </div>
   </div>
   <!-- Dashboard Content -->
   <div *ngIf="!isLoading && !error" class="dashboard-content">

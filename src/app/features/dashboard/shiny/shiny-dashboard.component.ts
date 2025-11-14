@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import Chart from 'chart.js/auto';
@@ -7,6 +7,29 @@ import {
   ProcessedDeviceData
 } from '../../services/irrigation-sector.service';
 import { DeviceService } from '../../devices/services/device.service';
+import { catchError, map, Observable, of } from 'rxjs';
+import { CropService } from '../../crops/services/crop.service';
+
+// ============= INTERFACES =============
+interface ThermostatReading {
+  deviceId: string;
+  sensorType: string; // 'TEMP_SOIL', 'temp_DS18B20', 'temp_SOIL', 'TempC_DS18B20'
+  currentTemp: number;
+  max: number;
+  min: number;
+  mean: number;
+  tMinOpt: number;
+  tMaxOpt: number;
+  isWithinNormal: boolean;
+  normalRange: { min: number; max: number };
+  lastUpdate: string;
+  color: string;
+}
+
+interface CropTemperatureData {
+  cropName: string;
+  baseTemperature: number;
+}
 
 interface RawDeviceData {
   id: number;
@@ -160,6 +183,8 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   constructor(
     private irrigationService: IrrigationSectorService,
     private deviceService: DeviceService,
+    private cdr: ChangeDetectorRef,
+    private cropService: CropService, // ADD THIS
     private router: Router
   ) { }
 
@@ -201,6 +226,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
       this.processRawData();
       this.processHistoricalData();
+      this.prepareThermostatData();
       this.createInactiveDevices();
       this.isLoading = false;
 
@@ -1053,4 +1079,276 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
     console.log("Generated", this.windRoseSegments.length, "wind rose segments");
   }
+
+
+
+
+  // Add to shiny-dashboard.component.ts
+
+  // ============= THERMOSTAT CARD PROPERTIES =============
+  thermostatData: ThermostatReading[] = [];
+  thermostatConfig = {
+    size: 700,
+    center: 350,
+    outerRadius: 280,
+    innerRadius: 180,
+    minTemp: -10,
+    maxTemp: 50,
+    startAngle: -135, // degrees
+    endAngle: 135 // degrees
+  };
+
+  normalTemperatureRanges: Record<string, { min: number; max: number }> = {
+    enero: { min: 17, max: 27 },
+    febrero: { min: 17, max: 28 },
+    marzo: { min: 18, max: 29 },
+    abril: { min: 19, max: 30 },
+    mayo: { min: 19, max: 29 },
+    junio: { min: 19, max: 28 },
+    julio: { min: 18, max: 28 },
+    agosto: { min: 18, max: 28 },
+    septiembre: { min: 18, max: 28 },
+    octubre: { min: 18, max: 28 },
+    noviembre: { min: 18, max: 27 },
+    diciembre: { min: 17, max: 27 }
+  };
+
+
+
+  // ============= TEMPERATURE DATA PREPARATION =============
+  prepareThermostatData(): void {
+    console.log("=== THERMOSTAT DATA PREPARATION START ===");
+
+    // Temperature sensor types to track
+    const tempSensors = ['TEMP_SOIL', 'TempC_DS18B20', 'temp_SOIL', 'temp_DS18B20'];
+
+    // Filter temperature data from rawData
+    const tempRawData = this.rawData.filter(item =>
+      tempSensors.includes(item.sensor)
+    );
+
+    console.log("Temperature readings found:", tempRawData.length);
+
+    // Get current month for normal range
+    const currentMonth = this.getCurrentMonthName();
+    const normalRange = this.normalTemperatureRanges[currentMonth];
+
+    // Get crop temperature data
+    this.getCropTemperatureData().subscribe({
+      next: (cropData: any) => {
+        // Group by device and sensor
+        const dataMap = new Map<string, RawDeviceData[]>();
+
+        tempRawData.forEach(item => {
+          const key = `${item.deviceId}_${item.sensor}`;
+          if (!dataMap.has(key)) {
+            dataMap.set(key, []);
+          }
+          dataMap.get(key)!.push(item);
+        });
+
+        // Process each sensor group
+        this.thermostatData = [];
+        const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a'];
+        let colorIndex = 0;
+
+        dataMap.forEach((readings, key) => {
+          const [deviceId, sensorType] = key.split('_').slice(0, 2);
+          const fullSensorType = key.split('_').slice(1).join('_');
+
+          // Extract valid temperature values
+          const temps = readings
+            .map(r => this.extractNumericValue(r.payload))
+            .filter(v => v !== null && v > -50 && v < 100) as number[];
+
+          if (temps.length === 0) return;
+
+          // Calculate statistics
+          const currentTemp = temps[temps.length - 1];
+          const max = Math.max(...temps);
+          const min = Math.min(...temps);
+          const mean = temps.reduce((a, b) => a + b, 0) / temps.length;
+
+          // Calculate optimal temperatures from crops
+          const tMinOpt = cropData.length > 0
+            ? cropData.reduce((sum: number, c: { baseTemperature: number; }) => sum + (c.baseTemperature - 5), 0) / cropData.length
+            : 15;
+          const tMaxOpt = cropData.length > 0
+            ? cropData.reduce((sum: any, c: { baseTemperature: number; }) => sum + (c.baseTemperature + 10), 0) / cropData.length
+            : 30;
+
+          // Check if within normal range
+          const isWithinNormal = currentTemp >= normalRange.min && currentTemp <= normalRange.max;
+
+          // Get last update timestamp
+          const lastUpdate = readings[readings.length - 1].recordDate;
+
+          this.thermostatData.push({
+            deviceId: deviceId,
+            sensorType: fullSensorType,
+            currentTemp: parseFloat(currentTemp.toFixed(1)),
+            max: parseFloat(max.toFixed(1)),
+            min: parseFloat(min.toFixed(1)),
+            mean: parseFloat(mean.toFixed(1)),
+            tMinOpt: parseFloat(tMinOpt.toFixed(1)),
+            tMaxOpt: parseFloat(tMaxOpt.toFixed(1)),
+            isWithinNormal,
+            normalRange,
+            lastUpdate,
+            color: colors[colorIndex % colors.length]
+          });
+
+          colorIndex++;
+        });
+
+        console.log("Thermostat data prepared:", this.thermostatData);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error("Error getting crop temperature data:", err);
+        // Continue with default values if crop service fails
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  getCropTemperatureData(): Observable<CropTemperatureData[]> {
+    return this.cropService.getAll(true).pipe(
+      map((crops: any[]) => {
+        return crops
+          .filter(c => c.cropBaseTemperature && c.cropBaseTemperature > 0)
+          .map(c => ({
+            cropName: c.name,
+            baseTemperature: c.cropBaseTemperature
+          }));
+      }),
+      catchError(err => {
+        console.error('Error fetching crop data:', err);
+        return of([]);
+      })
+    );
+  }
+
+  getCurrentMonthName(): string {
+    const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    return months[new Date().getMonth()];
+  }
+
+  // ============= THERMOSTAT VISUALIZATION HELPERS =============
+  getThermostatArcPath(reading: ThermostatReading): string {
+    const { center, outerRadius, innerRadius, minTemp, maxTemp, startAngle, endAngle } = this.thermostatConfig;
+
+    // Calculate angle for current temperature
+    const tempRange = maxTemp - minTemp;
+    const angleRange = endAngle - startAngle;
+    const angle = startAngle + ((reading.currentTemp - minTemp) / tempRange) * angleRange;
+
+    // Convert to radians
+    const startRad = (startAngle * Math.PI) / 180;
+    const endRad = (angle * Math.PI) / 180;
+
+    // Calculate arc coordinates
+    const x1 = center + outerRadius * Math.cos(startRad);
+    const y1 = center + outerRadius * Math.sin(startRad);
+    const x2 = center + outerRadius * Math.cos(endRad);
+    const y2 = center + outerRadius * Math.sin(endRad);
+    const x3 = center + innerRadius * Math.cos(endRad);
+    const y3 = center + innerRadius * Math.sin(endRad);
+    const x4 = center + innerRadius * Math.cos(startRad);
+    const y4 = center + innerRadius * Math.sin(startRad);
+
+    const largeArcFlag = angle - startAngle > 180 ? 1 : 0;
+
+    return `M ${x1} ${y1} 
+          A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}
+          L ${x3} ${y3}
+          A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x4} ${y4}
+          Z`;
+  }
+
+  getThermostatTickMarks(): Array<{ x1: number, y1: number, x2: number, y2: number, label: string }> {
+    const { center, outerRadius, minTemp, maxTemp, startAngle, endAngle } = this.thermostatConfig;
+    const marks = [];
+    const tempStep = 10;
+
+    for (let temp = minTemp; temp <= maxTemp; temp += tempStep) {
+      const tempRange = maxTemp - minTemp;
+      const angleRange = endAngle - startAngle;
+      const angle = startAngle + ((temp - minTemp) / tempRange) * angleRange;
+      const rad = (angle * Math.PI) / 180;
+
+      const x1 = center + (outerRadius - 15) * Math.cos(rad);
+      const y1 = center + (outerRadius - 15) * Math.sin(rad);
+      const x2 = center + outerRadius * Math.cos(rad);
+      const y2 = center + outerRadius * Math.sin(rad);
+
+      marks.push({ x1, y1, x2, y2, label: `${temp}°` });
+    }
+
+    return marks;
+  }
+
+  getThermostatNeedlePosition(temp: number): { x: number, y: number, angle: number } {
+    const { center, innerRadius, outerRadius, minTemp, maxTemp, startAngle, endAngle } = this.thermostatConfig;
+
+    const tempRange = maxTemp - minTemp;
+    const angleRange = endAngle - startAngle;
+    const angle = startAngle + ((temp - minTemp) / tempRange) * angleRange;
+    const rad = (angle * Math.PI) / 180;
+
+    const needleLength = (outerRadius + innerRadius) / 2;
+    const x = center + needleLength * Math.cos(rad);
+    const y = center + needleLength * Math.sin(rad);
+
+    return { x, y, angle: angle + 90 };
+  }
+
+  getThermostatRangeIndicator(minTemp: number, maxTemp: number, color: string): string {
+    const { center, outerRadius, minTemp: configMin, maxTemp: configMax, startAngle, endAngle } = this.thermostatConfig;
+
+    const tempRange = configMax - configMin;
+    const angleRange = endAngle - startAngle;
+
+    const startAngleCalc = startAngle + ((minTemp - configMin) / tempRange) * angleRange;
+    const endAngleCalc = startAngle + ((maxTemp - configMin) / tempRange) * angleRange;
+
+    const startRad = (startAngleCalc * Math.PI) / 180;
+    const endRad = (endAngleCalc * Math.PI) / 180;
+
+    const indicatorRadius = outerRadius + 20;
+
+    const x1 = center + indicatorRadius * Math.cos(startRad);
+    const y1 = center + indicatorRadius * Math.sin(startRad);
+    const x2 = center + indicatorRadius * Math.cos(endRad);
+    const y2 = center + indicatorRadius * Math.sin(endRad);
+
+    const largeArcFlag = endAngleCalc - startAngleCalc > 180 ? 1 : 0;
+
+    return `M ${x1} ${y1} A ${indicatorRadius} ${indicatorRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
+  }
+
+  getTempStatusClass(reading: ThermostatReading): string {
+    if (reading.currentTemp < reading.tMinOpt) return 'temp-cold';
+    if (reading.currentTemp > reading.tMaxOpt) return 'temp-hot';
+    if (!reading.isWithinNormal) return 'temp-warning';
+    return 'temp-optimal';
+  }
+
+  getTempStatusText(reading: ThermostatReading): string {
+    if (reading.currentTemp < reading.tMinOpt) return 'Bajo Óptimo';
+    if (reading.currentTemp > reading.tMaxOpt) return 'Sobre Óptimo';
+    if (!reading.isWithinNormal) return 'Fuera de Rango Normal';
+    return 'Temperatura Óptima';
+  }
+
+  // TrackBy functions for performance
+  trackByThermostatId(index: number, item: ThermostatReading): string {
+    return `${item.deviceId}_${item.sensorType}`;
+  }
+
+  trackByTickIndex(index: number): number {
+    return index;
+  }
+ 
 }

@@ -317,7 +317,7 @@
 }
 
 .chart-content {
-  height: 900px;
+  height: 300px;
   position: relative;
 }
 
@@ -1169,6 +1169,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px;
+  margin-top: 200px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 0 0 12px 12px;
 }
@@ -1275,5 +1276,608 @@
   50% {
     opacity: 0.7;
     stroke-width: 5;
+  }
+}
+
+/* ============================================
+   THERMOSTAT TEMPERATURE CARD STYLES
+   Add to shiny-dashboard.component.css
+   ============================================ */
+
+/* Thermostat Card Container */
+.thermostat-card {
+  grid-column: span 2;
+  min-height: 1000px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.thermostat-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
+  animation: pulse 15s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.thermostat-card .chart-header {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 3px solid #667eea;
+}
+
+.thermostat-card .chart-header h3 {
+  color: #2c3e50;
+  font-size: 1.5rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.thermostat-card .chart-header i {
+  color: #667eea;
+  font-size: 1.8rem;
+  animation: thermometerPulse 2s ease-in-out infinite;
+}
+
+@keyframes thermometerPulse {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.thermostat-card .chart-info small {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  margin-top: 8px;
+  display: block;
+}
+
+/* Thermostat Container */
+.thermostat-container {
+  position: relative;
+  z-index: 1;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 0 0 12px 12px;
+  min-height: 2600px;
+}
+
+/* Thermostats Grid */
+.thermostats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 40px;
+  margin-bottom: 30px;
+}
+
+/* Individual Thermostat Gauge */
+.thermostat-gauge {
+  background: white;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.thermostat-gauge::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.thermostat-gauge:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+.thermostat-gauge:hover::before {
+  opacity: 1;
+  animation: ripple 2s linear infinite;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* Temperature Status Classes */
+.thermostat-gauge.temp-optimal {
+  border-left: 5px solid #27ae60;
+}
+
+.thermostat-gauge.temp-cold {
+  border-left: 5px solid #3498db;
+}
+
+.thermostat-gauge.temp-hot {
+  border-left: 5px solid #e74c3c;
+}
+
+.thermostat-gauge.temp-warning {
+  border-left: 5px solid #f39c12;
+}
+
+/* SVG Gauge Styles */
+.thermostat-svg {
+  filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s ease;
+  display: block;
+  margin: 0 auto;
+}
+
+.thermostat-gauge:hover .thermostat-svg {
+  transform: scale(1.02);
+}
+
+/* Temperature Arc */
+.temp-arc {
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.temp-arc:hover {
+  filter: brightness(1.2) drop-shadow(0 0 20px currentColor);
+}
+
+/* Range Indicators */
+.normal-range-indicator,
+.optimal-range-indicator {
+  transition: all 0.3s ease;
+}
+
+.thermostat-gauge:hover .normal-range-indicator {
+  stroke-width: 8;
+  opacity: 0.8;
+}
+
+.thermostat-gauge:hover .optimal-range-indicator {
+  stroke-width: 8;
+  opacity: 0.8;
+}
+
+/* Tick Marks */
+.tick-marks line {
+  transition: all 0.3s ease;
+}
+
+.tick-marks text {
+  transition: all 0.3s ease;
+}
+
+.thermostat-gauge:hover .tick-marks line {
+  stroke: #667eea;
+  stroke-width: 3;
+}
+
+.thermostat-gauge:hover .tick-marks text {
+  fill: #2c3e50;
+  font-size: 13px;
+}
+
+/* Current Temperature Display */
+.current-temp {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.thermostat-gauge:hover .current-temp {
+  font-size: 52px;
+  filter: drop-shadow(0 0 15px currentColor);
+}
+
+/* Temperature Needle */
+.temp-needle {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
+}
+
+.needle-center {
+  transition: all 0.3s ease;
+}
+
+.thermostat-gauge:hover .needle-center {
+  r: 12;
+  filter: drop-shadow(0 0 10px currentColor);
+}
+
+/* Statistics Panel */
+.thermostat-stats {
+  margin-top: 25px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 2px solid #dee2e6;
+}
+
+.stat-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 12px;
+}
+
+.stat-row:last-child {
+  margin-bottom: 0;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stat-item.full-width {
+  width: 100%;
+}
+
+.stat-item i {
+  font-size: 1.2rem;
+  color: #667eea;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  font-weight: 600;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+/* Status Badge */
+.status-badge {
+  margin-top: 15px;
+  padding: 12px 20px;
+  border-radius: 25px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge i {
+  font-size: 1.1rem;
+}
+
+.status-badge.temp-optimal {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: white;
+}
+
+.status-badge.temp-cold {
+  background: linear-gradient(135deg, #3498db, #5dade2);
+  color: white;
+}
+
+.status-badge.temp-hot {
+  background: linear-gradient(135deg, #e74c3c, #ec7063);
+  color: white;
+}
+
+.status-badge.temp-warning {
+  background: linear-gradient(135deg, #f39c12, #f8c471);
+  color: white;
+}
+
+.status-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Range Info */
+.range-info {
+  margin-top: 15px;
+  padding: 15px;
+  background: white;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+}
+
+.range-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.range-item:last-child {
+  border-bottom: none;
+}
+
+.range-item.optimal {
+  border-left: 3px solid #667eea;
+  padding-left: 12px;
+}
+
+.range-label {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-label i {
+  color: #667eea;
+}
+
+.range-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+/* Last Update */
+.last-update {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 2px solid #ecf0f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #95a5a6;
+  font-size: 0.85rem;
+}
+
+.last-update i {
+  color: #667eea;
+}
+
+/* Thermostat Legend */
+.thermostat-legend {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.thermostat-legend h4 {
+  color: #2c3e50;
+  font-size: 1.1rem;
+  margin: 0 0 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.thermostat-legend h4 i {
+  color: #667eea;
+}
+
+.legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.legend-item:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+}
+
+.legend-color {
+  width: 40px;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.legend-color.normal {
+  background: #27ae60;
+}
+
+.legend-color.optimal {
+  background: #667eea;
+}
+
+.legend-color.current {
+  background: linear-gradient(90deg, #4facfe 0%, #fa709a 100%);
+}
+
+/* Chart Footer */
+.thermostat-card .chart-footer {
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  border-radius: 0 0 12px 12px;
+  text-align: center;
+}
+
+.thermostat-card .chart-footer small {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.thermostat-card .chart-footer i {
+  color: #667eea;
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+  .thermostats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+}
+
+@media (max-width: 1200px) {
+  .thermostat-card {
+    grid-column: span 1;
+  }
+  
+  .thermostats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .thermostat-card {
+    min-height: 600px;
+  }
+  
+  .thermostat-container {
+    padding: 15px;
+  }
+  
+  .thermostats-grid {
+    gap: 25px;
+  }
+  
+  .thermostat-gauge {
+    padding: 15px;
+  }
+  
+  .thermostat-svg {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  .stat-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .legend-items {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .thermostat-card {
+    min-height: 500px;
+  }
+  
+  .thermostat-container {
+    padding: 10px;
+  }
+  
+  .thermostat-gauge {
+    padding: 10px;
+  }
+  
+  .thermostat-stats {
+    padding: 15px;
+  }
+  
+  .stat-item {
+    padding: 10px;
+  }
+  
+  .stat-value {
+    font-size: 1.1rem;
+  }
+}
+
+/* Animation for entrance */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.thermostat-gauge {
+  animation: fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+}
+
+.thermostat-gauge:nth-child(1) { animation-delay: 0.1s; }
+.thermostat-gauge:nth-child(2) { animation-delay: 0.2s; }
+.thermostat-gauge:nth-child(3) { animation-delay: 0.3s; }
+.thermostat-gauge:nth-child(4) { animation-delay: 0.4s; }
+
+/* Print Styles */
+@media print {
+  .thermostat-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .thermostat-gauge {
+    box-shadow: none;
+  }
+  
+  .thermostat-gauge:hover {
+    transform: none;
   }
 }
