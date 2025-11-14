@@ -592,6 +592,231 @@
         </small>
       </div>
     </div>
+
+
+
+    <!-- PAR DLIp CHART CARD -->
+    <div class="chart-card par-dlip-card">
+      <div class="chart-header">
+        <h3>
+          <i class="fas fa-lightbulb"></i> PAR & DLIp - Radiación Fotosintética Activa
+        </h3>
+        <div class="chart-info">
+          <small>Daily Light Integral - PAR | Período: {{ parChartData.dataPoints.length }} horas</small>
+        </div>
+      </div>
+
+      <!-- DLIp Summary Cards -->
+      <div class="dlip-summary-cards">
+        <div class="dlip-card dlip-total">
+          <div class="dlip-card-header">
+            <span class="dlip-icon">💡</span>
+            <span class="dlip-label">DLIp Total</span>
+          </div>
+          <div class="dlip-value">
+            {{ parChartData.dlipTotal.toFixed(2) }}
+            <span class="dlip-unit">mol/m²</span>
+          </div>
+        </div>
+
+        <div class="dlip-card dlip-max">
+          <div class="dlip-card-header">
+            <span class="dlip-icon">⚡</span>
+            <span class="dlip-label">PAR Máximo</span>
+          </div>
+          <div class="dlip-value">
+            {{ parChartData.parMax.toFixed(0) }}
+            <span class="dlip-unit">μmol/m²/s</span>
+          </div>
+        </div>
+
+        <div class="dlip-card dlip-mean">
+          <div class="dlip-card-header">
+            <span class="dlip-icon">☀️</span>
+            <span class="dlip-label">PAR Promedio</span>
+          </div>
+          <div class="dlip-value">
+            {{ parChartData.parMean.toFixed(0) }}
+            <span class="dlip-unit">μmol/m²/s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAR Chart Container -->
+      <div class="par-chart-container" *ngIf="parChartData.dataPoints.length > 0">
+        <svg [attr.width]="parChartConfig.width" [attr.height]="parChartConfig.height" class="par-chart-svg">
+          <!-- Gradients and Filters -->
+          <defs>
+            <!-- Visible Light Spectrum Gradient -->
+            <linearGradient id="visibleSpectrumGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#8b00ff" />
+              <stop offset="16.67%" stop-color="#0000ff" />
+              <stop offset="33.33%" stop-color="#00ff00" />
+              <stop offset="50%" stop-color="#ffff00" />
+              <stop offset="66.67%" stop-color="#ff7f00" />
+              <stop offset="100%" stop-color="#ff0000" />
+            </linearGradient>
+
+            <!-- PAR Area Gradient -->
+            <linearGradient id="parGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+              <stop offset="0%" stop-color="rgba(139, 0, 255, 0.1)" />
+              <stop offset="50%" stop-color="rgba(0, 255, 0, 0.3)" />
+              <stop offset="100%" stop-color="rgba(255, 255, 0, 0.5)" />
+            </linearGradient>
+
+            <!-- DLIp Gradient -->
+            <linearGradient id="dlipGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+              <stop offset="0%" stop-color="rgba(0, 191, 255, 0.1)" />
+              <stop offset="100%" stop-color="rgba(0, 191, 255, 0.4)" />
+            </linearGradient>
+
+            <!-- Neon Glow Filter -->
+            <filter id="neonGlow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          <!-- Background -->
+          <rect [attr.x]="parChartConfig.padding.left" [attr.y]="parChartConfig.padding.top"
+            [attr.width]="getPARChartDimensions().chartWidth" [attr.height]="getPARChartDimensions().chartHeight"
+            fill="rgba(0, 0, 0, 0.2)" rx="8" />
+
+          <!-- PAR Grid Lines (left axis) -->
+          <g class="par-grid-lines">
+            <g *ngFor="let line of getPARGridLines(); trackBy: trackByPARIndex">
+              <line [attr.x1]="parChartConfig.padding.left" [attr.y1]="line.y"
+                [attr.x2]="parChartConfig.padding.left + getPARChartDimensions().chartWidth" [attr.y2]="line.y"
+                stroke="rgba(139, 0, 255, 0.2)" stroke-width="1" stroke-dasharray="5,5" />
+              <text [attr.x]="parChartConfig.padding.left - 10" [attr.y]="line.y" text-anchor="end"
+                dominant-baseline="middle" fill="rgba(255, 255, 255, 0.8)" font-size="11" font-weight="500">
+                {{ line.label }}
+              </text>
+            </g>
+          </g>
+
+          <!-- DLIp Grid Labels (right axis) -->
+          <g class="dlip-grid-lines">
+            <text *ngFor="let line of getDLIpGridLines(); trackBy: trackByPARIndex"
+              [attr.x]="parChartConfig.padding.left + getPARChartDimensions().chartWidth + 10" [attr.y]="line.y"
+              text-anchor="start" dominant-baseline="middle" fill="rgba(0, 191, 255, 0.9)" font-size="11"
+              font-weight="500">
+              {{ line.label }}
+            </text>
+          </g>
+
+          <!-- PAR Area -->
+          <path [attr.d]="generatePARAreaPath()" fill="url(#parGradient)" opacity="0.6" class="par-area" />
+
+          <!-- PAR Line -->
+          <path [attr.d]="generatePARLinePath()" fill="none" stroke="url(#visibleSpectrumGradient)" stroke-width="3"
+            filter="url(#neonGlow)" class="par-line" />
+
+          <!-- DLIp Line -->
+          <path [attr.d]="generateDLIpLinePath()" fill="none" stroke="#00bfff" stroke-width="3" filter="url(#neonGlow)"
+            stroke-dasharray="8,4" class="dlip-line" />
+
+          <!-- X-axis labels -->
+          <g class="par-x-axis-labels">
+            <text *ngFor="let label of getPARXAxisLabels(); trackBy: trackByPARIndex" [attr.x]="label.x"
+              [attr.y]="parChartConfig.height - parChartConfig.padding.bottom + 25" text-anchor="middle"
+              fill="rgba(255, 255, 255, 0.7)" font-size="11" font-weight="500">
+              {{ label.label }}
+            </text>
+          </g>
+ 
+          <!-- Interactive overlay -->
+          <rect [attr.x]="parChartConfig.padding.left" [attr.y]="parChartConfig.padding.top"
+            [attr.width]="getPARChartDimensions().chartWidth" [attr.height]="getPARChartDimensions().chartHeight"
+            fill="transparent" (mousemove)="onPARChartHover($event)" (mouseleave)="onPARChartLeave()"
+            style="cursor: crosshair;" />
+
+          <!-- Hover indicator and tooltip -->
+          <g *ngIf="hoveredPARPoint && hoveredPARIndex >= 0" class="par-hover-group">
+            <!-- Vertical indicator line -->
+            <line [attr.x1]="parChartConfig.padding.left + getPARXScale(hoveredPARIndex)"
+              [attr.y1]="parChartConfig.padding.top"
+              [attr.x2]="parChartConfig.padding.left + getPARXScale(hoveredPARIndex)"
+              [attr.y2]="parChartConfig.padding.top + getPARChartDimensions().chartHeight"
+              stroke="rgba(255, 255, 255, 0.6)" stroke-width="2" stroke-dasharray="5,5" filter="url(#neonGlow)" />
+
+            <!-- PAR point indicator -->
+            <circle [attr.cx]="parChartConfig.padding.left + getPARXScale(hoveredPARIndex)"
+              [attr.cy]="parChartConfig.padding.top + getPARYScale(hoveredPARPoint.parInstantaneous)" r="6"
+              fill="#ffff00" stroke="#fff" stroke-width="2" filter="url(#neonGlow)" />
+
+            <!-- DLIp point indicator -->
+            <circle [attr.cx]="parChartConfig.padding.left + getPARXScale(hoveredPARIndex)"
+              [attr.cy]="parChartConfig.padding.top + getDLIpYScale(hoveredPARPoint.dlipAccumulated)" r="6"
+              fill="#00bfff" stroke="#fff" stroke-width="2" filter="url(#neonGlow)" />
+
+            <!-- Tooltip background -->
+            <rect [attr.x]="getPARTooltipX()" [attr.y]="getPARTooltipY()" width="200" height="140"
+              fill="rgba(0, 0, 0, 0.95)" rx="8" stroke="url(#visibleSpectrumGradient)" stroke-width="2"
+              filter="url(#neonGlow)" class="par-tooltip-bg" />
+
+            <!-- Tooltip content -->
+            <text [attr.x]="getPARTooltipX() + 10" [attr.y]="getPARTooltipY() + 25" fill="rgba(255, 255, 255, 0.9)"
+              font-size="13" font-weight="600">
+              {{ formatPARTime(hoveredPARPoint.timestamp) }}
+            </text>
+
+            <text [attr.x]="getPARTooltipX() + 10" [attr.y]="getPARTooltipY() + 45" fill="rgba(255, 255, 255, 0.6)"
+              font-size="10">
+              {{ formatPARDate(hoveredPARPoint.timestamp) }}
+            </text>
+
+            <text [attr.x]="getPARTooltipX() + 10" [attr.y]="getPARTooltipY() + 70" fill="#ffff00" font-size="12"
+              font-weight="500">
+              💡 PAR: {{ hoveredPARPoint.parInstantaneous.toFixed(1) }} μmol/m²/s
+            </text>
+
+            <text [attr.x]="getPARTooltipX() + 10" [attr.y]="getPARTooltipY() + 95" fill="#00bfff" font-size="12"
+              font-weight="500">
+              📊 DLIp: {{ hoveredPARPoint.dlipAccumulated.toFixed(2) }} mol/m²
+            </text>
+
+            <text [attr.x]="getPARTooltipX() + 10" [attr.y]="getPARTooltipY() + 120" fill="rgba(255, 255, 255, 0.5)"
+              font-size="10">
+              Δ: {{ (hoveredPARPoint.parInstantaneous * 3600 / 1000000).toFixed(3) }} mol/m²/h
+            </text>
+          </g>
+        </svg>
+
+        <!-- Legend -->
+        <div class="par-legend">
+          <div class="par-legend-item par-legend-par">
+            <span class="par-legend-icon">💡</span>
+            <div class="par-legend-color"></div>
+            <span class="par-legend-label">PAR Instantáneo</span>
+          </div>
+          <div class="par-legend-item par-legend-dlip">
+            <span class="par-legend-icon">📊</span>
+            <div class="par-legend-color"></div>
+            <span class="par-legend-label">DLIp Acumulado</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- No data message -->
+      <div class="no-data-message" *ngIf="parChartData.dataPoints.length === 0">
+        <i class="fas fa-lightbulb"></i>
+        <p>No hay datos de PAR disponibles</p>
+        <small>Esperando lecturas del sensor PAR</small>
+      </div>
+
+      <!-- Footer -->
+      <div class="chart-footer par-footer">
+        <small>
+          <i class="fas fa-calculator"></i>
+          Fórmula DLIp: Σ(PAR μmol/m²/s × 3600s) / 1,000,000 = mol/m²/período
+          <span class="par-footer-badge">Rango óptimo: 20-60 mol/m²/día</span>
+        </small>
+      </div>
+    </div>
   </div>
   <!-- Dashboard Content -->
   <div *ngIf="!isLoading && !error" class="dashboard-content">

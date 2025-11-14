@@ -26,6 +26,25 @@ interface ThermostatReading {
   color: string;
 }
 
+
+// 1.1 ADD INTERFACE (after TSRChartData interface, around line 43)
+interface PARDataPoint {
+  timestamp: string;
+  parInstantaneous: number; // μmol/m²/s
+  dlipAccumulated: number; // mol/m²/period
+  deviceId: string;
+}
+
+interface PARChartData {
+  dataPoints: PARDataPoint[];
+  dlipTotal: number;
+  parMax: number;
+  parMean: number;
+  parMin: number;
+  timeRange: { start: string; end: string };
+}
+
+
 // 1. ADD INTERFACE (after ThermostatReading interface)
 interface TSRDataPoint {
   timestamp: string;
@@ -130,6 +149,25 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     }
   };
 
+
+  // 1.2 ADD PROPERTIES (after tsrChartData property, around line 150)
+  parChartData: PARChartData = {
+    dataPoints: [],
+    dlipTotal: 0,
+    parMax: 0,
+    parMean: 0,
+    parMin: 0,
+    timeRange: { start: '', end: '' }
+  };
+
+  parChartConfig = {
+    width: 1200,
+    height: 600,
+    padding: { top: 40, right: 100, bottom: 80, left: 80 }
+  };
+
+  hoveredPARPoint: PARDataPoint | null = null;
+  hoveredPARIndex: number = -1;
   hoveredTSRPoint: TSRDataPoint | null = null;
   hoveredTSRIndex: number = -1;
 
@@ -228,6 +266,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   ngOnInit(): void {
     this.loadDeviceData();
+
   }
 
   ngAfterViewInit(): void {
@@ -266,6 +305,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       this.processHistoricalData();
       this.prepareThermostatData();
       this.prepareTSRData();
+      this.preparePARData();
       this.createInactiveDevices();
       this.isLoading = false;
 
@@ -1653,5 +1693,321 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   // TrackBy for performance
   trackByTSRIndex(index: number): number {
     return index;
-  } 
+  }
+
+
+
+
+
+  // 1.4 ADD PREPARATION METHOD (after prepareTSRData() method, around line 450)
+  preparePARData(): void {
+    console.log("=== PAR DATA PREPARATION START ===");
+
+    // PAR sensor types to track
+    const parSensors = [
+      'PAR',
+      'PhotosyntheticallyActiveRadiation',
+      'PARAvg',
+      'PARMin',
+      'PARMax',
+      'par',
+      'illumination' // Some systems use illumination for PAR
+    ];
+
+    // Filter PAR data from rawData - from climate/meteorological devices
+    const parRawData = this.rawData.filter(item =>
+      parSensors.some(sensor =>
+        item.sensor.includes(sensor) ||
+        item.sensor.toLowerCase().includes('par')
+      )
+    );
+
+    console.log("PAR readings found:", parRawData.length);
+    console.log("PAR sensors detected:", [...new Set(parRawData.map(d => d.sensor))]);
+
+    if (parRawData.length === 0) {
+      console.warn("No PAR data found");
+      return;
+    }
+
+    // Group by timestamp (hour) for processing
+    const timeGroups = new Map<string, { values: number[]; deviceId: string }>();
+
+    parRawData.forEach(item => {
+      const timestamp = new Date(item.recordDate);
+      // Round to nearest hour for grouping
+      timestamp.setMinutes(0, 0, 0);
+      const hourKey = timestamp.toISOString();
+
+      const value = this.extractNumericValue(item.payload);
+      if (value !== null && value >= 0) { // Only valid positive values
+        if (!timeGroups.has(hourKey)) {
+          timeGroups.set(hourKey, { values: [], deviceId: item.deviceId });
+        }
+        timeGroups.get(hourKey)!.values.push(value);
+      }
+    });
+
+    console.log("PAR time groups:", timeGroups.size);
+
+    // Calculate instantaneous PAR and accumulated DLIp
+    const dataPoints: PARDataPoint[] = [];
+    let accumulatedDLIp = 0;
+
+    // Sort time groups by timestamp
+    const sortedTimeGroups = Array.from(timeGroups.entries()).sort((a, b) =>
+      new Date(a[0]).getTime() - new Date(b[0]).getTime()
+    );
+
+    sortedTimeGroups.forEach(([timestamp, group]) => {
+      const values = group.values;
+      if (values.length > 0) {
+        // Calculate mean PAR for this hour
+        const parInstantaneous = values.reduce((a, b) => a + b, 0) / values.length;
+
+        // Calculate DLIp increment for this hour
+        // Formula: PAR (μmol/m²/s) × 3600 seconds / 1,000,000 = mol/m²/hour
+        const dlipIncrement = (parInstantaneous * 3600) / 1000000;
+        accumulatedDLIp += dlipIncrement;
+
+        dataPoints.push({
+          timestamp: timestamp,
+          parInstantaneous: parInstantaneous,
+          dlipAccumulated: accumulatedDLIp,
+          deviceId: group.deviceId
+        });
+      }
+    });
+
+    console.log("PAR data points created:", dataPoints.length);
+
+    // Calculate statistics
+    const parValues = dataPoints.map(d => d.parInstantaneous);
+    const parMax = parValues.length > 0 ? Math.max(...parValues) : 0;
+    const parMean = parValues.length > 0 ? parValues.reduce((a, b) => a + b, 0) / parValues.length : 0;
+    const parMin = parValues.length > 0 ? Math.min(...parValues) : 0;
+
+    // Get time range
+    const timeRange = dataPoints.length > 0 ? {
+      start: dataPoints[0].timestamp,
+      end: dataPoints[dataPoints.length - 1].timestamp
+    } : { start: '', end: '' };
+
+    this.parChartData = {
+      dataPoints,
+      dlipTotal: accumulatedDLIp,
+      parMax,
+      parMean,
+      parMin,
+      timeRange
+    };
+
+    console.log("PAR Chart Data prepared:", {
+      dataPoints: this.parChartData.dataPoints.length,
+      dlipTotal: this.parChartData.dlipTotal.toFixed(2),
+      parMax: this.parChartData.parMax.toFixed(1),
+      parMean: this.parChartData.parMean.toFixed(1),
+      parMin: this.parChartData.parMin.toFixed(1)
+    });
+  }
+
+  // 1.5 ADD SVG HELPER METHODS for PAR chart (after TSR helper methods, around line 550)
+  getPARChartDimensions() {
+    return {
+      chartWidth: this.parChartConfig.width - this.parChartConfig.padding.left - this.parChartConfig.padding.right,
+      chartHeight: this.parChartConfig.height - this.parChartConfig.padding.top - this.parChartConfig.padding.bottom
+    };
+  }
+
+  getPARMaxValue(): number {
+    if (this.parChartData.dataPoints.length === 0) return 2000;
+    return Math.max(...this.parChartData.dataPoints.map(d => d.parInstantaneous)) * 1.1;
+  }
+
+  getDLIpMaxValue(): number {
+    if (this.parChartData.dataPoints.length === 0) return 60;
+    return Math.max(...this.parChartData.dataPoints.map(d => d.dlipAccumulated)) * 1.1;
+  }
+
+  getPARXScale(index: number): number {
+    const { chartWidth } = this.getPARChartDimensions();
+    const length = this.parChartData.dataPoints.length;
+    if (length <= 1) return 0;
+    return (index / (length - 1)) * chartWidth;
+  }
+
+  getPARYScale(value: number): number {
+    const { chartHeight } = this.getPARChartDimensions();
+    const maxValue = this.getPARMaxValue();
+    return chartHeight - (value / maxValue) * chartHeight;
+  }
+
+  getDLIpYScale(value: number): number {
+    const { chartHeight } = this.getPARChartDimensions();
+    const maxValue = this.getDLIpMaxValue();
+    return chartHeight - (value / maxValue) * chartHeight;
+  }
+
+  // Generate SVG path for PAR area chart
+  generatePARAreaPath(): string {
+    if (this.parChartData.dataPoints.length === 0) return '';
+
+    const { chartWidth, chartHeight } = this.getPARChartDimensions();
+    const pad = this.parChartConfig.padding;
+    const points = this.parChartData.dataPoints.map((d, i) => ({
+      x: this.getPARXScale(i),
+      y: this.getPARYScale(d.parInstantaneous)
+    }));
+
+    let path = `M ${pad.left} ${pad.top + chartHeight} `;
+    path += `L ${pad.left + points[0].x} ${pad.top + points[0].y} `;
+
+    for (let i = 1; i < points.length; i++) {
+      const prevPoint = points[i - 1];
+      const currPoint = points[i];
+      const cpx = (prevPoint.x + currPoint.x) / 2;
+
+      path += `Q ${pad.left + cpx} ${pad.top + prevPoint.y}, `;
+      path += `${pad.left + currPoint.x} ${pad.top + currPoint.y} `;
+    }
+
+    path += `L ${pad.left + points[points.length - 1].x} ${pad.top + chartHeight} Z`;
+
+    return path;
+  }
+
+  // Generate SVG path for PAR line
+  generatePARLinePath(): string {
+    if (this.parChartData.dataPoints.length === 0) return '';
+
+    const pad = this.parChartConfig.padding;
+    const points = this.parChartData.dataPoints.map((d, i) => ({
+      x: this.getPARXScale(i),
+      y: this.getPARYScale(d.parInstantaneous)
+    }));
+
+    let path = `M ${pad.left + points[0].x} ${pad.top + points[0].y} `;
+
+    for (let i = 1; i < points.length; i++) {
+      const prevPoint = points[i - 1];
+      const currPoint = points[i];
+      const cpx = (prevPoint.x + currPoint.x) / 2;
+
+      path += `Q ${pad.left + cpx} ${pad.top + prevPoint.y}, `;
+      path += `${pad.left + currPoint.x} ${pad.top + currPoint.y} `;
+    }
+
+    return path;
+  }
+
+  // Generate SVG path for DLIp line
+  generateDLIpLinePath(): string {
+    if (this.parChartData.dataPoints.length === 0) return '';
+
+    const pad = this.parChartConfig.padding;
+    const points = this.parChartData.dataPoints.map((d, i) => ({
+      x: this.getPARXScale(i),
+      y: this.getDLIpYScale(d.dlipAccumulated)
+    }));
+
+    let path = `M ${pad.left + points[0].x} ${pad.top + points[0].y} `;
+
+    for (let i = 1; i < points.length; i++) {
+      const prevPoint = points[i - 1];
+      const currPoint = points[i];
+      const cpx = (prevPoint.x + currPoint.x) / 2;
+
+      path += `Q ${pad.left + cpx} ${pad.top + prevPoint.y}, `;
+      path += `${pad.left + currPoint.x} ${pad.top + currPoint.y} `;
+    }
+
+    return path;
+  }
+
+  // Get grid lines for PAR Y-axis (left)
+  getPARGridLines(): { y: number; label: string }[] {
+    const { chartHeight } = this.getPARChartDimensions();
+    const maxValue = this.getPARMaxValue();
+    const pad = this.parChartConfig.padding;
+
+    return [0, 0.25, 0.5, 0.75, 1].map(ratio => ({
+      y: pad.top + chartHeight * ratio,
+      label: Math.round(maxValue * (1 - ratio)).toString()
+    }));
+  }
+
+  // Get grid labels for DLIp Y-axis (right)
+  getDLIpGridLines(): { y: number; label: string }[] {
+    const { chartHeight } = this.getPARChartDimensions();
+    const maxValue = this.getDLIpMaxValue();
+    const pad = this.parChartConfig.padding;
+
+    return [0, 0.25, 0.5, 0.75, 1].map(ratio => ({
+      y: pad.top + chartHeight * ratio,
+      label: (maxValue * (1 - ratio)).toFixed(1)
+    }));
+  }
+
+  // Get X-axis labels (show every 4th point)
+  getPARXAxisLabels(): { x: number; label: string }[] {
+    return this.parChartData.dataPoints
+      .filter((_, i) => i % 4 === 0)
+      .map((d, i) => {
+        const index = i * 4;
+        const date = new Date(d.timestamp);
+        return {
+          x: this.parChartConfig.padding.left + this.getPARXScale(index),
+          label: date.getHours().toString().padStart(2, '0') + ':00'
+        };
+      });
+  }
+
+  // Format time for PAR tooltip
+  formatPARTime(timestamp: string): string {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Format date for PAR tooltip
+  formatPARDate(timestamp: string): string {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('es-CR', { month: 'short', day: 'numeric' });
+  }
+
+  // Handle PAR chart hover
+  onPARChartHover(event: MouseEvent): void {
+    const svg = event.currentTarget as SVGElement;
+    const rect = svg.getBoundingClientRect();
+    const x = event.clientX - rect.left - this.parChartConfig.padding.left;
+    const { chartWidth } = this.getPARChartDimensions();
+
+    const index = Math.round((x / chartWidth) * (this.parChartData.dataPoints.length - 1));
+
+    if (index >= 0 && index < this.parChartData.dataPoints.length) {
+      this.hoveredPARPoint = this.parChartData.dataPoints[index];
+      this.hoveredPARIndex = index;
+    }
+  }
+
+  onPARChartLeave(): void {
+    this.hoveredPARPoint = null;
+    this.hoveredPARIndex = -1;
+  }
+
+  getPARTooltipX(): number {
+    if (this.hoveredPARIndex < 0) return 0;
+    const x = this.parChartConfig.padding.left + this.getPARXScale(this.hoveredPARIndex);
+    const { chartWidth } = this.getPARChartDimensions();
+    return x > chartWidth / 2 ? x - 210 : x + 10;
+  }
+
+  getPARTooltipY(): number {
+    return this.parChartConfig.padding.top + 20;
+  }
+
+  // Track by function for PAR
+  trackByPARIndex(index: number, item: any): number {
+    return index;
+  }
+
 }

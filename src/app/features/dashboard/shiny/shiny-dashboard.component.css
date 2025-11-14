@@ -2456,3 +2456,568 @@
   margin-top: 8px;
   display: block;
 }
+
+/* ============================================================================
+   PAR DLIp CHART STYLES
+   Add to shiny-dashboard.component.css (after tsr-dlig-card styles)
+   ============================================================================ */
+
+/* PAR Card Container */
+.par-dlip-card {
+  grid-column: span 2;
+  min-height: 1100px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0f0a1e 100%);
+}
+
+.par-dlip-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(139, 0, 255, 0.15) 0%, transparent 70%);
+  animation: parPulse 15s ease-in-out infinite;
+}
+
+@keyframes parPulse {
+
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: scale(1.1) rotate(180deg);
+    opacity: 0.8;
+  }
+}
+
+.par-dlip-card .chart-header {
+  position: relative;
+  z-index: 1;
+  background: rgba(139, 0, 255, 0.1);
+  backdrop-filter: blur(15px);
+  padding: 25px;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 3px solid;
+  border-image: linear-gradient(90deg, #8b00ff, #00ff00, #ffff00, #ff0000) 1;
+}
+
+.par-dlip-card .chart-header h3 {
+  color: #fff;
+  font-size: 1.6rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-shadow: 0 0 20px rgba(139, 0, 255, 0.8), 0 0 40px rgba(0, 255, 0, 0.5);
+  animation: spectrumGlow 4s ease-in-out infinite;
+}
+
+@keyframes spectrumGlow {
+
+  0%,
+  100% {
+    text-shadow: 0 0 20px rgba(139, 0, 255, 0.8), 0 0 40px rgba(0, 255, 0, 0.5);
+  }
+
+  33% {
+    text-shadow: 0 0 20px rgba(0, 255, 0, 0.8), 0 0 40px rgba(255, 255, 0, 0.5);
+  }
+
+  66% {
+    text-shadow: 0 0 20px rgba(255, 255, 0, 0.8), 0 0 40px rgba(255, 0, 0, 0.5);
+  }
+}
+
+.par-dlip-card .chart-header i {
+  color: #ffff00;
+  font-size: 2rem;
+  animation: lightPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 0, 1));
+}
+
+@keyframes lightPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 15px rgba(255, 255, 0, 1));
+  }
+
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 25px rgba(255, 255, 0, 1));
+  }
+}
+
+.par-dlip-card .chart-info small {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  margin-top: 10px;
+  display: block;
+}
+
+/* DLIp Summary Cards */
+.par-dlip-card .dlip-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  padding: 35px;
+  position: relative;
+  z-index: 1;
+}
+
+.par-dlip-card .dlip-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 25px;
+  border: 2px solid transparent;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.par-dlip-card .dlip-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 3px;
+  transition: all 0.4s ease;
+}
+
+.par-dlip-card .dlip-card:hover {
+  transform: translateY(-8px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.par-dlip-card .dlip-card.dlip-total {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.par-dlip-card .dlip-card.dlip-total::before {
+  background: linear-gradient(90deg, #8b00ff, #00ff00, #ffff00);
+}
+
+.par-dlip-card .dlip-card.dlip-total:hover {
+  box-shadow: 0 15px 40px rgba(255, 255, 255, 0.3);
+}
+
+.par-dlip-card .dlip-card.dlip-total:hover::before {
+  left: 0;
+}
+
+.par-dlip-card .dlip-card.dlip-max {
+  border-color: rgba(255, 255, 0, 0.3);
+}
+
+.par-dlip-card .dlip-card.dlip-max::before {
+  background: linear-gradient(90deg, #ffff00, #ff7f00);
+}
+
+.par-dlip-card .dlip-card.dlip-max:hover {
+  box-shadow: 0 15px 40px rgba(255, 255, 0, 0.4);
+}
+
+.par-dlip-card .dlip-card.dlip-max:hover::before {
+  left: 0;
+}
+
+.par-dlip-card .dlip-card.dlip-mean {
+  border-color: rgba(0, 255, 0, 0.3);
+}
+
+.par-dlip-card .dlip-card.dlip-mean::before {
+  background: linear-gradient(90deg, #00ff00, #00bfff);
+}
+
+.par-dlip-card .dlip-card.dlip-mean:hover {
+  box-shadow: 0 15px 40px rgba(0, 255, 0, 0.4);
+}
+
+.par-dlip-card .dlip-card.dlip-mean:hover::before {
+  left: 0;
+}
+
+.par-dlip-card .dlip-card-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 18px;
+}
+
+.par-dlip-card .dlip-icon {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.4));
+  animation: iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.par-dlip-card .dlip-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.par-dlip-card .dlip-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.par-dlip-card .dlip-total .dlip-value {
+  background: linear-gradient(90deg, #8b00ff, #00ff00, #ffff00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 20px rgba(139, 0, 255, 0.5));
+}
+
+.par-dlip-card .dlip-max .dlip-value {
+  color: #ffff00;
+  text-shadow: 0 0 25px rgba(255, 255, 0, 1);
+}
+
+.par-dlip-card .dlip-mean .dlip-value {
+  color: #00ff00;
+  text-shadow: 0 0 25px rgba(0, 255, 0, 1);
+}
+
+.par-dlip-card .dlip-unit {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+/* PAR Chart Container */
+.par-chart-container {
+  position: relative;
+  z-index: 1;
+  padding: 35px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0 0 12px 12px;
+}
+
+.par-chart-svg {
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 16px;
+  transition: transform 0.3s ease;
+  display: block;
+  margin: 0 auto;
+}
+
+.par-chart-svg:hover {
+  transform: scale(1.01);
+}
+
+/* PAR Chart Elements */
+.par-area {
+  transition: all 0.4s ease;
+}
+
+.par-line,
+.dlip-line {
+  transition: all 0.4s ease;
+}
+
+.par-area:hover,
+.par-line:hover,
+.dlip-line:hover {
+  filter: brightness(1.3);
+}
+
+/* Grid and axis styling */
+.par-grid-lines line {
+  transition: all 0.3s ease;
+}
+
+.par-x-axis-labels text,
+.dlip-grid-lines text {
+  transition: all 0.3s ease;
+}
+
+/* Hover effects */
+.par-hover-group {
+  animation: fadeInPAR 0.2s ease-in;
+}
+
+@keyframes fadeInPAR {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.par-tooltip-bg {
+  transition: all 0.2s ease;
+}
+
+/* PAR Legend */
+.par-legend {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 35px;
+  flex-wrap: wrap;
+}
+
+.par-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 25px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 25px;
+  border: 1px solid transparent;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.par-legend-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-3px);
+}
+
+.par-legend-item.par-legend-par {
+  border-color: rgba(139, 0, 255, 0.4);
+}
+
+.par-legend-item.par-legend-par:hover {
+  box-shadow: 0 8px 25px rgba(139, 0, 255, 0.4);
+}
+
+.par-legend-item.par-legend-dlip {
+  border-color: rgba(0, 191, 255, 0.4);
+}
+
+.par-legend-item.par-legend-dlip:hover {
+  box-shadow: 0 8px 25px rgba(0, 191, 255, 0.4);
+}
+
+.par-legend-icon {
+  font-size: 1.4rem;
+}
+
+.par-legend-color {
+  width: 50px;
+  height: 5px;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.par-legend-par .par-legend-color {
+  background: linear-gradient(90deg, #8b00ff, #ffff00, #ff0000);
+  box-shadow: 0 0 15px rgba(139, 0, 255, 0.6);
+}
+
+.par-legend-dlip .par-legend-color {
+  background: #00bfff;
+  box-shadow: 0 0 15px rgba(0, 191, 255, 0.6);
+}
+
+.par-legend-item:hover .par-legend-color {
+  width: 60px;
+  height: 6px;
+  box-shadow: 0 0 25px currentColor;
+}
+
+.par-legend-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* PAR Footer */
+.par-footer {
+  position: relative;
+  z-index: 1;
+  margin-top: 25px;
+  padding: 25px;
+  background: rgba(0, 0, 0, 0.4);
+  border-top: 2px solid;
+  border-image: linear-gradient(90deg, #8b00ff, #00ff00, #ffff00, #ff0000) 1;
+  border-radius: 0 0 12px 12px;
+}
+
+.par-footer small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+  flex-wrap: wrap;
+}
+
+.par-footer i {
+  color: #ffff00;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 0, 0.8));
+}
+
+.par-footer-badge {
+  padding: 6px 15px;
+  background: rgba(139, 0, 255, 0.2);
+  border-radius: 15px;
+  font-size: 0.85rem;
+  border: 1px solid rgba(139, 0, 255, 0.4);
+  box-shadow: 0 0 15px rgba(139, 0, 255, 0.3);
+}
+
+/* No Data Message for PAR */
+.par-dlip-card .no-data-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  position: relative;
+  z-index: 1;
+}
+
+.par-dlip-card .no-data-message i {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+  color: #ffff00;
+  filter: drop-shadow(0 0 20px rgba(255, 255, 0, 0.5));
+  animation: lightPulse 3s ease-in-out infinite;
+}
+
+.par-dlip-card .no-data-message p {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.par-dlip-card .no-data-message small {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+  .par-dlip-card .dlip-summary-cards {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 1200px) {
+  .par-dlip-card {
+    grid-column: span 1;
+    min-height: 900px;
+  }
+
+  .par-chart-svg {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .par-dlip-card {
+    min-height: 800px;
+  }
+
+  .par-dlip-card .dlip-summary-cards {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 25px;
+  }
+
+  .par-chart-container {
+    padding: 20px;
+  }
+
+  .par-legend {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .par-dlip-card .chart-header h3 {
+    font-size: 1.3rem;
+  }
+
+  .par-dlip-card .dlip-value {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .par-dlip-card .chart-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .par-dlip-card .dlip-value {
+    font-size: 1.6rem;
+  }
+
+  .par-chart-container {
+    padding: 15px;
+  }
+}
+
+/* Animation for entrance */
+@keyframes parFadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.par-dlip-card {
+  animation: parFadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+  animation-delay: 0.3s;
+}
+
+/* Print Styles */
+@media print {
+  .par-dlip-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .par-dlip-card::before {
+    display: none;
+  }
+
+  .par-dlip-card .dlip-card:hover {
+    transform: none;
+  }
+}
