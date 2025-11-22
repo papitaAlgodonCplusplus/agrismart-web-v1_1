@@ -23,6 +23,9 @@ export class FarmListComponent implements OnInit {
   filteredFarms: Farm[] = [];
   selectedFarm: Farm | null = null;
   farmForm!: FormGroup;
+  sortField: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
+
 
   // Companies
   availableCompanies: Company[] = [];
@@ -276,8 +279,9 @@ export class FarmListComponent implements OnInit {
 
     console.log('Final filtered farms:', this.filteredFarms);
     console.log('Total records:', this.totalRecords);
+    this.applySorting();
   }
-
+  
   onFilterChange(): void {
     console.log('Filter changed, reapplying filters');
     this.applyFilters();
@@ -571,5 +575,46 @@ export class FarmListComponent implements OnInit {
 
   goToDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+
+  sortByField(field: string): void {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.applySorting();
+  }
+
+  /**
+   * Apply sorting to filtered data
+   */
+  private applySorting(): void {
+    if (!this.sortField) return;
+
+    this.filteredFarms.sort((a: any, b: any) => {
+      const aValue = a[this.sortField];
+      const bValue = b[this.sortField];
+
+      let comparison = 0;
+
+      if (aValue == null && bValue == null) {
+        comparison = 0;
+      } else if (aValue == null) {
+        comparison = 1;
+      } else if (bValue == null) {
+        comparison = -1;
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+        comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue;
+      } else {
+        comparison = String(aValue).localeCompare(String(bValue));
+      }
+
+      return this.sortDirection === 'desc' ? comparison * -1 : comparison;
+    });
   }
 }

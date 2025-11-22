@@ -81,6 +81,8 @@ export interface CropFilters {
 export interface CropCreateRequest {
   name?: string | undefined;
   scientificName?: string;
+  cropBaseTemperature?: number;
+  id?: number;
   description?: string;
   type?: string;
   variety?: string;
@@ -193,7 +195,7 @@ export class CropService {
     return this.http.get<BackendResponse<{ crops: Crop[] }>>(url, { params })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result?.crops || [];
           }
@@ -215,7 +217,7 @@ export class CropService {
     return this.http.get<BackendResponse<Crop>>(url)
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -244,7 +246,7 @@ export class CropService {
     return this.http.post<BackendResponse<Crop>>(url, payload, { headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -262,13 +264,33 @@ export class CropService {
    * Note: Your current backend may not have this endpoint
    */
   update(data: CropUpdateRequest): Observable<Crop> {
+
+    /*
+    {
+  "id": 0,
+  "name": "string",
+  "description": "string",
+  "cropBaseTemperature": 0,
+  "active": true
+}
+  
+    */
     const url = `${this.apiConfig.agronomicApiUrl}/Crop`;
     const headers = this.getAuthHeaders();
 
-    return this.http.put<BackendResponse<Crop>>(url, data, { headers })
+    const curated_data = {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      cropBaseTemperature: data.cropBaseTemperature || 0,
+      active: data.isActive !== undefined ? data.isActive : true
+    };
+    console.log('Updating crop with data:', curated_data, 'Headers:', headers, 'URL:', url);
+
+    return this.http.put<BackendResponse<Crop>>(url, curated_data, { headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -292,7 +314,7 @@ export class CropService {
     return this.http.delete<BackendResponse<void>>(url, { headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -316,7 +338,7 @@ export class CropService {
     return this.http.put<BackendResponse<Crop>>(url, payload, { headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -400,7 +422,7 @@ export class CropService {
     return this.http.get<BackendResponse<CropStatistics>>(url, { headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -440,7 +462,7 @@ export class CropService {
     return this.http.get<BackendResponse<CropRecommendation[]>>(url, { params, headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -463,7 +485,7 @@ export class CropService {
     return this.http.get<BackendResponse<string[]>>(url, { headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -487,7 +509,7 @@ export class CropService {
     return this.http.get<BackendResponse<string[]>>(url, { params, headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -510,7 +532,7 @@ export class CropService {
     return this.http.get<BackendResponse<string[]>>(url, { headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -533,7 +555,7 @@ export class CropService {
     return this.http.get<BackendResponse<Crop[]>>(url, { headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -556,7 +578,7 @@ export class CropService {
     return this.http.get<BackendResponse<Crop[]>>(url, { headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -579,7 +601,7 @@ export class CropService {
     return this.http.get<BackendResponse<Crop[]>>(url, { headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -619,7 +641,7 @@ export class CropService {
     return this.http.get<BackendResponse<any>>(url, { params, headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -643,7 +665,7 @@ export class CropService {
     return this.http.put<BackendResponse<Crop[]>>(url, payload, { headers })
       .pipe(
         map(response => {
-          
+
           if (response.success) {
             return response.result;
           }
@@ -872,7 +894,7 @@ export class CropService {
 
     return this.http.get<CropPhase[]>('/CropPhase', { params }).pipe(
       map(response => {
-        
+
         return Array.isArray(response) ? response : [];
       }),
       catchError(error => {
@@ -895,7 +917,7 @@ export class CropService {
   getCropPhaseById(phaseId: number): Observable<CropPhase> {
     return this.http.get<CropPhase>(`/CropPhase/${phaseId}`).pipe(
       map(response => {
-        
+
         return response;
       }),
       catchError(error => {
@@ -913,7 +935,7 @@ export class CropService {
     // Try the specific endpoint that exists in backend
     return this.http.get<any>(`/CropPhaseSolutionRequirement/${phaseId}`).pipe(
       map(response => {
-        
+
         return response || null;
       }),
       catchError(error => {
@@ -930,7 +952,7 @@ export class CropService {
   getAllCropPhaseSolutionRequirements(): Observable<CropPhaseSolutionRequirement[]> {
     return this.http.get<CropPhaseSolutionRequirement[]>('/CropPhaseSolutionRequirement').pipe(
       map(response => {
-        
+
         return Array.isArray(response) ? response : [];
       }),
       catchError(error => {
@@ -947,7 +969,7 @@ export class CropService {
   getCropPhaseOptimals(): Observable<CropPhaseOptimal[]> {
     return this.http.get<CropPhaseOptimal[]>('/CropPhaseOptimal').pipe(
       map(response => {
-        
+
         return Array.isArray(response) ? response : [];
       }),
       catchError(error => {

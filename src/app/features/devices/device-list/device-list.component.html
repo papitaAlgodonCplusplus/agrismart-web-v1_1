@@ -163,14 +163,35 @@
     <!-- Table Content -->
     <div class="table-responsive" *ngIf="!isLoading">
       <table class="table table-hover">
+
         <thead>
           <tr>
-            <th>Dispositivo</th>
-            <th>Tipo</th>
-            <th>Estado</th>
-            <th>Datos en Tiempo Real</th>
-            <th>Última Lectura</th>
-            <th>Producciones</th>
+            <th (click)="sortByField('name')" class="sortable" style="cursor: pointer;">
+              Dispositivo
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('type')" class="sortable" style="cursor: pointer;">
+              Tipo
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'type' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'type' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('serialNumber')" class="sortable" style="cursor: pointer;">
+              Serial
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'serialNumber' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'serialNumber' && sortDirection === 'desc'"></i>
+            </th>
+            <th>Lecturas de Sensores</th>
+            <th (click)="sortByField('lastReading')" class="sortable" style="cursor: pointer;">
+              Última Lectura
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'lastReading' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'lastReading' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('status')" class="sortable" style="cursor: pointer;">
+              Estado
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'status' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'status' && sortDirection === 'desc'"></i>
+            </th>
             <th>Acciones</th>
           </tr>
         </thead>

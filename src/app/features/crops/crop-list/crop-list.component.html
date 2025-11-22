@@ -77,10 +77,8 @@
           <label for="searchTerm" class="form-label">Buscar</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control" id="searchTerm" 
-                   [(ngModel)]="filters.searchTerm" 
-                   (ngModelChange)="onFiltersChange()"
-                   placeholder="Nombre o descripción...">
+            <input type="text" class="form-control" id="searchTerm" [(ngModel)]="filters.searchTerm"
+              (ngModelChange)="onFiltersChange()" placeholder="Nombre o descripción...">
           </div>
         </div>
 
@@ -88,9 +86,8 @@
         <div class="col-md-6">
           <label class="form-label">Estado</label>
           <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="activeFilter" 
-                   [(ngModel)]="filters.onlyActive" 
-                   (ngModelChange)="onFiltersChange()">
+            <input class="form-check-input" type="checkbox" id="activeFilter" [(ngModel)]="filters.onlyActive"
+              (ngModelChange)="onFiltersChange()">
             <label class="form-check-label" for="activeFilter">
               Solo activos
             </label>
@@ -131,15 +128,46 @@
     <!-- Data Table -->
     <div class="table-responsive" *ngIf="!isLoading && filteredCrops.length > 0">
       <table class="table table-hover">
+
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Temperatura Base (°C)</th>
-            <th>Fecha Creación</th>
-            <th>Creado Por</th>
-            <th>Estado</th>
+            <th (click)="sortByField('name')" class="sortable" style="cursor: pointer;">
+              Cultivo
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('type')" class="sortable" style="cursor: pointer;">
+              Tipo
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'type' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'type' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('growthCycleDays')" class="sortable" style="cursor: pointer;">
+              Ciclo de Crecimiento
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'growthCycleDays' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'growthCycleDays' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('optimalTemperatureMin')" class="sortable" style="cursor: pointer;">
+              Temperatura Óptima
+              <i class="bi bi-arrow-down-short"
+                *ngIf="sortField === 'optimalTemperatureMin' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short"
+                *ngIf="sortField === 'optimalTemperatureMin' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('dateCreated')" class="sortable" style="cursor: pointer;">
+              Fecha de Creación
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'dateCreated' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'dateCreated' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('createdBy')" class="sortable" style="cursor: pointer;">
+              Creado Por
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'createdBy' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'createdBy' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('active')" class="sortable" style="cursor: pointer;">
+              Estado
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
+            </th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -169,24 +197,18 @@
               <span class="badge bg-secondary">Usuario {{ crop.createdBy }}</span>
             </td>
             <td>
-              <span class="badge" 
-                    [class.bg-success]="crop.active" 
-                    [class.bg-secondary]="!crop.active">
+              <span class="badge" [class.bg-success]="crop.active" [class.bg-secondary]="!crop.active">
                 {{ crop.active ? 'Activo' : 'Inactivo' }}
               </span>
             </td>
             <td>
               <div class="action-buttons">
-                <button type="button" class="btn btn-sm btn-outline-primary me-1" 
-                        (click)="showEditForm(crop)" 
-                        [disabled]="isLoading"
-                        title="Editar">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="showEditForm(crop)"
+                  [disabled]="isLoading" title="Editar">
                   <i class="bi bi-pencil"></i>
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-danger ms-1" 
-                        (click)="deleteCrop(crop)" 
-                        [disabled]="isLoading"
-                        title="Eliminar">
+                <button type="button" class="btn btn-sm btn-outline-danger ms-1" (click)="deleteCrop(crop)"
+                  [disabled]="isLoading" title="Eliminar">
                   <i class="bi bi-trash"></i>
                 </button>
               </div>
@@ -205,9 +227,8 @@
               <i class="bi bi-chevron-left"></i>
             </button>
           </li>
-          <li class="page-item" 
-              *ngFor="let page of [].constructor(getTotalPages()); let i = index" 
-              [class.active]="currentPage === i + 1">
+          <li class="page-item" *ngFor="let page of [].constructor(getTotalPages()); let i = index"
+            [class.active]="currentPage === i + 1">
             <button class="page-link" (click)="goToPage(i + 1)">{{ i + 1 }}</button>
           </li>
           <li class="page-item" [class.disabled]="currentPage === getTotalPages()">
@@ -242,7 +263,7 @@
           <div class="col-md-12 mb-3">
             <label for="name" class="form-label">Nombre *</label>
             <input type="text" class="form-control" id="name" formControlName="name"
-                   [class.is-invalid]="getFieldError('name')" placeholder="Nombre del cultivo">
+              [class.is-invalid]="getFieldError('name')" placeholder="Nombre del cultivo">
             <div class="invalid-feedback">{{ getFieldError('name') }}</div>
           </div>
         </div>
@@ -251,8 +272,7 @@
           <div class="col-md-12 mb-3">
             <label for="description" class="form-label">Descripción</label>
             <textarea class="form-control" id="description" formControlName="description" rows="3"
-                      [class.is-invalid]="getFieldError('description')" 
-                      placeholder="Descripción del cultivo"></textarea>
+              [class.is-invalid]="getFieldError('description')" placeholder="Descripción del cultivo"></textarea>
             <div class="invalid-feedback">{{ getFieldError('description') }}</div>
           </div>
         </div>
@@ -260,10 +280,8 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="cropBaseTemperature" class="form-label">Temperatura Base (°C) *</label>
-            <input type="number" class="form-control" id="cropBaseTemperature" 
-                   formControlName="cropBaseTemperature"
-                   [class.is-invalid]="getFieldError('cropBaseTemperature')" 
-                   placeholder="12" min="-50" max="100" step="0.1">
+            <input type="number" class="form-control" id="cropBaseTemperature" formControlName="cropBaseTemperature"
+              [class.is-invalid]="getFieldError('cropBaseTemperature')" placeholder="12" min="-50" max="100" step="0.1">
             <div class="invalid-feedback">{{ getFieldError('cropBaseTemperature') }}</div>
             <small class="form-text text-muted">Temperatura base necesaria para el crecimiento</small>
           </div>
@@ -294,241 +312,255 @@
 </div>
 
 <style>
-.crop-list-container {
-  padding: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
+  .crop-list-container {
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e9ecef;
-}
-
-.page-title {
-  color: #198754;
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 600;
-}
-
-.page-title i {
-  margin-right: 0.5rem;
-}
-
-.page-description {
-  color: #6c757d;
-  margin: 0.5rem 0 0 0;
-  font-size: 1.1rem;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  border-left: 4px solid;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.stat-primary { border-left-color: #0d6efd; }
-.stat-success { border-left-color: #198754; }
-.stat-warning { border-left-color: #fd7e14; }
-.stat-info { border-left-color: #0dcaf0; }
-
-.stat-icon {
-  font-size: 2rem;
-  opacity: 0.8;
-}
-
-.stat-content h4 {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
-}
-
-.stat-content p {
-  margin: 0;
-  color: #6c757d;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.filters-card, .table-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 1.5rem;
-}
-
-.filters-header, .table-header {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e9ecef;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.filters-body {
-  padding: 1.5rem;
-}
-
-.no-data {
-  text-align: center;
-  padding: 3rem 1.5rem;
-  color: #6c757d;
-}
-
-.no-data i {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.record-count {
-  font-size: 0.9rem;
-  color: #6c757d;
-  font-weight: normal;
-}
-
-.form-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1050;
-}
-
-.form-panel {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  max-width: 800px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.form-header {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e9ecef;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f8f9fa;
-  border-radius: 12px 12px 0 0;
-}
-
-.form-body {
-  padding: 1.5rem;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.form-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e9ecef;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  background: #f8f9fa;
-  border-radius: 0 0 12px 12px;
-}
-
-.form-section {
-  margin-bottom: 2rem;
-}
-
-.form-section-title {
-  color: #198754;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e9ecef;
-  font-size: 1.1rem;
-}
-
-.pagination-wrapper {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e9ecef;
-}
-
-.crop-name strong {
-  color: #198754;
-}
-
-.table th {
-  background-color: #f8f9fa;
-  border-bottom: 2px solid #dee2e6;
-  font-weight: 600;
-  color: #495057;
-}
-
-.table-hover tbody tr:hover {
-  background-color: #f8f9fa;
-}
-
-.btn {
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-.btn-primary {
-  background-color: #198754;
-  border-color: #198754;
-}
-
-.btn-primary:hover {
-  background-color: #157347;
-  border-color: #146c43;
-}
-
-.form-control:focus, .form-select:focus {
-  border-color: #198754;
-  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
-}
-
-.alert {
-  border-radius: 8px;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.badge {
-  font-size: 0.8rem;
-  padding: 0.4rem 0.6rem;
-}
-
-@media (max-width: 768px) {
   .page-header {
-    flex-direction: column;
-    align-items: flex-start;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+  }
+
+  .page-title {
+    color: #198754;
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 600;
+  }
+
+  .page-title i {
+    margin-right: 0.5rem;
+  }
+
+  .page-description {
+    color: #6c757d;
+    margin: 0.5rem 0 0 0;
+    font-size: 1.1rem;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid;
+    display: flex;
+    align-items: center;
     gap: 1rem;
   }
-  
-  .form-panel {
-    margin: 1rem;
-    width: calc(100% - 2rem);
+
+  .stat-primary {
+    border-left-color: #0d6efd;
   }
-  
+
+  .stat-success {
+    border-left-color: #198754;
+  }
+
+  .stat-warning {
+    border-left-color: #fd7e14;
+  }
+
+  .stat-info {
+    border-left-color: #0dcaf0;
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+  }
+
+  .stat-content h4 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  .stat-content p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .filters-card,
+  .table-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+  }
+
+  .filters-header,
+  .table-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .filters-body {
+    padding: 1.5rem;
+  }
+
+  .no-data {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: #6c757d;
+  }
+
+  .no-data i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
   .action-buttons {
-    flex-direction: column;
+    display: flex;
+    gap: 0.25rem;
   }
-}
+
+  .record-count {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: normal;
+  }
+
+  .form-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+  }
+
+  .form-panel {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .form-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .form-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .form-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+  }
+
+  .form-section {
+    margin-bottom: 2rem;
+  }
+
+  .form-section-title {
+    color: #198754;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+    font-size: 1.1rem;
+  }
+
+  .pagination-wrapper {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .crop-name strong {
+    color: #198754;
+  }
+
+  .table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+
+  .btn {
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  .btn-primary {
+    background-color: #198754;
+    border-color: #198754;
+  }
+
+  .btn-primary:hover {
+    background-color: #157347;
+    border-color: #146c43;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+  }
+
+  .alert {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  @media (max-width: 768px) {
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .form-panel {
+      margin: 1rem;
+      width: calc(100% - 2rem);
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+  }
 </style>

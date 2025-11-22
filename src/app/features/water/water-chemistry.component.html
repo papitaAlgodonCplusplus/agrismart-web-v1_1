@@ -119,18 +119,55 @@
 
     <div class="table-responsive" *ngIf="!isLoading">
       <table class="table table-hover">
+
         <thead>
           <tr>
-            <th scope="col">ID / Fecha</th>
-            <th scope="col">pH</th>
-            <th scope="col">EC</th>
-            <th scope="col">Calidad</th>
-            <th scope="col">N-NO₃</th>
-            <th scope="col">K</th>
-            <th scope="col">Ca</th>
-            <th scope="col">Mg</th>
-            <th scope="col">Estado</th>
-            <th scope="col">Acciones</th>
+            <th (click)="sortByField('name')" class="sortable" style="cursor: pointer;">
+              Registro
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
+            </th>
+            <th  (click)="sortByField('ph')" class="sortable" style="cursor: pointer;">
+              pH
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'ph' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'ph' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('ph')" class="sortable" style="cursor: pointer;">
+              pH / EC
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'ph' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'ph' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('qualityStatus')" class="sortable" style="cursor: pointer;">
+              Calidad Agua
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'qualityStatus' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'qualityStatus' && sortDirection === 'desc'"></i> 
+            </th>
+            <th (click)="sortByField('nO3')" class="sortable" style="cursor: pointer;">
+              NO₃⁻
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'nO3' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'nO3' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('k')" class="sortable" style="cursor: pointer;">
+              K⁺
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'k' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'k' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('ca')" class="sortable" style="cursor: pointer;">
+              Ca²⁺
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'ca' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'ca' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('mg')" class="sortable" style="cursor: pointer;">
+              Mg²⁺
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'mg' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'mg' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('active')" class="sortable" style="cursor: pointer;">
+              Estado
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
+            </th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -192,10 +229,10 @@
             </td>
             <td>
               <div class="action-buttons">
-                <button type="button" class="btn btn-outline-primary btn-sm" (click)="editRecord(record)"
+                <!-- <button type="button" class="btn btn-outline-primary btn-sm" (click)="editRecord(record)"
                   title="Editar">
                   <i class="bi bi-pencil"></i>
-                </button>
+                </button> -->
                 <button type="button" class="btn btn-outline-danger btn-sm" (click)="deleteRecord(record)"
                   title="Eliminar">
                   <i class="bi bi-trash"></i>

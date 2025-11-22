@@ -112,6 +112,23 @@ interface IntegrationMetadata {
     api_endpoints_used: string[];
 }
 
+interface NutrientDiagnostic {
+    has_discrepancy: boolean;
+    severity: 'none' | 'low' | 'medium' | 'high';
+    deviation_percent: number;
+    message: string;
+    reasons: Array<{
+        type: string;
+        description: string;
+    }>;
+    supplying_fertilizers: string[];
+}
+
+
+interface NutrientDiagnostics {
+    [nutrient: string]: NutrientDiagnostic;
+}
+
 interface OptimizationSummary {
     method: string;
     status: string;
@@ -490,6 +507,7 @@ export class NutrientFormulationComponent implements OnInit {
     waterAnalysisDisplay: WaterAnalysisDisplay | null = null;
     performanceMetricsDisplay: any | null = null;
     optimizationSummaryDisplay: any | null = null;
+    nutrientDiagnostics: NutrientDiagnostics = {};
 
     // Data arrays
     catalogs: Catalog[] = [];
@@ -725,7 +743,7 @@ export class NutrientFormulationComponent implements OnInit {
             return 'status-optimal';
         } else if (difference < target * 0.3) {
             return 'text-warning';
-        } else {    
+        } else {
             return 'status-critical';
         }
     }
@@ -735,7 +753,7 @@ export class NutrientFormulationComponent implements OnInit {
             return 'Óptimo';
         } else if (difference < target * 0.3) {
             return 'Aceptable';
-        } else {    
+        } else {
             return 'Crítico';
         }
     }
@@ -2206,7 +2224,7 @@ export class NutrientFormulationComponent implements OnInit {
         this.renderFertilizerCharts();
         console.log("finished renderFertilizerCharts")
     }
- 
+
 
     /**
      * Process fertilizer usage data from api_fertilizers_raw
@@ -2235,7 +2253,7 @@ export class NutrientFormulationComponent implements OnInit {
                     dosage.dosage_g_per_L,
                     volumeLiters
                 );
-  
+
                 return {
                     name,
                     dosage_g_per_L: dosage.dosage_g_per_L,
@@ -2946,28 +2964,7 @@ export class NutrientFormulationComponent implements OnInit {
             }
         }
     }
-
-    // Add this method to handle modal cleanup on component destroy
-    ngOnDestroy(): void {
-        // Clean up any open modals
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-            const modalInstance = (window as any).bootstrap?.Modal?.getInstance(modal);
-            if (modalInstance) {
-                modalInstance.dispose();
-            }
-        });
-
-        // Remove any remaining backdrops
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
-
-        // Restore body
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-    }
-
+ 
 
 
     /**
@@ -3363,7 +3360,7 @@ export class NutrientFormulationComponent implements OnInit {
                 return of(null);
             })
         ).subscribe({
-            next: (response) => {
+            next: (response: any) => {
                 this.isLoading = false;
                 if (response) {
                     console.log('Calculation successful:', response);
@@ -3390,6 +3387,14 @@ export class NutrientFormulationComponent implements OnInit {
                         }
                     }
                     this.processResults();
+
+                    // 🆕 Capture diagnostics
+                    if (response.nutrient_diagnostics) {
+                        this.nutrientDiagnostics = response.nutrient_diagnostics;
+                        console.log('📊 Diagnostics:', this.nutrientDiagnostics);
+                    }
+                    setTimeout(() => this.initializeTooltips(), 100);
+
                     this.showResults = true;
                     this.successMessage = 'Cálculo completado exitosamente';
                     console.log(this.successMessage)
@@ -4515,5 +4520,102 @@ export class NutrientFormulationComponent implements OnInit {
         }
 
         return verificationResults;
+    }
+
+
+    hasNutrientDiscrepancy(nutrient: string): boolean {
+        const diagnostic = this.nutrientDiagnostics[nutrient];
+        return diagnostic && diagnostic.has_discrepancy === true;
+    }
+
+    getNutrientDiagnosticSeverity(nutrient: string): string {
+        const diagnostic = this.nutrientDiagnostics[nutrient];
+        return diagnostic?.has_discrepancy ? diagnostic.severity : 'none';
+    }
+
+    getNutrientDiagnosticMessage(nutrient: string): string {
+        const diagnostic = this.nutrientDiagnostics[nutrient];
+
+        if (!diagnostic?.has_discrepancy) {
+            return 'Concentración óptima alcanzada';
+        }
+
+        let html = `<div class="diagnostic-tooltip">`;
+        html += `<strong>${nutrient}</strong><br>`;
+        html += `<span class="badge bg-${this.getSeverityBadgeClass(diagnostic.severity)}">${diagnostic.severity.toUpperCase()}</span><br><br>`;
+        html += `<strong>Mensaje:</strong> ${diagnostic.message}<br>`;
+
+        if (diagnostic.reasons?.length > 0) {
+            html += `<br><strong>Razones:</strong><ul class="mb-0 ps-3">`;
+            diagnostic.reasons.forEach(r => html += `<li>${r.description}</li>`);
+            html += `</ul>`;
+        }
+
+        if (diagnostic.supplying_fertilizers?.length > 0) {
+            html += `<br><strong>Fertilizantes:</strong><br>`;
+            html += `<small>${diagnostic.supplying_fertilizers.join(', ')}</small>`;
+        }
+
+        html += `</div>`;
+        return html;
+    }
+
+    private getSeverityBadgeClass(severity: string): string {
+        switch (severity) {
+            case 'high': return 'danger';
+            case 'medium': return 'warning';
+            case 'low': return 'info';
+            default: return 'secondary';
+        }
+    }
+
+    private initializeTooltips(): void {
+        if (typeof (window as any).bootstrap !== 'undefined') {
+            const tooltipTriggerList = Array.from(
+                document.querySelectorAll('[data-bs-toggle="tooltip"]')
+            );
+            tooltipTriggerList.forEach((el) => {
+                new (window as any).bootstrap.Tooltip(el, { html: true, trigger: 'hover' });
+            });
+        }
+    }
+
+    getNutrientDiagnosticsSummary(): { high: number; medium: number; low: number; total: number } {
+        const summary = { high: 0, medium: 0, low: 0, total: 0 };
+        Object.values(this.nutrientDiagnostics).forEach(d => {
+            if (d.has_discrepancy) {
+                summary.total++;
+                if (d.severity === 'high') summary.high++;
+                else if (d.severity === 'medium') summary.medium++;
+                else if (d.severity === 'low') summary.low++;
+            }
+        });
+        return summary;
+    }
+
+    ngOnDestroy(): void {
+        // Cleanup tooltips
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+            const tooltip = (window as any).bootstrap.Tooltip.getInstance(el);
+            tooltip?.dispose();
+        });
+
+        // Clean up any open modals
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            const modalInstance = (window as any).bootstrap?.Modal?.getInstance(modal);
+            if (modalInstance) {
+                modalInstance.dispose();
+            }
+        });
+
+        // Remove any remaining backdrops
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+
+        // Restore body
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
     }
 }

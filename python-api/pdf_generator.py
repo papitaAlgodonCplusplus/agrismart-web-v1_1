@@ -981,8 +981,8 @@ class EnhancedPDFReportGenerator:
             fertilizer_data = [['Fertilizante', 'Dosis (g/L)', 'Dosis (ml/L)', 'Costo (CRC)', '% Costo']]
             
             for name, dosage in active_fertilizers.items():
-                g_per_L = dosage.get('dosage_g_per_L', 0)
-                ml_per_L = dosage.get('dosage_ml_per_L', 0)
+                g_per_L = getattr(dosage, 'dosage_g_per_L', 0)
+                ml_per_L = getattr(dosage, 'dosage_ml_per_L', 0)
                 cost = fertilizer_costs.get(name, 0)
                 cost_pct = cost_percentages.get(name, 0)
                 

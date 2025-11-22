@@ -23,6 +23,8 @@ export class CropListComponent implements OnInit {
   filteredCrops: Crop[] = [];
   selectedCrop: Crop | null = null;
   cropForm!: FormGroup;
+  sortField: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
   // Catalogs
   availableCatalogs: Catalog[] = [];
@@ -189,6 +191,8 @@ export class CropListComponent implements OnInit {
 
     this.filteredCrops = filtered;
     this.totalRecords = filtered.length;
+
+    this.applySorting();
   }
 
   // Filter methods
@@ -248,7 +252,9 @@ export class CropListComponent implements OnInit {
       // Update existing crop
       const updateData: CropUpdateRequest = {
         ...formData,
-        id: this.selectedCrop.id
+        cropBaseTemperature: formData.cropBaseTemperature,
+        id: this.selectedCrop.id,
+        isActive: formData.isActive !== undefined ? formData.isActive : this.selectedCrop.isActive
       };
 
       this.cropService.update(updateData).subscribe({
@@ -389,6 +395,50 @@ export class CropListComponent implements OnInit {
       this.currentPage = page;
     }
   }
+
+  /**
+ * Sort by field
+ */
+  sortByField(field: string): void {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.applySorting();
+  }
+
+  /**
+   * Apply sorting to filtered data
+   */
+  private applySorting(): void {
+    if (!this.sortField) return;
+
+    this.filteredCrops.sort((a: any, b: any) => {
+      const aValue = a[this.sortField];
+      const bValue = b[this.sortField];
+
+      let comparison = 0;
+
+      if (aValue == null && bValue == null) {
+        comparison = 0;
+      } else if (aValue == null) {
+        comparison = 1;
+      } else if (bValue == null) {
+        comparison = -1;
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+        comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue;
+      } else {
+        comparison = String(aValue).localeCompare(String(bValue));
+      }
+
+      return this.sortDirection === 'desc' ? comparison * -1 : comparison;
+    });
+  }
+
 
   // Statistics
   getTotalCount(): number {

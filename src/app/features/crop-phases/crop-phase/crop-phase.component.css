@@ -6,6 +6,22 @@
   padding: 1rem;
 }
 
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.sortable:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.sortable i {
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
+}
+
 /* Page Header */
 .page-header {
   display: flex;

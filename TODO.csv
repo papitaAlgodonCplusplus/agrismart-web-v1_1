@@ -1,0 +1,19 @@
+DESC, STATUS, %
+
+5. Nutrient formulation que recetas guarde nombre elegido por usuario y fechas  todos los datos completos  aplicaciones fitosanitarias ver grabación 5:30 PM  y plan riego 5:44, 0, 0%
+
+6. Facturas RP de hacienda que lleve el stock  que mande alertas si tiene low stock, 0, 0%
+
+7. cropproductionid asociado a  Plan de riegos and bomba deviced fk a cropproductionid, 0, 0%
+
+3. Shiny dashboard more controls over charts statistical example (comportamiento por periodos semanales diarios  temporada de cultivo), (0), 0%
+
+--------------------------------------------------------------------------------------------------
+
+2. Shiny dashboard all requested dashboards, (data needs to be submitted to my db once validation with cesar is over), 70%
+
+1. Todas las tablas poder ordenar por columnas, (semi-ready  some columns don't work, 80%)
+
+4. Nutriente formulation poner tool tip para estados low el porqué no se logró, needs to explain logic of what has comments and which deviations do not, 80%
+
+3. Crop phases revisar duplicados + dejar solo inicio semana, falta probar CRUD, 70%

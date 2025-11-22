@@ -167,15 +167,29 @@ class CompleteFertilizerCalculator:
         final_solution = self.calculate_final_solution(
             nutrient_contrib, water_contrib)
 
-        # Verification and analysis (existing code)
-        verification_results = verifier.verify_concentrations(
-            request.target_concentrations, final_solution['FINAL_mg_L']
+            
+        # ============ ENHANCED VERIFICATION WITH DIAGNOSTICS ============
+        print(f"\n{'='*80}")
+        print(f"[VERIFY] PERFORMING ENHANCED VERIFICATION WITH DIAGNOSTICS")
+        print(f"{'='*80}")
+
+        # Create detailed verification with diagnostics
+        verification_results = verifier.create_detailed_verification_with_diagnostics(
+            dosages=dosages_g_l,
+            achieved_concentrations=final_solution['FINAL_mg_L'],
+            target_concentrations=request.target_concentrations,
+            water_analysis=request.water_analysis,
+            fertilizers=request.fertilizers,
+            volume_liters=request.calculation_settings.volume_liters
         )
+        
+        # Continue with existing ionic verification...
         ionic_relationships = verifier.verify_ionic_relationships(
-            final_solution['FINAL_meq_L'], final_solution['FINAL_mmol_L'], final_solution['FINAL_mg_L']
+            final_solution['FINAL_meq_L'], 
+            final_solution['FINAL_mmol_L'], 
+            final_solution['FINAL_mg_L']
         )
-        ionic_balance = verifier.verify_ionic_balance(
-            final_solution['FINAL_meq_L'])
+        ionic_balance = verifier.verify_ionic_balance(final_solution['FINAL_meq_L'])
 
         # Cost analysis with API pricing support
         fertilizer_amounts_kg = {
@@ -1013,6 +1027,169 @@ async def swagger_integrated_calculation_with_linear_programming(
                     'cost_per_liter_crc': cost_analysis['cost_per_liter_diluted'],
                     'cost_per_m3_crc': cost_analysis['cost_per_m3_diluted']
                 }
+                
+                dosages_g_l = nutrient_calc.calculate_optimized_dosages(
+                    enhanced_fertilizers,
+                    target_concentrations,
+                    water_analysis
+                )
+                
+                def calculate_nutrient_contributions(dosages_g_l: Dict[str, float], fertilizers: List):
+                    """Calculate nutrient contributions from fertilizers with proper calculations"""
+                    elements = ['Ca', 'K', 'Mg', 'Na', 'NH4', 'N', 'SO4', 'S',
+                                'Cl', 'H2PO4', 'P', 'HCO3', 'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo']
+
+                    contributions = {
+                        'APORTE_mg_L': {elem: 0.0 for elem in elements},
+                        'APORTE_mmol_L': {elem: 0.0 for elem in elements},
+                        'APORTE_meq_L': {elem: 0.0 for elem in elements}
+                    }
+
+                    fert_map = {f.name: f for f in fertilizers}
+
+                    # Calculate contributions for each active fertilizer
+                    for fert_name, dosage_g_l in dosages_g_l.items():
+                        if dosage_g_l > 0 and fert_name in fert_map:
+                            fertilizer = fert_map[fert_name]
+                            dosage_mg_l = dosage_g_l * 1000  # Convert g/L to mg/L
+
+                            print(
+                                f"  Processing {fert_name}: {dosage_g_l:.4f} g/L ({dosage_mg_l:.1f} mg/L)")
+
+                            # Calculate contributions from cations
+                            for element, content_percent in fertilizer.composition.cations.items():
+                                if content_percent > 0:
+                                    contribution = nutrient_calc.calculate_element_contribution(
+                                        dosage_mg_l, content_percent, fertilizer.chemistry.purity
+                                    )
+                                    contributions['APORTE_mg_L'][element] += contribution
+                                    print(
+                                        f"    {element} (cation): +{contribution:.3f} mg/L")
+
+                            # Calculate contributions from anions
+                            for element, content_percent in fertilizer.composition.anions.items():
+                                if content_percent > 0:
+                                    contribution = nutrient_calc.calculate_element_contribution(
+                                        dosage_mg_l, content_percent, fertilizer.chemistry.purity
+                                    )
+                                    contributions['APORTE_mg_L'][element] += contribution
+                                    print(
+                                        f"    {element} (anion): +{contribution:.3f} mg/L")
+
+                    # Convert to mmol/L and meq/L with proper calculations
+                    for element in elements:
+                        mg_l = contributions['APORTE_mg_L'][element]
+                        mmol_l = nutrient_calc.convert_mg_to_mmol(mg_l, element)
+                        meq_l = nutrient_calc.convert_mmol_to_meq(mmol_l, element)
+
+                        contributions['APORTE_mg_L'][element] = round(mg_l, 3)
+                        contributions['APORTE_mmol_L'][element] = round(mmol_l, 3)
+                        contributions['APORTE_meq_L'][element] = round(meq_l, 3)
+
+                        if mg_l > 0:
+                            print(
+                                f"  Total {element}: {mg_l:.3f} mg/L = {mmol_l:.3f} mmol/L = {meq_l:.3f} meq/L")
+
+                    return contributions
+
+                def calculate_water_contributions(water_analysis: Dict[str, float], volume_liters: float):
+                    """Calculate water contributions"""
+                    elements = ['Ca', 'K', 'Mg', 'Na', 'NH4', 'N', 'SO4', 'S',
+                                'Cl', 'H2PO4', 'P', 'HCO3', 'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo']
+
+                    water_contrib = {
+                        'IONES_mg_L_DEL_AGUA': {elem: 0.0 for elem in elements},
+                        'mmol_L': {elem: 0.0 for elem in elements},
+                        'meq_L': {elem: 0.0 for elem in elements}
+                    }
+
+                    for element in elements:
+                        mg_l = water_analysis.get(element, 0.0)
+                        mmol_l = nutrient_calc.convert_mg_to_mmol(mg_l, element)
+                        meq_l = nutrient_calc.convert_mmol_to_meq(mmol_l, element)
+
+                        water_contrib['IONES_mg_L_DEL_AGUA'][element] = round(mg_l, 3)
+                        water_contrib['mmol_L'][element] = round(mmol_l, 3)
+                        water_contrib['meq_L'][element] = round(meq_l, 3)
+
+                    return water_contrib
+
+                def calculate_final_solution(nutrient_contrib: Dict[str, Dict[str, float]], water_contrib: Dict):
+                    """Calculate final solution concentrations"""
+                    elements = ['Ca', 'K', 'Mg', 'Na', 'NH4', 'N', 'SO4', 'S',
+                                'Cl', 'H2PO4', 'P', 'HCO3', 'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo']
+
+                    final = {
+                        'FINAL_mg_L': {},
+                        'FINAL_mmol_L': {},
+                        'FINAL_meq_L': {}
+                    }
+
+                    for element in elements:
+                        final_mg_l = (nutrient_contrib['APORTE_mg_L'][element] +
+                                    water_contrib['IONES_mg_L_DEL_AGUA'][element])
+                        final_mmol_l = nutrient_calc.convert_mg_to_mmol(
+                            final_mg_l, element)
+                        final_meq_l = nutrient_calc.convert_mmol_to_meq(
+                            final_mmol_l, element)
+
+                        final['FINAL_mg_L'][element] = round(final_mg_l, 3)
+                        final['FINAL_mmol_L'][element] = round(final_mmol_l, 3)
+                        final['FINAL_meq_L'][element] = round(final_meq_l, 3)
+
+                    # Calculate EC and pH
+                    cations = ['Ca', 'K', 'Mg', 'Na', 'NH4', 'Fe', 'Mn', 'Zn', 'Cu']
+                    cation_sum = sum(final['FINAL_meq_L'].get(cation, 0)
+                                    for cation in cations)
+                    ec = cation_sum * 0.1
+
+                    hco3 = final['FINAL_mg_L'].get('HCO3', 0)
+                    no3_n = final['FINAL_mg_L'].get('N', 0)
+                    if hco3 > 61:
+                        ph = 6.5 + (hco3 - 61) / 100
+                    else:
+                        ph = 6.0 - (no3_n / 200)
+
+                    return {
+                        'FINAL_mg_L': final['FINAL_mg_L'],
+                        'FINAL_mmol_L': final['FINAL_mmol_L'],
+                        'FINAL_meq_L': final['FINAL_meq_L'],
+                        'calculated_EC': round(ec, 2),
+                        'calculated_pH': round(ph, 1)
+                    }
+                            
+                nutrient_contrib = calculate_nutrient_contributions(
+                    dosages_g_l, enhanced_fertilizers
+                )
+
+                # Calculate water contributions
+                water_contrib = calculate_water_contributions(
+                    water_analysis, volume_liters
+                )
+                
+                final_solution = calculate_final_solution(nutrient_contrib, water_contrib)
+
+                # Create detailed verification with diagnostics
+                verification_results = verifier.create_detailed_verification_with_diagnostics(
+                    dosages=dosages_g_l,
+                    achieved_concentrations=final_solution['FINAL_mg_L'],
+                    target_concentrations=target_concentrations,
+                    water_analysis=water_analysis,
+                    fertilizers=enhanced_fertilizers,
+                    volume_liters=volume_liters
+                )
+                # Extract diagnostics
+                nutrient_diagnostics = verification_results.get('nutrient_diagnostics', {})
+                print(f"\n[VERIFY] Nutrient Diagnostics Summary:")
+                for nutrient, diag in nutrient_diagnostics.items():
+                    print(f"  - {nutrient}: {diag}")
+
+                # Log diagnostics summary
+                high_severity_count = len([d for d in nutrient_diagnostics.values() if d.get('has_discrepancy') and d.get('severity') == 'high'])
+                medium_severity_count = len([d for d in nutrient_diagnostics.values() if d.get('has_discrepancy') and d.get('severity') == 'medium'])
+
+
+                calculation_results['nutrient_diagnostics'] = nutrient_diagnostics
 
                 # 🆕 NEW: Display cost summary in console
                 print(
@@ -1292,6 +1469,7 @@ async def swagger_integrated_calculation_with_linear_programming(
         # ===== CREATE COMPREHENSIVE API RESPONSE =====
         response = {
             "user_info": user_info,
+            "nutrient_diagnostics": calculation_results.get('nutrient_diagnostics', {}),
             "optimization_method": method,
             "linear_programming_enabled": linear_programming,
             "integration_metadata": {

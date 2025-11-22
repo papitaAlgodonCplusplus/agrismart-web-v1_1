@@ -300,12 +300,36 @@
             <table class="table table-hover mb-0 fertilizer-table">
               <thead class="table-dark">
                 <tr>
-                  <th>Fertilizante</th>
-                  <th>Tipo & NPK</th>
-                  <th>Stock</th>
-                  <th>Precio</th>
-                  <th>Estado</th>
-                  <th>Vencimiento</th>
+                  <th (click)="sortBy('name')" class="sortable" style="cursor: pointer;">
+                    Fertilizante
+                    <i class="bi" [class.bi-arrow-down]="sortField === 'name' && sortDirection === 'asc'"
+                      [class.bi-arrow-up]="sortField === 'name' && sortDirection === 'desc'"></i>
+                  </th>
+                  <th (click)="sortBy('type')" class="sortable" style="cursor: pointer;">
+                    Tipo & NPK
+                    <i class="bi" [class.bi-arrow-down]="sortField === 'type' && sortDirection === 'asc'"
+                      [class.bi-arrow-up]="sortField === 'type' && sortDirection === 'desc'"></i>
+                  </th>
+                  <th (click)="sortBy('currentStock')" class="sortable" style="cursor: pointer;">
+                    Stock
+                    <i class="bi" [class.bi-arrow-down]="sortField === 'currentStock' && sortDirection === 'asc'"
+                      [class.bi-arrow-up]="sortField === 'currentStock' && sortDirection === 'desc'"></i>
+                  </th>
+                  <th (click)="sortBy('pricePerUnit')" class="sortable" style="cursor: pointer;">
+                    Precio
+                    <i class="bi" [class.bi-arrow-down]="sortField === 'pricePerUnit' && sortDirection === 'asc'"
+                      [class.bi-arrow-up]="sortField === 'pricePerUnit' && sortDirection === 'desc'"></i>
+                  </th>
+                  <th (click)="sortBy('active')" class="sortable" style="cursor: pointer;">
+                    Estado
+                    <i class="bi" [class.bi-arrow-down]="sortField === 'active' && sortDirection === 'asc'"
+                      [class.bi-arrow-up]="sortField === 'active' && sortDirection === 'desc'"></i>
+                  </th>
+                  <th (click)="sortBy('expirationDate')" class="sortable" style="cursor: pointer;">
+                    Vencimiento
+                    <i class="bi" [class.bi-arrow-down]="sortField === 'expirationDate' && sortDirection === 'asc'"
+                      [class.bi-arrow-up]="sortField === 'expirationDate' && sortDirection === 'desc'"></i>
+                  </th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -423,16 +447,11 @@
                               title="Ver detalles">
                         <i class="bi bi-eye"></i>
                       </button>
-                      <button class="btn btn-sm btn-outline-warning" 
+                      <!-- <button class="btn btn-sm btn-outline-warning" 
                               (click)="edit(fertilizer)"
                               title="Editar">
                         <i class="bi bi-pencil"></i>
-                      </button>
-                      <button class="btn btn-sm btn-outline-success" 
-                              (click)="duplicate(fertilizer)"
-                              title="Duplicar">
-                        <i class="bi bi-files"></i>
-                      </button>
+                      </button> -->
                       <button class="btn btn-sm btn-outline-danger" 
                               (click)="delete(fertilizer)"
                               title="Eliminar">
@@ -512,14 +531,10 @@
                         (click)="view(fertilizer)">
                   <i class="bi bi-eye"></i>
                 </button>
-                <button class="btn btn-outline-warning btn-sm" 
+                <!-- <button class="btn btn-outline-warning btn-sm" 
                         (click)="edit(fertilizer)">
                   <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-outline-success btn-sm" 
-                        (click)="duplicate(fertilizer)">
-                  <i class="bi bi-files"></i>
-                </button>
+                </button> -->
                 <button class="btn btn-outline-danger btn-sm" 
                         (click)="delete(fertilizer)">
                   <i class="bi bi-trash"></i>
@@ -1170,18 +1185,12 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" 
+        <!-- <button type="button" 
                 class="btn btn-outline-warning" 
                 (click)="edit(selectedFertilizer!)">
           <i class="bi bi-pencil me-1"></i>
           Editar
-        </button>
-        <button type="button" 
-                class="btn btn-outline-success" 
-                (click)="duplicate(selectedFertilizer)">
-          <i class="bi bi-files me-1"></i>
-          Duplicar
-        </button>
+        </button> -->
         <button type="button" 
                 class="btn btn-secondary" 
                 (click)="closeDetailsModal()">

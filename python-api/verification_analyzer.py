@@ -585,6 +585,195 @@ class SolutionVerifier:
         
         return detailed_verification
 
+
+    def generate_nutrient_discrepancy_info(self, 
+                                       nutrient: str,
+                                       target: float, 
+                                       achieved: float,
+                                       dosages: Dict[str, float],
+                                       fertilizers: List[Any],
+                                       water_analysis: Dict[str, float]) -> Dict[str, Any]:
+        """
+        Generate detailed diagnostic information for nutrient discrepancies
+        
+        Returns:
+            dict with 'has_discrepancy', 'severity', 'message', 'reasons'
+        """
+        
+        # Calculate deviation
+        if target == 0:
+            return {
+                'has_discrepancy': False,
+                'severity': 'none',
+                'message': '',
+                'reasons': []
+            }
+        
+        deviation_percent = abs((achieved - target) / target * 100)
+        
+        # No significant discrepancy (within 5%)
+        if deviation_percent <= 5:
+            return {
+                'has_discrepancy': False,
+                'severity': 'none',
+                'message': '',
+                'reasons': []
+            }
+        
+        # Analyze reasons for discrepancy
+        reasons = []
+        severity = 'low'
+        
+        # 1. Check if any fertilizers supply this nutrient
+        supplying_fertilizers = []
+        for fert in fertilizers:
+            cation_content = fert.composition.cations.get(nutrient, 0)
+            anion_content = fert.composition.anions.get(nutrient, 0)
+            total_content = cation_content + anion_content
+            
+            if total_content > 0:
+                dosage = dosages.get(fert.name, 0)
+                if dosage > 0:
+                    supplying_fertilizers.append({
+                        'name': fert.name,
+                        'content_percent': total_content,
+                        'dosage_g_l': dosage
+                    })
+        
+        # 2. No fertilizers supply this nutrient
+        if len(supplying_fertilizers) == 0:
+            reasons.append({
+                'type': 'no_fertilizer_source',
+                'description': f'Ningún fertilizante en el catálogo contiene {nutrient}'
+            })
+            severity = 'high'
+        
+        # 3. Fertilizers supply it but dosage is too low
+        elif achieved < target * 0.9:
+            water_contribution = water_analysis.get(nutrient, 0)
+            
+            if water_contribution > target * 0.3:
+                reasons.append({
+                    'type': 'high_water_content',
+                    'description': f'El agua aporta {water_contribution:.1f} ppm de {nutrient}, limitando los fertilizantes necesarios'
+                })
+                severity = 'medium'
+            
+            total_dosage = sum(dosages.values())
+            if total_dosage > 12:
+                reasons.append({
+                    'type': 'conflicting_fertilizers',
+                    'description': f'Alta dosificación total ({total_dosage:.1f} g/L) limita la cantidad de fertilizantes que aportan {nutrient}'
+                })
+                severity = 'medium'
+            
+            if nutrient in self.nutrient_ranges:
+                ranges = self.nutrient_ranges[nutrient]
+                if target > ranges['max']:
+                    reasons.append({
+                        'type': 'target_exceeds_safe_limits',
+                        'description': f'Objetivo de {nutrient} ({target:.1f} ppm) excede límite seguro ({ranges["max"]} ppm)'
+                    })
+                    severity = 'high'
+            
+            avg_content = sum([f['content_percent'] for f in supplying_fertilizers]) / len(supplying_fertilizers)
+            if avg_content < 5:
+                reasons.append({
+                    'type': 'low_fertilizer_content',
+                    'description': f'Los fertilizantes disponibles tienen bajo contenido de {nutrient} (promedio {avg_content:.1f}%)'
+                })
+                severity = 'medium'
+        
+        # 4. Achieved exceeds target
+        elif achieved > target * 1.1:
+            water_contribution = water_analysis.get(nutrient, 0)
+            
+            if water_contribution > target * 0.5:
+                reasons.append({
+                    'type': 'excessive_water_content',
+                    'description': f'El agua aporta {water_contribution:.1f} ppm de {nutrient}, excediendo el objetivo de {target:.1f} ppm'
+                })
+                severity = 'high'
+            
+            reasons.append({
+                'type': 'fertilizer_byproduct',
+                'description': f'{nutrient} se aporta como subproducto de fertilizantes dirigidos a otros nutrientes'
+            })
+            severity = 'medium'
+        
+        # 5. Check unusual phase requirements
+        if nutrient in self.nutrient_ranges:
+            ranges = self.nutrient_ranges[nutrient]
+            if target < ranges['min'] * 0.5 or target > ranges['max'] * 1.5:
+                reasons.append({
+                    'type': 'unusual_phase_requirement',
+                    'description': f'Requerimiento de fase inusual: {target:.1f} ppm (rango típico: {ranges["min"]}-{ranges["max"]} ppm)'
+                })
+                severity = 'medium'
+        
+        # Adjust severity based on deviation
+        if deviation_percent > 20:
+            severity = 'high'
+        elif deviation_percent > 10:
+            severity = max(severity, 'medium') if severity != 'high' else 'high'
+        
+        # Create message
+        if achieved < target:
+            message = f'Déficit de ppm encontrado, '
+        else:
+            message = f'Exceso de ppm encontrado, '
+        
+        if reasons:
+            message += reasons[0]['description']
+        
+        return {
+            'has_discrepancy': True,
+            'severity': severity,
+            'deviation_percent': round(deviation_percent, 1),
+            'message': message,
+            'reasons': reasons,
+            'supplying_fertilizers': [f['name'] for f in supplying_fertilizers]
+        }
+
+    def create_detailed_verification_with_diagnostics(self, 
+                                                   dosages: Dict[str, float],
+                                                   achieved_concentrations: Dict[str, float],
+                                                   target_concentrations: Dict[str, float],
+                                                   water_analysis: Dict[str, float],
+                                                   fertilizers: List[Any],
+                                                   volume_liters: float) -> Dict[str, Any]:
+        """
+        Enhanced version that includes discrepancy diagnostics
+        """
+        
+        # Get base verification
+        verification = self.create_detailed_verification(
+            dosages, achieved_concentrations, target_concentrations, water_analysis, volume_liters
+        )
+        
+        # Add diagnostics for each nutrient
+        nutrient_diagnostics = {}
+        
+        for nutrient in target_concentrations.keys():
+            target = target_concentrations[nutrient]
+            achieved = achieved_concentrations.get(nutrient, 0)
+            
+            diagnostic = self.generate_nutrient_discrepancy_info(
+                nutrient=nutrient,
+                target=target,
+                achieved=achieved,
+                dosages=dosages,
+                fertilizers=fertilizers,
+                water_analysis=water_analysis
+            )
+            
+            nutrient_diagnostics[nutrient] = diagnostic
+        
+        # Add diagnostics to verification results
+        verification['nutrient_diagnostics'] = nutrient_diagnostics
+        
+        return verification
+    
     def _convert_to_meq_l(self, concentrations_mg_l: Dict[str, float]) -> Dict[str, float]:
         """Convert mg/L concentrations to meq/L for ionic balance calculations"""
         

@@ -556,3 +556,19 @@
     padding: 1rem;
   }
 }
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+  position: relative;
+  
+  &:hover {
+    background-color: rgba(5, 150, 105, 0.1);
+  }
+  
+  i {
+    margin-left: 0.25rem;
+    font-size: 0.875rem;
+  }
+}

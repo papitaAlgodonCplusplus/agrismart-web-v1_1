@@ -34,6 +34,8 @@ export class WaterChemistryComponent implements OnInit {
   currentPage = 1;
   pageSize = 10;
   totalRecords = 0;
+  sortField: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
   // Filters
   filters: WaterChemistryFilters = {
@@ -235,6 +237,7 @@ export class WaterChemistryComponent implements OnInit {
     });
 
     this.updatePagination();
+    this.applySorting();
   }
 
   updatePagination(): void {
@@ -249,6 +252,52 @@ export class WaterChemistryComponent implements OnInit {
 
   get totalPages(): number {
     return Math.ceil(this.totalRecords / this.pageSize);
+  }
+
+  
+  /**
+   * Sort by field
+   */
+  sortByField(field: string): void {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.applySorting();
+  }
+
+  /**
+   * Apply sorting to filtered data
+   */
+  private applySorting(): void {
+    if (!this.sortField) return;
+
+    this.filteredRecords.sort((a: any, b: any) => {
+      const aValue = a[this.sortField];
+      const bValue = b[this.sortField];
+
+      let comparison = 0;
+
+      if (aValue == null && bValue == null) {
+        comparison = 0;
+      } else if (aValue == null) {
+        comparison = 1;
+      } else if (bValue == null) {
+        comparison = -1;
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+        comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue;
+      } else if (aValue instanceof Date && bValue instanceof Date) {
+        comparison = aValue.getTime() - bValue.getTime();
+      } else {
+        comparison = String(aValue).localeCompare(String(bValue));
+      }
+
+      return this.sortDirection === 'desc' ? comparison * -1 : comparison;
+    });
   }
 
   onSearchChange(): void {

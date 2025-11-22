@@ -60,7 +60,7 @@
         </div>
       </div>
     </div>
-  
+
     <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
       <div class="stat-card stat-warning">
         <div class="stat-icon">
@@ -89,19 +89,15 @@
           <label for="searchTerm" class="form-label">Buscar</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control" id="searchTerm" 
-                   [(ngModel)]="filters.searchTerm" 
-                   (ngModelChange)="onFiltersChange()"
-                   placeholder="Nombre, descripción...">
+            <input type="text" class="form-control" id="searchTerm" [(ngModel)]="filters.searchTerm"
+              (ngModelChange)="onFiltersChange()" placeholder="Nombre, descripción...">
           </div>
         </div>
 
         <!-- Crop Filter -->
         <div class="col-md-3">
           <label for="cropFilter" class="form-label">Cultivo</label>
-          <select class="form-select" id="cropFilter" 
-                  [(ngModel)]="filters.cropId" 
-                  (ngModelChange)="onCropChange()">
+          <select class="form-select" id="cropFilter" [(ngModel)]="filters.cropId" (ngModelChange)="onCropChange()">
             <option [ngValue]="undefined">Todos los cultivos</option>
             <option *ngFor="let crop of availableCrops" [ngValue]="crop.id">{{ crop.name }}</option>
           </select>
@@ -110,9 +106,8 @@
         <!-- Crop Phase Filter -->
         <div class="col-md-3">
           <label for="phaseFilter" class="form-label">Fase</label>
-          <select class="form-select" id="phaseFilter" 
-                  [(ngModel)]="filters.cropPhaseId" 
-                  (ngModelChange)="onFiltersChange()">
+          <select class="form-select" id="phaseFilter" [(ngModel)]="filters.cropPhaseId"
+            (ngModelChange)="onFiltersChange()">
             <option [ngValue]="undefined">Todas las fases</option>
             <option *ngFor="let phase of getFilteredCropPhases()" [ngValue]="phase.id">
               {{ getCropName(phase.cropId) }} - {{ phase.name }}
@@ -125,9 +120,8 @@
           <label class="form-label">Estado</label>
           <div class="form-checks">
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="activeFilter" 
-                     [(ngModel)]="filters.onlyActive" 
-                     (ngModelChange)="onFiltersChange()">
+              <input class="form-check-input" type="checkbox" id="activeFilter" [(ngModel)]="filters.onlyActive"
+                (ngModelChange)="onFiltersChange()">
               <label class="form-check-label" for="activeFilter">Solo activos</label>
             </div>
           </div>
@@ -167,14 +161,39 @@
     <!-- Data Table -->
     <div class="table-responsive" *ngIf="!isLoading && filteredRequirements.length > 0">
       <table class="table table-hover">
+
         <thead>
           <tr>
-            <th>Cultivo</th>
-            <th>Fase</th>
-            <th>NPK</th>
-            <th>EC</th>
-            <th>pH</th>
-            <th>Estado</th>
+            <th (click)="sortByField('name')" class="sortable" style="cursor: pointer;">
+              Cultivo
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('cropPhaseId')" class="sortable" style="cursor: pointer;">
+              Fase de Cultivo
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'cropPhaseId' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'cropPhaseId' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('npkRatio')" class="sortable" style="cursor: pointer;">
+              NPK
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'npkRatio' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'npkRatio' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('ec')" class="sortable" style="cursor: pointer;">
+              EC (dS/m)
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'ec' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'ec' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('pH')" class="sortable" style="cursor: pointer;">
+              pH
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'pH' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'pH' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('isValidated')" class="sortable" style="cursor: pointer;">
+              Estado
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'isValidated' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'isValidated' && sortDirection === 'desc'"></i>
+            </th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -182,7 +201,7 @@
           <tr *ngFor="let requirement of getPaginatedData(); trackBy: trackByIndex">
             <td>
               <div class="crop-info">
-                <strong>{{ getCropNameRequirement(requirement.cropPhaseId) }}</strong>
+                <strong>{{ getCropNameRequirement(requirement) }}</strong>
               </div>
             </td>
             <td>
@@ -203,24 +222,18 @@
               <span class="nutrient-value">{{ requirement.pH || 0 }}</span>
             </td>
             <td>
-              <span class="badge" 
-                    [class.bg-success]="requirement.active" 
-                    [class.bg-secondary]="!requirement.active">
+              <span class="badge" [class.bg-success]="requirement.active" [class.bg-secondary]="!requirement.active">
                 {{ requirement.active ? 'Activo' : 'Inactivo' }}
               </span>
             </td>
             <td>
               <div class="action-buttons">
-                <button type="button" class="btn btn-sm btn-outline-primary me-1" 
-                        (click)="showEditForm(requirement)" 
-                        [disabled]="isLoading"
-                        title="Editar">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="showEditForm(requirement)"
+                  [disabled]="isLoading" title="Editar">
                   <i class="bi bi-pencil"></i>
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-danger ms-1" 
-                        (click)="deleteRequirement(requirement)" 
-                        [disabled]="isLoading"
-                        title="Eliminar">
+                <button type="button" class="btn btn-sm btn-outline-danger ms-1"
+                  (click)="deleteRequirement(requirement)" [disabled]="isLoading" title="Eliminar">
                   <i class="bi bi-trash"></i>
                 </button>
               </div>
@@ -239,9 +252,8 @@
               <i class="bi bi-chevron-left"></i>
             </button>
           </li>
-          <li class="page-item" 
-              *ngFor="let page of [].constructor(getTotalPages()); let i = index" 
-              [class.active]="currentPage === i + 1">
+          <li class="page-item" *ngFor="let page of [].constructor(getTotalPages()); let i = index"
+            [class.active]="currentPage === i + 1">
             <button class="page-link" (click)="goToPage(i + 1)">{{ i + 1 }}</button>
           </li>
           <li class="page-item" [class.disabled]="currentPage === getTotalPages()">
@@ -276,13 +288,13 @@
           <div class="col-md-6">
             <label for="name" class="form-label">Nombre</label>
             <input type="text" class="form-control" id="name" formControlName="name"
-                   [class.is-invalid]="getFieldError('name')" placeholder="Nombre del requerimiento">
+              [class.is-invalid]="getFieldError('name')" placeholder="Nombre del requerimiento">
             <div class="invalid-feedback">{{ getFieldError('name') }}</div>
           </div>
           <div class="col-md-6">
             <label for="cropPhaseId" class="form-label">Fase de Cultivo *</label>
             <select class="form-select" id="cropPhaseId" formControlName="cropPhaseId"
-                    [class.is-invalid]="getFieldError('cropPhaseId')">
+              [class.is-invalid]="getFieldError('cropPhaseId')">
               <option value="">Seleccionar fase</option>
               <option *ngFor="let phase of availableCropPhases" [value]="phase.id">
                 {{ getCropName(phase) }} - {{ phase.name }} - {{ phase.cropId }}
@@ -296,8 +308,8 @@
           <div class="col-12">
             <label for="description" class="form-label">Descripción</label>
             <textarea class="form-control" id="description" formControlName="description" rows="3"
-                      [class.is-invalid]="getFieldError('description')" 
-                      placeholder="Descripción del requerimiento nutricional"></textarea>
+              [class.is-invalid]="getFieldError('description')"
+              placeholder="Descripción del requerimiento nutricional"></textarea>
             <div class="invalid-feedback">{{ getFieldError('description') }}</div>
           </div>
         </div>
@@ -311,31 +323,31 @@
             Macronutrientes (ppm)
           </h6>
         </div>
-        
+
         <div class="collapsible-content" [class.collapsed]="!showMacronutrients">
           <div class="row">
             <div class="col-md-3">
               <label for="no3" class="form-label">Nitrato (NO₃⁻)</label>
               <input type="number" class="form-control" id="no3" formControlName="no3"
-                     [class.is-invalid]="getFieldError('no3')" placeholder="0" step="0.1" min="0">
+                [class.is-invalid]="getFieldError('no3')" placeholder="0" step="0.1" min="0">
               <div class="invalid-feedback">{{ getFieldError('no3') }}</div>
             </div>
             <div class="col-md-3">
               <label for="nh4" class="form-label">Amonio (NH₄⁺)</label>
               <input type="number" class="form-control" id="nh4" formControlName="nh4"
-                     [class.is-invalid]="getFieldError('nh4')" placeholder="0" step="0.1" min="0">
+                [class.is-invalid]="getFieldError('nh4')" placeholder="0" step="0.1" min="0">
               <div class="invalid-feedback">{{ getFieldError('nh4') }}</div>
             </div>
             <div class="col-md-3">
               <label for="h2po4" class="form-label">Fosfato (H₂PO₄⁻)</label>
               <input type="number" class="form-control" id="h2po4" formControlName="h2po4"
-                     [class.is-invalid]="getFieldError('h2po4')" placeholder="0" step="0.1" min="0">
+                [class.is-invalid]="getFieldError('h2po4')" placeholder="0" step="0.1" min="0">
               <div class="invalid-feedback">{{ getFieldError('h2po4') }}</div>
             </div>
             <div class="col-md-3">
               <label for="k" class="form-label">Potasio (K⁺)</label>
               <input type="number" class="form-control" id="k" formControlName="k"
-                     [class.is-invalid]="getFieldError('k')" placeholder="0" step="0.1" min="0">
+                [class.is-invalid]="getFieldError('k')" placeholder="0" step="0.1" min="0">
               <div class="invalid-feedback">{{ getFieldError('k') }}</div>
             </div>
           </div>
@@ -344,25 +356,25 @@
             <div class="col-md-3">
               <label for="ca" class="form-label">Calcio (Ca²⁺)</label>
               <input type="number" class="form-control" id="ca" formControlName="ca"
-                     [class.is-invalid]="getFieldError('ca')" placeholder="0" step="0.1" min="0">
+                [class.is-invalid]="getFieldError('ca')" placeholder="0" step="0.1" min="0">
               <div class="invalid-feedback">{{ getFieldError('ca') }}</div>
             </div>
             <div class="col-md-3">
               <label for="mg" class="form-label">Magnesio (Mg²⁺)</label>
               <input type="number" class="form-control" id="mg" formControlName="mg"
-                     [class.is-invalid]="getFieldError('mg')" placeholder="0" step="0.1" min="0">
+                [class.is-invalid]="getFieldError('mg')" placeholder="0" step="0.1" min="0">
               <div class="invalid-feedback">{{ getFieldError('mg') }}</div>
             </div>
             <div class="col-md-3">
               <label for="so4" class="form-label">Sulfato (SO₄²⁻)</label>
               <input type="number" class="form-control" id="so4" formControlName="so4"
-                     [class.is-invalid]="getFieldError('so4')" placeholder="0" step="0.1" min="0">
+                [class.is-invalid]="getFieldError('so4')" placeholder="0" step="0.1" min="0">
               <div class="invalid-feedback">{{ getFieldError('so4') }}</div>
             </div>
             <div class="col-md-3">
               <label for="cl" class="form-label">Cloruro (Cl⁻)</label>
               <input type="number" class="form-control" id="cl" formControlName="cl"
-                     [class.is-invalid]="getFieldError('cl')" placeholder="0" step="0.1" min="0">
+                [class.is-invalid]="getFieldError('cl')" placeholder="0" step="0.1" min="0">
               <div class="invalid-feedback">{{ getFieldError('cl') }}</div>
             </div>
           </div>
@@ -371,13 +383,13 @@
             <div class="col-md-4">
               <label for="na" class="form-label">Sodio (Na⁺)</label>
               <input type="number" class="form-control" id="na" formControlName="na"
-                     [class.is-invalid]="getFieldError('na')" placeholder="0" step="0.1" min="0">
+                [class.is-invalid]="getFieldError('na')" placeholder="0" step="0.1" min="0">
               <div class="invalid-feedback">{{ getFieldError('na') }}</div>
             </div>
             <div class="col-md-4">
               <label for="hco3" class="form-label">Bicarbonato (HCO₃⁻)</label>
               <input type="number" class="form-control" id="hco3" formControlName="hco3"
-                     [class.is-invalid]="getFieldError('hco3')" placeholder="0" step="0.1" min="0">
+                [class.is-invalid]="getFieldError('hco3')" placeholder="0" step="0.1" min="0">
               <div class="invalid-feedback">{{ getFieldError('hco3') }}</div>
             </div>
           </div>
@@ -392,43 +404,43 @@
             Micronutrientes (ppm)
           </h6>
         </div>
-        
+
         <div class="collapsible-content" [class.collapsed]="!showMicronutrients">
           <div class="row">
             <div class="col-md-2">
               <label for="fe" class="form-label">Hierro (Fe)</label>
               <input type="number" class="form-control" id="fe" formControlName="fe"
-                     [class.is-invalid]="getFieldError('fe')" placeholder="0" step="0.01" min="0">
+                [class.is-invalid]="getFieldError('fe')" placeholder="0" step="0.01" min="0">
               <div class="invalid-feedback">{{ getFieldError('fe') }}</div>
             </div>
             <div class="col-md-2">
               <label for="mn" class="form-label">Manganeso (Mn)</label>
               <input type="number" class="form-control" id="mn" formControlName="mn"
-                     [class.is-invalid]="getFieldError('mn')" placeholder="0" step="0.01" min="0">
+                [class.is-invalid]="getFieldError('mn')" placeholder="0" step="0.01" min="0">
               <div class="invalid-feedback">{{ getFieldError('mn') }}</div>
             </div>
             <div class="col-md-2">
               <label for="zn" class="form-label">Zinc (Zn)</label>
               <input type="number" class="form-control" id="zn" formControlName="zn"
-                     [class.is-invalid]="getFieldError('zn')" placeholder="0" step="0.01" min="0">
+                [class.is-invalid]="getFieldError('zn')" placeholder="0" step="0.01" min="0">
               <div class="invalid-feedback">{{ getFieldError('zn') }}</div>
             </div>
             <div class="col-md-2">
               <label for="cu" class="form-label">Cobre (Cu)</label>
               <input type="number" class="form-control" id="cu" formControlName="cu"
-                     [class.is-invalid]="getFieldError('cu')" placeholder="0" step="0.01" min="0">
+                [class.is-invalid]="getFieldError('cu')" placeholder="0" step="0.01" min="0">
               <div class="invalid-feedback">{{ getFieldError('cu') }}</div>
             </div>
             <div class="col-md-2">
               <label for="b" class="form-label">Boro (B)</label>
               <input type="number" class="form-control" id="b" formControlName="b"
-                     [class.is-invalid]="getFieldError('b')" placeholder="0" step="0.01" min="0">
+                [class.is-invalid]="getFieldError('b')" placeholder="0" step="0.01" min="0">
               <div class="invalid-feedback">{{ getFieldError('b') }}</div>
             </div>
             <div class="col-md-2">
               <label for="mo" class="form-label">Molibdeno (Mo)</label>
               <input type="number" class="form-control" id="mo" formControlName="mo"
-                     [class.is-invalid]="getFieldError('mo')" placeholder="0" step="0.001" min="0">
+                [class.is-invalid]="getFieldError('mo')" placeholder="0" step="0.001" min="0">
               <div class="invalid-feedback">{{ getFieldError('mo') }}</div>
             </div>
           </div>
@@ -443,26 +455,26 @@
             Propiedades de la Solución
           </h6>
         </div>
-        
+
         <div class="collapsible-content" [class.collapsed]="!showSolutionProperties">
           <div class="row">
             <div class="col-md-4">
               <label for="ec" class="form-label">Conductividad Eléctrica (EC)</label>
               <input type="number" class="form-control" id="ec" formControlName="ec"
-                     [class.is-invalid]="getFieldError('ec')" placeholder="1.2" step="0.1" min="0" max="10">
+                [class.is-invalid]="getFieldError('ec')" placeholder="1.2" step="0.1" min="0" max="10">
               <div class="invalid-feedback">{{ getFieldError('ec') }}</div>
               <small class="form-text text-muted">dS/m</small>
             </div>
             <div class="col-md-4">
               <label for="ph" class="form-label">pH</label>
               <input type="number" class="form-control" id="ph" formControlName="ph"
-                     [class.is-invalid]="getFieldError('ph')" placeholder="6.5" step="0.1" min="3" max="9">
+                [class.is-invalid]="getFieldError('ph')" placeholder="6.5" step="0.1" min="3" max="9">
               <div class="invalid-feedback">{{ getFieldError('ph') }}</div>
             </div>
             <div class="col-md-4">
               <label for="temperature" class="form-label">Temperatura Óptima</label>
               <input type="number" class="form-control" id="temperature" formControlName="temperature"
-                     [class.is-invalid]="getFieldError('temperature')" placeholder="22" step="0.1" min="10" max="35">
+                [class.is-invalid]="getFieldError('temperature')" placeholder="22" step="0.1" min="10" max="35">
               <div class="invalid-feedback">{{ getFieldError('temperature') }}</div>
               <small class="form-text text-muted">°C</small>
             </div>
@@ -476,8 +488,8 @@
           <div class="col-12">
             <label for="notes" class="form-label">Notas</label>
             <textarea class="form-control" id="notes" formControlName="notes" rows="3"
-                      [class.is-invalid]="getFieldError('notes')" 
-                      placeholder="Notas adicionales sobre este requerimiento"></textarea>
+              [class.is-invalid]="getFieldError('notes')"
+              placeholder="Notas adicionales sobre este requerimiento"></textarea>
             <div class="invalid-feedback">{{ getFieldError('notes') }}</div>
           </div>
         </div>
@@ -499,7 +511,8 @@
         <i class="bi bi-x-circle"></i>
         Cancelar
       </button>
-      <button type="submit" class="btn btn-primary" (click)="submitForm()" [disabled]="isLoading || requirementForm.invalid">
+      <button type="submit" class="btn btn-primary" (click)="submitForm()"
+        [disabled]="isLoading || requirementForm.invalid">
         <span class="spinner-border spinner-border-sm me-2" *ngIf="isLoading"></span>
         <i class="bi bi-check-circle" *ngIf="!isLoading"></i>
         {{ isEditMode ? 'Actualizar' : 'Crear' }} Requerimiento

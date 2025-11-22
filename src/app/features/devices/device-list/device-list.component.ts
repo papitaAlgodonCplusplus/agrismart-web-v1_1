@@ -66,7 +66,7 @@ interface CropProductionDevice {
 })
 export class DeviceListComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  
+
   // Data properties
   devices: EnhancedDevice[] = [];
   filteredDevices: EnhancedDevice[] = [];
@@ -74,7 +74,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   iotDevices: IoTDeviceResponse[] = [];
   rawData: DeviceRawDataItem[] = [];
   cropProductionDevices: CropProductionDevice[] = [];
-  
+
   // UI state
   selectedDevice: EnhancedDevice | null = null;
   isLoading = true;
@@ -82,24 +82,26 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   showForm = false;
   isEditMode = false;
   autoRefresh = true;
-  
+
   // Form
   deviceForm!: FormGroup;
-  
+
   // Filters
   filters: DeviceFilters = {};
   searchTerm = '';
   statusFilter = '';
+  sortField: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
   typeFilter = '';
-  
+
   // Statistics
   statistics: DeviceStatistics | null = null;
-  
+
   // Pagination
   currentPage = 1;
   itemsPerPage = 10;
   totalItems = 0;
-  
+
   // Device types and options
   deviceTypes = [
     { value: 'flujo', label: 'Sensor de Flujo' },
@@ -109,7 +111,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     { value: 'suelo', label: 'Sensor de Suelo' },
     { value: 'otro', label: 'Otro' }
   ];
-  
+
   manufacturers = [
     { value: 'Arduino', label: 'Arduino' },
     { value: 'Raspberry Pi', label: 'Raspberry Pi' },
@@ -223,11 +225,11 @@ export class DeviceListComponent implements OnInit, OnDestroy {
       next: ({ registeredDevices, iotDevices, rawData, cropProductionDevices, statistics }) => {
         console.log('Data loaded successfully: ', {
           registeredDevices: registeredDevices?.length || 0,
-          iotDevices: iotDevices?.length || 0, 
+          iotDevices: iotDevices?.length || 0,
           rawData: rawData?.length || 0,
           cropProductionDevices: cropProductionDevices?.length || 0
         });
-        
+
         this.registeredDevices = registeredDevices || [];
         this.iotDevices = iotDevices || [];
         this.rawData = rawData || [];
@@ -269,12 +271,12 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     this.registeredDevices.forEach(registeredDevice => {
       // Find matching raw data - the registered device deviceId is contained in the raw data deviceId
       // e.g., registered: 'flujo-02' matches raw: 'flujo-02-c7'
-      const deviceRawData = this.rawData.filter(rd => 
+      const deviceRawData = this.rawData.filter(rd =>
         rd.deviceId.includes(registeredDevice.deviceId || '')
       );
-      
+
       // Find linked crop productions
-      const linkedToCropProductions = this.cropProductionDevices.filter(cpd => 
+      const linkedToCropProductions = this.cropProductionDevices.filter(cpd =>
         cpd.deviceId === registeredDevice.id && cpd.active
       );
 
@@ -302,7 +304,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     // Add IoT devices that aren't registered in the DeviceService (if iotDevices data is available)
     if (this.iotDevices && Array.isArray(this.iotDevices)) {
       this.iotDevices.forEach(iotDevice => {
-        const existsInRegistered = this.registeredDevices.some(rd => 
+        const existsInRegistered = this.registeredDevices.some(rd =>
           iotDevice.deviceId.includes(rd.deviceId || '')
         );
 
@@ -438,8 +440,8 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   private updateDeviceReadings(): void {
     this.devices.forEach(device => {
       // Match using the registered device ID contained in raw data deviceId
-      const deviceRawData = this.rawData.filter(rd => 
-        rd.deviceId.includes(device.deviceId || '') || 
+      const deviceRawData = this.rawData.filter(rd =>
+        rd.deviceId.includes(device.deviceId || '') ||
         rd.deviceId.includes(device.name || '')
       );
       device.sensorReadings = this.processDeviceReadings(deviceRawData);
@@ -473,11 +475,13 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     }
 
     this.totalItems = filtered.length;
-    
+
     // Apply pagination
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
     this.filteredDevices = filtered.slice(startIndex, endIndex);
+
+    this.applySorting();
   }
 
   onSearch(): void {
@@ -649,6 +653,52 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     }
   }
 
+
+  /**
+   * Sort by field
+   */
+  sortByField(field: string): void {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.applySorting();
+  }
+
+  /**
+   * Apply sorting to filtered data
+   */
+  private applySorting(): void {
+    if (!this.sortField) return;
+
+    this.filteredDevices.sort((a: any, b: any) => {
+      const aValue = a[this.sortField];
+      const bValue = b[this.sortField];
+
+      let comparison = 0;
+
+      if (aValue == null && bValue == null) {
+        comparison = 0;
+      } else if (aValue == null) {
+        comparison = 1;
+      } else if (bValue == null) {
+        comparison = -1;
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+        comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue;
+      } else if (aValue instanceof Date && bValue instanceof Date) {
+        comparison = aValue.getTime() - bValue.getTime();
+      } else {
+        comparison = String(aValue).localeCompare(String(bValue));
+      }
+
+      return this.sortDirection === 'desc' ? comparison * -1 : comparison;
+    });
+  }
+
   getStatusLabel(status: string): string {
     switch (status) {
       case 'online': return 'En línea';
@@ -677,13 +727,13 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   getReadingAge(date: Date): string {
     const now = new Date();
     const diffMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
+
     if (diffMinutes < 1) return 'menos de 1 minuto';
     if (diffMinutes < 60) return `${diffMinutes} minutos`;
-    
+
     const diffHours = Math.floor(diffMinutes / 60);
     if (diffHours < 24) return `${diffHours} horas`;
-    
+
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays} días`;
   }

@@ -44,6 +44,8 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSaving = false;
 
+  sortField: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
   // Modals
   showPlanModal = false;
   showEntryModal = false;
@@ -176,6 +178,8 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   // ==================== TAB NAVIGATION ====================
   setActiveTab(tab: 'plans' | 'entries' | 'modes' | 'history'): void {
     this.activeTab = tab;
+    this.sortField = '';
+    this.sortDirection = 'asc';
     
     if (tab === 'history') {
       this.loadExecutionHistory();
@@ -779,5 +783,67 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
 
   goToDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  
+  /**
+   * Sort by field
+   */
+  sortByField(field: string): void {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.applySorting();
+  }
+
+  /**
+   * Apply sorting to current data based on active tab
+   */
+  private applySorting(): void {
+    if (!this.sortField) return;
+
+    const sortFunction = (a: any, b: any) => {
+      const aValue = a[this.sortField];
+      const bValue = b[this.sortField];
+
+      let comparison = 0;
+
+      if (aValue == null && bValue == null) {
+        comparison = 0;
+      } else if (aValue == null) {
+        comparison = 1;
+      } else if (bValue == null) {
+        comparison = -1;
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+        comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue;
+      } else if (aValue instanceof Date && bValue instanceof Date) {
+        comparison = aValue.getTime() - bValue.getTime();
+      } else {
+        comparison = String(aValue).localeCompare(String(bValue));
+      }
+
+      return this.sortDirection === 'desc' ? comparison * -1 : comparison;
+    };
+
+    // Apply sorting to the appropriate array based on active tab
+    switch (this.activeTab) {
+      case 'plans':
+        this.irrigationPlans.sort(sortFunction);
+        break;
+      case 'entries':
+        this.filteredEntries.sort(sortFunction);
+        break;
+      case 'modes':
+        this.irrigationModes.sort(sortFunction);
+        break;
+      case 'history':
+        this.executionHistory.sort(sortFunction);
+        break;
+    }
   }
 }

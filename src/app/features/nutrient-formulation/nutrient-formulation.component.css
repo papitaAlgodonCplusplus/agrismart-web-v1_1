@@ -1399,6 +1399,65 @@ body.modal-open {
   transform: scale(0.95);
 }
 
+
+/* Diagnostic Icons */
+.bi-info-circle-fill,
+.bi-check-circle-fill {
+  transition: all 0.3s ease;
+}
+
+.bi-info-circle-fill:hover,
+.bi-check-circle-fill:hover {
+  transform: scale(1.2);
+}
+
+/* Tooltip Styling */
+.tooltip-inner {
+  max-width: 400px;
+  text-align: left;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.diagnostic-tooltip {
+  line-height: 1.6;
+}
+
+.diagnostic-tooltip strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.diagnostic-tooltip .badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Animations */
+@keyframes pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.bi-info-circle-fill.text-warning {
+  animation: pulse-warning 2s infinite;
+}
+
+.bi-info-circle-fill.text-danger {
+  animation: pulse-danger 1.5s infinite;
+}
+
+.bi-info-circle-fill:hover {
+  animation: none !important;
+}
+
 .status-optimal {
   color: #28a745;
   background-color: linear-gradient(135deg, rgba(40, 167, 69, 0.15) 0%, rgba(40, 167, 69, 0.05) 100%);

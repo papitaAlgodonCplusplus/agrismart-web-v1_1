@@ -76,13 +76,14 @@ echo - Run: run-stop.bat
 echo.
 echo ========================================
 
-:: Optional: Start Angular frontend if it exists
-@REM if exist "package.json" (
-@REM     echo.
-@REM     echo Starting Angular Frontend...
-@REM     start "AgriSmart-Frontend" cmd /c "npm run build-dev && npm dev"
-@REM     echo - Frontend: http://localhost:4200
-@REM )
+
+:: python -m uvicorn main_api:app --host 0.0.0.0 --port 5002 in ./python-api folder
+echo Starting Python API server...
+start "python-api" cmd /c "cd python-api && python -m uvicorn main_api:app --host 0.0.0.0 --port 5002"
+timeout /t 3
+
+echo Starting ng server for frontend in current folder...
+cmd /c "ng serve --open" 
 
 echo.
 echo Press any key to exit this launcher...

@@ -182,14 +182,35 @@
 
     <div class="table-responsive">
       <table class="table table-hover mb-0">
+
         <thead>
           <tr>
-            <th>Finca</th>
-            <th>Empresa</th>
-            <th>Ubicación</th>
-            <th>Área</th>
+            <th (click)="sortByField('name')" class="sortable" style="cursor: pointer;">
+              Finca
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('companyId')" class="sortable" style="cursor: pointer;">
+              Empresa
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'companyId' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'companyId' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('location')" class="sortable" style="cursor: pointer;">
+              Ubicación
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'location' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'location' && sortDirection === 'desc'"></i>
+            </th>
+            <th (click)="sortByField('totalArea')" class="sortable" style="cursor: pointer;">
+              Área
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'totalArea' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'totalArea' && sortDirection === 'desc'"></i>
+            </th>
             <th>Clima/Suelo</th>
-            <th>Estado</th>
+            <th (click)="sortByField('active')" class="sortable" style="cursor: pointer;">
+              Estado
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
+            </th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -372,14 +393,14 @@
           <!-- Coordinates -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Latitud</label>
-            <input type="number" class="form-control" formControlName="latitude" step="0.0001" min="-90"
-              max="90" placeholder="Ej: 10.0000">
+            <input type="number" class="form-control" formControlName="latitude" step="0.0001" min="-90" max="90"
+              placeholder="Ej: 10.0000">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Longitud</label>
-            <input type="number" class="form-control" formControlName="longitude" step="0.0001" min="-180"
-              max="180" placeholder="Ej: -84.0000">
+            <input type="number" class="form-control" formControlName="longitude" step="0.0001" min="-180" max="180"
+              placeholder="Ej: -84.0000">
           </div>
 
           <!-- Physical Characteristics -->

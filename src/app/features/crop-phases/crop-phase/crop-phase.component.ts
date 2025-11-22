@@ -27,6 +27,9 @@ import { CatalogService, Catalog } from '../../catalogs/services/catalog.service
 })
 export class CropPhaseComponent implements OnInit {
   cropPhases: CropPhase[] = [];
+  sortField: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
+
   filteredCropPhases: CropPhase[] = [];
   selectedCropPhase: CropPhase | null = null;
   cropPhaseForm!: FormGroup;
@@ -89,7 +92,6 @@ export class CropPhaseComponent implements OnInit {
       description: ['', Validators.maxLength(500)],
       cropId: [null, Validators.required],
       catalogId: [null, Validators.required],
-      sequence: [1, [Validators.required, Validators.min(1), Validators.max(100)]],
       startingWeek: [1, [Validators.required, Validators.min(1), Validators.max(52)]],
       durationWeeks: [1, [Validators.required, Validators.min(1), Validators.max(52)]],
       criticalNotes: ['', Validators.maxLength(1000)],
@@ -218,19 +220,18 @@ export class CropPhaseComponent implements OnInit {
     if (this.filters.onlyActive) {
       filtered = filtered.filter(phase => phase.active);
     }
-
-    // Sort by crop and sequence
+ 
     filtered.sort((a, b) => {
       if (a.cropId !== b.cropId) {
         const cropA = this.getCropName(a.cropId);
         const cropB = this.getCropName(b.cropId);
         return cropA.localeCompare(cropB);
       }
-      return (a.sequence || 0) - (b.sequence || 0);
+      return (a.startingWeek || 0) - (b.startingWeek || 0);
     });
-
     this.filteredCropPhases = filtered;
     this.totalRecords = filtered.length;
+    this.applySorting();
   }
 
   // Filter methods
@@ -256,8 +257,7 @@ export class CropPhaseComponent implements OnInit {
     this.selectedCropPhase = null;
     this.cropPhaseForm.reset();
     this.cropPhaseForm.patchValue({
-      active: true,
-      sequence: 1,
+      active: true, 
       startingWeek: 1,
       durationWeeks: 1
     });
@@ -272,6 +272,49 @@ export class CropPhaseComponent implements OnInit {
     this.clearMessages();
   }
 
+  /**
+   * Sort by field
+   */
+  sortByField(field: string): void {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.applySorting();
+  }
+
+  /**
+   * Apply sorting to filtered data
+   */
+  private applySorting(): void {
+    if (!this.sortField) return;
+
+    this.filteredCropPhases.sort((a: any, b: any) => {
+      const aValue = a[this.sortField];
+      const bValue = b[this.sortField];
+
+      let comparison = 0;
+
+      if (aValue == null && bValue == null) {
+        comparison = 0;
+      } else if (aValue == null) {
+        comparison = 1;
+      } else if (bValue == null) {
+        comparison = -1;
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+        comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue;
+      } else {
+        comparison = String(aValue).localeCompare(String(bValue));
+      }
+
+      return this.sortDirection === 'desc' ? comparison * -1 : comparison;
+    });
+  }
+
   hideForm(): void {
     this.isFormVisible = false;
     this.isEditMode = false;
@@ -281,11 +324,6 @@ export class CropPhaseComponent implements OnInit {
   }
 
   submitForm(): void {
-    if (this.cropPhaseForm.invalid) {
-      this.cropPhaseForm.markAllAsTouched();
-      return;
-    }
-
     const formData = this.cropPhaseForm.value;
     this.isLoading = true;
     this.clearMessages();
@@ -405,8 +443,7 @@ export class CropPhaseComponent implements OnInit {
     const labels: { [key: string]: string } = {
       name: 'Nombre',
       description: 'Descripción',
-      cropId: 'Cultivo',
-      sequence: 'Secuencia',
+      cropId: 'Cultivo', 
       startingWeek: 'Semana de inicio',
       durationWeeks: 'Duración en semanas',
       criticalNotes: 'Notas críticas',
@@ -472,44 +509,7 @@ export class CropPhaseComponent implements OnInit {
   trackByIndex(index: number, item: any): number {
     return index;
   }
-
-  // Validation helpers
-  isSequenceValid(): boolean {
-    const sequence = this.cropPhaseForm.get('sequence')?.value;
-    const cropId = this.cropPhaseForm.get('cropId')?.value;
-
-    if (!sequence || !cropId) return true; // Let required validators handle this
-
-    // Check if sequence already exists for this crop (excluding current phase if editing)
-    const existingPhase = this.cropPhases.find(phase =>
-      phase.cropId === cropId &&
-      phase.sequence === sequence &&
-      phase.id !== this.selectedCropPhase?.id
-    );
-
-    return !existingPhase;
-  }
-
-  getSequenceError(): string {
-    if (!this.isSequenceValid()) {
-      return 'Ya existe una fase con esta secuencia para el cultivo seleccionado';
-    }
-    return this.getFieldError('sequence');
-  }
-
-  // Form field dependencies
-  onCropChange(): void {
-    // Reset sequence when crop changes
-    this.cropPhaseForm.patchValue({ sequence: 1 });
-
-    // Get next available sequence for selected crop
-    const cropId = this.cropPhaseForm.get('cropId')?.value;
-    if (cropId) {
-      const cropPhases = this.cropPhases.filter(phase => phase.cropId === cropId);
-      const maxSequence = Math.max(0, ...cropPhases.map(phase => phase.sequence || 0));
-      this.cropPhaseForm.patchValue({ sequence: maxSequence + 1 });
-    }
-  }
+ 
 
   goToDashboard(): void {
     this.router.navigate(['/dashboard']);

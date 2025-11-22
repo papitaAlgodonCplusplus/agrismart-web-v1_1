@@ -1123,6 +1123,7 @@
                                 <th>Logrado</th>
                                 <th>Desviación %</th>
                                 <th>Estado</th>
+                                <th class="text-center">Info</th> <!-- NEW -->
                               </tr>
                             </thead>
                             <tbody>
@@ -1140,6 +1141,25 @@
                                   <span [class]="getStatusClass(result.target_value, result.actual_value)">
                                     {{ getStatusText(result.target_value, result.actual_value) }}
                                   </span>
+                                </td>
+
+                                <!-- NEW INFO COLUMN -->
+                                <td class="text-center">
+                                  <ng-container *ngIf="hasNutrientDiscrepancy(result.parameter)">
+                                    <i class="bi bi-info-circle-fill"
+                                      [class.text-warning]="getNutrientDiagnosticSeverity(result.parameter) === 'medium'"
+                                      [class.text-danger]="getNutrientDiagnosticSeverity(result.parameter) === 'high'"
+                                      [class.text-info]="getNutrientDiagnosticSeverity(result.parameter) === 'low'"
+                                      style="cursor: pointer; font-size: 1.2rem;" [attr.data-bs-toggle]="'tooltip'"
+                                      [attr.data-bs-placement]="'left'" [attr.data-bs-html]="true"
+                                      [attr.title]="getNutrientDiagnosticMessage(result.parameter)">
+                                    </i>
+                                  </ng-container>
+                                  <ng-container *ngIf="!hasNutrientDiscrepancy(result.parameter)">
+                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 1.2rem;"
+                                      [attr.data-bs-toggle]="'tooltip'" [attr.title]="'Concentración óptima alcanzada'">
+                                    </i>
+                                  </ng-container>
                                 </td>
                               </tr>
                             </tbody>
@@ -1379,6 +1399,7 @@
                                 <th>Unidad</th>
                                 <th>Desviación</th>
                                 <th>Estado</th>
+                                <th class="text-center">Info</th> <!-- NEW -->
                               </tr>
                             </thead>
                             <tbody>
@@ -1403,6 +1424,25 @@
                                     {{ param.status === 'optimal' ? 'Óptimo' :
                                     param.status === 'acceptable' ? 'Aceptable' : 'Crítico' }}
                                   </span>
+                                </td>
+
+                                <!-- NEW INFO COLUMN -->
+                                <td class="text-center">
+                                  <ng-container *ngIf="hasNutrientDiscrepancy(param.parameter)">
+                                    <i class="bi bi-info-circle-fill"
+                                      [class.text-warning]="getNutrientDiagnosticSeverity(param.parameter) === 'medium'"
+                                      [class.text-danger]="getNutrientDiagnosticSeverity(param.parameter) === 'high'"
+                                      [class.text-info]="getNutrientDiagnosticSeverity(param.parameter) === 'low'"
+                                      style="cursor: pointer; font-size: 1.2rem;" [attr.data-bs-toggle]="'tooltip'"
+                                      [attr.data-bs-placement]="'left'" [attr.data-bs-html]="true"
+                                      [attr.title]="getNutrientDiagnosticMessage(param.parameter)">
+                                    </i>
+                                  </ng-container>
+                                  <ng-container *ngIf="!hasNutrientDiscrepancy(param.parameter)">
+                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 1.2rem;"
+                                      [attr.data-bs-toggle]="'tooltip'" [attr.title]="'Concentración óptima alcanzada'">
+                                    </i>
+                                  </ng-container>
                                 </td>
                               </tr>
                             </tbody>

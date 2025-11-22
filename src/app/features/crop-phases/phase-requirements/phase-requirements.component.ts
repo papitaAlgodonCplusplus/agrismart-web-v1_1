@@ -93,6 +93,8 @@ export class PhaseRequirementsComponent implements OnInit {
   currentPage = 1;
   pageSize = 10;
   totalRecords = 0;
+  sortField: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
   // Filters
   filters: PhaseRequirementFilters = {
@@ -123,6 +125,50 @@ export class PhaseRequirementsComponent implements OnInit {
     private router: Router
   ) {
     this.initializeForm();
+  }
+
+
+  /**
+   * Sort by field
+   */
+  sortByField(field: string): void {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.applySorting();
+  }
+
+  /**
+   * Apply sorting to filtered data
+   */
+  private applySorting(): void {
+    if (!this.sortField) return;
+
+    this.filteredRequirements.sort((a: any, b: any) => {
+      const aValue = a[this.sortField];
+      const bValue = b[this.sortField];
+
+      let comparison = 0;
+
+      if (aValue == null && bValue == null) {
+        comparison = 0;
+      } else if (aValue == null) {
+        comparison = 1;
+      } else if (bValue == null) {
+        comparison = -1;
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+        comparison = aValue.toLowerCase().localeCompare(bValue.toLowerCase());
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue;
+      } else {
+        comparison = String(aValue).localeCompare(String(bValue));
+      }
+
+      return this.sortDirection === 'desc' ? comparison * -1 : comparison;
+    });
   }
 
   ngOnInit(): void {
@@ -249,8 +295,33 @@ export class PhaseRequirementsComponent implements OnInit {
     if (this.isEditMode && this.selectedRequirement) {
       // Update existing requirement
       const updateData = {
-        ...apiRequestData,
-        id: this.selectedRequirement.id
+        id: this.selectedRequirement.id,
+        cropPhaseService: apiRequestData.cropPhaseId,
+        phaseId: apiRequestData.phaseId,
+        ec: apiRequestData.ec,
+        hcO3: apiRequestData.hco3,
+        nO3: apiRequestData.no3,
+        h2PO4: apiRequestData.h2po4,
+        sO4: apiRequestData.so4,
+        cl: apiRequestData.cl,
+        nH4: apiRequestData.nh4,
+        k: apiRequestData.k,
+        ca: apiRequestData.ca,
+        mg: apiRequestData.mg,
+        na: apiRequestData.na,
+        fe: apiRequestData.fe,
+        mn: apiRequestData.mn,
+        zn: apiRequestData.zn,
+        cu: apiRequestData.cu,
+        b: apiRequestData.b,
+        mo: apiRequestData.mo,
+        pH: apiRequestData.ph,
+        temperature: apiRequestData.temperature,
+        notes: apiRequestData.notes,
+        name: apiRequestData.name,
+        description: apiRequestData.description,
+        active: apiRequestData.active,
+        updatedBy: this.authService.getCurrentUserId()
       };
 
       console.log('Updating requirement with data:', updateData);
@@ -261,7 +332,7 @@ export class PhaseRequirementsComponent implements OnInit {
           this.loadRequirements();
         },
         error: (error) => {
-          console.error('Error updating requirement:', error);
+
           this.errorMessage = 'Error al actualizar el requerimiento';
           this.isLoading = false;
         }
@@ -276,7 +347,7 @@ export class PhaseRequirementsComponent implements OnInit {
           this.loadRequirements();
         },
         error: (error) => {
-          console.error('Error creating requirement:', error);
+
           this.errorMessage = 'Error al crear el requerimiento';
           this.isLoading = false;
         }
@@ -298,7 +369,7 @@ export class PhaseRequirementsComponent implements OnInit {
           this.loadRequirements();
         },
         error: (error) => {
-          console.error('Error deleting requirement:', error);
+
           this.errorMessage = 'Error al eliminar el requerimiento';
           this.isLoading = false;
         }
@@ -327,7 +398,7 @@ export class PhaseRequirementsComponent implements OnInit {
           this.loadRequirements();
         },
         error: (error) => {
-          console.error('Error toggling requirement status:', error);
+
           this.errorMessage = `Error al ${action} el requerimiento`;
           this.isLoading = false;
         }
@@ -355,7 +426,7 @@ export class PhaseRequirementsComponent implements OnInit {
           this.loadRequirements();
         },
         error: (error) => {
-          console.error('Error validating requirement:', error);
+
           this.errorMessage = 'Error al validar el requerimiento';
           this.isLoading = false;
         }
@@ -369,23 +440,29 @@ export class PhaseRequirementsComponent implements OnInit {
     this.successMessage = '';
   }
 
-  getCropNameRequirement(cropPhaseId?: number): string {
+  getCropNameRequirement(requirement: any): string {
+    console.log('Getting crop name for requirement:', requirement);
+    const cropPhaseId = requirement?.cropPhaseId;
     if (!cropPhaseId) {
-      console.error('Invalid cropPhaseId:', cropPhaseId);
       return 'N/A';
     }
     const phase = this.availableCropPhases.find(p => p.id.toString() === cropPhaseId.toString());
     if (!phase) {
-      console.error('Crop phase not found for id:', cropPhaseId);
+      if (cropPhaseId === 1) {
+        console.log('cropPhaseId is 1 yet returning N/A', this.availableCropPhases);
+      }
       return 'N/A';
     }
     const crop = this.availableCrops.find(c => c.id.toString() === phase.cropId.toString());
+
+    if(crop != null){
+      console.log('Found crop:', crop);
+    }
     return crop ? crop.name || 'N/A' : 'N/A';
   }
 
   getCropName(phase?: any): string {
     if (!phase) {
-      console.error('Invalid phase:', phase);
       return 'N/A';
     }
 
@@ -571,7 +648,7 @@ export class PhaseRequirementsComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error loading requirements:', error);
+
         this.errorMessage = 'Error al cargar los requerimientos de fase';
         this.requirements = [];
         this.filteredRequirements = [];
@@ -623,6 +700,7 @@ export class PhaseRequirementsComponent implements OnInit {
 
     this.filteredRequirements = filtered;
     this.totalRecords = filtered.length;
+    this.applySorting();
   }
 
   // Update the loadInitialData method to handle the requirements response:
@@ -632,19 +710,19 @@ export class PhaseRequirementsComponent implements OnInit {
     forkJoin({
       catalogs: this.catalogService.getAll().pipe(
         catchError(error => {
-          console.error('Error loading catalogs:', error);
+
           return of([]); // Return empty array on error
         })
       ),
       crops: this.cropService.getAll(true).pipe(
         catchError(error => {
-          console.error('Error loading crops:', error);
+
           return of([]);
         })
       ),
       cropPhases: this.cropPhaseService.getAll().pipe(
         catchError(error => {
-          console.error('Error loading crop phases:', error);
+
           return of([]);
         })
       ),
@@ -689,14 +767,14 @@ export class PhaseRequirementsComponent implements OnInit {
           this.isLoading = false;
           this.cdr.markForCheck();
         } catch (processingError) {
-          console.error('Error processing loaded data:', processingError);
+
           this.errorMessage = 'Error al procesar los datos cargados';
           this.isLoading = false;
           this.cdr.markForCheck();
         }
       },
       error: (error) => {
-        console.error('Error loading initial data:', error);
+
         this.errorMessage = 'Error al cargar los datos iniciales. Por favor, recargue la página.';
 
         // Initialize with empty arrays to prevent further errors

@@ -10,6 +10,21 @@
   min-height: 100vh;
 }
 
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+  position: relative;
+  
+  &:hover {
+    background-color: rgba(34, 197, 94, 0.1);
+  }
+  
+  i {
+    margin-left: 0.25rem;
+    font-size: 0.875rem;
+  }
+}
 /* Page Header */
 .page-header {
   margin-bottom: 2rem;
