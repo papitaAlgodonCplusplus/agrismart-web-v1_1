@@ -702,8 +702,7 @@ export class PhaseRequirementsComponent implements OnInit {
     this.totalRecords = filtered.length;
     this.applySorting();
   }
-
-  // Update the loadInitialData method to handle the requirements response:
+ 
   private loadInitialData(): void {
     this.isLoading = true;
 

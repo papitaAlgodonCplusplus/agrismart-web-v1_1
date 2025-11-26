@@ -91,7 +91,6 @@ export class IrrigationCalculationsService {
     cropProduction: CropProductionEntity,
     measurementVariables: MeasurementVariable[]
   ): IrrigationMetric {
-    console.log('Calculating irrigation metrics for inputs:', inputs);
 
     const output: IrrigationMetric = {} as IrrigationMetric;
 
@@ -109,7 +108,7 @@ export class IrrigationCalculationsService {
     output.irrigationLength =
       inputs[0].dateTimeEnd.getTime() - inputs[0].dateTimeStart.getTime();
 
-    //console.log(`Irrigation length: ${output.irrigationLength} ms`);
+    //
 
     // Calculate densities (containers and plants per m²)
     const densityContainer =
@@ -117,7 +116,7 @@ export class IrrigationCalculationsService {
     const densityPlant =
       1 / (cropProduction.betweenRowDistance * cropProduction.betweenPlantDistance);
 
-    //console.log(`Density Container: ${densityContainer}, Density Plant: ${densityPlant}`);
+    //
 
     // Find measurement variables
     const irrigationVolumeVariable = measurementVariables.find(
@@ -127,7 +126,7 @@ export class IrrigationCalculationsService {
       x => x.measurementVariableStandardId === 20
     );
 
-    //console.log(`Irrigation Volume Variable: ${irrigationVolumeVariable?.name}, Drain Volume Variable: ${drainVolumeVariable?.name}`);
+    //
     if (!irrigationVolumeVariable || !drainVolumeVariable) {
       throw new Error('Required measurement variables not found (StandardId 19 or 20)');
     }
@@ -144,7 +143,7 @@ export class IrrigationCalculationsService {
     output.irrigationVolumenPerPlant = new Volume(irrigationVolumePerPlant, VolumeMeasure.toLitre);
     output.irrigationVolumenTotal = new Volume(irrigationVolumeTotal, VolumeMeasure.toLitre);
 
-    //console.log(`Irrigation Volume Total: ${irrigationVolumeTotal} L, M2: ${irrigationVolumeM2} L/m², Per Plant: ${irrigationVolumePerPlant} L/plant`);
+    //
 
     // Calculate drain volumes
     const drainVolumeTotal = inputs[0].irrigationMeasurements
@@ -156,25 +155,24 @@ export class IrrigationCalculationsService {
 
     output.drainVolumenM2 = new Volume(drainVolumeM2, VolumeMeasure.toLitre);
     output.drainVolumenPerPlant = new Volume(drainVolumePerPlant, VolumeMeasure.toLitre);
-    console.log(`Drain Volume Total: ${drainVolumeTotal} L, Volume Total: ${irrigationVolumeTotal}`);
     // Calculate drain percentage
     output.drainPercentage = irrigationVolumeTotal > 0
       ? (drainVolumeTotal / irrigationVolumeTotal) * 100
       : 0;
-    //console.log(`Drain Percentage: ${output.drainPercentage}%`);
+    //
     // Calculate irrigation flow (L/hour)
     const irrigationLengthHours = output.irrigationLength / (1000 * 60 * 60);
     const flowRate = irrigationLengthHours > 0
       ? irrigationVolumeTotal / irrigationLengthHours
       : 0;
     output.irrigationFlow = new Volume(flowRate, VolumeMeasure.toLitre);
-    //console.log(`Irrigation Flow Rate: ${flowRate} L/hour`);
+    //
     // Calculate precipitation rate (L/m²/hour)
     const precipitationRate = irrigationLengthHours > 0
       ? irrigationVolumeM2 / irrigationLengthHours
       : 0;
     output.irrigationPrecipitation = new Volume(precipitationRate, VolumeMeasure.toLitre);
-    //console.log(`Irrigation Precipitation Rate: ${precipitationRate} L/m²/hour`);
+    //
     return output;
   }
 
@@ -239,7 +237,7 @@ export class IrrigationCalculationsService {
       events.push(event);
     }
 
-    console.log(`Detected ${events.length} irrigation events from pressure data`);
+    
     return events;
   }
 
@@ -273,9 +271,9 @@ export class IrrigationCalculationsService {
         return rDate >= event.dateTimeStart && rDate <= event.dateTimeEnd;
       });
 
-      console.log(`Event ${event.dateTimeStart.toISOString()}: ${inputsInWindow.length} input readings, ${drainsInWindow.length} drain readings`);
+      
 
-      console.log("drainsInWindow:", drainsInWindow);
+      
 
       // Calculate volumes
       const irrigationVolume = this.calculateVolumeFromFlowReadings(inputsInWindow);
@@ -293,7 +291,7 @@ export class IrrigationCalculationsService {
         }
       ];
 
-      console.log(`Event volumes - Irrigation: ${irrigationVolume}L, Drain: ${drainVolume}L`);
+      
 
       return event;
     });
@@ -305,7 +303,7 @@ export class IrrigationCalculationsService {
    */
   private calculateVolumeFromFlowReadings(flowReadings: DeviceRawDataPoint[]): number {
     if (flowReadings.length === 0) {
-      console.warn('No flow readings provided');
+      
       return 0;
     }
 
@@ -321,7 +319,7 @@ export class IrrigationCalculationsService {
       const pulseReadings = flowReadings.filter(r => r.sensor === 'Total_pulse');
 
       if (pulseReadings.length < 2) {
-        console.warn('Need at least 2 pulse readings to calculate volume');
+        
         return 0;
       }
 
@@ -353,7 +351,7 @@ export class IrrigationCalculationsService {
         const lastValue = Number(flowRateReadings[flowRateReadings.length - 1].payload);
 
         if (isNaN(firstValue) || isNaN(lastValue)) {
-          console.warn('Flow readings contain non-numeric payloads');
+          
           return 0;
         }
 
@@ -377,7 +375,7 @@ export class IrrigationCalculationsService {
         const firstValue = Number(flowRateReadings[0].payload);
         const lastValue = Number(flowRateReadings[flowRateReadings.length - 1].payload); 
         if (isNaN(firstValue) || isNaN(lastValue)) {
-          console.warn('Flow readings contain non-numeric payloads');
+          
           return 0;
         }
         return Math.max(0, lastValue - firstValue);
@@ -385,7 +383,7 @@ export class IrrigationCalculationsService {
       return totalFlow;
     }
 
-    console.warn('No recognized flow sensor data found');
+    
     return 0;
   }
 

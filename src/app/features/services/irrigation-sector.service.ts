@@ -1153,7 +1153,7 @@ export class IrrigationSectorService {
     // if (endDate) params = params.set('EndDate', endDate);
     if (sensor) params = params.set('Sensor', sensor);
     // if (pageNumber) params = params.set('PageNumber', pageNumber.toString());
-    // if (pageSize) params = params.set('PageSize', pageSize.toString());
+    if (pageSize) params = params.set('PageSize', pageSize.toString());
 
     return this.apiService.getIot<DeviceRawDataResponse>('/DeviceRawData', params).pipe(
       map(response => response.deviceRawData || []),
