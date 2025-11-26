@@ -17,12 +17,15 @@ import {
   CreateIrrigationPlanEntryCommand,
   UpdateIrrigationPlanEntryCommand
 } from '../services/irrigation-scheduling.service';
-import { 
+import {
   IrrigationPlanEntryHistoryService,
   IrrigationPlanEntryHistory
 } from '../services/irrigation-plan-entry-history.service';
 import { AlertService } from '../../core/services/alert.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { IrrigationCalculationsService, IrrigationMetric, IrrigationMonitorResponse, IrrigationEventEntity, CropProductionEntity, MeasurementVariable, DeviceRawDataPoint } from '../services/irrigation-calculations.service';
+import { CropService } from '../../features/crops/services/crop.service';
+import { IrrigationSectorService } from '../services/irrigation-sector.service';
 
 @Component({
   selector: 'app-irrigation-engineering-design',
@@ -40,7 +43,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   private currentUserId!: number;
 
   // ==================== UI STATE ====================
-  activeTab: 'plans' | 'entries' | 'modes' | 'history' = 'plans';
+  activeTab: 'plans' | 'entries' | 'modes' | 'history' | 'metrics' = 'plans';
   isLoading = false;
   isSaving = false;
 
@@ -60,7 +63,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   irrigationPlans: IrrigationPlan[] = [];
   irrigationModes: IrrigationMode[] = [];
   irrigationEntries: IrrigationPlanEntry[] = []; // These are the TEMPLATES/SCHEDULES
-  
+
   // Execution History
   executionHistory: IrrigationPlanEntryHistory[] = []; // These are the ACTUAL EXECUTIONS
 
@@ -97,19 +100,66 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     { bit: 64, name: 'Sábado', abbr: 'Sáb' }
   ];
 
+
+
+  // ==================== NEW: IRRIGATION METRICS TAB ====================
+  irrigationMetrics: IrrigationMetric[] = [];
+  selectedCropProductionId: number | null = null;
+  metricsStartDate: string = '';
+  metricsEndDate: string = '';
+  isLoadingMetrics = false;
+  selectedMetric: IrrigationMetric | null = null;
+  cropProductions: any[] = [];
+
+  metricsSummary = {
+    totalEvents: 0,
+    avgVolume: 0,
+    avgDrainPercentage: 0,
+    avgDurationMinutes: 0,
+    avgFlow: 0,
+    efficiency: 0
+  };
+
+  // TODO: MOCKED - These should come from database/API
+  private mockMeasurementVariables: MeasurementVariable[] = [
+    { id: 1, measurementVariableStandardId: 19, name: 'Irrigation Volume' },
+    { id: 2, measurementVariableStandardId: 20, name: 'Drain Volume' },
+    { id: 3, measurementVariableStandardId: 21, name: 'Soil Moisture' },
+    { id: 4, measurementVariableStandardId: 22, name: 'Soil pH' },
+    { id: 5, measurementVariableStandardId: 23, name: 'Flow Rate' },
+    { id: 6, measurementVariableStandardId: 24, name: 'Pressure' }
+  ];
+
+  // TODO: MOCKED - Crop production specifications (Container, spacing, area)
+  private mockCropProductionSpecs: CropProductionEntity = {
+    id: 1,
+    betweenRowDistance: 2.0,          // meters
+    betweenContainerDistance: 0.5,     // meters
+    betweenPlantDistance: 0.25,        // meters
+    area: 1000,                        // square meters
+    containerVolume: 10,               // liters
+    availableWaterPercentage: 50       // percentage
+  };
+
+
   constructor(
     private fb: FormBuilder,
     private irrigationSchedulingService: IrrigationSchedulingService,
     private irrigationHistoryService: IrrigationPlanEntryHistoryService,
     private alertService: AlertService,
     private authService: AuthService,
+    private irrigationCalculationsService: IrrigationCalculationsService,
+    private cropService: CropService,
+    private irrigationSectorService: IrrigationSectorService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.getCurrentUser();
     this.initializeForms();
     this.loadAllData();
+    this.loadCropProductions();
+    this.setDefaultDateRange();
   }
 
   ngOnDestroy(): void {
@@ -159,32 +209,23 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         finalize(() => this.isLoading = false)
       )
       .subscribe({
-        next: (data:any) => {
+        next: (data: any) => {
           this.irrigationPlans = data.plansAndEntries.irrigationPlans || [];
           this.irrigationEntries = data.plansAndEntries.irrigationPlanEntries || [];
           this.irrigationModes = data.modes.irrigationModes || [];
           this.executionHistory = data.history || [];
-          
+
           this.filteredEntries = [...this.irrigationEntries];
           this.filteredHistory = [...this.executionHistory];
         },
         error: (error) => {
           console.error('Error loading data:', error);
-          
+
         }
       });
   }
 
-  // ==================== TAB NAVIGATION ====================
-  setActiveTab(tab: 'plans' | 'entries' | 'modes' | 'history'): void {
-    this.activeTab = tab;
-    this.sortField = '';
-    this.sortDirection = 'asc';
-    
-    if (tab === 'history') {
-      this.loadExecutionHistory();
-    }
-  }
+
 
   // ==================== PLAN OPERATIONS ====================
   openPlanModal(plan?: IrrigationPlan): void {
@@ -235,13 +276,13 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         )
         .subscribe({
           next: () => {
-            
+
             this.closePlanModal();
             this.loadAllData();
           },
           error: (error) => {
             console.error('Error updating plan:', error);
-            
+
           }
         });
     } else {
@@ -259,13 +300,13 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         )
         .subscribe({
           next: () => {
-            
+
             this.closePlanModal();
             this.loadAllData();
           },
           error: (error) => {
             console.error('Error creating plan:', error);
-            
+
           }
         });
     }
@@ -284,12 +325,12 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
-          
+
           this.loadAllData();
         },
         error: (error) => {
           console.error('Error deleting plan:', error);
-          
+
         }
       });
   }
@@ -301,7 +342,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
 
     if (entry) {
       const timeString = entry.startTime.substring(0, 5); // "HH:mm:ss" -> "HH:mm"
-      
+
       this.entryForm.patchValue({
         irrigationPlanId: entry.irrigationPlanId,
         irrigationModeId: entry.irrigationModeId,
@@ -368,13 +409,13 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         )
         .subscribe({
           next: () => {
-            
+
             this.closeEntryModal();
             this.loadAllData();
           },
           error: (error) => {
             console.error('Error updating entry:', error);
-            
+
           }
         });
     } else {
@@ -398,13 +439,13 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         )
         .subscribe({
           next: () => {
-            
+
             this.closeEntryModal();
             this.loadAllData();
           },
           error: (error) => {
             console.error('Error creating entry:', error);
-            
+
           }
         });
     }
@@ -423,12 +464,12 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
-          
+
           this.loadAllData();
         },
         error: (error) => {
           console.error('Error deleting entry:', error);
-          
+
         }
       });
   }
@@ -480,13 +521,13 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       //   )
       //   .subscribe({
       //     next: () => {
-            
+
       //       this.closeModeModal();
       //       this.loadAllData();
       //     },
       //     error: (error) => {
       //       console.error('Error updating mode:', error);
-            
+
       //     }
       //   });
     } else {
@@ -503,13 +544,13 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       //   )
       //   .subscribe({
       //     next: () => {
-            
+
       //       this.closeModeModal();
       //       this.loadAllData();
       //     },
       //     error: (error) => {
       //       console.error('Error creating mode:', error);
-            
+
       //     }
       //   });
     }
@@ -528,12 +569,12 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     //   )
     //   .subscribe({
     //     next: () => {
-          
+
     //       this.loadAllData();
     //     },
     //     error: (error) => {
     //       console.error('Error deleting mode:', error);
-          
+
     //     }
     //   });
   }
@@ -553,7 +594,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading execution history:', error);
-          
+
         }
       });
   }
@@ -624,7 +665,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     this.filterStatus = '';
     this.filterDateFrom = '';
     this.filterDateTo = '';
-    
+
     if (this.activeTab === 'entries') {
       this.filteredEntries = [...this.irrigationEntries];
     } else if (this.activeTab === 'history') {
@@ -647,14 +688,14 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     const selectedDays = this.daysOfWeek
       .filter(day => (dayMask & day.bit) === day.bit)
       .map(day => day.abbr);
-    
+
     return selectedDays.length > 0 ? selectedDays.join(', ') : 'Ninguno';
   }
 
   toggleDay(event: any): void {
     const dayBit = parseInt(event.target.value);
     const currentMask = this.planForm.get('dayMask')?.value || 0;
-    
+
     if (event.target.checked) {
       this.planForm.patchValue({ dayMask: currentMask | dayBit });
     } else {
@@ -760,7 +801,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     }
 
     if (data.length === 0) {
-      
+
       return;
     }
 
@@ -785,7 +826,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard']);
   }
 
-  
+
   /**
    * Sort by field
    */
@@ -844,6 +885,286 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       case 'history':
         this.executionHistory.sort(sortFunction);
         break;
+    }
+  }
+
+  /**
+   * Load crop productions for selection
+   */
+  private loadCropProductions(): void {
+    this.cropService.getAll().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (crops) => {
+        this.cropProductions = crops;
+
+        // TODO: MOCKED - Auto-select first crop production
+        if (crops.length > 0) {
+          this.selectedCropProductionId = crops[0].id;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading crop productions:', error);
+        this.alertService.showError('Error al cargar producciones de cultivo');
+      }
+    });
+  }
+
+  /**
+   * Set default date range (last 7 days)
+   */
+  private setDefaultDateRange(): void {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 7);
+
+    this.metricsEndDate = end.toISOString().split('T')[0];
+    this.metricsStartDate = start.toISOString().split('T')[0];
+  }
+
+  /**
+   * Event handler when crop production changes
+   */
+  onCropProductionChange(): void {
+    this.loadMetrics();
+  }
+
+  /**
+   * Load irrigation metrics for selected crop production
+   */
+  loadMetrics(): void {
+    if (!this.selectedCropProductionId) {
+      this.alertService.showError('Por favor seleccione una producción de cultivo');
+      return;
+    }
+
+    if (!this.metricsStartDate || !this.metricsEndDate) {
+      this.alertService.showError('Por favor seleccione un rango de fechas');
+      return;
+    }
+
+    this.isLoadingMetrics = true;
+    this.irrigationMetrics = [];
+
+    // Get device raw data from irrigation sector service
+    this.irrigationSectorService.getDeviceRawData().pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.isLoadingMetrics = false)
+    ).subscribe({
+      next: (rawData: any[]) => {
+        // Process raw data into irrigation events
+        this.processRawDataIntoMetrics(rawData);
+        this.calculateMetricsSummary();
+        this.alertService.showSuccess(`${this.irrigationMetrics.length} eventos de riego procesados`);
+      },
+      error: (error) => {
+        console.error('Error loading metrics:', error);
+        this.alertService.showError('Error al cargar métricas de riego');
+      }
+    });
+  }
+
+  // In irrigation-engineering-design.component.ts
+
+  private processRawDataIntoMetrics(rawData: any[]): void {
+    try {
+      // Separate pressure data (for event detection) and flow data (for volume calculation)
+      const pressureData: DeviceRawDataPoint[] = rawData
+        .filter(d => d.sensor === 'Water_pressure_MPa' || d.sensor.includes('presion'))
+        .map(d => this.convertToDeviceRawDataPoint(d));
+
+      const flowInputData: DeviceRawDataPoint[] = rawData
+        .filter(d =>
+          d.sensor === 'Water_flow_value' ||
+          d.sensor === 'Total_pulse' ||
+          d.deviceId.includes('flujo')
+        )
+        .map(d => this.convertToDeviceRawDataPoint(d));
+
+      const drainData: DeviceRawDataPoint[] = rawData
+        .filter(d =>
+          d.sensor.includes('rain')
+        )
+        .map(d => this.convertToDeviceRawDataPoint(d));
+
+      // Use flow data as drain if no dedicated drain sensors
+      const drainDataFinal = drainData.length > 0 ? drainData : flowInputData;
+
+      console.log(`Pressure readings: ${pressureData.length}`);
+      console.log(`Flow input readings: ${flowInputData.length}`);
+      console.log(`Drain readings: ${drainDataFinal.length}`);
+
+      // TODO: MOCKED - Using mock crop production specs
+      const cropProduction = {
+        ...this.mockCropProductionSpecs,
+        id: this.selectedCropProductionId!
+      };
+
+      // Step 1: Detect irrigation events from pressure changes
+      const irrigationEvents = this.irrigationCalculationsService.getCropProductionIrrigationEvents(
+        cropProduction,
+        pressureData,
+        0.002 // Pressure delta threshold in MPa
+      );
+
+      console.log(`Detected ${irrigationEvents.length} irrigation events`);
+
+      if (irrigationEvents.length === 0) {
+        this.alertService.showWarning('No se detectaron eventos de riego en el período seleccionado');
+        return;
+      }
+
+      // Step 2: Calculate volumes for each event using flow sensors
+      const eventsWithVolumes = this.irrigationCalculationsService.getIrrigationEventsVolumes(
+        irrigationEvents,
+        flowInputData,
+        drainDataFinal,
+        this.mockMeasurementVariables
+      );
+
+      // Step 3: Calculate metrics for each event
+      this.irrigationMetrics = [];
+
+      for (let i = 0; i < eventsWithVolumes.length; i++) {
+        const currentEvent = eventsWithVolumes[i];
+        const previousEvent = i > 0 ? eventsWithVolumes[i - 1] : null;
+
+        const inputs = previousEvent
+          ? [currentEvent, previousEvent]
+          : [currentEvent];
+
+        try {
+          const metric = this.irrigationCalculationsService.calculateIrrigationMetrics(
+            inputs,
+            cropProduction,
+            this.mockMeasurementVariables
+          );
+
+          this.irrigationMetrics.push(metric);
+        } catch (error) {
+          console.error('Error calculating metric for event:', error);
+        }
+      }
+
+      // Sort by date descending
+      this.irrigationMetrics.sort((a, b) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+
+      console.log(`Processed ${this.irrigationMetrics.length} irrigation metrics`);
+      console.log(this.irrigationMetrics);
+
+    } catch (error) {
+      console.error('Error processing raw data:', error);
+      this.alertService.showError('Error al procesar datos de riego: ' + (error as Error).message);
+    }
+  }
+
+  // Helper to convert raw data to typed interface
+  private convertToDeviceRawDataPoint(data: any): DeviceRawDataPoint {
+    return {
+      id: data.id,
+      recordDate: new Date(data.recordDate),
+      clientId: data.clientId,
+      userId: data.userId,
+      deviceId: data.deviceId,
+      sensor: data.sensor,
+      payload: data.payload,
+      summarized: data.summarized
+    };
+  }
+
+  /**
+   * Calculate summary statistics
+   */
+  private calculateMetricsSummary(): void {
+    if (this.irrigationMetrics.length === 0) {
+      this.metricsSummary = {
+        totalEvents: 0,
+        avgVolume: 0,
+        avgDrainPercentage: 0,
+        avgDurationMinutes: 0,
+        avgFlow: 0,
+        efficiency: 0
+      };
+      return;
+    }
+
+    const totalVolume = this.irrigationMetrics.reduce(
+      (sum, m) => sum + m.irrigationVolumenTotal.value, 0
+    );
+
+    const totalDrain = this.irrigationMetrics.reduce(
+      (sum, m) => sum + m.drainPercentage, 0
+    );
+
+    this.metricsSummary = {
+      totalEvents: this.irrigationMetrics.length,
+      avgVolume: totalVolume / this.irrigationMetrics.length,
+      avgDrainPercentage: totalDrain / this.irrigationMetrics.length,
+      avgDurationMinutes: this.irrigationMetrics.reduce(
+        (sum, m) => sum + (m.irrigationLength / (1000 * 60)), 0
+      ) / this.irrigationMetrics.length,
+      avgFlow: this.irrigationMetrics.reduce(
+        (sum, m) => sum + m.irrigationFlow.value, 0
+      ) / this.irrigationMetrics.length,
+      efficiency: 100 - (totalDrain / this.irrigationMetrics.length)
+    };
+  }
+
+  /**
+   * Get drain status text
+   */
+  getDrainStatus(drainPercentage: number): string {
+    if (drainPercentage < 10) return 'Bajo (< 10%)';
+    if (drainPercentage > 30) return 'Alto (> 30%)';
+    return 'Óptimo (10-30%)';
+  }
+
+  /**
+   * View metric details
+   */
+  viewMetricDetails(metric: IrrigationMetric): void {
+    this.selectedMetric = metric;
+    const display = this.irrigationCalculationsService.convertToDisplayFormat(metric);
+
+    const message = `
+      Fecha: ${new Date(metric.date).toLocaleString()}
+      Intervalo: ${display.intervalHours || 'N/A'} horas
+      Duración: ${display.lengthMinutes} minutos
+      Volumen Total: ${display.totalVolume} L
+      Volumen/m²: ${display.volumePerM2} L/m²
+      Volumen/Planta: ${display.volumePerPlant} L
+      Drenaje: ${display.drainPercentage}%
+      Flujo: ${display.flowRate} L/hr
+      Precipitación: ${display.precipitationRate} L/m²/hr
+    `;
+
+    this.alertService.showInfo(message.trim());
+  }
+
+  /**
+   * Compare metrics
+   */
+  compareMetrics(metric: IrrigationMetric): void {
+    // TODO: Implement metric comparison functionality
+    this.alertService.showInfo('Comparación de métricas - Funcionalidad en desarrollo');
+  }
+
+  /**
+   * Update existing setActiveTab to include 'metrics'
+   */
+  setActiveTab(tab: 'plans' | 'entries' | 'modes' | 'history' | 'metrics'): void {
+    this.activeTab = tab as any;
+    this.sortField = '';
+    this.sortDirection = 'asc';
+
+    if (tab === 'history') {
+      this.loadExecutionHistory();
+    } else if (tab === 'metrics') {
+      if (this.selectedCropProductionId) {
+        this.loadMetrics();
+      }
     }
   }
 }

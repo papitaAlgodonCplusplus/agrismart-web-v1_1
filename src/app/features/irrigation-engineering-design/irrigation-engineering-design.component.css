@@ -1175,3 +1175,111 @@
     display: none;
   }
 }
+
+/* ============================================================================
+   METRICS TAB STYLES
+   ============================================================================ */
+
+/* Metrics Controls */
+.metrics-controls {
+  background: var(--light-bg);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+/* Metrics Summary Cards */
+.metrics-summary .metric-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--border-color);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.metrics-summary .metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-color);
+}
+
+.metrics-summary .metric-card.warning {
+  border-color: var(--warning-color);
+  background: linear-gradient(135deg, #fff 0%, #fff8e1 100%);
+}
+
+.metrics-summary .metric-card.success {
+  border-color: var(--success-color);
+  background: linear-gradient(135deg, #fff 0%, #e8f5e9 100%);
+}
+
+.metric-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.metric-card.warning .metric-icon {
+  background: linear-gradient(135deg, var(--warning-color), #f57c00);
+}
+
+.metric-card.success .metric-icon {
+  background: linear-gradient(135deg, var(--success-color), var(--success-dark));
+}
+
+.metric-content {
+  flex: 1;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.metric-status {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Table Active Row */
+.table tbody tr.table-active {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* Responsive Metrics */
+@media (max-width: 768px) {
+  .metrics-summary .metric-card {
+    padding: 1rem;
+  }
+  
+  .metric-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
+  }
+}

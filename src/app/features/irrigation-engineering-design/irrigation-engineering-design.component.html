@@ -1,6 +1,6 @@
 <!-- src/app/features/irrigation-engineering-design/irrigation-engineering-design.component.html -->
 <div class="irrigation-scheduling-container">
-  
+
   <!-- ==================== PAGE HEADER ==================== -->
   <div class="page-header">
     <div class="header-content">
@@ -11,16 +11,11 @@
       <p class="lead">Gestione planes, modos, programaciones y revise el historial de ejecuciones</p>
     </div>
     <div class="header-actions">
-      <button
-        class="btn btn-secondary me-2"
-        (click)="goToDashboard()">
+      <button class="btn btn-secondary me-2" (click)="goToDashboard()">
         <i class="bi bi-arrow-left"></i>
         Regresar al Dashboard
       </button>
-      <button
-        class="btn btn-success"
-        (click)="exportToCSV()"
-        [disabled]="isLoading">
+      <button class="btn btn-success" (click)="exportToCSV()" [disabled]="isLoading">
         <i class="bi bi-download"></i>
         Exportar
       </button>
@@ -30,39 +25,33 @@
   <!-- ==================== NAVIGATION TABS ==================== -->
   <ul class="nav nav-tabs">
     <li class="nav-item">
-      <a 
-        class="nav-link" 
-        [class.active]="activeTab === 'plans'"
-        (click)="setActiveTab('plans')">
+      <a class="nav-link" [class.active]="activeTab === 'plans'" (click)="setActiveTab('plans')">
         <i class="bi bi-calendar-check"></i>
         Planes de Riego
       </a>
     </li>
     <li class="nav-item">
-      <a 
-        class="nav-link" 
-        [class.active]="activeTab === 'entries'"
-        (click)="setActiveTab('entries')">
+      <a class="nav-link" [class.active]="activeTab === 'entries'" (click)="setActiveTab('entries')">
         <i class="bi bi-clock-history"></i>
         Entradas de Programación
       </a>
     </li>
     <li class="nav-item">
-      <a 
-        class="nav-link" 
-        [class.active]="activeTab === 'modes'"
-        (click)="setActiveTab('modes')">
+      <a class="nav-link" [class.active]="activeTab === 'modes'" (click)="setActiveTab('modes')">
         <i class="bi bi-water"></i>
         Modos de Riego
       </a>
     </li>
     <li class="nav-item">
-      <a 
-        class="nav-link" 
-        [class.active]="activeTab === 'history'"
-        (click)="setActiveTab('history')">
+      <a class="nav-link" [class.active]="activeTab === 'history'" (click)="setActiveTab('history')">
         <i class="bi bi-clock-history"></i>
         Historial de Ejecuciones
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'metrics'" (click)="setActiveTab('metrics')">
+        <i class="bi bi-graph-up"></i>
+        Métricas de Riego
       </a>
     </li>
   </ul>
@@ -95,38 +84,28 @@
               <tr>
                 <th (click)="sortByField('id')" class="sortable">
                   ID
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'id' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'id' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'id' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'id' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('name')" class="sortable">
                   Nombre
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('dayMask')" class="sortable">
                   Días de la Semana
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'dayMask' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'dayMask' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'dayMask' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'dayMask' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('active')" class="sortable">
                   Estado
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('dateCreated')" class="sortable">
                   Fecha Creación
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'dateCreated' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'dateCreated' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'dateCreated' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'dateCreated' && sortDirection === 'desc'"></i>
                 </th>
                 <th>Acciones</th>
               </tr>
@@ -144,16 +123,10 @@
                 <td>{{ formatDate(plan.dateCreated) }}</td>
                 <td>
                   <div class="btn-group btn-group-sm">
-                    <button 
-                      class="btn btn-outline-primary" 
-                      (click)="openPlanModal(plan)"
-                      title="Editar">
+                    <button class="btn btn-outline-primary" (click)="openPlanModal(plan)" title="Editar">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <button 
-                      class="btn btn-outline-danger" 
-                      (click)="deletePlan(plan)"
-                      title="Eliminar">
+                    <button class="btn btn-outline-danger" (click)="deletePlan(plan)" title="Eliminar">
                       <i class="bi bi-trash"></i>
                     </button>
                   </div>
@@ -190,10 +163,7 @@
         <div class="row g-3 mb-4">
           <div class="col-md-4">
             <label class="form-label">Filtrar por Plan</label>
-            <select 
-              class="form-select" 
-              [(ngModel)]="filterPlanId"
-              (change)="applyEntryFilters()">
+            <select class="form-select" [(ngModel)]="filterPlanId" (change)="applyEntryFilters()">
               <option [ngValue]="null">Todos los planes</option>
               <option *ngFor="let plan of irrigationPlans" [ngValue]="plan.id">
                 {{ plan.name }}
@@ -202,10 +172,7 @@
           </div>
           <div class="col-md-4">
             <label class="form-label">Filtrar por Modo</label>
-            <select 
-              class="form-select" 
-              [(ngModel)]="filterModeId"
-              (change)="applyEntryFilters()">
+            <select class="form-select" [(ngModel)]="filterModeId" (change)="applyEntryFilters()">
               <option [ngValue]="null">Todos los modos</option>
               <option *ngFor="let mode of irrigationModes" [ngValue]="mode.id">
                 {{ mode.name }}
@@ -213,9 +180,7 @@
             </select>
           </div>
           <div class="col-md-4 d-flex align-items-end">
-            <button 
-              class="btn btn-secondary w-100" 
-              (click)="clearFilters()">
+            <button class="btn btn-secondary w-100" (click)="clearFilters()">
               <i class="bi bi-x-circle"></i>
               Limpiar Filtros
             </button>
@@ -229,73 +194,57 @@
               <tr>
                 <th (click)="sortByField('id')" class="sortable">
                   ID
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'id' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'id' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'id' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'id' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('irrigationPlanId')" class="sortable">
                   Plan
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'irrigationPlanId' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'irrigationPlanId' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short"
+                    *ngIf="sortField === 'irrigationPlanId' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short"
+                    *ngIf="sortField === 'irrigationPlanId' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('irrigationModeId')" class="sortable">
                   Modo
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'irrigationModeId' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'irrigationModeId' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short"
+                    *ngIf="sortField === 'irrigationModeId' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short"
+                    *ngIf="sortField === 'irrigationModeId' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('startTime')" class="sortable">
                   Hora Inicio
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'startTime' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'startTime' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'startTime' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'startTime' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('duration')" class="sortable">
                   Duración (min)
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'duration' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'duration' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'duration' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'duration' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('wStart')" class="sortable">
                   Semana Inicio
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'wStart' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'wStart' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'wStart' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'wStart' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('wEnd')" class="sortable">
                   Semana Fin
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'wEnd' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'wEnd' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'wEnd' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'wEnd' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('frequency')" class="sortable">
                   Frecuencia
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'frequency' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'frequency' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'frequency' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'frequency' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('sequence')" class="sortable">
                   Secuencia
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'sequence' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'sequence' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'sequence' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'sequence' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('active')" class="sortable">
                   Estado
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
                 </th>
                 <th>Acciones</th>
               </tr>
@@ -320,16 +269,10 @@
                 </td>
                 <td>
                   <div class="btn-group btn-group-sm">
-                    <button 
-                      class="btn btn-outline-primary" 
-                      (click)="openEntryModal(entry)"
-                      title="Editar">
+                    <button class="btn btn-outline-primary" (click)="openEntryModal(entry)" title="Editar">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <button 
-                      class="btn btn-outline-danger" 
-                      (click)="deleteEntry(entry)"
-                      title="Eliminar">
+                    <button class="btn btn-outline-danger" (click)="deleteEntry(entry)" title="Eliminar">
                       <i class="bi bi-trash"></i>
                     </button>
                   </div>
@@ -368,31 +311,23 @@
               <tr>
                 <th (click)="sortByField('id')" class="sortable">
                   ID
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'id' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'id' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'id' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'id' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('name')" class="sortable">
                   Nombre
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('active')" class="sortable">
                   Estado
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('dateCreated')" class="sortable">
                   Fecha Creación
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'dateCreated' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'dateCreated' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'dateCreated' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'dateCreated' && sortDirection === 'desc'"></i>
                 </th>
                 <th>Acciones</th>
               </tr>
@@ -409,16 +344,10 @@
                 <td>{{ formatDate(mode.dateCreated) }}</td>
                 <td>
                   <div class="btn-group btn-group-sm">
-                    <button 
-                      class="btn btn-outline-primary" 
-                      (click)="openModeModal(mode)"
-                      title="Editar">
+                    <button class="btn btn-outline-primary" (click)="openModeModal(mode)" title="Editar">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <button 
-                      class="btn btn-outline-danger" 
-                      (click)="deleteMode(mode)"
-                      title="Eliminar">
+                    <button class="btn btn-outline-danger" (click)="deleteMode(mode)" title="Eliminar">
                       <i class="bi bi-trash"></i>
                     </button>
                   </div>
@@ -458,66 +387,64 @@
               <tr>
                 <th (click)="sortByField('id')" class="sortable">
                   ID
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'id' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'id' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'id' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'id' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('irrigationPlanId')" class="sortable">
                   Plan
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'irrigationPlanId' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'irrigationPlanId' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short"
+                    *ngIf="sortField === 'irrigationPlanId' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short"
+                    *ngIf="sortField === 'irrigationPlanId' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('irrigationModeId')" class="sortable">
                   Modo
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'irrigationModeId' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'irrigationModeId' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short"
+                    *ngIf="sortField === 'irrigationModeId' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short"
+                    *ngIf="sortField === 'irrigationModeId' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('executionStartTime')" class="sortable">
                   Inicio Ejecución
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'executionStartTime' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'executionStartTime' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short"
+                    *ngIf="sortField === 'executionStartTime' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short"
+                    *ngIf="sortField === 'executionStartTime' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('executionEndTime')" class="sortable">
                   Fin Ejecución
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'executionEndTime' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'executionEndTime' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short"
+                    *ngIf="sortField === 'executionEndTime' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short"
+                    *ngIf="sortField === 'executionEndTime' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('plannedDuration')" class="sortable">
                   Dur. Plan.
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'plannedDuration' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'plannedDuration' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short"
+                    *ngIf="sortField === 'plannedDuration' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short"
+                    *ngIf="sortField === 'plannedDuration' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('actualDuration')" class="sortable">
                   Dur. Real
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'actualDuration' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'actualDuration' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short"
+                    *ngIf="sortField === 'actualDuration' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short"
+                    *ngIf="sortField === 'actualDuration' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('executionStatus')" class="sortable">
                   Estado
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'executionStatus' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'executionStatus' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short"
+                    *ngIf="sortField === 'executionStatus' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short"
+                    *ngIf="sortField === 'executionStatus' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('isManualExecution')" class="sortable">
                   Tipo
-                  <i class="bi bi-arrow-down-short" 
-                     *ngIf="sortField === 'isManualExecution' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" 
-                     *ngIf="sortField === 'isManualExecution' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short"
+                    *ngIf="sortField === 'isManualExecution' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short"
+                    *ngIf="sortField === 'isManualExecution' && sortDirection === 'desc'"></i>
                 </th>
                 <th>Acciones</th>
               </tr>
@@ -539,14 +466,13 @@
                   </span>
                 </td>
                 <td>
-                  <span class="badge" [class.bg-warning]="record.isManualExecution" [class.bg-info]="!record.isManualExecution">
+                  <span class="badge" [class.bg-warning]="record.isManualExecution"
+                    [class.bg-info]="!record.isManualExecution">
                     {{ record.isManualExecution ? 'Manual' : 'Automático' }}
                   </span>
                 </td>
                 <td>
-                  <button 
-                    class="btn btn-sm btn-outline-primary" 
-                    (click)="viewHistoryDetails(record)"
+                  <button class="btn btn-sm btn-outline-primary" (click)="viewHistoryDetails(record)"
                     title="Ver Detalles">
                     <i class="bi bi-eye"></i>
                   </button>
@@ -561,6 +487,194 @@
             </div>
           </ng-template>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'metrics' && !isLoading">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-graph-up"></i>
+          Métricas de Rendimiento de Riego
+        </h5>
+      </div>
+      <div class="card-body">
+        <!-- Metrics Controls -->
+        <div class="metrics-controls mb-4">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Producción de Cultivo</label>
+              <select class="form-select" [(ngModel)]="selectedCropProductionId" (change)="onCropProductionChange()">
+                <option [value]="null">Seleccionar...</option>
+                <option *ngFor="let cp of cropProductions" [value]="cp.id">
+                  {{ cp.name || 'Producción #' + cp.id }}
+                </option>
+              </select>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Fecha Inicio</label>
+              <input type="date" class="form-control" [(ngModel)]="metricsStartDate" (change)="loadMetrics()">
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label">Fecha Fin</label>
+              <input type="date" class="form-control" [(ngModel)]="metricsEndDate" (change)="loadMetrics()">
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-primary w-100" (click)="loadMetrics()" [disabled]="isLoadingMetrics">
+                <i class="bi bi-arrow-clockwise"></i>
+                {{ isLoadingMetrics ? 'Cargando...' : 'Actualizar' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics Summary Cards -->
+        <div class="metrics-summary mb-4" *ngIf="irrigationMetrics.length > 0">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="bi bi-water"></i>
+                </div>
+                <div class="metric-content">
+                  <div class="metric-label">Total Eventos</div>
+                  <div class="metric-value">{{ metricsSummary.totalEvents }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="bi bi-droplet"></i>
+                </div>
+                <div class="metric-content">
+                  <div class="metric-label">Vol. Prom/Evento</div>
+                  <div class="metric-value">{{ metricsSummary.avgVolume | number:'1.2-2' }} L</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="metric-card"
+                [class.warning]="metricsSummary.avgDrainPercentage < 10 || metricsSummary.avgDrainPercentage > 30">
+                <div class="metric-icon">
+                  <i class="bi bi-funnel"></i>
+                </div>
+                <div class="metric-content">
+                  <div class="metric-label">Drenaje Prom.</div>
+                  <div class="metric-value">{{ metricsSummary.avgDrainPercentage | number:'1.1-1' }}%</div>
+                  <div class="metric-status">
+                    {{ getDrainStatus(metricsSummary.avgDrainPercentage) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="bi bi-speedometer"></i>
+                </div>
+                <div class="metric-content">
+                  <div class="metric-label">Eficiencia Sistema</div>
+                  <div class="metric-value">{{ metricsSummary.efficiency | number:'1.1-1' }}%</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="bi bi-clock"></i>
+                </div>
+                <div class="metric-content">
+                  <div class="metric-label">Dur. Prom/Evento</div>
+                  <div class="metric-value">{{ metricsSummary.avgDurationMinutes | number:'1.1-1' }} min</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="metric-content">
+                  <div class="metric-label">Flujo Promedio</div>
+                  <div class="metric-value">{{ metricsSummary.avgFlow | number:'1.2-2' }} L/hr</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics Table -->
+        <div class="table-responsive" *ngIf="irrigationMetrics.length > 0; else noMetrics">
+          <table class="table table-hover">
+            <thead class="table-header">
+              <tr>
+                <th>Fecha/Hora</th>
+                <th>Duración (min)</th>
+                <th>Intervalo (hrs)</th>
+                <th>Vol. (L/m²)</th>
+                <th>Vol/Planta (L)</th>
+                <th>Vol. Total (L)</th>
+                <th>Drenaje %</th>
+                <th>Flujo (L/hr)</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let metric of irrigationMetrics" [class.table-active]="selectedMetric?.date === metric.date">
+                <td>{{ metric.date | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ (metric.irrigationLength / 60000) | number:'1.1-1' }}</td>
+                <td>
+                  <span *ngIf="metric.irrigationInterval; else noInterval">
+                    {{ (metric.irrigationInterval / 3600000) | number:'1.1-1' }}
+                  </span>
+                  <ng-template #noInterval>-</ng-template>
+                </td>
+                <td>{{ metric.irrigationVolumenM2.value | number:'1.2-2' }}</td>
+                <td>{{ metric.irrigationVolumenPerPlant.value | number:'1.2-2' }}</td>
+                <td>{{ metric.irrigationVolumenTotal.value | number:'1.2-2' }}</td>
+                <td>
+                  <span class="badge" [class.bg-success]="metric.drainPercentage >= 10 && metric.drainPercentage <= 30"
+                    [class.bg-warning]="metric.drainPercentage < 10 || metric.drainPercentage > 30">
+                    {{ metric.drainPercentage | number:'1.1-1' }}%
+                  </span>
+                </td>
+                <td>{{ metric.irrigationFlow.value | number:'1.2-2' }}</td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" (click)="viewMetricDetails(metric)" title="Ver Detalles">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" (click)="compareMetrics(metric)" title="Comparar">
+                      <i class="bi bi-bar-chart"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #noMetrics>
+          <div class="text-center text-muted py-5">
+            <i class="bi bi-graph-up" style="font-size: 3rem;"></i>
+            <p class="mt-3">
+              <span *ngIf="!selectedCropProductionId">Seleccione una producción de cultivo para ver métricas</span>
+              <span *ngIf="selectedCropProductionId && !isLoadingMetrics">No hay datos de riego disponibles para el
+                período seleccionado</span>
+              <span *ngIf="isLoadingMetrics">Cargando métricas...</span>
+            </p>
+          </div>
+        </ng-template>
       </div>
     </div>
   </div>
@@ -583,11 +697,7 @@
         <div class="row">
           <div class="col-12 mb-3">
             <label class="form-label">Nombre del Plan *</label>
-            <input
-              type="text"
-              class="form-control"
-              formControlName="name"
-              placeholder="Ingrese el nombre del plan">
+            <input type="text" class="form-control" formControlName="name" placeholder="Ingrese el nombre del plan">
             <div class="invalid-feedback" *ngIf="planForm.get('name')?.invalid && planForm.get('name')?.touched">
               El nombre es requerido
             </div>
@@ -597,13 +707,8 @@
             <label class="form-label">Días de la Semana *</label>
             <div class="days-selector">
               <div class="form-check" *ngFor="let day of daysOfWeek">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  [value]="day.bit"
-                  [checked]="isDaySelected(day.bit)"
-                  (change)="toggleDay($event)"
-                  [id]="'day-' + day.bit">
+                <input class="form-check-input" type="checkbox" [value]="day.bit" [checked]="isDaySelected(day.bit)"
+                  (change)="toggleDay($event)" [id]="'day-' + day.bit">
                 <label class="form-check-label" [for]="'day-' + day.bit">
                   {{ day.name }}
                 </label>
@@ -613,11 +718,7 @@
 
           <div class="col-12 mb-3">
             <div class="form-check form-switch">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                formControlName="active"
-                id="planActive">
+              <input class="form-check-input" type="checkbox" formControlName="active" id="planActive">
               <label class="form-check-label" for="planActive">
                 Plan Activo
               </label>
@@ -661,7 +762,8 @@
                 {{ plan.name }}
               </option>
             </select>
-            <div class="invalid-feedback" *ngIf="entryForm.get('irrigationPlanId')?.invalid && entryForm.get('irrigationPlanId')?.touched">
+            <div class="invalid-feedback"
+              *ngIf="entryForm.get('irrigationPlanId')?.invalid && entryForm.get('irrigationPlanId')?.touched">
               El plan es requerido
             </div>
           </div>
@@ -674,87 +776,58 @@
                 {{ mode.name }}
               </option>
             </select>
-            <div class="invalid-feedback" *ngIf="entryForm.get('irrigationModeId')?.invalid && entryForm.get('irrigationModeId')?.touched">
+            <div class="invalid-feedback"
+              *ngIf="entryForm.get('irrigationModeId')?.invalid && entryForm.get('irrigationModeId')?.touched">
               El modo es requerido
             </div>
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Hora de Inicio *</label>
-            <input
-              type="time"
-              class="form-control"
-              formControlName="startTime">
-            <div class="invalid-feedback" *ngIf="entryForm.get('startTime')?.invalid && entryForm.get('startTime')?.touched">
+            <input type="time" class="form-control" formControlName="startTime">
+            <div class="invalid-feedback"
+              *ngIf="entryForm.get('startTime')?.invalid && entryForm.get('startTime')?.touched">
               La hora de inicio es requerida
             </div>
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Duración (minutos) *</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="duration"
-              min="1"
-              placeholder="Ej: 30">
-            <div class="invalid-feedback" *ngIf="entryForm.get('duration')?.invalid && entryForm.get('duration')?.touched">
+            <input type="number" class="form-control" formControlName="duration" min="1" placeholder="Ej: 30">
+            <div class="invalid-feedback"
+              *ngIf="entryForm.get('duration')?.invalid && entryForm.get('duration')?.touched">
               La duración debe ser mayor a 0
             </div>
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Semana de Inicio (1-52)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="wStart"
-              min="1"
-              max="52"
-              placeholder="Opcional">
+            <input type="number" class="form-control" formControlName="wStart" min="1" max="52" placeholder="Opcional">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Semana de Fin (1-52)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="wEnd"
-              min="1"
-              max="52"
-              placeholder="Opcional">
+            <input type="number" class="form-control" formControlName="wEnd" min="1" max="52" placeholder="Opcional">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Frecuencia (días)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="frequency"
-              min="1"
-              placeholder="Opcional">
+            <input type="number" class="form-control" formControlName="frequency" min="1" placeholder="Opcional">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Secuencia *</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="sequence"
-              min="1"
+            <input type="number" class="form-control" formControlName="sequence" min="1"
               placeholder="Orden de ejecución">
-            <div class="invalid-feedback" *ngIf="entryForm.get('sequence')?.invalid && entryForm.get('sequence')?.touched">
+            <div class="invalid-feedback"
+              *ngIf="entryForm.get('sequence')?.invalid && entryForm.get('sequence')?.touched">
               La secuencia debe ser mayor a 0
             </div>
           </div>
 
           <div class="col-12 mb-3">
             <div class="form-check form-switch">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                formControlName="active"
-                id="entryActive">
+              <input class="form-check-input" type="checkbox" formControlName="active" id="entryActive">
               <label class="form-check-label" for="entryActive">
                 Entrada Activa
               </label>
@@ -792,11 +865,7 @@
         <div class="row">
           <div class="col-12 mb-3">
             <label class="form-label">Nombre del Modo *</label>
-            <input
-              type="text"
-              class="form-control"
-              formControlName="name"
-              placeholder="Ingrese el nombre del modo">
+            <input type="text" class="form-control" formControlName="name" placeholder="Ingrese el nombre del modo">
             <div class="invalid-feedback" *ngIf="modeForm.get('name')?.invalid && modeForm.get('name')?.touched">
               El nombre es requerido
             </div>
@@ -804,11 +873,7 @@
 
           <div class="col-12 mb-3">
             <div class="form-check form-switch">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                formControlName="active"
-                id="modeActive">
+              <input class="form-check-input" type="checkbox" formControlName="active" id="modeActive">
               <label class="form-check-label" for="modeActive">
                 Modo Activo
               </label>
@@ -870,7 +935,8 @@
         <div class="col-md-6 mb-3">
           <label class="form-label fw-bold">Tipo de Ejecución</label>
           <p>
-            <span class="badge" [class.bg-warning]="selectedHistoryRecord.isManualExecution" [class.bg-info]="!selectedHistoryRecord.isManualExecution">
+            <span class="badge" [class.bg-warning]="selectedHistoryRecord.isManualExecution"
+              [class.bg-info]="!selectedHistoryRecord.isManualExecution">
               {{ selectedHistoryRecord.isManualExecution ? 'Manual' : 'Automático' }}
             </span>
           </p>
@@ -883,7 +949,8 @@
 
         <div class="col-md-6 mb-3">
           <label class="form-label fw-bold">Duración Real</label>
-          <p>{{ selectedHistoryRecord.actualDuration ? (selectedHistoryRecord.actualDuration + ' minutos') : 'N/A' }}</p>
+          <p>{{ selectedHistoryRecord.actualDuration ? (selectedHistoryRecord.actualDuration + ' minutos') : 'N/A' }}
+          </p>
         </div>
 
         <div class="col-md-6 mb-3">
@@ -893,7 +960,8 @@
 
         <div class="col-md-6 mb-3">
           <label class="form-label fw-bold">Fin de Ejecución</label>
-          <p>{{ selectedHistoryRecord.executionEndTime ? formatDateTime(selectedHistoryRecord.executionEndTime) : 'N/A' }}</p>
+          <p>{{ selectedHistoryRecord.executionEndTime ? formatDateTime(selectedHistoryRecord.executionEndTime) : 'N/A'
+            }}</p>
         </div>
 
         <div class="col-12 mb-3" *ngIf="selectedHistoryRecord.notes">
