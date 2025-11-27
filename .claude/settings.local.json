@@ -62,7 +62,9 @@
       "Bash(npx playwright:*)",
       "WebFetch(domain:localhost)",
       "Bash(build_output.txt)",
-      "Bash(dotnet ef migrations add:*)"
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(repo_changes.txt)",
+      "Bash(build_result.txt)"
     ],
     "deny": [],
     "ask": []

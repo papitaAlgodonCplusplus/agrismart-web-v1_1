@@ -5,6 +5,7 @@ import { Observable, combineLatest, forkJoin, interval, of, throwError } from 'r
 import { map, catchError, startWith, switchMap, tap } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { ApiConfigService } from '../../core/services/api-config.service';
+import { environment } from '../../../environments/environment';
 
 // ============================================================================
 // INTERFACES MATCHING ACTUAL API RESPONSES
@@ -122,6 +123,40 @@ export interface MeasurementVariable {
   measurementUnitId: number;
   factorToMeasurementVariableStandard: number;
   active: boolean;
+}
+
+
+export interface AggregatedDeviceData {
+  timestamp: Date;
+  deviceId: string;
+  sensor: string;
+  value: number;
+  minValue?: number;
+  maxValue?: number;
+  dataPointCount: number;
+}
+
+export interface AggregatedDataResponse {
+  aggregatedData: AggregatedDeviceData[];
+  totalRecords: number;
+  pageNumber: number;
+  pageSize: number;
+  aggregationInterval: string;
+  aggregationType: string;
+}
+
+export interface DeviceRawDataParams {
+  deviceId?: string;
+  startDate?: Date;
+  endDate?: Date;
+  sensor?: string;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface AggregatedDataParams extends DeviceRawDataParams {
+  aggregationInterval?: 'minute' | 'hour' | 'day' | 'week' | 'month';
+  aggregationType?: 'avg' | 'min' | 'max' | 'sum' | 'count';
 }
 
 // Existing interfaces (keep these)
@@ -534,6 +569,7 @@ export class IrrigationSectorService {
   private readonly measurementBaseUrl = '/MeasurementBase';
   private readonly measurementKPIUrl = '/MeasurementKPI';
   private readonly measurementVariableUrl = '/MeasurementVariable';
+  private apiUrl = `${environment.iotApiUrl}/DeviceRawData`;
 
   constructor(
     private apiService: ApiService,
@@ -1134,6 +1170,41 @@ export class IrrigationSectorService {
   // NEW IoT API METHODS FOR REAL-TIME DEVICE DATA
   // ============================================================================
 
+  getDeviceRawDataHour(
+    deviceId?: string,
+    startDate?: string,
+    endDate?: string,
+    sensor?: string,
+    pageNumber?: number,
+    pageSize?: number
+  ): Observable<any[]> {
+    let params = new HttpParams();
+
+    if (deviceId) params = params.set('DeviceId', deviceId);
+    if (startDate) params = params.set('StartDate', startDate);
+    if (endDate) params = params.set('EndDate', endDate);
+    if (sensor) params = params.set('Sensor', sensor);
+    if (pageNumber) params = params.set('PageNumber', pageNumber);
+    if (pageSize) params = params.set('PageSize', pageSize);
+    console.log('Fetching device raw data hour with params:', params.toString());
+    return this.apiService.getIot<any>('/DeviceRawData/hour', params).pipe(
+      map(response => {
+        const items: any[] = response.deviceRawDataHour || [];
+        return items.map(item => {
+          if (item && item.payload_Avg !== undefined) {
+            item.payload = item.payload_Avg;
+            delete item.payload_Avg;
+          }
+          return item;
+        });
+      }),
+      catchError(error => {
+        console.error('Error fetching device raw data hour:', error);
+        return of([]);
+      })
+    );
+  }
+
   /**
    * Get raw device data from IoT API
    * This is the PRIMARY method for fetching real sensor data
@@ -1149,10 +1220,10 @@ export class IrrigationSectorService {
     let params = new HttpParams();
 
     if (deviceId) params = params.set('DeviceId', deviceId);
-    // if (startDate) params = params.set('StartDate', startDate);
-    // if (endDate) params = params.set('EndDate', endDate);
+    if (startDate) params = params.set('StartDate', startDate);
+    if (endDate) params = params.set('EndDate', endDate);
     if (sensor) params = params.set('Sensor', sensor);
-    // if (pageNumber) params = params.set('PageNumber', pageNumber.toString());
+    if (pageNumber) params = params.set('PageNumber', pageNumber.toString());
     if (pageSize) params = params.set('PageSize', pageSize.toString());
 
     return this.apiService.getIot<DeviceRawDataResponse>('/DeviceRawData', params).pipe(
@@ -2095,5 +2166,200 @@ export class IrrigationSectorService {
         return of({ timeSeries: [], devices: [] });
       })
     );
+  }
+
+
+  /**
+   * Get raw device data - USE SPARINGLY
+   * Only use this for very recent data (last few hours) or specific debugging
+   */
+  getRawDeviceData(params: DeviceRawDataParams): Observable<any> {
+    let httpParams = new HttpParams();
+
+    if (params.deviceId) httpParams = httpParams.set('DeviceId', params.deviceId);
+    if (params.startDate) httpParams = httpParams.set('StartDate', params.startDate.toISOString());
+    if (params.endDate) httpParams = httpParams.set('EndDate', params.endDate.toISOString());
+    if (params.sensor) httpParams = httpParams.set('Sensor', params.sensor);
+    if (params.pageNumber) httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    if (params.pageSize) httpParams = httpParams.set('PageSize', params.pageSize.toString());
+
+    return this.http.get(`${this.apiUrl}`, { params: httpParams });
+  }
+
+  /**
+   * Get aggregated device data - RECOMMENDED
+   * Use this for all time-series visualizations and historical data
+   */
+  getAggregatedDeviceData(params: AggregatedDataParams): Observable<any> {
+    let httpParams = new HttpParams();
+
+    if (params.deviceId) httpParams = httpParams.set('DeviceId', params.deviceId);
+    if (params.startDate) httpParams = httpParams.set('StartDate', params.startDate.toISOString());
+    if (params.endDate) httpParams = httpParams.set('EndDate', params.endDate.toISOString());
+    if (params.sensor) httpParams = httpParams.set('Sensor', params.sensor);
+    if (params.aggregationInterval) httpParams = httpParams.set('AggregationInterval', params.aggregationInterval);
+    if (params.aggregationType) httpParams = httpParams.set('AggregationType', params.aggregationType);
+    if (params.pageNumber) httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    if (params.pageSize) httpParams = httpParams.set('PageSize', params.pageSize.toString());
+
+    return this.http.get<any>(`${this.apiUrl}/aggregated`, { params: httpParams }).pipe(
+      map(response => response.result)
+    );
+  }
+
+  /**
+   * Helper method: Get hourly data (for last 24-48 hours view)
+   */
+  getHourlyData(deviceId: string, sensor: string, hours: number = 24): Observable<AggregatedDataResponse> {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setHours(startDate.getHours() - hours);
+
+    return this.getAggregatedDeviceData({
+      deviceId,
+      sensor,
+      startDate,
+      endDate,
+      aggregationInterval: 'hour',
+      aggregationType: 'avg',
+      pageSize: hours + 1
+    });
+  }
+
+  /**
+   * Helper method: Get daily data (for week/month view)
+   */
+  getDailyData(deviceId: string, sensor: string, days: number = 30): Observable<AggregatedDataResponse> {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    return this.getAggregatedDeviceData({
+      deviceId,
+      sensor,
+      startDate,
+      endDate,
+      aggregationInterval: 'day',
+      aggregationType: 'avg',
+      pageSize: days + 1
+    });
+  }
+
+  /**
+   * Helper method: Get weekly data (for 3-6 month view)
+   */
+  getWeeklyData(deviceId: string, sensor: string, weeks: number = 12): Observable<AggregatedDataResponse> {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - (weeks * 7));
+
+    return this.getAggregatedDeviceData({
+      deviceId,
+      sensor,
+      startDate,
+      endDate,
+      aggregationInterval: 'week',
+      aggregationType: 'avg',
+      pageSize: weeks + 1
+    });
+  }
+
+  /**
+   * Helper method: Get monthly data (for yearly view)
+   */
+  getMonthlyData(deviceId: string, sensor: string, months: number = 12): Observable<AggregatedDataResponse> {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+
+    return this.getAggregatedDeviceData({
+      deviceId,
+      sensor,
+      startDate,
+      endDate,
+      aggregationInterval: 'month',
+      aggregationType: 'avg',
+      pageSize: months + 1
+    });
+  }
+
+  /**
+   * Helper method: Get data for multiple sensors at once
+   */
+  getMultipleSensorsData(
+    deviceId: string,
+    sensors: string[],
+    startDate: Date,
+    endDate: Date,
+    aggregationInterval: 'hour' | 'day' | 'week' | 'month' = 'hour'
+  ): Observable<Map<string, any>> {
+    const requests = sensors.map(sensor =>
+      this.getAggregatedDeviceData({
+        deviceId,
+        sensor,
+        startDate,
+        endDate,
+        aggregationInterval,
+        aggregationType: 'avg',
+        pageSize: 1000
+      })
+    );
+
+    // Use forkJoin to combine Observables and map the array of responses into a Map
+    return forkJoin(requests).pipe(
+      map((responses: any[]) => {
+        const dataMap = new Map<string, any>();
+        sensors.forEach((sensor, index) => {
+          // responses[index] is the AggregatedDataResponse; prefer aggregatedData but fall back to whole response
+          dataMap.set(sensor, responses[index]?.aggregatedData ?? responses[index]);
+        });
+        return dataMap;
+      }),
+      catchError(error => {
+        console.error('Error fetching multiple sensors data:', error);
+        return of(new Map<string, any>());
+      })
+    );
+  }
+
+  /**
+   * Smart fetching: Automatically choose the right aggregation based on time range
+   */
+  getSmartAggregatedData(
+    deviceId: string,
+    sensor: string,
+    startDate: Date,
+    endDate: Date
+  ): Observable<AggregatedDataResponse> {
+    const hoursDiff = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
+
+    let aggregationInterval: 'minute' | 'hour' | 'day' | 'week' | 'month';
+
+    if (hoursDiff <= 6) {
+      // Last 6 hours: use minute aggregation
+      aggregationInterval = 'minute';
+    } else if (hoursDiff <= 72) {
+      // Last 3 days: use hour aggregation
+      aggregationInterval = 'hour';
+    } else if (hoursDiff <= 720) {
+      // Last 30 days: use day aggregation
+      aggregationInterval = 'day';
+    } else if (hoursDiff <= 4320) {
+      // Last 6 months: use week aggregation
+      aggregationInterval = 'week';
+    } else {
+      // More than 6 months: use month aggregation
+      aggregationInterval = 'month';
+    }
+
+    return this.getAggregatedDeviceData({
+      deviceId,
+      sensor,
+      startDate,
+      endDate,
+      aggregationInterval,
+      aggregationType: 'avg',
+      pageSize: 1000
+    });
   }
 }

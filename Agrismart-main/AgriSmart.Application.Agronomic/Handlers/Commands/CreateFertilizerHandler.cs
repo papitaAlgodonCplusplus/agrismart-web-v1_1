@@ -42,7 +42,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                     Active = command.Active,
 
                     // NEW PROPERTIES MAPPING
-                    
+
                     // Basic Information
                     Brand = command.Brand,
                     Description = command.Description,
@@ -97,6 +97,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                     EC = command.EC,
                     PH = command.PH
                 };
+                newFertilizer.CreatedBy = _fertilizerCommandRepository.GetSessionUserId();
 
                 Fertilizer createFertilizerResult = await _fertilizerCommandRepository.CreateAsync(newFertilizer);
 

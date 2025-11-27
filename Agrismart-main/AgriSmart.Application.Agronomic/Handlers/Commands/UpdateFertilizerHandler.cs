@@ -100,6 +100,10 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                     getResult.TDS = command.TDS;
                     getResult.EC = command.EC;
                     getResult.PH = command.PH;
+
+                    // Update audit fields
+                    getResult.UpdatedBy = _fertilizerCommandRepository.GetSessionUserId();
+                    getResult.DateUpdated = DateTime.Now;
                 }
 
                 Fertilizer updateFertilizerResult = await _fertilizerCommandRepository.UpdateAsync(getResult);

@@ -20,12 +20,10 @@ namespace AgriSmart.Api.Iot.Controllers
         {
             _mediator = mediator;
             _logger = logger;
-
         }
 
-
         /// <summary>
-        /// Get device raw data with optional filtering
+        /// Get device raw data with optional filtering (USE SPARINGLY - Returns raw data)
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
@@ -36,6 +34,70 @@ namespace AgriSmart.Api.Iot.Controllers
         {
             if (query == null)
                 query = new GetAllDeviceRawDataQuery();
+
+            var response = await _mediator.Send(query);
+
+            if (response.Success)
+                return Ok(response);
+
+            return BadRequest(response);
+        }
+
+        /// <summary>
+        /// Get aggregated device raw data - RECOMMENDED for time-series visualizations
+        /// Use this endpoint for hourly, daily, weekly, monthly views
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        [HttpGet("aggregated")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<Response<GetAggregatedDeviceRawDataResponse>>> GetAggregatedData([FromQuery] GetAggregatedDeviceRawDataQuery query)
+        {
+            if (query == null)
+                query = new GetAggregatedDeviceRawDataQuery();
+
+            var response = await _mediator.Send(query);
+
+            if (response.Success)
+                return Ok(response);
+
+            return BadRequest(response);
+        }
+
+        /// <summary>
+        /// Get hourly aggregated device raw data
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        [HttpGet("hour")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<Response<GetAllDeviceRawDataHourResponse>>> GetRawDataHour([FromQuery] GetAllDeviceRawDataHourQuery query)
+        {
+            if (query == null)
+                query = new GetAllDeviceRawDataHourQuery();
+
+            var response = await _mediator.Send(query);
+
+            if (response.Success)
+                return Ok(response);
+
+            return BadRequest(response);
+        }
+
+        /// <summary>
+        /// Get minute-level aggregated device raw data
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        [HttpGet("minute")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<Response<GetAllDeviceRawDataMinuteResponse>>> GetRawDataMinute([FromQuery] GetAllDeviceRawDataMinuteQuery query)
+        {
+            if (query == null)
+                query = new GetAllDeviceRawDataMinuteQuery();
 
             var response = await _mediator.Send(query);
 

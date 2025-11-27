@@ -1,0 +1,12 @@
+diff --git a/Agrismart-main/AgriSmart.Infrastructure/Repositories/Query/DeviceRawDataQueryRepository.cs b/Agrismart-main/AgriSmart.Infrastructure/Repositories/Query/DeviceRawDataQueryRepository.cs
+index d861a49..61d9f61 100644
+--- a/Agrismart-main/AgriSmart.Infrastructure/Repositories/Query/DeviceRawDataQueryRepository.cs
++++ b/Agrismart-main/AgriSmart.Infrastructure/Repositories/Query/DeviceRawDataQueryRepository.cs
+@@ -1,6 +1,7 @@
+ using AgriSmart.Core.Configuration;
+ using AgriSmart.Infrastructure.Data;
+ using AgriSmart.Core.Entities;
++using AgriSmart.Core.DTOs;
+ using Microsoft.EntityFrameworkCore;
+ using Microsoft.Extensions.Options;
+ using AgriSmart.Core.Repositories.Queries;

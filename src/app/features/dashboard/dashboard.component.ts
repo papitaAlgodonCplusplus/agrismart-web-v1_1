@@ -49,6 +49,9 @@ export interface FertilizerDosage {
   fertilizer: string;
   dosageGramsPerLiter: number;
   cost: number;
+  phaseId: number;
+  phaseName: string;
+  nutrientContribution: any;
 }
 
 export interface CropProductionLocation {
@@ -144,6 +147,30 @@ export class DashboardComponent implements OnInit {
   };
   isLoading = true;
   errorMessage = '';
+  currentPage = 1;
+  pageSize = 100;
+  isLoadingMore = false;
+  hasMoreData = true;
+  totalRecordsLoaded = 0;
+  pageSizeBulk = 500;
+  // Add to the component class properties (around line 130)
+  climateKPIsPage = 1;
+  climateKPIsPageSize = 20;
+  irrigationMetricsPage = 1;
+  irrigationMetricsPageSize = 20;
+
+  // Add aggregate statistics properties
+  aggregateClimateKPIs: {
+    tempAvg: number;
+    tempMin: number;
+    tempMax: number;
+    windSpeedAvg: number;
+    solarRadiationAvg: number;
+    referenceETAvg: number;
+    cropETAvg: number;
+    cropETMin: number;
+    cropETMax: number;
+  } | null = null;
 
   constructor(
     private authService: AuthService,
@@ -163,6 +190,26 @@ export class DashboardComponent implements OnInit {
     this.irrigationCalcService = irrigationCalcServiceInjected;
   }
 
+  // Add after calculateClimateKPIs() method (around line 450)
+  private calculateAggregateClimateKPIs(): void {
+    if (this.climateKPIs.length === 0) {
+      this.aggregateClimateKPIs = null;
+      return;
+    }
+
+    this.aggregateClimateKPIs = {
+      tempAvg: this.climateKPIs.reduce((sum, k) => sum + k.tempAvg, 0) / this.climateKPIs.length,
+      tempMin: Math.min(...this.climateKPIs.map(k => k.tempMin)),
+      tempMax: Math.max(...this.climateKPIs.map(k => k.tempMax)),
+      windSpeedAvg: this.climateKPIs.reduce((sum, k) => sum + k.windSpeed, 0) / this.climateKPIs.length,
+      solarRadiationAvg: this.climateKPIs.reduce((sum, k) => sum + k.solarRadiation, 0) / this.climateKPIs.length,
+      referenceETAvg: this.climateKPIs.reduce((sum, k) => sum + k.referenceET, 0) / this.climateKPIs.length,
+      cropETAvg: this.climateKPIs.reduce((sum, k) => sum + k.cropET, 0) / this.climateKPIs.length,
+      cropETMin: Math.min(...this.climateKPIs.map(k => k.cropET)),
+      cropETMax: Math.max(...this.climateKPIs.map(k => k.cropET))
+    };
+  }
+
   ngOnInit(): void {
     this.loadDashboardStats();
     // ADD THESE:
@@ -174,6 +221,9 @@ export class DashboardComponent implements OnInit {
   private loadDashboardStats(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.currentPage = 1; // Reset pagination
+    this.hasMoreData = true;
+    this.totalRecordsLoaded = 0;
 
     // Load data from multiple endpoints including device raw data
     forkJoin({
@@ -182,15 +232,27 @@ export class DashboardComponent implements OnInit {
       crops: this.apiService.get('/Crop').pipe(catchError(() => of([]))),
       cropProductions: this.apiService.get('/CropProduction').pipe(catchError(() => of([]))),
       users: this.apiService.get('/User').pipe(catchError(() => of([]))),
-      deviceRawData: this.irrigationService.getDeviceRawData(undefined, undefined, undefined, undefined, undefined, 1000000).pipe(catchError(() => of([])))
+      deviceRawData: this.irrigationService.getDeviceRawDataHour(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        this.currentPage,
+        this.pageSize
+      ).pipe(catchError(() => of([])))
     }).subscribe({
       next: (data) => {
-        console.log('Dashboard data loaded:', data);
+        // console.log('Dashboard data loaded:', data);
         this.rawData = data;
+        this.totalRecordsLoaded = Array.isArray(data.deviceRawData) ? data.deviceRawData.length : 0;
+
+        // Check if we got less than pageSize, meaning no more data
+        if (this.totalRecordsLoaded < this.pageSize) {
+          this.hasMoreData = false;
+        }
+
         this.calculateStats();
         this.generateRecentActivitiesFromRealData();
-
-        // ADD THESE THREE LINES:
         this.calculateClimateKPIs();
         this.calculateIrrigationMetrics();
         this.calculateFertilizerDosages();
@@ -240,11 +302,11 @@ export class DashboardComponent implements OnInit {
 
     // Get set of active device names from raw data
     const activeDeviceNames = new Set(rawDeviceData.map((d: any) => d.sensor));
-    console.log('Active devices from raw data:', activeDeviceNames);
+    // console.log('Active devices from raw data:', activeDeviceNames);
 
     // Count offline/inactive registered devices
     alerts += devices.filter((d: any) => !activeDeviceNames.has(d.name)).length;
-    console.log('Offline/inactive devices:', devices.filter((d: any) => !activeDeviceNames.has(d.name)).map((d: any) => d.name));
+    // console.log('Offline/inactive devices:', devices.filter((d: any) => !activeDeviceNames.has(d.name)).map((d: any) => d.name));
 
     // Analyze raw device data for alerts
     const deviceDataMap = new Map<string, any[]>();
@@ -256,12 +318,11 @@ export class DashboardComponent implements OnInit {
       }
       deviceDataMap.get(deviceName)!.push(data);
     });
-    console.log('Device data map:', deviceDataMap);
+    // console.log('Device data map:', deviceDataMap);
 
     // Check each active device for alert conditions
     deviceDataMap.forEach((dataPoints, deviceName) => {
       const latestData = dataPoints[dataPoints.length - 1];
-      console.log(`Analyzing data for device: ${deviceName}`, latestData);
 
       // Battery alerts (low battery)
       const batteryKeys = ['Bat', 'BAT', 'Bat_V', 'BatV'];
@@ -316,32 +377,42 @@ export class DashboardComponent implements OnInit {
     let activityId = 1;
 
     const rawDeviceData = this.rawData.deviceRawData || [];
-    const devices = this.rawData.devices?.devices || [];
-
-    // Get set of active device names
-    const activeDeviceNames = new Set(rawDeviceData.map((d: any) => d.sensor));
-
-    // Create map of latest data per device
-    const deviceDataMap = new Map<string, any>();
+    const rawDeviceDataMap = new Map<string, any>();
     rawDeviceData.forEach((data: any) => {
-      const existing = deviceDataMap.get(data.sensor);
-      if (!existing || new Date(data.recordDate) > new Date(existing.recordDate)) {
-        deviceDataMap.set(data.sensor, data);
-      }
+      rawDeviceDataMap.set(data.sensor, data);
     });
 
-    console.log('Generating activities from device data:', deviceDataMap);
-
     // Generate activities from device data analysis
-    deviceDataMap.forEach((latestData, deviceName) => {
-      console.log(`Analyzing data for device: ${deviceName}`, latestData);
-      // Check for various alert conditions and create activities
+    rawDeviceDataMap.forEach((latestData, deviceName) => {
+      // Check for nulls in any sensor data
+      if (latestData === null) {
+        this.recentActivities.push({
+          icon: 'bi-exclamation-triangle',
+          id: activityId++,
+          type: 'warning',
+          message: `${deviceName}: Datos nulos detectados`,
+          timestamp: new Date(),
+          deviceId: deviceName
+        });
+      }
+
+      // Check for 0s in any sensor data
+      if (latestData.payload === '0' || latestData.payload === 0) {
+        this.recentActivities.push({
+          icon: 'bi-exclamation-circle',
+          id: activityId++,
+          type: 'info',
+          message: `${deviceName}: Valor cero detectado en sensor ${latestData.sensor}`,
+          timestamp: new Date(),
+          deviceId: deviceName
+        });
+      }
 
       // Battery alerts
       const batteryKeys = ['Bat', 'BAT', 'Bat_V', 'BatV'];
       for (const key of batteryKeys) {
         if (latestData.sensor === key && latestData !== null) {
-          console.log(`Analyzing battery data for device: ${deviceName}`, latestData);
+          // console.log(`Analyzing battery data for device: ${deviceName}`, latestData);
           const batValue = parseFloat(latestData.payload);
           const timestamp = new Date(latestData.recordDate);
           if (batValue < 3.5) {
@@ -387,6 +458,72 @@ export class DashboardComponent implements OnInit {
               id: activityId++,
               type: 'warning',
               message: `${deviceName}: Temperatura alta (${tempValue.toFixed(1)}°C)`,
+              timestamp,
+              deviceId: deviceName
+            });
+          }
+        }
+      }
+
+      // PAR / Solar Radiation alerts
+      const parKeys = ['TSR', 'Solar_Radiation', 'illumination'];
+      for (const key of parKeys) {
+        if (latestData.sensor === key && latestData !== null) {
+          const parValue = parseFloat(latestData.payload);
+          const timestamp = new Date(latestData.recordDate);
+          if (parValue > 1000) {
+            this.recentActivities.push({
+              icon: 'bi-sun',
+              id: activityId++,
+              type: 'warning',
+              message: `${deviceName}: Radiación solar alta (${parValue.toFixed(1)} W/m²)`,
+              timestamp,
+              deviceId: deviceName
+            });
+          } else if (parValue == 0) {
+            this.recentActivities.push({
+              icon: 'bi-sun',
+              id: activityId++,
+              type: 'info',
+              message: `${deviceName}: Radiación solar no detectada`,
+              timestamp,
+              deviceId: deviceName
+            });
+          }
+        }
+      }
+
+
+      // wind alerts
+      const windKeys = ['wind_speed_level', 'wind_speed', 'wind_direction'];
+      for (const key of windKeys) {
+        if (latestData.sensor === key && latestData !== null) {
+          const windValue = parseFloat(latestData.payload);
+          const timestamp = new Date(latestData.recordDate);
+          if (windValue > 80) {
+            this.recentActivities.push({
+              icon: 'bi-wind',
+              id: activityId++,
+              type: 'danger',
+              message: `${deviceName}: Velocidad de viento peligrosa (${windValue.toFixed(1)} km/h)`,
+              timestamp,
+              deviceId: deviceName
+            });
+          } else if (windValue > 50) {
+            this.recentActivities.push({
+              icon: 'bi-wind',
+              id: activityId++,
+              type: 'warning',
+              message: `${deviceName}: Velocidad de viento alta (${windValue.toFixed(1)} km/h)`,
+              timestamp,
+              deviceId: deviceName
+            });
+          } else if (windValue == 0) {
+            this.recentActivities.push({
+              icon: 'bi-wind',
+              id: activityId++,
+              type: 'info',
+              message: `${deviceName}: Sin viento detectado`,
               timestamp,
               deviceId: deviceName
             });
@@ -628,7 +765,7 @@ export class DashboardComponent implements OnInit {
   private loadCropProductionLocations(): void {
     this.farmService.getAll(true).subscribe({
       next: (response: any) => {
-        console.log('Farms loaded for locations:', response);
+        // console.log('Farms loaded for locations:', response);
 
         // Extract farms array from response
         const farms = response.farms || response.result?.farms || [];
@@ -641,7 +778,7 @@ export class DashboardComponent implements OnInit {
           altitude: farm.altitude || 100 // Default altitude if not provided
         }));
 
-        console.log(`Loaded ${this.cropProductionLocations.length} crop production locations`);
+        // console.log(`Loaded ${this.cropProductionLocations.length} crop production locations`);
       },
       error: (error) => {
         console.error('Error loading crop production locations:', error);
@@ -656,7 +793,7 @@ export class DashboardComponent implements OnInit {
   private loadAvailableCatalogs(): void {
     this.catalogService.getAll().subscribe({
       next: (response: any) => {
-        console.log('Catalogs loaded:', response);
+        // console.log('Catalogs loaded:', response);
 
         // Extract catalogs array from response
         this.availableCatalogs = response.catalogs || response.result?.catalogs || [];
@@ -666,7 +803,7 @@ export class DashboardComponent implements OnInit {
           this.loadAvailableFertilizers(this.availableCatalogs[0].id);
         }
 
-        console.log(`Loaded ${this.availableCatalogs.length} catalogs`);
+        // console.log(`Loaded ${this.availableCatalogs.length} catalogs`);
       },
       error: (error) => {
         console.error('Error loading catalogs:', error);
@@ -679,9 +816,9 @@ export class DashboardComponent implements OnInit {
    * Load available fertilizers from catalog
    */
   private loadAvailableFertilizers(catalogId: number): void {
-    this.fertilizerService.getFertilizersWithCatalogId(catalogId).subscribe({
+    this.fertilizerService.getAll().subscribe({
       next: (response: any) => {
-        console.log('Fertilizers loaded:', response);
+        // console.log('Fertilizers loaded:', response);
 
         // Handle different response structures
         let fertilizers = [];
@@ -706,7 +843,7 @@ export class DashboardComponent implements OnInit {
           cost: f.pricePerUnit || 1.0
         }));
 
-        console.log(`Loaded ${this.availableFertilizers.length} fertilizers`);
+        // console.log(`Loaded ${this.availableFertilizers.length} fertilizers`);
       },
       error: (error) => {
         console.error('Error loading fertilizers:', error);
@@ -721,7 +858,7 @@ export class DashboardComponent implements OnInit {
   private loadCropPhaseRequirements(): void {
     this.apiService.get<any>('/CropPhaseSolutionRequirement').subscribe({
       next: (response) => {
-        console.log('CropPhaseSolutionRequirement loaded:', response);
+        // console.log('CropPhaseSolutionRequirement loaded:', response);
 
         // Handle different response structures
         if (Array.isArray(response)) {
@@ -732,7 +869,7 @@ export class DashboardComponent implements OnInit {
           this.cropPhaseRequirements = [];
         }
 
-        console.log(`Loaded ${this.cropPhaseRequirements.length} crop phase requirements`);
+        // console.log(`Loaded ${this.cropPhaseRequirements.length} crop phase requirements`);
       },
       error: (error) => {
         console.error('Error loading crop phase requirements:', error);
@@ -749,17 +886,21 @@ export class DashboardComponent implements OnInit {
     const hourlyData = this.groupRawDataByHour();
 
     this.climateKPIs = Array.from(hourlyData.entries()).map(([hour, sensors]) => {
+      // console.log(`Calculating KPIs for hour: ${hour}`, sensors);
+
       // Extract temperature from DS18B20 sensor
-      const temps = this.extractSensorValues(sensors, 'temp_DS18B20')
+      const temps = this.extractSensorValues(sensors, 'temp')
         .map(v => v / 10); // Convert from sensor reading
 
       // Extract wind speed
-      const windSpeeds = this.extractSensorValues(sensors, 'wind_speed');
+      const windSpeeds = this.extractSensorValues(sensors, 'wind_speed_level');
 
       // Extract PAR (solar radiation)
-      const solarRadiation = this.extractSensorValues(sensors, 'PAR');
+      const solarRadiation = this.extractSensorValues(sensors, 'TSR');
 
-      // Get location for calculations
+      //// console.log(`Hour: ${hour} - Temps:`, temps, 'WindSpeeds:', windSpeeds, 'SolarRadiation:', solarRadiation);
+
+      // Get location for calculations TODO VERIFY MOCKED LOCATION
       const location = this.cropProductionLocations[0] || {
         latitude: 10,
         longitude: -84,
@@ -770,6 +911,7 @@ export class DashboardComponent implements OnInit {
       const tempStats = this.calculateStatsValues(temps);
       const windStats = this.calculateStatsValues(windSpeeds);
       const solarStats = this.calculateStatsValues(solarRadiation);
+      // // console.log(`Hour: ${hour} - TempStats:`, tempStats, 'WindStats:', windStats, 'SolarStats:', solarStats);
 
       // Calculate reference ET (simplified FAO-56)
       const referenceET = this.calculateReferenceET(
@@ -804,6 +946,7 @@ export class DashboardComponent implements OnInit {
     if (this.climateKPIs.length > 0) {
       this.stats.currentET = this.climateKPIs[this.climateKPIs.length - 1].cropET;
     }
+    this.calculateAggregateClimateKPIs();
   }
 
   /**
@@ -900,71 +1043,110 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * Calculate fertilizer dosages based on ET and requirements
-   */
+ * Calculate fertilizer dosages based on ET and requirements
+ * Fixed to iterate through ALL crop phase requirements
+ */
   private calculateFertilizerDosages(): void {
     if (this.availableFertilizers.length === 0 || this.cropPhaseRequirements.length === 0) {
       console.warn('Cannot calculate fertilizer dosages - missing data');
       return;
     }
 
-    // Get latest ET value
+    console.log('Calculating fertilizer dosages with available fertilizers:', this.availableFertilizers);
+
+    // Get latest ET value (non-zero)
     const latestET = this.climateKPIs.length > 0
-      ? this.climateKPIs[this.climateKPIs.length - 1].cropET
-      : 5;
+      ? this.climateKPIs.slice().reverse().find(kpi => kpi.cropET > 0)?.cropET || 0
+      : 0;
 
-    // Get first crop phase requirement
-    const requirement = this.cropPhaseRequirements[0];
+    console.log('Latest ET value:', latestET);
 
-    // Calculate requirements in ppm
-    const requirements = {
-      nitrogen: (requirement.no3 || 0) + (requirement.nh4 || 0),
-      phosphorus: requirement.h2po4 || 0,
-      potassium: requirement.k || 0,
-      calcium: requirement.ca || 0,
-      magnesium: requirement.mg || 0,
-      sulfur: requirement.so4 || 0
-    };
-
-    // Simple fertilizer calculation (greedy algorithm)
+    // Reset fertilizer dosages array
     this.fertilizerDosages = [];
-    let remainingN = requirements.nitrogen;
-    let remainingP = requirements.phosphorus;
-    let remainingK = requirements.potassium;
 
-    for (const fert of this.availableFertilizers) {
-      if (remainingN <= 0 && remainingK <= 0 && remainingP <= 0) break;
+    // Get average water volume for cost calculations
+    const avgWaterVolume = this.irrigationMetrics.length > 0
+      ? this.irrigationMetrics.reduce((sum, m) => sum + m.totalVolume, 0) / this.irrigationMetrics.length
+      : 10000;
 
-      let dosageNeeded = 0;
+    // ITERATE THROUGH ALL CROP PHASE REQUIREMENTS
+    for (const requirement of this.cropPhaseRequirements) {
+      console.log('Processing requirement:', requirement);
 
-      if (remainingN > 0 && fert.N > 0) {
-        dosageNeeded = Math.max(dosageNeeded, (remainingN / 1000) / (fert.N / 100));
-      }
-      if (remainingK > 0 && fert.K2O > 0) {
-        dosageNeeded = Math.max(dosageNeeded, (remainingK / 1000) / (fert.K2O * 0.83 / 100));
-      }
-      if (remainingP > 0 && fert.P2O5 > 0) {
-        dosageNeeded = Math.max(dosageNeeded, (remainingP / 1000) / (fert.P2O5 * 0.44 / 100));
-      }
+      // Calculate requirements in ppm
+      const requirements = {
+        nitrogen: (requirement.nO3 || 0) + (requirement.nH4 || 0),
+        phosphorus: requirement.h2PO4 || 0,
+        potassium: requirement.k || 0,
+        calcium: requirement.ca || 0,
+        magnesium: requirement.mg || 0,
+        sulfur: requirement.sO4 || 0
+      };
 
-      if (dosageNeeded > 0 && dosageNeeded <= fert.solubility) {
-        remainingN -= (dosageNeeded * (fert.N / 100) * 1000);
-        remainingK -= (dosageNeeded * (fert.K2O / 100) * 0.83 * 1000);
-        remainingP -= (dosageNeeded * (fert.P2O5 / 100) * 0.44 * 1000);
+      // Track remaining nutrients for this phase
+      let remainingN = requirements.nitrogen;
+      let remainingP = requirements.phosphorus;
+      let remainingK = requirements.potassium;
 
-        const avgWaterVolume = this.irrigationMetrics.length > 0
-          ? this.irrigationMetrics.reduce((sum, m) => sum + m.totalVolume, 0) / this.irrigationMetrics.length
-          : 10000;
+      // Calculate dosages for this phase requirement
+      for (const fert of this.availableFertilizers) {
+        console.log('Evaluating fertilizer:', fert);
+        console.log(`Remaining - N: ${remainingN}, P: ${remainingP}, K: ${remainingK}`);
+        if (remainingN <= 0 && remainingK <= 0 && remainingP <= 0) break;
 
-        this.fertilizerDosages.push({
-          fertilizer: fert.name,
-          dosageGramsPerLiter: dosageNeeded,
-          cost: dosageNeeded * fert.cost / 1000 * avgWaterVolume
-        });
+        let dosageNeeded = 0;
+
+        // Calculate dosage based on nutrient with highest deficit
+        if (remainingN > 0 && fert.N > 0) {
+          dosageNeeded = Math.max(dosageNeeded, (remainingN / 1000) / (fert.N / 100));
+        }
+        if (remainingK > 0 && fert.K2O > 0) {
+          dosageNeeded = Math.max(dosageNeeded, (remainingK / 1000) / (fert.K2O * 0.83 / 100));
+        }
+        if (remainingP > 0 && fert.P2O5 > 0) {
+          dosageNeeded = Math.max(dosageNeeded, (remainingP / 1000) / (fert.P2O5 * 0.44 / 100));
+        }
+
+        console.log(`Calculated dosage needed for fertilizer ${fert.name}: ${dosageNeeded} g/L`);
+        // Only add if dosage is valid and within solubility limits
+        if (dosageNeeded > 0) { // TODO check this condition  && dosageNeeded <= fert.solubility
+          // Subtract nutrients provided by this fertilizer
+          remainingN -= (dosageNeeded * (fert.N / 100) * 1000);
+          remainingK -= (dosageNeeded * (fert.K2O / 100) * 0.83 * 1000);
+          remainingP -= (dosageNeeded * (fert.P2O5 / 100) * 0.44 * 1000);
+
+          // Check if this fertilizer/phase combination already exists
+          const existingIndex = this.fertilizerDosages.findIndex(
+            d => d.fertilizer === fert.name && d.phaseId === requirement.id
+          );
+
+          if (existingIndex >= 0) {
+            // Update existing dosage
+            this.fertilizerDosages[existingIndex].dosageGramsPerLiter += dosageNeeded;
+            this.fertilizerDosages[existingIndex].cost += dosageNeeded * fert.cost / 1000 * avgWaterVolume;
+          } else {
+            // Add new dosage entry with phase information
+            this.fertilizerDosages.push({
+              fertilizer: fert.name,
+              dosageGramsPerLiter: dosageNeeded,
+              cost: dosageNeeded * fert.cost / 1000 * avgWaterVolume,
+              phaseId: requirement.id,
+              phaseName: requirement.cropPhaseName || `Fase ${requirement.id}`,
+              // Add nutrient contribution details
+              nutrientContribution: {
+                N: dosageNeeded * (fert.N / 100) * 1000,
+                P: dosageNeeded * (fert.P2O5 / 100) * 0.44 * 1000,
+                K: dosageNeeded * (fert.K2O / 100) * 0.83 * 1000
+              }
+            });
+          }
+        }
       }
     }
 
-    // Update dashboard stats
+    console.log(`Calculated ${this.fertilizerDosages.length} fertilizer dosages for ${this.cropPhaseRequirements.length} phases`);
+
+    // Update dashboard stats with total cost
     this.stats.fertilizerCost = this.fertilizerDosages.reduce(
       (sum, f) => sum + f.cost, 0
     );
@@ -974,7 +1156,7 @@ export class DashboardComponent implements OnInit {
   // HELPER METHODS
   // ============================================================================
 
-  private groupRawDataByHour(): Map<number, any[]> {
+  private groupRawDataByHour(): Map<number, any> {
     const grouped = new Map<number, any[]>();
 
     this.rawData.deviceRawData.forEach((point: any) => {
@@ -992,7 +1174,7 @@ export class DashboardComponent implements OnInit {
 
   private extractSensorValues(sensors: any[], sensorName: string): number[] {
     return sensors
-      .filter(s => s.sensor === sensorName)
+      .filter(s => s.sensor.includes(sensorName))
       .map(s => typeof s.payload === 'number' ? s.payload : parseFloat(s.payload))
       .filter(v => !isNaN(v));
   }
@@ -1028,6 +1210,7 @@ export class DashboardComponent implements OnInit {
     const numerator = 0.408 * delta * Rn + gamma * (900 / (temp + 273)) * windSpeed * 0.5;
     const denominator = delta + gamma * (1 + 0.34 * windSpeed);
 
+
     return numerator / denominator;
   }
 
@@ -1040,5 +1223,218 @@ export class DashboardComponent implements OnInit {
     return 0.000665 * P;
   }
 
- 
+
+  /**
+   * Load next page of device raw data and append to existing data
+   */
+  loadMoreDeviceData(): void {
+    if (this.isLoadingMore || !this.hasMoreData) {
+      return;
+    }
+
+    this.isLoadingMore = true;
+    this.currentPage++;
+
+    this.irrigationService.getDeviceRawDataHour(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      this.currentPage,
+      this.pageSize
+    ).subscribe({
+      next: (newData) => {
+        // console.log(`Loaded page ${this.currentPage}:`, newData);
+
+        // Append new data to existing deviceRawData
+        if (Array.isArray(newData) && newData.length > 0) {
+          this.rawData.deviceRawData = [
+            ...(this.rawData.deviceRawData || []),
+            ...newData
+          ];
+
+          this.totalRecordsLoaded += newData.length;
+
+          // Check if we got less than pageSize, meaning no more data
+          if (newData.length < this.pageSize) {
+            this.hasMoreData = false;
+          }
+
+          // Recalculate everything with new data
+          this.calculateStats();
+          this.generateRecentActivitiesFromRealData();
+          this.calculateClimateKPIs();
+          this.calculateIrrigationMetrics();
+          this.calculateFertilizerDosages();
+        } else {
+          // No more data available
+          this.hasMoreData = false;
+        }
+
+        this.isLoadingMore = false;
+        this.cdr.markForCheck();
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading more device data:', error);
+        this.errorMessage = 'Error al cargar más datos';
+        this.isLoadingMore = false;
+        this.currentPage--; // Revert page increment on error
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /**
+  * Load next page of device raw data and append to existing data
+  */
+  loadMoreDeviceDataBulk(): void {
+    if (this.isLoadingMore || !this.hasMoreData) {
+      return;
+    }
+
+    this.isLoadingMore = true;
+    this.currentPage++;
+
+    this.irrigationService.getDeviceRawDataHour(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      this.currentPage,
+      this.pageSizeBulk
+    ).subscribe({
+      next: (newData) => {
+        // console.log(`Loaded page ${this.currentPage}:`, newData);
+
+        // Append new data to existing deviceRawData
+        if (Array.isArray(newData) && newData.length > 0) {
+          this.rawData.deviceRawData = [
+            ...(this.rawData.deviceRawData || []),
+            ...newData
+          ];
+
+          this.totalRecordsLoaded += newData.length;
+
+          // Check if we got less than pageSize, meaning no more data
+          if (newData.length < this.pageSize) {
+            this.hasMoreData = false;
+          }
+
+          // Recalculate everything with new data
+          this.calculateStats();
+          this.generateRecentActivitiesFromRealData();
+          this.calculateClimateKPIs();
+          this.calculateIrrigationMetrics();
+          this.calculateFertilizerDosages();
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+
+          // console.log(`Total records loaded: ${this.totalRecordsLoaded}`);
+          // console log all available sensor in this.rawData
+          const availableSensors = new Set(
+            (this.rawData.deviceRawData || []).map((d: any) => d.sensor)
+          );
+          // console.log('Available sensors after bulk load:', Array.from(availableSensors).sort());
+        } else {
+          // No more data available
+          this.hasMoreData = false;
+        }
+
+        this.isLoadingMore = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error loading more device data:', error);
+        this.errorMessage = 'Error al cargar más datos';
+        this.isLoadingMore = false;
+        this.currentPage--; // Revert page increment on error
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * Get formatted pagination info
+   */
+  getPaginationInfo(): string {
+    return `Mostrando ${this.totalRecordsLoaded.toLocaleString()} registros (Página ${this.currentPage})`;
+  }
+
+  /**
+   * Reset pagination and reload from beginning
+   */
+  resetPagination(): void {
+    this.currentPage = 1;
+    this.hasMoreData = true;
+    this.totalRecordsLoaded = 0;
+    this.loadDashboardStats();
+  }
+
+
+  // Add pagination helper methods at the end of the class
+  getClimateKPIsPaginated(): ClimateKPIs[] {
+    const startIndex = (this.climateKPIsPage - 1) * this.climateKPIsPageSize;
+    const endIndex = startIndex + this.climateKPIsPageSize;
+    return this.climateKPIs.slice(startIndex, endIndex);
+  }
+
+  getClimateKPIsTotalPages(): number {
+    return Math.ceil(this.climateKPIs.length / this.climateKPIsPageSize);
+  }
+
+  goToClimateKPIsPage(page: any): void {
+    if (page >= 1 && page <= this.getClimateKPIsTotalPages()) {
+      this.climateKPIsPage = page;
+    }
+  }
+
+  getIrrigationMetricsPaginated(): IrrigationDashboardMetric[] {
+    const startIndex = (this.irrigationMetricsPage - 1) * this.irrigationMetricsPageSize;
+    const endIndex = startIndex + this.irrigationMetricsPageSize;
+    return this.irrigationMetrics.slice(startIndex, endIndex);
+  }
+
+  getIrrigationMetricsTotalPages(): number {
+    return Math.ceil(this.irrigationMetrics.length / this.irrigationMetricsPageSize);
+  }
+
+  goToIrrigationMetricsPage(page: any): void {
+    if (page >= 1 && page <= this.getIrrigationMetricsTotalPages()) {
+      this.irrigationMetricsPage = page;
+    }
+  }
+
+  getPageNumbers(currentPage: number, totalPages: number): (number | string)[] {
+    const pages: (number | string)[] = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      if (currentPage > 3) {
+        pages.push('...');
+      }
+
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (currentPage < totalPages - 2) {
+        pages.push('...');
+      }
+
+      pages.push(totalPages);
+    }
+
+    return pages;
+  }
+
 }

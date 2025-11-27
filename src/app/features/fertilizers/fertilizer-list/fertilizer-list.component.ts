@@ -71,10 +71,13 @@ export class FertilizerListComponent implements OnInit {
 
   // Modal properties
   showCreateModal = false;
+  showEditModal = false;
   showDetailsModal = false;
   selectedFertilizer: EnhancedFertilizer | null = null;
   createForm: FormGroup;
+  editForm: FormGroup;
   isCreating = false;
+  isEditing = false;
 
   // Alert properties
   alerts: FertilizerAlert[] = [];
@@ -87,6 +90,7 @@ export class FertilizerListComponent implements OnInit {
     public fb: FormBuilder
   ) {
     this.createForm = this.initializeCreateForm();
+    this.editForm = this.initializeEditForm();
   }
 
   ngOnInit(): void {
@@ -101,6 +105,7 @@ export class FertilizerListComponent implements OnInit {
       brand: [''],
       type: ['', [Validators.required]],
       description: [''],
+      formulation: [''],
       isLiquid: [false],
       concentration: [''],
       concentrationUnit: [''],
@@ -108,12 +113,92 @@ export class FertilizerListComponent implements OnInit {
       nitrogenPercentage: ['', [Validators.min(0), Validators.max(100)]],
       phosphorusPercentage: ['', [Validators.min(0), Validators.max(100)]],
       potassiumPercentage: ['', [Validators.min(0), Validators.max(100)]],
+      micronutrients: [''],
       currentStock: ['', [Validators.min(0)]],
       minimumStock: ['', [Validators.min(0)]],
       stockUnit: [''],
       pricePerUnit: ['', [Validators.min(0)]],
       supplier: [''],
       expirationDate: [''],
+      storageInstructions: [''],
+      applicationInstructions: [''],
+      // Chemical composition - Macronutrients
+      ca: ['', [Validators.min(0)]],
+      k: ['', [Validators.min(0)]],
+      mg: ['', [Validators.min(0)]],
+      na: ['', [Validators.min(0)]],
+      nH4: ['', [Validators.min(0)]],
+      n: ['', [Validators.min(0)]],
+      sO4: ['', [Validators.min(0)]],
+      s: ['', [Validators.min(0)]],
+      cl: ['', [Validators.min(0)]],
+      h2PO4: ['', [Validators.min(0)]],
+      p: ['', [Validators.min(0)]],
+      hcO3: ['', [Validators.min(0)]],
+      // Micronutrients composition
+      fe: ['', [Validators.min(0)]],
+      mn: ['', [Validators.min(0)]],
+      zn: ['', [Validators.min(0)]],
+      cu: ['', [Validators.min(0)]],
+      b: ['', [Validators.min(0)]],
+      mo: ['', [Validators.min(0)]],
+      // Water quality parameters
+      tds: ['', [Validators.min(0)]],
+      ec: ['', [Validators.min(0)]],
+      ph: ['', [Validators.min(0), Validators.max(14)]],
+      active: [true]
+    });
+  }
+
+  public initializeEditForm(): FormGroup {
+    return this.fb.group({
+      id: ['', [Validators.required]],
+      name: ['', [Validators.required, Validators.minLength(2)]],
+      manufacturer: ['', [Validators.required]],
+      brand: [''],
+      type: ['', [Validators.required]],
+      description: [''],
+      formulation: [''],
+      isLiquid: [false],
+      concentration: [''],
+      concentrationUnit: [''],
+      applicationMethod: [''],
+      nitrogenPercentage: ['', [Validators.min(0), Validators.max(100)]],
+      phosphorusPercentage: ['', [Validators.min(0), Validators.max(100)]],
+      potassiumPercentage: ['', [Validators.min(0), Validators.max(100)]],
+      micronutrients: [''],
+      currentStock: ['', [Validators.min(0)]],
+      minimumStock: ['', [Validators.min(0)]],
+      stockUnit: [''],
+      pricePerUnit: ['', [Validators.min(0)]],
+      supplier: [''],
+      expirationDate: [''],
+      storageInstructions: [''],
+      applicationInstructions: [''],
+      // Chemical composition - Macronutrients
+      ca: ['', [Validators.min(0)]],
+      k: ['', [Validators.min(0)]],
+      mg: ['', [Validators.min(0)]],
+      na: ['', [Validators.min(0)]],
+      nH4: ['', [Validators.min(0)]],
+      n: ['', [Validators.min(0)]],
+      sO4: ['', [Validators.min(0)]],
+      s: ['', [Validators.min(0)]],
+      cl: ['', [Validators.min(0)]],
+      h2PO4: ['', [Validators.min(0)]],
+      p: ['', [Validators.min(0)]],
+      hcO3: ['', [Validators.min(0)]],
+      // Micronutrients composition
+      fe: ['', [Validators.min(0)]],
+      mn: ['', [Validators.min(0)]],
+      zn: ['', [Validators.min(0)]],
+      cu: ['', [Validators.min(0)]],
+      b: ['', [Validators.min(0)]],
+      mo: ['', [Validators.min(0)]],
+      // Water quality parameters
+      tds: ['', [Validators.min(0)]],
+      ec: ['', [Validators.min(0)]],
+      ph: ['', [Validators.min(0), Validators.max(14)]],
       active: [true]
     });
   }
@@ -483,7 +568,103 @@ export class FertilizerListComponent implements OnInit {
   }
 
   edit(fertilizer: EnhancedFertilizer): void {
-    this.router.navigate(['/fertilizers', this.getProperty(fertilizer, 'id'), 'edit']);
+    this.openEditModal(fertilizer);
+  }
+
+  openEditModal(fertilizer: EnhancedFertilizer): void {
+    this.selectedFertilizer = { ...fertilizer };
+    this.showEditModal = true;
+
+    // Format the date properly for the input
+    let expirationDate = this.getProperty(fertilizer, 'expirationDate');
+    if (expirationDate) {
+      expirationDate = new Date(expirationDate).toISOString().split('T')[0];
+    }
+
+    this.editForm.patchValue({
+      id: this.getProperty(fertilizer, 'id'),
+      name: this.getProperty(fertilizer, 'name') || '',
+      manufacturer: this.getProperty(fertilizer, 'manufacturer') || '',
+      brand: this.getProperty(fertilizer, 'brand') || '',
+      type: this.getProperty(fertilizer, 'type') || '',
+      description: this.getProperty(fertilizer, 'description') || '',
+      formulation: this.getProperty(fertilizer, 'formulation') || '',
+      isLiquid: this.getProperty(fertilizer, 'isLiquid') || false,
+      concentration: this.getProperty(fertilizer, 'concentration') || '',
+      concentrationUnit: this.getProperty(fertilizer, 'concentrationUnit') || '',
+      applicationMethod: this.getProperty(fertilizer, 'applicationMethod') || '',
+      nitrogenPercentage: this.getProperty(fertilizer, 'nitrogenPercentage') || '',
+      phosphorusPercentage: this.getProperty(fertilizer, 'phosphorusPercentage') || '',
+      potassiumPercentage: this.getProperty(fertilizer, 'potassiumPercentage') || '',
+      micronutrients: this.getProperty(fertilizer, 'micronutrients') || '',
+      currentStock: this.getProperty(fertilizer, 'currentStock') || '',
+      minimumStock: this.getProperty(fertilizer, 'minimumStock') || '',
+      stockUnit: this.getProperty(fertilizer, 'stockUnit') || '',
+      pricePerUnit: this.getProperty(fertilizer, 'pricePerUnit') || '',
+      supplier: this.getProperty(fertilizer, 'supplier') || '',
+      expirationDate: expirationDate || '',
+      storageInstructions: this.getProperty(fertilizer, 'storageInstructions') || '',
+      applicationInstructions: this.getProperty(fertilizer, 'applicationInstructions') || '',
+      ca: this.getProperty(fertilizer, 'ca') || '',
+      k: this.getProperty(fertilizer, 'k') || '',
+      mg: this.getProperty(fertilizer, 'mg') || '',
+      na: this.getProperty(fertilizer, 'na') || '',
+      nH4: this.getProperty(fertilizer, 'nH4') || '',
+      n: this.getProperty(fertilizer, 'n') || '',
+      sO4: this.getProperty(fertilizer, 'sO4') || '',
+      s: this.getProperty(fertilizer, 's') || '',
+      cl: this.getProperty(fertilizer, 'cl') || '',
+      h2PO4: this.getProperty(fertilizer, 'h2PO4') || '',
+      p: this.getProperty(fertilizer, 'p') || '',
+      hcO3: this.getProperty(fertilizer, 'hcO3') || '',
+      fe: this.getProperty(fertilizer, 'fe') || '',
+      mn: this.getProperty(fertilizer, 'mn') || '',
+      zn: this.getProperty(fertilizer, 'zn') || '',
+      cu: this.getProperty(fertilizer, 'cu') || '',
+      b: this.getProperty(fertilizer, 'b') || '',
+      mo: this.getProperty(fertilizer, 'mo') || '',
+      tds: this.getProperty(fertilizer, 'tds') || '',
+      ec: this.getProperty(fertilizer, 'ec') || '',
+      ph: this.getProperty(fertilizer, 'ph') || '',
+      active: this.getProperty(fertilizer, 'active') !== undefined ? this.getProperty(fertilizer, 'active') : true
+    });
+  }
+
+  closeEditModal(): void {
+    this.showEditModal = false;
+    this.editForm.reset();
+    this.selectedFertilizer = null;
+    this.isEditing = false;
+  }
+
+  onSubmitEdit(): void {
+    if (this.editForm.valid) {
+      this.isEditing = true;
+
+      const formData = this.editForm.value;
+
+      // Clean up the data
+      Object.keys(formData).forEach(key => {
+        if (formData[key] === '') {
+          formData[key] = null;
+        }
+      });
+
+      this.fertilizerService.update(formData).subscribe({
+        next: (fertilizer) => {
+          this.successMessage = `Fertilizante "${this.getProperty(fertilizer, 'name')}" actualizado correctamente`;
+          this.closeEditModal();
+          this.loadFertilizers();
+        },
+        error: (error) => {
+          this.errorMessage = 'Error al actualizar el fertilizante';
+          console.error('Update error:', error);
+          this.isEditing = false;
+        }
+      });
+    } else {
+      this.markEditFormGroupTouched();
+    }
   }
 
   delete(fertilizer: EnhancedFertilizer): void {
@@ -566,13 +747,22 @@ export class FertilizerListComponent implements OnInit {
     });
   }
 
-  isFieldInvalid(fieldName: string): boolean {
-    const field = this.createForm.get(fieldName);
+  public markEditFormGroupTouched(): void {
+    Object.keys(this.editForm.controls).forEach(key => {
+      const control = this.editForm.get(key);
+      control?.markAsTouched();
+    });
+  }
+
+  isFieldInvalid(fieldName: string, formType: 'create' | 'edit' = 'create'): boolean {
+    const form = formType === 'create' ? this.createForm : this.editForm;
+    const field = form.get(fieldName);
     return !!(field && field.invalid && field.touched);
   }
 
-  getFieldError(fieldName: string): string {
-    const field = this.createForm.get(fieldName);
+  getFieldError(fieldName: string, formType: 'create' | 'edit' = 'create'): string {
+    const form = formType === 'create' ? this.createForm : this.editForm;
+    const field = form.get(fieldName);
     if (field?.errors) {
       if (field.errors['required']) return `${fieldName} es requerido`;
       if (field.errors['minlength']) return `${fieldName} debe tener al menos ${field.errors['minlength'].requiredLength} caracteres`;

@@ -447,11 +447,11 @@
                               title="Ver detalles">
                         <i class="bi bi-eye"></i>
                       </button>
-                      <!-- <button class="btn btn-sm btn-outline-warning" 
+                       <button class="btn btn-sm btn-outline-warning" 
                               (click)="edit(fertilizer)"
                               title="Editar">
                         <i class="bi bi-pencil"></i>
-                      </button> -->
+                      </button> 
                       <button class="btn btn-sm btn-outline-danger" 
                               (click)="delete(fertilizer)"
                               title="Eliminar">
@@ -531,10 +531,10 @@
                         (click)="view(fertilizer)">
                   <i class="bi bi-eye"></i>
                 </button>
-                <!-- <button class="btn btn-outline-warning btn-sm" 
+                 <button class="btn btn-outline-warning btn-sm" 
                         (click)="edit(fertilizer)">
                   <i class="bi bi-pencil"></i>
-                </button> -->
+                </button>
                 <button class="btn btn-outline-danger btn-sm" 
                         (click)="delete(fertilizer)">
                   <i class="bi bi-trash"></i>
@@ -838,10 +838,20 @@
           <div class="form-section">
             <h6 class="section-title">
               <i class="bi bi-spray-can text-warning"></i>
-              Aplicación
+              Aplicación y Formulación
             </h6>
             <div class="row">
-              <div class="col-md-12">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="formulation" class="form-label">Formulación</label>
+                  <input type="text"
+                         id="formulation"
+                         class="form-control"
+                         formControlName="formulation"
+                         placeholder="Ej: EC, WP, SL">
+                </div>
+              </div>
+              <div class="col-md-6">
                 <div class="mb-3">
                   <label for="applicationMethod" class="form-label">Método de Aplicación</label>
                   <select id="applicationMethod"
@@ -855,6 +865,301 @@
                     <option value="Aspersion">Aspersión</option>
                     <option value="Granulado">Granulado</option>
                   </select>
+                </div>
+              </div>
+              <div class="col-md-12">
+                <div class="mb-3">
+                  <label for="micronutrients" class="form-label">Micronutrientes</label>
+                  <textarea id="micronutrients"
+                            class="form-control"
+                            formControlName="micronutrients"
+                            rows="2"
+                            placeholder="Descripción de micronutrientes adicionales"></textarea>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="applicationInstructions" class="form-label">Instrucciones de Aplicación</label>
+                  <textarea id="applicationInstructions"
+                            class="form-control"
+                            formControlName="applicationInstructions"
+                            rows="3"
+                            placeholder="Instrucciones detalladas de aplicación"></textarea>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="storageInstructions" class="form-label">Instrucciones de Almacenamiento</label>
+                  <textarea id="storageInstructions"
+                            class="form-control"
+                            formControlName="storageInstructions"
+                            rows="3"
+                            placeholder="Condiciones de almacenamiento"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chemical Composition Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-mortarboard text-info"></i>
+              Composición Química - Macronutrientes
+            </h6>
+            <div class="row">
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="ca" class="form-label">Calcio (Ca)</label>
+                  <input type="number"
+                         id="ca"
+                         class="form-control"
+                         formControlName="ca"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="k" class="form-label">Potasio (K)</label>
+                  <input type="number"
+                         id="k"
+                         class="form-control"
+                         formControlName="k"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="mg" class="form-label">Magnesio (Mg)</label>
+                  <input type="number"
+                         id="mg"
+                         class="form-control"
+                         formControlName="mg"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="na" class="form-label">Sodio (Na)</label>
+                  <input type="number"
+                         id="na"
+                         class="form-control"
+                         formControlName="na"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="nH4" class="form-label">Amonio (NH₄)</label>
+                  <input type="number"
+                         id="nH4"
+                         class="form-control"
+                         formControlName="nH4"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="n" class="form-label">Nitrógeno Total (N)</label>
+                  <input type="number"
+                         id="n"
+                         class="form-control"
+                         formControlName="n"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="sO4" class="form-label">Sulfato (SO₄)</label>
+                  <input type="number"
+                         id="sO4"
+                         class="form-control"
+                         formControlName="sO4"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="s" class="form-label">Azufre (S)</label>
+                  <input type="number"
+                         id="s"
+                         class="form-control"
+                         formControlName="s"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="cl" class="form-label">Cloro (Cl)</label>
+                  <input type="number"
+                         id="cl"
+                         class="form-control"
+                         formControlName="cl"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="h2PO4" class="form-label">Fosfato (H₂PO₄)</label>
+                  <input type="number"
+                         id="h2PO4"
+                         class="form-control"
+                         formControlName="h2PO4"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="p" class="form-label">Fósforo (P)</label>
+                  <input type="number"
+                         id="p"
+                         class="form-control"
+                         formControlName="p"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="hcO3" class="form-label">Bicarbonato (HCO₃)</label>
+                  <input type="number"
+                         id="hcO3"
+                         class="form-control"
+                         formControlName="hcO3"
+                         placeholder="mg/L o %"
+                         min="0" step="0.01">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Micronutrients Composition Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-gear text-secondary"></i>
+              Micronutrientes - Composición Detallada
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="fe" class="form-label">Hierro (Fe)</label>
+                  <input type="number"
+                         id="fe"
+                         class="form-control"
+                         formControlName="fe"
+                         placeholder="mg/L o %"
+                         min="0" step="0.001">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="mn" class="form-label">Manganeso (Mn)</label>
+                  <input type="number"
+                         id="mn"
+                         class="form-control"
+                         formControlName="mn"
+                         placeholder="mg/L o %"
+                         min="0" step="0.001">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="zn" class="form-label">Zinc (Zn)</label>
+                  <input type="number"
+                         id="zn"
+                         class="form-control"
+                         formControlName="zn"
+                         placeholder="mg/L o %"
+                         min="0" step="0.001">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="cu" class="form-label">Cobre (Cu)</label>
+                  <input type="number"
+                         id="cu"
+                         class="form-control"
+                         formControlName="cu"
+                         placeholder="mg/L o %"
+                         min="0" step="0.001">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="b" class="form-label">Boro (B)</label>
+                  <input type="number"
+                         id="b"
+                         class="form-control"
+                         formControlName="b"
+                         placeholder="mg/L o %"
+                         min="0" step="0.001">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="mo" class="form-label">Molibdeno (Mo)</label>
+                  <input type="number"
+                         id="mo"
+                         class="form-control"
+                         formControlName="mo"
+                         placeholder="mg/L o %"
+                         min="0" step="0.001">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Water Quality Parameters Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-droplet-half text-primary"></i>
+              Parámetros de Calidad del Agua
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="tds" class="form-label">TDS (Sólidos Disueltos Totales)</label>
+                  <input type="number"
+                         id="tds"
+                         class="form-control"
+                         formControlName="tds"
+                         placeholder="ppm"
+                         min="0" step="0.1">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="ec" class="form-label">EC (Conductividad Eléctrica)</label>
+                  <input type="number"
+                         id="ec"
+                         class="form-control"
+                         formControlName="ec"
+                         placeholder="dS/m"
+                         min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="ph" class="form-label">pH</label>
+                  <input type="number"
+                         id="ph"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('ph')"
+                         formControlName="ph"
+                         placeholder="0-14"
+                         min="0" max="14" step="0.1">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('ph')">
+                    {{ getFieldError('ph') }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1185,12 +1490,12 @@
       </div>
 
       <div class="modal-footer">
-        <!-- <button type="button" 
+         <button type="button" 
                 class="btn btn-outline-warning" 
                 (click)="edit(selectedFertilizer!)">
           <i class="bi bi-pencil me-1"></i>
           Editar
-        </button> -->
+        </button> 
         <button type="button" 
                 class="btn btn-secondary" 
                 (click)="closeDetailsModal()">
@@ -1202,9 +1507,558 @@
   </div>
 </div>
 
+<!-- Edit Fertilizer Modal -->
+<div class="modal fade"
+     [class.show]="showEditModal"
+     [style.display]="showEditModal ? 'block' : 'none'"
+     tabindex="-1"
+     role="dialog">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil-square me-2"></i>
+          Editar Fertilizante
+        </h5>
+        <button type="button"
+                class="btn-close btn-close-white"
+                (click)="closeEditModal()"></button>
+      </div>
+
+      <form [formGroup]="editForm" (ngSubmit)="onSubmitEdit()">
+        <input type="hidden" formControlName="id">
+
+        <div class="modal-body">
+          <!-- Basic Information Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-info-circle text-primary"></i>
+              Información Básica
+            </h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_name" class="form-label">
+                    Nombre <span class="text-danger">*</span>
+                  </label>
+                  <input type="text"
+                         id="edit_name"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('name', 'edit')"
+                         formControlName="name"
+                         placeholder="Ej: Urea 46%">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('name', 'edit')">
+                    {{ getFieldError('name', 'edit') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_manufacturer" class="form-label">
+                    Fabricante <span class="text-danger">*</span>
+                  </label>
+                  <input type="text"
+                         id="edit_manufacturer"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('manufacturer', 'edit')"
+                         formControlName="manufacturer"
+                         placeholder="Ej: Yara International">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('manufacturer', 'edit')">
+                    {{ getFieldError('manufacturer', 'edit') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_brand" class="form-label">Marca</label>
+                  <input type="text"
+                         id="edit_brand"
+                         class="form-control"
+                         formControlName="brand"
+                         placeholder="Marca comercial">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_type" class="form-label">
+                    Tipo <span class="text-danger">*</span>
+                  </label>
+                  <select id="edit_type"
+                          class="form-select"
+                          [class.is-invalid]="isFieldInvalid('type', 'edit')"
+                          formControlName="type">
+                    <option value="">Seleccionar tipo...</option>
+                    <option value="Organic">Orgánico</option>
+                    <option value="Inorganic">Inorgánico</option>
+                    <option value="Liquid">Líquido</option>
+                    <option value="Solid">Sólido</option>
+                    <option value="Foliar">Foliar</option>
+                    <option value="Granulated">Granulado</option>
+                    <option value="Powder">Polvo</option>
+                  </select>
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('type', 'edit')">
+                    {{ getFieldError('type', 'edit') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-12">
+                <div class="mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="edit_isLiquid"
+                           formControlName="isLiquid">
+                    <label class="form-check-label" for="edit_isLiquid">
+                      <i class="bi bi-droplet me-1"></i>
+                      Es fertilizante líquido
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="mb-3">
+                  <label for="edit_description" class="form-label">Descripción</label>
+                  <textarea id="edit_description"
+                            class="form-control"
+                            formControlName="description"
+                            rows="3"
+                            placeholder="Descripción detallada del fertilizante"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NPK Composition Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-graph-up text-success"></i>
+              Composición NPK
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_nitrogenPercentage" class="form-label">Nitrógeno (N) %</label>
+                  <input type="number"
+                         id="edit_nitrogenPercentage"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('nitrogenPercentage', 'edit')"
+                         formControlName="nitrogenPercentage"
+                         placeholder="% Nitrógeno"
+                         min="0" max="100" step="0.01">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('nitrogenPercentage', 'edit')">
+                    {{ getFieldError('nitrogenPercentage', 'edit') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_phosphorusPercentage" class="form-label">Fósforo (P) %</label>
+                  <input type="number"
+                         id="edit_phosphorusPercentage"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('phosphorusPercentage', 'edit')"
+                         formControlName="phosphorusPercentage"
+                         placeholder="% Fósforo"
+                         min="0" max="100" step="0.01">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('phosphorusPercentage', 'edit')">
+                    {{ getFieldError('phosphorusPercentage', 'edit') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_potassiumPercentage" class="form-label">Potasio (K) %</label>
+                  <input type="number"
+                         id="edit_potassiumPercentage"
+                         class="form-control"
+                         [class.is-invalid]="isFieldInvalid('potassiumPercentage', 'edit')"
+                         formControlName="potassiumPercentage"
+                         placeholder="% Potasio"
+                         min="0" max="100" step="0.01">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('potassiumPercentage', 'edit')">
+                    {{ getFieldError('potassiumPercentage', 'edit') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Concentration Section -->
+          <div class="form-section" *ngIf="editForm.get('isLiquid')?.value">
+            <h6 class="section-title">
+              <i class="bi bi-droplet text-info"></i>
+              Concentración
+            </h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_concentration" class="form-label">Concentración</label>
+                  <input type="text"
+                         id="edit_concentration"
+                         class="form-control"
+                         formControlName="concentration"
+                         placeholder="Ej: 20-20-20">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_concentrationUnit" class="form-label">Unidad de Concentración</label>
+                  <select id="edit_concentrationUnit"
+                          class="form-select"
+                          formControlName="concentrationUnit">
+                    <option value="">Seleccionar unidad...</option>
+                    <option value="ppm">PPM</option>
+                    <option value="percentage">Porcentaje (%)</option>
+                    <option value="g/L">g/L</option>
+                    <option value="mg/L">mg/L</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Application Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-spray-can text-warning"></i>
+              Aplicación y Formulación
+            </h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_formulation" class="form-label">Formulación</label>
+                  <input type="text"
+                         id="edit_formulation"
+                         class="form-control"
+                         formControlName="formulation"
+                         placeholder="Ej: EC, WP, SL">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_applicationMethod" class="form-label">Método de Aplicación</label>
+                  <select id="edit_applicationMethod"
+                          class="form-select"
+                          formControlName="applicationMethod">
+                    <option value="">Seleccionar método...</option>
+                    <option value="Riego">Riego</option>
+                    <option value="Foliar">Foliar</option>
+                    <option value="Suelo">Aplicación al suelo</option>
+                    <option value="Fertirrigacion">Fertirrigación</option>
+                    <option value="Aspersion">Aspersión</option>
+                    <option value="Granulado">Granulado</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-12">
+                <div class="mb-3">
+                  <label for="edit_micronutrients" class="form-label">Micronutrientes</label>
+                  <textarea id="edit_micronutrients"
+                            class="form-control"
+                            formControlName="micronutrients"
+                            rows="2"
+                            placeholder="Descripción de micronutrientes adicionales"></textarea>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_applicationInstructions" class="form-label">Instrucciones de Aplicación</label>
+                  <textarea id="edit_applicationInstructions"
+                            class="form-control"
+                            formControlName="applicationInstructions"
+                            rows="3"
+                            placeholder="Instrucciones detalladas de aplicación"></textarea>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_storageInstructions" class="form-label">Instrucciones de Almacenamiento</label>
+                  <textarea id="edit_storageInstructions"
+                            class="form-control"
+                            formControlName="storageInstructions"
+                            rows="3"
+                            placeholder="Condiciones de almacenamiento"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chemical Composition Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-mortarboard text-info"></i>
+              Composición Química - Macronutrientes
+            </h6>
+            <div class="row">
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_ca" class="form-label">Calcio (Ca)</label>
+                  <input type="number" id="edit_ca" class="form-control" formControlName="ca" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_k" class="form-label">Potasio (K)</label>
+                  <input type="number" id="edit_k" class="form-control" formControlName="k" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_mg" class="form-label">Magnesio (Mg)</label>
+                  <input type="number" id="edit_mg" class="form-control" formControlName="mg" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_na" class="form-label">Sodio (Na)</label>
+                  <input type="number" id="edit_na" class="form-control" formControlName="na" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_nH4" class="form-label">Amonio (NH₄)</label>
+                  <input type="number" id="edit_nH4" class="form-control" formControlName="nH4" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_n" class="form-label">Nitrógeno Total (N)</label>
+                  <input type="number" id="edit_n" class="form-control" formControlName="n" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_sO4" class="form-label">Sulfato (SO₄)</label>
+                  <input type="number" id="edit_sO4" class="form-control" formControlName="sO4" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_s" class="form-label">Azufre (S)</label>
+                  <input type="number" id="edit_s" class="form-control" formControlName="s" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_cl" class="form-label">Cloro (Cl)</label>
+                  <input type="number" id="edit_cl" class="form-control" formControlName="cl" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_h2PO4" class="form-label">Fosfato (H₂PO₄)</label>
+                  <input type="number" id="edit_h2PO4" class="form-control" formControlName="h2PO4" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_p" class="form-label">Fósforo (P)</label>
+                  <input type="number" id="edit_p" class="form-control" formControlName="p" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="mb-3">
+                  <label for="edit_hcO3" class="form-label">Bicarbonato (HCO₃)</label>
+                  <input type="number" id="edit_hcO3" class="form-control" formControlName="hcO3" placeholder="mg/L o %" min="0" step="0.01">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Micronutrients Composition Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-gear text-secondary"></i>
+              Micronutrientes - Composición Detallada
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_fe" class="form-label">Hierro (Fe)</label>
+                  <input type="number" id="edit_fe" class="form-control" formControlName="fe" placeholder="mg/L o %" min="0" step="0.001">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_mn" class="form-label">Manganeso (Mn)</label>
+                  <input type="number" id="edit_mn" class="form-control" formControlName="mn" placeholder="mg/L o %" min="0" step="0.001">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_zn" class="form-label">Zinc (Zn)</label>
+                  <input type="number" id="edit_zn" class="form-control" formControlName="zn" placeholder="mg/L o %" min="0" step="0.001">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_cu" class="form-label">Cobre (Cu)</label>
+                  <input type="number" id="edit_cu" class="form-control" formControlName="cu" placeholder="mg/L o %" min="0" step="0.001">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_b" class="form-label">Boro (B)</label>
+                  <input type="number" id="edit_b" class="form-control" formControlName="b" placeholder="mg/L o %" min="0" step="0.001">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_mo" class="form-label">Molibdeno (Mo)</label>
+                  <input type="number" id="edit_mo" class="form-control" formControlName="mo" placeholder="mg/L o %" min="0" step="0.001">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Water Quality Parameters Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-droplet-half text-primary"></i>
+              Parámetros de Calidad del Agua
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_tds" class="form-label">TDS (Sólidos Disueltos Totales)</label>
+                  <input type="number" id="edit_tds" class="form-control" formControlName="tds" placeholder="ppm" min="0" step="0.1">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_ec" class="form-label">EC (Conductividad Eléctrica)</label>
+                  <input type="number" id="edit_ec" class="form-control" formControlName="ec" placeholder="dS/m" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_ph" class="form-label">pH</label>
+                  <input type="number" id="edit_ph" class="form-control" [class.is-invalid]="isFieldInvalid('ph', 'edit')" formControlName="ph" placeholder="0-14" min="0" max="14" step="0.1">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('ph', 'edit')">
+                    {{ getFieldError('ph', 'edit') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stock & Pricing Section -->
+          <div class="form-section">
+            <h6 class="section-title">
+              <i class="bi bi-boxes text-primary"></i>
+              Inventario y Precios
+            </h6>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_currentStock" class="form-label">Stock Actual</label>
+                  <input type="number" id="edit_currentStock" class="form-control" [class.is-invalid]="isFieldInvalid('currentStock', 'edit')" formControlName="currentStock" placeholder="Cantidad actual" min="0" step="0.01">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('currentStock', 'edit')">
+                    {{ getFieldError('currentStock', 'edit') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_minimumStock" class="form-label">Stock Mínimo</label>
+                  <input type="number" id="edit_minimumStock" class="form-control" [class.is-invalid]="isFieldInvalid('minimumStock', 'edit')" formControlName="minimumStock" placeholder="Stock mínimo" min="0" step="0.01">
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('minimumStock', 'edit')">
+                    {{ getFieldError('minimumStock', 'edit') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="edit_stockUnit" class="form-label">Unidad de Medida</label>
+                  <select id="edit_stockUnit" class="form-select" formControlName="stockUnit">
+                    <option value="">Seleccionar unidad...</option>
+                    <option value="kg">Kilogramos (kg)</option>
+                    <option value="L">Litros (L)</option>
+                    <option value="g">Gramos (g)</option>
+                    <option value="mL">Mililitros (mL)</option>
+                    <option value="ton">Toneladas (ton)</option>
+                    <option value="units">Unidades</option>
+                    <option value="bags">Sacos</option>
+                    <option value="boxes">Cajas</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_pricePerUnit" class="form-label">Precio por Unidad</label>
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="edit_pricePerUnit" class="form-control" [class.is-invalid]="isFieldInvalid('pricePerUnit', 'edit')" formControlName="pricePerUnit" placeholder="0.00" min="0" step="0.01">
+                  </div>
+                  <div class="invalid-feedback" *ngIf="isFieldInvalid('pricePerUnit', 'edit')">
+                    {{ getFieldError('pricePerUnit', 'edit') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_supplier" class="form-label">Proveedor</label>
+                  <input type="text" id="edit_supplier" class="form-control" formControlName="supplier" placeholder="Nombre del proveedor">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="edit_expirationDate" class="form-label">Fecha de Vencimiento</label>
+                  <input type="date" id="edit_expirationDate" class="form-control" formControlName="expirationDate">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="edit_active" formControlName="active">
+                    <label class="form-check-label" for="edit_active">
+                      <i class="bi bi-check-circle me-1"></i>
+                      Fertilizante activo
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button"
+                  class="btn btn-secondary"
+                  (click)="closeEditModal()"
+                  [disabled]="isEditing">
+            <i class="bi bi-x-circle me-1"></i>
+            Cancelar
+          </button>
+          <button type="submit"
+                  class="btn btn-warning"
+                  [disabled]="editForm.invalid || isEditing">
+            <span *ngIf="isEditing" class="spinner-border spinner-border-sm me-2"></span>
+            <i class="bi bi-check-circle me-1" *ngIf="!isEditing"></i>
+            {{ isEditing ? 'Actualizando...' : 'Actualizar Fertilizante' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Backdrop -->
-<div class="modal-backdrop fade" 
-     [class.show]="showCreateModal || showDetailsModal" 
-     *ngIf="showCreateModal || showDetailsModal"
-     (click)="showCreateModal ? closeCreateModal() : closeDetailsModal()">
+<div class="modal-backdrop fade"
+     [class.show]="showCreateModal || showEditModal || showDetailsModal"
+     *ngIf="showCreateModal || showEditModal || showDetailsModal"
+     (click)="showCreateModal ? closeCreateModal() : (showEditModal ? closeEditModal() : closeDetailsModal())">
 </div>

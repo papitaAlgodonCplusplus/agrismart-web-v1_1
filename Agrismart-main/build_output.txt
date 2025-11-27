@@ -1,0 +1,17 @@
+C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Tools.Desktop\AgriSmart.Tools.Desktop.csproj : warning NU1603: AgriSmart.Tools.Desktop depends on DevExpress.Win.Design (>= 24.1.6) but DevExpress.Win.Design 24.1.6 was not found. DevExpress.Win.Design 25.1.4 was resolved instead.
+  Agrismart.MQTTBroker -> C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\Agrismart.MQTTBroker\bin\Debug\net6.0\Agrismart.MQTTBroker.dll
+  AgriSmart.Core -> C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Core\bin\Debug\net6.0\AgriSmart.Core.dll
+  AgriSmart.Tools.Desktop -> C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Tools.Desktop\bin\Debug\net8.0-windows\AgriSmart.Tools.Desktop.dll
+  AgriSmart.Calculator -> C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Calculator\bin\Debug\net6.0\AgriSmart.Calculator.dll
+C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Infrastructure\Repositories\Query\DeviceRawDataQueryRepository.cs(12,85): error CS0535: 'DeviceRawDataQueryRepository' does not implement interface member 'IDeviceRawDataQueryRepository.GetAggregatedDataAsync(string?, DateTime?, DateTime?, string?, string, string, int, int)' [C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Infrastructure\AgriSmart.Infrastructure.csproj]
+C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Infrastructure\Repositories\Query\DeviceRawDataQueryRepository.cs(12,85): error CS0535: 'DeviceRawDataQueryRepository' does not implement interface member 'IDeviceRawDataQueryRepository.GetAggregatedCountAsync(string?, DateTime?, DateTime?, string?, string)' [C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Infrastructure\AgriSmart.Infrastructure.csproj]
+
+Build FAILED.
+
+C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Tools.Desktop\AgriSmart.Tools.Desktop.csproj : warning NU1603: AgriSmart.Tools.Desktop depends on DevExpress.Win.Design (>= 24.1.6) but DevExpress.Win.Design 24.1.6 was not found. DevExpress.Win.Design 25.1.4 was resolved instead.
+C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Infrastructure\Repositories\Query\DeviceRawDataQueryRepository.cs(12,85): error CS0535: 'DeviceRawDataQueryRepository' does not implement interface member 'IDeviceRawDataQueryRepository.GetAggregatedDataAsync(string?, DateTime?, DateTime?, string?, string, string, int, int)' [C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Infrastructure\AgriSmart.Infrastructure.csproj]
+C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Infrastructure\Repositories\Query\DeviceRawDataQueryRepository.cs(12,85): error CS0535: 'DeviceRawDataQueryRepository' does not implement interface member 'IDeviceRawDataQueryRepository.GetAggregatedCountAsync(string?, DateTime?, DateTime?, string?, string)' [C:\Users\AlexQQ\Desktop\agrismart-web-v1_1\Agrismart-main\AgriSmart.Infrastructure\AgriSmart.Infrastructure.csproj]
+    1 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:02.39

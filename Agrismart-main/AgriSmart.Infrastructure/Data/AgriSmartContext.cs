@@ -129,6 +129,8 @@ namespace AgriSmart.Infrastructure.Data
         public DbSet<Device> Device { get; set; }
         public DbSet<Sensor> Sensor { get; set; }
         public DbSet<DeviceRawData> DeviceRawData { get; set; }
+        public DbSet<DeviceRawDataHour> DeviceRawDataHour { get; set; }
+        public DbSet<DeviceRawDataMinute> DeviceRawDataMinute { get; set; }
         public DbSet<Fertilizer> Fertilizer { get; set; }
         public DbSet<FertilizerChemistry> FertilizerChemistry { get; set; }
         public DbSet<FertilizerInput> FertilizerInput { get; set; }
