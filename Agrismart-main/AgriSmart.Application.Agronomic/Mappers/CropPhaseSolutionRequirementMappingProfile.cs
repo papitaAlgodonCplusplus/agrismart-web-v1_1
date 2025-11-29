@@ -13,6 +13,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
             CreateMap<CropPhaseSolutionRequirement, GetCropPhaseSolutionRequirementByIdPhaseResponse>().ReverseMap();
             CreateMap<CreateCropPhaseSolutionRequirementCommand, CropPhaseSolutionRequirement>().ReverseMap();
             CreateMap<UpdateCropPhaseSolutionRequirementCommand, CropPhaseSolutionRequirement>().ReverseMap();
+            CreateMap<DeleteCropPhaseSolutionRequirementCommand, CropPhaseSolutionRequirement>().ReverseMap();
             CreateMap<CropPhaseSolutionRequirement, CreateCropPhaseSolutionRequirementResponse>().ReverseMap();
             CreateMap<CropPhaseSolutionRequirement, UpdateCropPhaseSolutionRequirementResponse>().ReverseMap();
             CreateMap<CropPhaseSolutionRequirement, DeleteCropPhaseSolutionRequirementResponse>().ReverseMap();

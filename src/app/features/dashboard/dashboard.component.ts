@@ -172,6 +172,10 @@ export class DashboardComponent implements OnInit {
     cropETMax: number;
   } | null = null;
 
+  // Modal properties for fertilizer details
+  showFertilizerDetailsModal = false;
+  selectedFertilizerDosage: FertilizerDosage | null = null;
+
   constructor(
     private authService: AuthService,
     private apiService: ApiService,
@@ -1053,6 +1057,7 @@ export class DashboardComponent implements OnInit {
     }
 
     console.log('Calculating fertilizer dosages with available fertilizers:', this.availableFertilizers);
+    console.log('Crop phase requirements:', this.cropPhaseRequirements);
 
     // Get latest ET value (non-zero)
     const latestET = this.climateKPIs.length > 0
@@ -1090,7 +1095,7 @@ export class DashboardComponent implements OnInit {
 
       // Calculate dosages for this phase requirement
       for (const fert of this.availableFertilizers) {
-        console.log('Evaluating fertilizer:', fert);
+        console.log('Evaluating fertilizer:', fert.name, fert);
         console.log(`Remaining - N: ${remainingN}, P: ${remainingP}, K: ${remainingK}`);
         if (remainingN <= 0 && remainingK <= 0 && remainingP <= 0) break;
 
@@ -1435,6 +1440,17 @@ export class DashboardComponent implements OnInit {
     }
 
     return pages;
+  }
+
+  // Modal methods for fertilizer details
+  openFertilizerDetailsModal(dosage: FertilizerDosage): void {
+    this.selectedFertilizerDosage = { ...dosage };
+    this.showFertilizerDetailsModal = true;
+  }
+
+  closeFertilizerDetailsModal(): void {
+    this.showFertilizerDetailsModal = false;
+    this.selectedFertilizerDosage = null;
   }
 
 }

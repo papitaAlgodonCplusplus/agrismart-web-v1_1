@@ -1235,3 +1235,337 @@
     transform: translateX(0);
   }
 }
+
+// Fertilizer Details Modal Styles
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1050;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  outline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.fade {
+    transition: opacity 0.15s linear;
+  }
+
+  &.show {
+    display: flex !important;
+  }
+}
+
+.modal-backdrop {
+  &.fade {
+    opacity: 0;
+    transition: opacity 0.15s linear;
+  }
+
+  &.show {
+    opacity: 0.5;
+  }
+
+  background-color: #000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1040;
+  width: 100%;
+  height: 100%;
+}
+
+.modal-dialog {
+  position: relative;
+  width: auto;
+  margin: 1.75rem;
+  max-width: 800px;
+  pointer-events: none;
+
+  @media (min-width: 576px) {
+    max-width: 500px;
+  }
+
+  @media (min-width: 992px) {
+    max-width: 800px;
+  }
+}
+
+.modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  pointer-events: auto;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  outline: 0;
+}
+
+.fertilizer-details {
+  .detail-header {
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #e9ecef;
+
+    .fertilizer-name {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #212529;
+      margin-bottom: 0.25rem;
+    }
+
+    .fertilizer-id {
+      font-size: 0.875rem;
+      margin-bottom: 0;
+    }
+  }
+
+  .detail-section {
+    margin-bottom: 1.5rem;
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      i {
+        font-size: 1.25rem;
+      }
+    }
+
+    .detail-item {
+      margin-bottom: 0.75rem;
+
+      label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+      }
+
+      span {
+        display: block;
+        font-size: 1rem;
+        color: #212529;
+      }
+    }
+
+    .nutrient-item {
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border: 1px solid #dee2e6;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      text-align: center;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      &.nitrogen {
+        border-left: 4px solid #28a745;
+      }
+
+      &.phosphorus {
+        border-left: 4px solid #ffc107;
+      }
+
+      &.potassium {
+        border-left: 4px solid #17a2b8;
+      }
+
+      .nutrient-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .nutrient-value {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #212529;
+      }
+    }
+  }
+}
+
+// Modal footer improvements
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+
+  .btn {
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+
+    i {
+      margin-right: 0.25rem;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+// Modal body scrolling
+.modal-body {
+  position: relative;
+  flex: 1 1 auto;
+  padding: 1.5rem;
+  max-height: calc(100vh - 210px);
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  border-top-left-radius: calc(0.5rem - 1px);
+  border-top-right-radius: calc(0.5rem - 1px);
+
+  .modal-title {
+    margin-bottom: 0;
+    line-height: 1.5;
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  .btn-close {
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    text-shadow: 0 1px 0 #fff;
+    opacity: 0.5;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.75;
+    }
+
+    &.btn-close-white {
+      filter: invert(1) grayscale(100%) brightness(200%);
+    }
+  }
+}
+
+// Responsive modal
+@media (max-width: 768px) {
+  .modal-dialog {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+
+  .modal-body {
+    padding: 1rem;
+    max-height: calc(100vh - 180px);
+  }
+
+  .fertilizer-details {
+    .detail-header {
+      .fertilizer-name {
+        font-size: 1.25rem;
+      }
+    }
+
+    .detail-section {
+      .nutrient-item {
+        padding: 0.75rem;
+
+        .nutrient-label {
+          font-size: 0.75rem;
+        }
+
+        .nutrient-value {
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+}
+
+// Dark mode support for modal
+@media (prefers-color-scheme: dark) {
+  .modal-content {
+    background-color: #2d3748;
+    color: #e2e8f0;
+  }
+
+  .fertilizer-details {
+    .detail-header {
+      border-bottom-color: #4a5568;
+
+      .fertilizer-name {
+        color: #e2e8f0;
+      }
+
+      .fertilizer-id {
+        color: #a0aec0;
+      }
+    }
+
+    .detail-section {
+      .section-title {
+        color: #e2e8f0;
+      }
+
+      .detail-item {
+        label {
+          color: #a0aec0;
+        }
+
+        span {
+          color: #e2e8f0;
+        }
+      }
+
+      .nutrient-item {
+        background: linear-gradient(135deg, #2d3748 0%, #374151 100%);
+        border-color: #4a5568;
+
+        .nutrient-label {
+          color: #a0aec0;
+        }
+
+        .nutrient-value {
+          color: #e2e8f0;
+        }
+      }
+    }
+  }
+
+  .modal-footer {
+    background-color: #374151;
+    border-top-color: #4a5568;
+  }
+}
