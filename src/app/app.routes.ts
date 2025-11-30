@@ -4,6 +4,7 @@ import { Routes } from '@angular/router';
 // Guards
 import { AuthGuard } from './core/guards/auth.guard';
 import { AdminGuard } from './core/guards/admin.guard';
+import { ProcessKPIsComponent } from './features/process-kpis/process-kpis.component';
 
 // Layout
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
@@ -127,7 +128,13 @@ export const routes: Routes = [
         data: { title: 'Editar Finca' }
       },
 
-      // NEW: Crop Management Routes
+      // Inside the MainLayoutComponent children array:
+      {
+        path: 'process-kpis',
+        component: ProcessKPIsComponent,
+        canActivate: [AuthGuard],
+        data: { title: 'Process KPIs' }
+      },
       {
         path: 'crops',
         component: CropListComponent,

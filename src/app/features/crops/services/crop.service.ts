@@ -212,14 +212,19 @@ export class CropService {
    * Get crop by ID - Backend: GET /Crop/{Id:int}
    */
   getById(id: number): Observable<Crop> {
-    const url = `${this.apiConfig.agronomicApiUrl}/Crop/${id}`;
+    const url = `${this.apiConfig.agronomicApiUrl}/Crop`;
 
-    return this.http.get<BackendResponse<Crop>>(url)
+    return this.http.get<BackendResponse<{ crops: Crop[] }>>(url)
       .pipe(
         map(response => {
 
           if (response.success) {
-            return response.result;
+            const crops = response.result?.crops || [];
+            const crop = crops.find((c: Crop) => c.id.toString() === id.toString());
+            if (crop) {
+              return crop;
+            }
+            throw new Error(`Crop with ID ${id} not found`);
           }
           throw new Error(`Get Crop by ID failed: ${response.exception}`);
         }),

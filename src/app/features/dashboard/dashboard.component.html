@@ -70,6 +70,25 @@
         </div>
       </div>
     </div>
+
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="stats-card card-primary">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-8">
+              <h6 class="card-category text-uppercase text-muted mb-0">Eventos de Riego</h6>
+              <h2 class="card-title mb-0 counter">{{ stats.totalIrrigationEvents }}</h2>
+            </div>
+            <div class="col-4 text-end">
+              <div class="icon-shape bg-gradient-primary text-white rounded-circle">
+                <i class="bi bi-lightning fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Charts and Activities Section -->
@@ -131,6 +150,24 @@
                 <div class="quick-action-content">
                   <h6 class="quick-action-title">Dispositivos</h6>
                   <p class="quick-action-description">Gestionar dispositivos IoT</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </div>
+            </div>
+
+
+
+            <!-- Fertilizer Management -->
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="quick-action-card" (click)="navigateToFertilizers()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-bag text-success"></i>
+                </div>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Fertilizantes</h6>
+                  <p class="quick-action-description">Gestionar catálogo de fertilizantes</p>
                 </div>
                 <div class="quick-action-arrow">
                   <i class="bi bi-arrow-right"></i>
@@ -213,21 +250,6 @@
               </div>
             </div>
 
-            <!-- Fertilizer Management -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToFertilizers()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-bag text-success"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Fertilizantes</h6>
-                  <p class="quick-action-description">Gestionar catálogo de fertilizantes</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
 
             <!-- Irrigation Engineering Design -->
             <div class="col-md-3 col-6 mb-3">
@@ -275,6 +297,22 @@
                 <div class="quick-action-content">
                   <h6 class="quick-action-title">Dashboard Avanzado</h6>
                   <p class="quick-action-description">Visualizaciones interactivas</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Process KPIs -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToProcessKPIs()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-bar-chart-line text-primary"></i>
+                </div>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">KPIs de Procesos</h6>
+                  <p class="quick-action-description">Monitorear indicadores clave</p>
                 </div>
                 <div class="quick-action-arrow">
                   <i class="bi bi-arrow-right"></i>
@@ -691,9 +729,8 @@
                   <td>{{ dosage.dosageGramsPerLiter | number:'1.3-3' }} ml/L</td>
                   <td>${{ dosage.cost | number:'1.2-2' }}</td>
                   <td>
-                    <button class="btn btn-sm btn-outline-primary"
-                            title="Ver detalles"
-                            (click)="openFertilizerDetailsModal(dosage)">
+                    <button class="btn btn-sm btn-outline-primary" title="Ver detalles"
+                      (click)="openFertilizerDetailsModal(dosage)">
                       <i class="bi bi-eye"></i>
                     </button>
                   </td>
@@ -761,11 +798,8 @@
   </div>
 
   <!-- Fertilizer Details Modal -->
-  <div class="modal fade"
-       [class.show]="showFertilizerDetailsModal"
-       [style.display]="showFertilizerDetailsModal ? 'block' : 'none'"
-       tabindex="-1"
-       role="dialog">
+  <div class="modal fade" [class.show]="showFertilizerDetailsModal"
+    [style.display]="showFertilizerDetailsModal ? 'block' : 'none'" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header bg-success text-white">
@@ -773,9 +807,7 @@
             <i class="bi bi-eye me-2"></i>
             Detalles de Fertilizante
           </h5>
-          <button type="button"
-                  class="btn-close btn-close-white"
-                  (click)="closeFertilizerDetailsModal()"></button>
+          <button type="button" class="btn-close btn-close-white" (click)="closeFertilizerDetailsModal()"></button>
         </div>
 
         <div class="modal-body" *ngIf="selectedFertilizerDosage">
@@ -811,7 +843,8 @@
                 <div class="col-md-6">
                   <div class="detail-item">
                     <label>Dosis (ml/L):</label>
-                    <span class="fw-bold">{{ selectedFertilizerDosage.dosageGramsPerLiter | number:'1.3-3' }} ml/L</span>
+                    <span class="fw-bold">{{ selectedFertilizerDosage.dosageGramsPerLiter | number:'1.3-3' }}
+                      ml/L</span>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -839,19 +872,22 @@
                 <div class="col-md-4">
                   <div class="nutrient-item nitrogen">
                     <div class="nutrient-label">Nitrógeno (N)</div>
-                    <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.N | number:'1.2-2' }} ppm</div>
+                    <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.N | number:'1.2-2' }}
+                      ppm</div>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="nutrient-item phosphorus">
                     <div class="nutrient-label">Fósforo (P)</div>
-                    <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.P | number:'1.2-2' }} ppm</div>
+                    <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.P | number:'1.2-2' }}
+                      ppm</div>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="nutrient-item potassium">
                     <div class="nutrient-label">Potasio (K)</div>
-                    <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.K | number:'1.2-2' }} ppm</div>
+                    <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.K | number:'1.2-2' }}
+                      ppm</div>
                   </div>
                 </div>
               </div>
@@ -872,7 +908,8 @@
                   <p class="text-muted">
                     Esta dosificación ha sido calculada específicamente para la fase
                     <strong>{{ selectedFertilizerDosage.phaseName }}</strong>
-                    del cultivo, considerando los requerimientos nutricionales óptimos y las condiciones climáticas actuales.
+                    del cultivo, considerando los requerimientos nutricionales óptimos y las condiciones climáticas
+                    actuales.
                   </p>
                 </div>
               </div>
@@ -881,9 +918,7 @@
         </div>
 
         <div class="modal-footer">
-          <button type="button"
-                  class="btn btn-secondary"
-                  (click)="closeFertilizerDetailsModal()">
+          <button type="button" class="btn btn-secondary" (click)="closeFertilizerDetailsModal()">
             <i class="bi bi-x-circle me-1"></i>
             Cerrar
           </button>
@@ -893,9 +928,7 @@
   </div>
 
   <!-- Modal Backdrop -->
-  <div class="modal-backdrop fade"
-       [class.show]="showFertilizerDetailsModal"
-       *ngIf="showFertilizerDetailsModal"
-       (click)="closeFertilizerDetailsModal()">
+  <div class="modal-backdrop fade" [class.show]="showFertilizerDetailsModal" *ngIf="showFertilizerDetailsModal"
+    (click)="closeFertilizerDetailsModal()">
   </div>
 </div>

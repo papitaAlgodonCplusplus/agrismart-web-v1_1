@@ -80,19 +80,7 @@
       <span class="ms-2">{{ getConnectionStatusText() }}</span>
     </div>
   </div>
-
-  <!-- Update Available Notification -->
-  <div class="update-notification" *ngIf="updateAvailable">
-    <div class="alert alert-info alert-dismissible fade show mb-0" role="alert">
-      <i class="bi bi-download me-2"></i>
-      <strong>Nueva versión disponible!</strong>
-      Hay una actualización de AgriSmart lista para instalar.
-      <button type="button" class="btn btn-sm btn-outline-info ms-2" (click)="installUpdate()">
-        Actualizar ahora
-      </button>
-      <button type="button" class="btn-close" (click)="dismissUpdate()" aria-label="Cerrar"></button>
-    </div>
-  </div>
+ 
 
   <!-- Global Progress Bar -->
   <div class="global-progress" *ngIf="showGlobalProgress">

@@ -74,6 +74,7 @@ interface DashboardStats {
   activeCropProductions: number;
   totalUsers: number;
   alertsCount: number;
+  totalIrrigationEvents: number;
   // ADD THESE NEW PROPERTIES:
   currentET?: number;
   totalWaterUsed?: number;
@@ -107,6 +108,7 @@ export class DashboardComponent implements OnInit {
     activeDevices: 0,
     totalCrops: 0,
     avgDrainPercentage: 0,
+    totalIrrigationEvents: 0,
     activeCropProductions: 0,
     totalUsers: 0,
     alertsCount: 0
@@ -148,7 +150,7 @@ export class DashboardComponent implements OnInit {
   isLoading = true;
   errorMessage = '';
   currentPage = 1;
-  pageSize = 100;
+  pageSize = 10000;
   isLoadingMore = false;
   hasMoreData = true;
   totalRecordsLoaded = 0;
@@ -255,11 +257,12 @@ export class DashboardComponent implements OnInit {
           this.hasMoreData = false;
         }
 
+        this.calculateIrrigationMetrics();
         this.calculateStats();
         this.generateRecentActivitiesFromRealData();
         this.calculateClimateKPIs();
-        this.calculateIrrigationMetrics();
         this.calculateFertilizerDosages();
+        this.calculateIrrigationMetrics();
 
         this.isLoading = false;
         this.cdr.markForCheck();
@@ -291,6 +294,7 @@ export class DashboardComponent implements OnInit {
       totalFarms: farms.length,
       totalDevices: devices.length,
       activeDevices: activeDeviceNames.size,
+      totalIrrigationEvents: this.irrigationMetrics.length,
       totalCrops: crops.filter((c: any) => c.createdBy?.toString() === userId?.toString()).length,
       activeCropProductions: cropProductions.filter((cp: any) => cp.isActive || cp.active).length,
       totalUsers: users.length,
@@ -816,6 +820,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  navigateToProcessKPIs(): void {
+    this.router.navigate(['/process-kpis']);
+  }
+
   /**
    * Load available fertilizers from catalog
    */
@@ -1271,6 +1279,8 @@ export class DashboardComponent implements OnInit {
           this.calculateClimateKPIs();
           this.calculateIrrigationMetrics();
           this.calculateFertilizerDosages();
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
         } else {
           // No more data available
           this.hasMoreData = false;

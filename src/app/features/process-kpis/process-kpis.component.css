@@ -1,0 +1,649 @@
+/* src/app/features/dashboard/process-kpis/process-kpis.component.css */
+
+/* ============================================================================
+   CONTAINER & LAYOUT
+   ============================================================================ */
+.process-kpis-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* ============================================================================
+   PAGE HEADER
+   ============================================================================ */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #20c997;
+}
+
+.page-header p {
+  margin: 10px 0 0 0;
+  opacity: 0.9;
+}
+
+.page-header i {
+  margin-right: 10px;
+}
+
+/* ============================================================================
+   IMPLEMENTATION STATUS
+   ============================================================================ */
+.implementation-status {
+  margin-bottom: 30px;
+}
+
+.status-card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-icon {
+  font-size: 3rem;
+  color: #28a745;
+}
+
+.status-info h3 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.status-info p {
+  margin: 5px 0 10px 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+  transition: width 0.3s ease;
+}
+
+/* ============================================================================
+   FILTER SECTION
+   ============================================================================ */
+.filter-section {
+  margin-bottom: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-section .card-header {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.filter-section .card-header h5 {
+  margin: 0;
+  color: #495057;
+}
+
+/* ============================================================================
+   STATISTICS CARDS
+   ============================================================================ */
+.stat-card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-left: 4px solid #ccc;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card-primary {
+  border-left-color: #007bff;
+}
+
+.stat-card-success {
+  border-left-color: #28a745;
+}
+
+.stat-card-warning {
+  border-left-color: #ffc107;
+}
+
+.stat-card-info {
+  border-left-color: #17a2b8;
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  opacity: 0.7;
+}
+
+.stat-card-primary .stat-icon {
+  color: #007bff;
+}
+
+.stat-card-success .stat-icon {
+  color: #28a745;
+}
+
+.stat-card-warning .stat-icon {
+  color: #ffc107;
+}
+
+.stat-card-info .stat-icon {
+  color: #17a2b8;
+}
+
+.stat-info h3 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.stat-info p {
+  margin: 5px 0 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* ============================================================================
+   TABS
+   ============================================================================ */
+.nav-tabs {
+  border-bottom: 2px solid #dee2e6;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  color: #6c757d;
+  font-weight: 500;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.nav-tabs .nav-link.active {
+  color: #007bff;
+  background-color: white;
+  border-bottom: 3px solid #007bff;
+  font-weight: 600;
+}
+
+.nav-tabs .nav-link i {
+  margin-right: 8px;
+}
+
+.tab-content {
+  padding: 20px 0;
+}
+
+/* ============================================================================
+   KPI CARDS
+   ============================================================================ */
+.kpi-card {
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+}
+
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.kpi-card .card-header {
+  font-weight: 600;
+  border-bottom: none;
+}
+
+.kpi-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.kpi-row:last-child {
+  border-bottom: none;
+}
+
+.kpi-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.kpi-value {
+  color: #333;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: right;
+}
+
+.kpi-row.highlight {
+  background-color: #fff3cd;
+  padding: 12px;
+  margin: 8px -12px;
+  border-radius: 5px;
+  border-bottom: none;
+}
+
+.kpi-row.highlight .kpi-label,
+.kpi-row.highlight .kpi-value {
+  color: #856404;
+}
+
+/* ============================================================================
+   TABLES
+   ============================================================================ */
+.table-responsive {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table thead {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background-color: #f1f3f5;
+}
+
+.table td, .table th {
+  vertical-align: middle;
+  padding: 12px;
+}
+
+/* ============================================================================
+   EMPTY STATE
+   ============================================================================ */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state i {
+  font-size: 4rem;
+  color: #ccc;
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  color: #6c757d;
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  color: #adb5bd;
+}
+
+/* ============================================================================
+   MODAL
+   ============================================================================ */
+.modal.show {
+  display: block;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-backdrop.show {
+  opacity: 0.5;
+}
+
+.modal-dialog {
+  margin: 30px auto;
+}
+
+.modal-content {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  border-radius: 10px 10px 0 0;
+}
+
+.modal-title i {
+  color: #007bff;
+  margin-right: 10px;
+}
+
+/* ============================================================================
+   BUTTONS
+   ============================================================================ */
+.btn {
+  border-radius: 5px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #65408b 100%);
+}
+
+/* ============================================================================
+   ALERTS
+   ============================================================================ */
+.alert {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.alert i {
+  margin-right: 10px;
+}
+
+/* ============================================================================
+   BADGES
+   ============================================================================ */
+.badge {
+  padding: 5px 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   FORM CONTROLS
+   ============================================================================ */
+.form-label {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+.form-select,
+.form-control {
+  border-radius: 5px;
+  border: 1px solid #ced4da;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-select:focus,
+.form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+  }
+
+  .status-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .kpi-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .kpi-value {
+    text-align: left;
+  }
+}
+
+/* ============================================================================
+   LOADING ANIMATIONS
+   ============================================================================ */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ============================================================================
+   MODAL DETAILS
+   ============================================================================ */
+.modal-xl {
+  max-width: 1200px;
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.detail-section {
+  margin-bottom: 25px;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.section-title i {
+  margin-right: 8px;
+}
+
+.detail-group {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.detail-group-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background-color: white;
+  border-radius: 5px;
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.detail-item:hover {
+  border-left-color: #667eea;
+  transform: translateX(3px);
+}
+
+.detail-item.highlight {
+  background-color: #fff3cd;
+  border-left-color: #ffc107;
+  font-weight: 600;
+}
+
+.detail-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  flex: 1;
+}
+
+.detail-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #212529;
+  text-align: right;
+}
+
+/* Water Gauges */
+.water-gauge {
+  text-align: center;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.gauge-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.gauge-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #495057;
+  margin-bottom: 15px;
+}
+
+.gauge-bar {
+  width: 100%;
+  height: 12px;
+  background-color: #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.gauge-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.gauge-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 20px 20px;
+  animation: gauge-stripe 1s linear infinite;
+}
+
+@keyframes gauge-stripe {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 20px 20px;
+  }
+}
+
+/* Modal body scrolling */
+.modal-body {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

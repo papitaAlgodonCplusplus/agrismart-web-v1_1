@@ -273,15 +273,7 @@ export class AppComponent implements OnInit, OnDestroy {
       if (Date.now() - dismissTime < oneDayInMs) {
         return; // Don't show update prompt again today
       }
-    }
-
-    // Simulate update check (replace with actual Service Worker integration)
-    setTimeout(() => {
-      const hasUpdate = Math.random() > 0.8; // 20% chance of update
-      if (hasUpdate) {
-        this.updateAvailable = true;
-      }
-    }, 5000);
+    } 
   }
 
   installUpdate(): void {
