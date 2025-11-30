@@ -29,6 +29,11 @@ export interface DailyKPIOutput {
     totalVolume: number;
     totalDuration: number;
     averageDrainPercentage: number;
+    // Batch 3: Irrigation statistics
+    irrigationSpan?: number; // Required time span in minutes
+    intervalStats?: { min: number; max: number; avg: number; sum: number };
+    lengthStats?: { min: number; max: number; avg: number; sum: number };
+    volumeStats?: { min: number; max: number; avg: number; sum: number };
   };
   crop: CropProductionKPIs;
   growingMedium: GrowingMediumKPIs;

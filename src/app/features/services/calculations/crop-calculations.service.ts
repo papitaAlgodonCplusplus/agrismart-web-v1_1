@@ -55,6 +55,7 @@ export interface CropProductionKPIs {
   densityContainer: number;
   totalPlants: number;
   numberOfRows: number;
+  numberOfPlantsPerRow: number; // Batch 2
   latitudeGrades: number;
   latitudeMinutes: number;
   containerVolume?: VolumeResult;
@@ -137,7 +138,7 @@ export class CropCalculationsService {
   calculateCropProductionKPIs(data: CropProductionData): CropProductionKPIs {
     const area = this.getArea(data.length, data.width);
     const densityPlant = this.getDensityPlant(
-      data.betweenRowDistance, 
+      data.betweenRowDistance,
       data.betweenPlantDistance
     );
     const densityContainer = this.getDensityContainer(
@@ -146,6 +147,7 @@ export class CropCalculationsService {
     );
     const totalPlants = this.getTotalPlants(densityPlant, area);
     const numberOfRows = this.getNumberOfRows(data.width, data.betweenRowDistance);
+    const numberOfPlantsPerRow = this.getNumberOfPlantsPerRow(data.length, data.betweenPlantDistance); // Batch 2
     const latitudeGrades = this.getLatitudeGrades(data.latitude);
     const latitudeMinutes = this.getLatitudeMinutes(data.latitude, latitudeGrades);
 
@@ -160,6 +162,7 @@ export class CropCalculationsService {
       densityContainer,
       totalPlants,
       numberOfRows,
+      numberOfPlantsPerRow,
       latitudeGrades,
       latitudeMinutes,
       containerVolume
@@ -199,6 +202,13 @@ export class CropCalculationsService {
    */
   getNumberOfRows(width: number, betweenRowDistance: number): number {
     return Math.round(width / betweenRowDistance);
+  }
+
+  /**
+   * BATCH 2: Calculate number of plants per row
+   */
+  getNumberOfPlantsPerRow(length: number, betweenPlantDistance: number): number {
+    return Math.round(length / betweenPlantDistance);
   }
 
   /**

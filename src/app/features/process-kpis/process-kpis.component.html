@@ -203,7 +203,12 @@
       <div class="row">
         <div class="col-12 mb-3">
           <h5><i class="bi bi-cloud-sun"></i> KPIs Climáticos Detallados</h5>
-          <p class="text-muted">Cálculos basados en FAO-56 Penman-Monteith</p>
+          <p class="text-muted">
+            Cálculos basados en FAO-56 Penman-Monteith
+            <span class="badge bg-success ms-2">
+              <i class="bi bi-calculator-fill"></i> 17 funciones CALCULUS activas
+            </span>
+          </p>
         </div>
 
         <div *ngFor="let kpi of kpiData" class="col-md-6 col-lg-4 mb-3">
@@ -216,33 +221,158 @@
                 <span class="kpi-label">ET Referencia:</span>
                 <span class="kpi-value">{{ kpi.climate.referenceET | number:'1.2-2' }} mm/día</span>
               </div>
-              <div class="kpi-row">
-                <span class="kpi-label">VPD:</span>
-                <span class="kpi-value">{{ kpi.climate.vaporPressureDeficit | number:'1.2-2' }} kPa</span>
+
+              <!-- Calculated with getSaturationVaporPressure() -->
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Presión Vapor Sat (Calc):
+                </span>
+                <span class="kpi-value">{{ kpi.climate.saturationVaporPressure | number:'1.3-3' }} kPa</span>
               </div>
-              <div class="kpi-row">
-                <span class="kpi-label">Presión Vapor Sat:</span>
-                <span class="kpi-value">{{ kpi.climate.saturationVaporPressure | number:'1.2-2' }} kPa</span>
+
+              <!-- Calculated with getRealVaporPressure() -->
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Presión Vapor Real (Calc):
+                </span>
+                <span class="kpi-value">{{ kpi.climate.realVaporPressure | number:'1.3-3' }} kPa</span>
               </div>
+
+              <div class="kpi-row">
+                <span class="kpi-label">VPD (Déficit):</span>
+                <span class="kpi-value">{{ kpi.climate.vaporPressureDeficit | number:'1.3-3' }} kPa</span>
+              </div>
+
               <div class="kpi-row">
                 <span class="kpi-label">Radiación Extraterrestre:</span>
                 <span class="kpi-value">{{ kpi.climate.extraterrestrialRadiation | number:'1.2-2' }} MJ/m²/día</span>
               </div>
+
               <div class="kpi-row">
                 <span class="kpi-label">Radiación Cielo Claro:</span>
                 <span class="kpi-value">{{ kpi.climate.clearSkySolarRadiation | number:'1.2-2' }} MJ/m²/día</span>
               </div>
+
               <div class="kpi-row">
                 <span class="kpi-label">Radiación Neta:</span>
                 <span class="kpi-value">{{ kpi.climate.netRadiation | number:'1.2-2' }} MJ/m²/día</span>
               </div>
-              <div class="kpi-row">
-                <span class="kpi-label">Grados Día:</span>
-                <span class="kpi-value">{{ kpi.climate.degreesDay | number:'1.1-1' }} °C·día</span>
+
+              <!-- Calculated with getDegreesDay() -->
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Grados Día (Calculado):
+                </span>
+                <span class="kpi-value">{{ kpi.climate.degreesDay | number:'1.2-2' }} °C·día</span>
               </div>
+
               <div class="kpi-row">
                 <span class="kpi-label">Constante Psicrométrica:</span>
                 <span class="kpi-value">{{ kpi.climate.psychrometricConstant | number:'1.3-3' }} kPa/°C</span>
+              </div>
+
+              <!-- Shows days in year calculated with getNDays() -->
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calendar2-check text-info"></i> Días en el Año:
+                </span>
+                <span class="kpi-value">
+                  {{ getDaysInYear(kpi.date) }}
+                  <span class="badge bg-info ms-1" *ngIf="getDaysInYear(kpi.date) === 366">Bisiesto</span>
+                </span>
+              </div>
+
+              <!-- Batch 2 - New Climate Calculations -->
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Presión Vapor Real Promedio:
+                </span>
+                <span class="kpi-value">{{ kpi.climate.avgRealVaporPressure | number:'1.3-3' }} kPa</span>
+              </div>
+
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Distancia Tierra-Sol Inversa:
+                </span>
+                <span class="kpi-value">{{ kpi.climate.earthSunInverseDistance | number:'1.4-4' }}</span>
+              </div>
+
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Latitud en Radianes:
+                </span>
+                <span class="kpi-value">{{ kpi.climate.latitudeRadians | number:'1.4-4' }} rad</span>
+              </div>
+
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Inclinación Solar:
+                </span>
+                <span class="kpi-value">{{ kpi.climate.solarInclination | number:'1.4-4' }} rad</span>
+              </div>
+
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Ángulo Puesta Solar:
+                </span>
+                <span class="kpi-value">{{ kpi.climate.solarSunsetAngle | number:'1.4-4' }} rad</span>
+              </div>
+
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Radiación Solar Extraterrestre:
+                </span>
+                <span class="kpi-value">{{ kpi.climate.extraterrestrialSolarRadiationTerm | number:'1.3-3' }} MJ/m²/día</span>
+              </div>
+
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Velocidad Viento (m/s):
+                </span>
+                <span class="kpi-value">{{ kpi.climate.windSpeedMtsPerSecond | number:'1.2-2' }} m/s</span>
+              </div>
+
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Pendiente Curva Vapor:
+                </span>
+                <span class="kpi-value">{{ kpi.climate.slopeVaporPressureCurveCalc | number:'1.4-4' }} kPa/°C</span>
+              </div>
+
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Calor Latente Evaporación:
+                </span>
+                <span class="kpi-value">{{ kpi.climate.latentHeatEvaporation | number:'1.2-2' }} MJ/kg</span>
+              </div>
+
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-info"></i> Constante Psicrométrica (Calc):
+                </span>
+                <span class="kpi-value">{{ kpi.climate.psychrometricConstantCalc | number:'1.4-4' }} kPa/°C</span>
+              </div>
+
+              <!-- Batch 3 - Longwave Radiation Components -->
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-warning"></i> Factor Radiación Isotérmica:
+                </span>
+                <span class="kpi-value">{{ kpi.climate.isothermalLongwaveRadiationFactor | number:'1.4-4' }} MJ/m²/día</span>
+              </div>
+
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-warning"></i> Factor de Humedad:
+                </span>
+                <span class="kpi-value">{{ kpi.climate.humidityFactor | number:'1.3-3' }}</span>
+              </div>
+
+              <div class="kpi-row highlight">
+                <span class="kpi-label">
+                  <i class="bi bi-calculator-fill text-warning"></i> Factor de Nubosidad:
+                </span>
+                <span class="kpi-value">{{ kpi.climate.cloudFactor | number:'1.3-3' }}</span>
               </div>
             </div>
           </div>
@@ -255,7 +385,134 @@
       <div class="row">
         <div class="col-12 mb-3">
           <h5><i class="bi bi-droplet"></i> KPIs de Riego</h5>
-          <p class="text-muted">Métricas de riego y volúmenes aplicados</p>
+          <p class="text-muted">
+            Métricas de riego y volúmenes aplicados
+            <span class="badge bg-success ms-2">
+              <i class="bi bi-calculator-fill"></i> 9 funciones CALCULUS activas
+            </span>
+          </p>
+        </div>
+
+        <!-- Show Crop Densities (calculated with getDensities) -->
+        <div class="col-12 mb-4" *ngIf="kpiData.length > 0">
+          <div class="card">
+            <div class="card-header bg-success text-white">
+              <h6 class="mb-0">
+                <i class="bi bi-calculator-fill"></i> Densidades de Cultivo (Calculadas con getDensities)
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="density-display">
+                    <div class="density-icon">
+                      <i class="bi bi-box text-primary"></i>
+                    </div>
+                    <div class="density-info">
+                      <div class="density-label">Densidad de Contenedores</div>
+                      <div class="density-value">{{ kpiData[0].crop.densityContainer | number:'1.2-2' }} cont/m²</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="density-display">
+                    <div class="density-icon">
+                      <i class="bi bi-flower1 text-success"></i>
+                    </div>
+                    <div class="density-info">
+                      <div class="density-label">Densidad de Plantas</div>
+                      <div class="density-value">{{ kpiData[0].crop.densityPlant | number:'1.2-2' }} plantas/m²</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Batch 3: Irrigation Statistics -->
+        <div class="col-12 mb-4" *ngIf="kpiData.length > 0">
+          <div class="card">
+            <div class="card-header bg-info text-white">
+              <h6 class="mb-0">
+                <i class="bi bi-calculator-fill"></i> Estadísticas de Riego del Período (Batch 3)
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <!-- Volume Statistics -->
+                <div class="col-md-4">
+                  <div class="stat-group">
+                    <h6 class="stat-group-title">
+                      <i class="bi bi-droplet-fill text-info"></i> Estadísticas de Volumen
+                    </h6>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Volumen Total:</span>
+                      <span class="kpi-value">{{ getTotalIrrigationVolume() | number:'1.0-0' }} L</span>
+                    </div>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Volumen Promedio:</span>
+                      <span class="kpi-value">{{ getAverageIrrigationVolume() | number:'1.2-2' }} L</span>
+                    </div>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Volumen Mínimo:</span>
+                      <span class="kpi-value">{{ getMinIrrigationVolume() | number:'1.2-2' }} L</span>
+                    </div>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Volumen Máximo:</span>
+                      <span class="kpi-value">{{ getMaxIrrigationVolume() | number:'1.2-2' }} L</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Interval Statistics -->
+                <div class="col-md-4">
+                  <div class="stat-group">
+                    <h6 class="stat-group-title">
+                      <i class="bi bi-clock-history text-warning"></i> Estadísticas de Intervalos
+                    </h6>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Intervalo Promedio:</span>
+                      <span class="kpi-value">{{ getAverageInterval() | number:'1.1-1' }} h</span>
+                    </div>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Intervalo Mínimo:</span>
+                      <span class="kpi-value">{{ getMinInterval() | number:'1.1-1' }} h</span>
+                    </div>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Intervalo Máximo:</span>
+                      <span class="kpi-value">{{ getMaxInterval() | number:'1.1-1' }} h</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Duration Statistics -->
+                <div class="col-md-4">
+                  <div class="stat-group">
+                    <h6 class="stat-group-title">
+                      <i class="bi bi-stopwatch text-success"></i> Estadísticas de Duración
+                    </h6>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Duración Total:</span>
+                      <span class="kpi-value">{{ getTotalDuration() | number:'1.0-0' }} min</span>
+                    </div>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Duración Promedio:</span>
+                      <span class="kpi-value">{{ getAverageDuration() | number:'1.1-1' }} min</span>
+                    </div>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Duración Mínima:</span>
+                      <span class="kpi-value">{{ getMinDuration() | number:'1.1-1' }} min</span>
+                    </div>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Duración Máxima:</span>
+                      <span class="kpi-value">{{ getMaxDuration() | number:'1.1-1' }} min</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div *ngFor="let kpi of kpiData" class="col-md-6 col-lg-4 mb-3">
@@ -290,6 +547,7 @@
       </div>
     </div>
 
+
     <!-- Crop Tab -->
     <div *ngIf="activeTab === 'crop'" class="tab-content">
       <div class="row">
@@ -300,33 +558,69 @@
             </div>
             <div class="card-body">
               <div *ngIf="kpiData.length > 0" class="kpi-details">
-                <div class="kpi-row">
-                  <span class="kpi-label">Área Total:</span>
+                <!-- Calculated with getArea() -->
+                <div class="kpi-row highlight">
+                  <span class="kpi-label">
+                    <i class="bi bi-calculator-fill text-success"></i> Área Total (Calculada):
+                  </span>
                   <span class="kpi-value">{{ kpiData[0].crop.area | number:'1.2-2' }} m²</span>
                 </div>
-                <div class="kpi-row">
-                  <span class="kpi-label">Densidad Plantas:</span>
+
+                <!-- Calculated with getDensityPlant() -->
+                <div class="kpi-row highlight">
+                  <span class="kpi-label">
+                    <i class="bi bi-calculator-fill text-success"></i> Densidad Plantas (Calculada):
+                  </span>
                   <span class="kpi-value">{{ kpiData[0].crop.densityPlant | number:'1.2-2' }} plantas/m²</span>
                 </div>
+
                 <div class="kpi-row">
                   <span class="kpi-label">Densidad Contenedores:</span>
                   <span class="kpi-value">{{ kpiData[0].crop.densityContainer | number:'1.2-2' }} cont/m²</span>
                 </div>
-                <div class="kpi-row">
-                  <span class="kpi-label">Total Plantas:</span>
+
+                <!-- Calculated with getTotalPlants() -->
+                <div class="kpi-row highlight">
+                  <span class="kpi-label">
+                    <i class="bi bi-calculator-fill text-success"></i> Total Plantas (Calculado):
+                  </span>
                   <span class="kpi-value">{{ kpiData[0].crop.totalPlants | number:'1.0-0' }}</span>
                 </div>
-                <div class="kpi-row">
-                  <span class="kpi-label">Número de Hileras:</span>
+
+                <!-- Calculated with getNumberOfRows() -->
+                <div class="kpi-row highlight">
+                  <span class="kpi-label">
+                    <i class="bi bi-calculator-fill text-success"></i> Número de Hileras (Calculado):
+                  </span>
                   <span class="kpi-value">{{ kpiData[0].crop.numberOfRows }}</span>
                 </div>
-                <div class="kpi-row">
-                  <span class="kpi-label">Latitud:</span>
-                  <span class="kpi-value">{{ kpiData[0].crop.latitudeGrades }}° {{ kpiData[0].crop.latitudeMinutes
-                    }}'</span>
+
+                <!-- Batch 2 - Calculated with getNumberOfPlantsPerRow() -->
+                <div class="kpi-row highlight">
+                  <span class="kpi-label">
+                    <i class="bi bi-calculator-fill text-success"></i> Plantas por Hilera (Calculado):
+                  </span>
+                  <span class="kpi-value">{{ kpiData[0].crop.numberOfPlantsPerRow }}</span>
                 </div>
-                <div *ngIf="kpiData[0].crop.containerVolume" class="kpi-row">
-                  <span class="kpi-label">Volumen Contenedor:</span>
+
+                <!-- Batch 2 - Calculated with getLatitudeGrades() and getLatitudeMinutes() -->
+                <div class="kpi-row highlight">
+                  <span class="kpi-label">
+                    <i class="bi bi-calculator-fill text-success"></i> Latitud (Calculada):
+                  </span>
+                  <span class="kpi-value">
+                    {{ kpiData[0].crop.latitudeGrades }}° {{ kpiData[0].crop.latitudeMinutes }}'
+                    <span class="badge bg-success ms-1">
+                      <i class="bi bi-geo-alt"></i> Grados/Minutos
+                    </span>
+                  </span>
+                </div>
+
+                <!-- Calculated with getVolume() -->
+                <div *ngIf="kpiData[0].crop.containerVolume" class="kpi-row highlight">
+                  <span class="kpi-label">
+                    <i class="bi bi-calculator-fill text-success"></i> Volumen Contenedor (Calculado):
+                  </span>
                   <span class="kpi-value">{{ kpiData[0].crop.containerVolume.value | number:'1.2-2' }} L</span>
                 </div>
               </div>
@@ -341,19 +635,60 @@
             </div>
             <div class="card-body">
               <div *ngIf="kpiData.length > 0" class="kpi-details">
-                <div class="kpi-row">
-                  <span class="kpi-label">Agua Total Disponible:</span>
-                  <span class="kpi-value">{{ kpiData[0].growingMedium.totalAvailableWaterPercentage | number:'1.1-1'
-                    }}%</span>
+                <!-- Calculated with getTotalAvailableWaterPercentage() -->
+                <div class="kpi-row highlight">
+                  <span class="kpi-label">
+                    <i class="bi bi-calculator-fill text-warning"></i> Agua Total Disponible (Calculada):
+                  </span>
+                  <span class="kpi-value">{{ kpiData[0].growingMedium.totalAvailableWaterPercentage | number:'1.1-1' }}%</span>
                 </div>
-                <div class="kpi-row">
-                  <span class="kpi-label">Agua Fácilmente Disponible:</span>
-                  <span class="kpi-value">{{ kpiData[0].growingMedium.easelyAvailableWaterPercentage | number:'1.1-1'
-                    }}%</span>
+
+                <!-- Calculated with getEaselyAvailableWaterPercentage() -->
+                <div class="kpi-row highlight">
+                  <span class="kpi-label">
+                    <i class="bi bi-calculator-fill text-warning"></i> Agua Fácilmente Disponible (Calculada):
+                  </span>
+                  <span class="kpi-value">{{ kpiData[0].growingMedium.easelyAvailableWaterPercentage | number:'1.1-1' }}%</span>
                 </div>
-                <div class="kpi-row">
-                  <span class="kpi-label">Agua de Reserva:</span>
+
+                <!-- Calculated with getReserveWaterPercentage() -->
+                <div class="kpi-row highlight">
+                  <span class="kpi-label">
+                    <i class="bi bi-calculator-fill text-warning"></i> Agua de Reserva (Calculada):
+                  </span>
                   <span class="kpi-value">{{ kpiData[0].growingMedium.reserveWaterPercentage | number:'1.1-1' }}%</span>
+                </div>
+
+                <!-- Visual Water Balance -->
+                <div class="water-balance-visual mt-4">
+                  <h6 class="text-center mb-3">Balance Hídrico Visual</h6>
+                  <div class="water-gauge-compact">
+                    <div class="gauge-label-compact">Total Disponible</div>
+                    <div class="gauge-bar-compact">
+                      <div class="gauge-fill-compact bg-info"
+                           [style.width.%]="kpiData[0].growingMedium.totalAvailableWaterPercentage">
+                      </div>
+                    </div>
+                    <div class="gauge-value-compact">{{ kpiData[0].growingMedium.totalAvailableWaterPercentage | number:'1.1-1' }}%</div>
+                  </div>
+                  <div class="water-gauge-compact">
+                    <div class="gauge-label-compact">Fácilmente Disponible</div>
+                    <div class="gauge-bar-compact">
+                      <div class="gauge-fill-compact bg-success"
+                           [style.width.%]="kpiData[0].growingMedium.easelyAvailableWaterPercentage">
+                      </div>
+                    </div>
+                    <div class="gauge-value-compact">{{ kpiData[0].growingMedium.easelyAvailableWaterPercentage | number:'1.1-1' }}%</div>
+                  </div>
+                  <div class="water-gauge-compact">
+                    <div class="gauge-label-compact">Reserva</div>
+                    <div class="gauge-bar-compact">
+                      <div class="gauge-fill-compact bg-warning"
+                           [style.width.%]="kpiData[0].growingMedium.reserveWaterPercentage">
+                      </div>
+                    </div>
+                    <div class="gauge-value-compact">{{ kpiData[0].growingMedium.reserveWaterPercentage | number:'1.1-1' }}%</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -361,6 +696,7 @@
         </div>
       </div>
     </div>
+
   </div>
 
   <!-- Empty State -->

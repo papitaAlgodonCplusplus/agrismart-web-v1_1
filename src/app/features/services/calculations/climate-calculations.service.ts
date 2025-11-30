@@ -34,21 +34,41 @@ export interface ClimateKPIs {
   saturationVaporPressure: number;
   realVaporPressure: number;
   vaporPressureDeficit: number;
-  
+  avgRealVaporPressure: number; // Batch 2
+
   // Solar Radiation
   extraterrestrialRadiation: number;
   clearSkySolarRadiation: number;
   netSolarRadiation: number;
   netLongwaveRadiation: number;
   netRadiation: number;
-  
+  earthSunInverseDistance: number; // Batch 2
+  latitudeRadians: number; // Batch 2
+  solarInclination: number; // Batch 2
+  solarSunsetAngle: number; // Batch 2
+  extraterrestrialSolarRadiationTerm: number; // Batch 2
+
+  // Batch 3: Longwave Radiation Components
+  isothermalLongwaveRadiationFactor: number;
+  humidityFactor: number;
+  cloudFactor: number;
+
   // Evapotranspiration
   referenceET: number; // FAO-56 Penman-Monteith
-  
+  referenceETMin?: number; // Batch 3: Minimum ET across period
+
   // Additional
   degreesDay: number;
   psychrometricConstant: number;
   slopeVaporPressureCurve: number;
+  windSpeedMtsPerSecond: number; // Batch 2
+  slopeVaporPressureCurveCalc: number; // Batch 2
+  latentHeatEvaporation: number; // Batch 2
+  psychrometricConstantCalc: number; // Batch 2
+
+  // Batch 3: Light Integrals
+  parLightIntegral?: number; // mol/m²/day
+  globalLightIntegral?: number; // MJ/m²/day
 }
 
 export interface LocationData {
@@ -151,20 +171,68 @@ export class ClimateCalculationsService {
       cropBaseTemperature
     );
 
+    // Batch 2 calculations
+    const avgRealVaporPressure = this.getAvgRealVaporPressure(
+      climateData.tempMax,
+      climateData.tempMin,
+      climateData.relativeHumidityMax,
+      climateData.relativeHumidityMin
+    );
+    const earthSunInverseDistance = this.getEarthSunInverseDistance(climateData.date);
+    const latitudeRadians = this.getLatitudeInRadians(
+      locationData.latitudeGrades,
+      locationData.latitudeMinutes
+    );
+    const solarInclination = this.getSolarInclination(climateData.date);
+    const solarSunsetAngle = this.getSolarSunsetAngle(
+      climateData.date,
+      locationData.latitudeGrades,
+      locationData.latitudeMinutes
+    );
+    const extraterrestrialSolarRadiationTerm = this.getExtraterrestrialSolarRadiationTerm(
+      climateData.date,
+      locationData.latitudeGrades,
+      locationData.latitudeMinutes
+    );
+    const windSpeedMtsPerSecond = this.getWindSpeedAsMtsPerSecond(
+      climateData.windSpeed,
+      locationData.windSpeedMeasurementHeight
+    );
+    const slopeVaporPressureCurveCalc = this.getSlopeVaporPressureCurve(climateData.tempAvg);
+    const latentHeatEvaporation = this.getLatentHeatEvaporation(climateData.tempAvg);
+    const psychrometricConstantCalc = this.getPsychrometricConstant(
+      locationData.altitude,
+      climateData.tempAvg
+    );
+
     return {
       date: climateData.date,
       saturationVaporPressure,
       realVaporPressure,
       vaporPressureDeficit,
+      avgRealVaporPressure,
       extraterrestrialRadiation,
       clearSkySolarRadiation,
       netSolarRadiation,
       netLongwaveRadiation,
       netRadiation,
+      earthSunInverseDistance,
+      latitudeRadians,
+      solarInclination,
+      solarSunsetAngle,
+      extraterrestrialSolarRadiationTerm,
+      // Batch 3: Longwave radiation components
+      isothermalLongwaveRadiationFactor: isothermalLongwave,
+      humidityFactor,
+      cloudFactor,
       referenceET,
       degreesDay,
       psychrometricConstant,
-      slopeVaporPressureCurve
+      slopeVaporPressureCurve,
+      windSpeedMtsPerSecond,
+      slopeVaporPressureCurveCalc,
+      latentHeatEvaporation,
+      psychrometricConstantCalc
     };
   }
 
