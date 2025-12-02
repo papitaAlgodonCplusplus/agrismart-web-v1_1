@@ -1665,3 +1665,361 @@
     min-width: auto;
   }
 }
+
+/* ============================================================================
+   AGGREGATION TAB STYLES
+   ============================================================================ */
+
+/* Aggregation Controls */
+.aggregation-controls {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.view-selector {
+  display: flex;
+  gap: 10px;
+}
+
+.view-selector .btn {
+  padding: 10px 20px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.view-selector .btn i {
+  margin-right: 8px;
+}
+
+.chart-options {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.chart-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Summary Cards */
+.summary-cards {
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.summary-card .card-icon {
+  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-card .card-content h6 {
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.summary-card .card-content .value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 5px;
+}
+
+.summary-card .card-content small {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+/* Chart Container */
+.chart-container {
+  background: white;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+/* Detailed Table */
+.detailed-table {
+  background: white;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detailed-table .section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detailed-table .section-title i {
+  color: #007bff;
+}
+
+.detailed-table .table {
+  margin-bottom: 0;
+}
+
+.detailed-table .table th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  color: #495057;
+  padding: 12px;
+  white-space: nowrap;
+}
+
+.detailed-table .table td {
+  padding: 12px;
+  vertical-align: middle;
+}
+
+.detailed-table .table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.detailed-table .table tfoot {
+  background-color: #e7f3ff;
+  font-weight: 600;
+}
+
+/* Growth Stage Timeline */
+.growth-stage-timeline {
+  background: white;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-container {
+  display: flex;
+  gap: 10px;
+  min-height: 120px;
+}
+
+.timeline-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.timeline-stage:hover {
+  border-color: currentColor;
+  transform: scale(1.05);
+}
+
+.timeline-stage .stage-header {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.timeline-stage .stage-header i {
+  font-size: 1.5rem;
+}
+
+.timeline-stage .stage-days {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-bottom: 5px;
+}
+
+.timeline-stage .stage-irrigation {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Stage Detail Cards */
+.stage-details {
+  background: white;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stage-detail-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  border-left: 4px solid #007bff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stage-detail-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stage-header-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.stage-header-card i {
+  font-size: 1.8rem;
+}
+
+.stage-header-card h6 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  flex: 1;
+}
+
+.stage-badge {
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stage-description {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.stage-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.metric-row:last-child {
+  border-bottom: none;
+}
+
+.metric-label {
+  font-weight: 500;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.metric-value {
+  font-weight: 600;
+  color: #2d3748;
+  text-align: right;
+}
+
+/* Empty State */
+.empty-state {
+  background: white;
+  border-radius: 10px;
+  padding: 60px 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: #dee2e6;
+  margin-bottom: 20px;
+}
+
+.empty-state h4 {
+  color: #6c757d;
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  color: #adb5bd;
+  font-size: 0.95rem;
+}
+
+/* Responsive Styles for Aggregation */
+@media (max-width: 992px) {
+  .aggregation-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .view-selector,
+  .chart-options {
+    justify-content: center;
+  }
+
+  .timeline-container {
+    flex-direction: column;
+  }
+
+  .timeline-stage {
+    min-height: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .summary-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .detailed-table {
+    padding: 15px;
+  }
+
+  .detailed-table .table-responsive {
+    font-size: 0.85rem;
+  }
+}

@@ -100,6 +100,11 @@
           <i class="bi bi-flower1"></i> KPIs Cultivo
         </a>
       </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'aggregation'" (click)="setActiveTab('aggregation')">
+          <i class="bi bi-bar-chart-fill"></i> Agregación Semanal/Etapas
+        </a>
+      </li>
     </ul>
 
     <!-- Overview Tab -->
@@ -322,7 +327,8 @@
                 <span class="kpi-label">
                   <i class="bi bi-calculator-fill text-info"></i> Radiación Solar Extraterrestre:
                 </span>
-                <span class="kpi-value">{{ kpi.climate.extraterrestrialSolarRadiationTerm | number:'1.3-3' }} MJ/m²/día</span>
+                <span class="kpi-value">{{ kpi.climate.extraterrestrialSolarRadiationTerm | number:'1.3-3' }}
+                  MJ/m²/día</span>
               </div>
 
               <div class="kpi-row highlight">
@@ -358,7 +364,8 @@
                 <span class="kpi-label">
                   <i class="bi bi-calculator-fill text-warning"></i> Factor Radiación Isotérmica:
                 </span>
-                <span class="kpi-value">{{ kpi.climate.isothermalLongwaveRadiationFactor | number:'1.4-4' }} MJ/m²/día</span>
+                <span class="kpi-value">{{ kpi.climate.isothermalLongwaveRadiationFactor | number:'1.4-4' }}
+                  MJ/m²/día</span>
               </div>
 
               <div class="kpi-row highlight">
@@ -640,7 +647,8 @@
                   <span class="kpi-label">
                     <i class="bi bi-calculator-fill text-warning"></i> Agua Total Disponible (Calculada):
                   </span>
-                  <span class="kpi-value">{{ kpiData[0].growingMedium.totalAvailableWaterPercentage | number:'1.1-1' }}%</span>
+                  <span class="kpi-value">{{ kpiData[0].growingMedium.totalAvailableWaterPercentage | number:'1.1-1'
+                    }}%</span>
                 </div>
 
                 <!-- Calculated with getEaselyAvailableWaterPercentage() -->
@@ -648,7 +656,8 @@
                   <span class="kpi-label">
                     <i class="bi bi-calculator-fill text-warning"></i> Agua Fácilmente Disponible (Calculada):
                   </span>
-                  <span class="kpi-value">{{ kpiData[0].growingMedium.easelyAvailableWaterPercentage | number:'1.1-1' }}%</span>
+                  <span class="kpi-value">{{ kpiData[0].growingMedium.easelyAvailableWaterPercentage | number:'1.1-1'
+                    }}%</span>
                 </div>
 
                 <!-- Calculated with getReserveWaterPercentage() -->
@@ -666,28 +675,31 @@
                     <div class="gauge-label-compact">Total Disponible</div>
                     <div class="gauge-bar-compact">
                       <div class="gauge-fill-compact bg-info"
-                           [style.width.%]="kpiData[0].growingMedium.totalAvailableWaterPercentage">
+                        [style.width.%]="kpiData[0].growingMedium.totalAvailableWaterPercentage">
                       </div>
                     </div>
-                    <div class="gauge-value-compact">{{ kpiData[0].growingMedium.totalAvailableWaterPercentage | number:'1.1-1' }}%</div>
+                    <div class="gauge-value-compact">{{ kpiData[0].growingMedium.totalAvailableWaterPercentage |
+                      number:'1.1-1' }}%</div>
                   </div>
                   <div class="water-gauge-compact">
                     <div class="gauge-label-compact">Fácilmente Disponible</div>
                     <div class="gauge-bar-compact">
                       <div class="gauge-fill-compact bg-success"
-                           [style.width.%]="kpiData[0].growingMedium.easelyAvailableWaterPercentage">
+                        [style.width.%]="kpiData[0].growingMedium.easelyAvailableWaterPercentage">
                       </div>
                     </div>
-                    <div class="gauge-value-compact">{{ kpiData[0].growingMedium.easelyAvailableWaterPercentage | number:'1.1-1' }}%</div>
+                    <div class="gauge-value-compact">{{ kpiData[0].growingMedium.easelyAvailableWaterPercentage |
+                      number:'1.1-1' }}%</div>
                   </div>
                   <div class="water-gauge-compact">
                     <div class="gauge-label-compact">Reserva</div>
                     <div class="gauge-bar-compact">
                       <div class="gauge-fill-compact bg-warning"
-                           [style.width.%]="kpiData[0].growingMedium.reserveWaterPercentage">
+                        [style.width.%]="kpiData[0].growingMedium.reserveWaterPercentage">
                       </div>
                     </div>
-                    <div class="gauge-value-compact">{{ kpiData[0].growingMedium.reserveWaterPercentage | number:'1.1-1' }}%</div>
+                    <div class="gauge-value-compact">{{ kpiData[0].growingMedium.reserveWaterPercentage | number:'1.1-1'
+                      }}%</div>
                   </div>
                 </div>
               </div>
@@ -695,6 +707,271 @@
           </div>
         </div>
       </div>
+    </div>
+
+
+    <!-- AGGREGATION TAB -->
+    <div *ngIf="activeTab === 'aggregation'" class="tab-content">
+
+      <!-- AGGREGATION VIEW SELECTOR -->
+      <div class="aggregation-controls">
+        <div class="view-selector">
+          <button class="btn" [class.btn-primary]="currentAggregationView === 'weekly'"
+            [class.btn-outline-primary]="currentAggregationView !== 'weekly'" (click)="switchAggregationView('weekly')">
+            <i class="bi bi-calendar-week"></i>
+            Por Semana
+          </button>
+          <button class="btn" [class.btn-primary]="currentAggregationView === 'stage'"
+            [class.btn-outline-primary]="currentAggregationView !== 'stage'" (click)="switchAggregationView('stage')">
+            <i class="bi bi-graph-up-arrow"></i>
+            Por Etapa de Crecimiento
+          </button>
+        </div>
+
+        <!-- Chart Options -->
+        <div class="chart-options">
+          <label class="form-check-label me-3">
+            <input type="checkbox" class="form-check-input" [checked]="aggregationChartConfig.showIrrigation"
+              (change)="toggleChartSeries('irrigation')">
+            Riego
+          </label>
+          <label class="form-check-label me-3">
+            <input type="checkbox" class="form-check-input" [checked]="aggregationChartConfig.showDrainage"
+              (change)="toggleChartSeries('drainage')">
+            Drenaje
+          </label>
+          <label class="form-check-label">
+            <input type="checkbox" class="form-check-input" [checked]="aggregationChartConfig.showET"
+              (change)="toggleChartSeries('et')">
+            ET
+          </label>
+        </div>
+      </div>
+
+      <!-- WEEKLY VIEW -->
+      <div *ngIf="currentAggregationView === 'weekly' && weeklyAggregation" class="aggregation-view">
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+          <div class="row g-3 mb-4">
+            <div class="col-md-3">
+              <div class="summary-card">
+                <div class="card-icon">
+                  <i class="bi bi-droplet-fill text-primary"></i>
+                </div>
+                <div class="card-content">
+                  <h6>Riego Total</h6>
+                  <div class="value">{{ weeklyAggregation.totals.totalIrrigationVolume | number:'1.0-0' }} L</div>
+                  <small>{{ weeklyAggregation.totals.totalIrrigationVolume / weeklyAggregation.metadata.area |
+                    number:'1.1-1' }} L/m²</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="summary-card">
+                <div class="card-icon">
+                  <i class="bi bi-funnel-fill text-danger"></i>
+                </div>
+                <div class="card-content">
+                  <h6>Drenaje Total</h6>
+                  <div class="value">{{ weeklyAggregation.totals.totalDrainageVolume | number:'1.0-0' }} L</div>
+                  <small>{{ weeklyAggregation.totals.averageDrainPercentage | number:'1.1-1' }}% promedio</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="summary-card">
+                <div class="card-icon">
+                  <i class="bi bi-calendar-week text-success"></i>
+                </div>
+                <div class="card-content">
+                  <h6>Semanas</h6>
+                  <div class="value">{{ weeklyAggregation.periods.length }}</div>
+                  <small>{{ getWeeklyTotalDays(weeklyAggregation) }} días totales</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="summary-card">
+                <div class="card-icon">
+                  <i class="bi bi-graph-up text-info"></i>
+                </div>
+                <div class="card-content">
+                  <h6>Eventos de Riego</h6>
+                  <div class="value">{{ getWeeklyTotalEvents(weeklyAggregation) }}</div>
+                  <small>Promedio por semana: {{ (getWeeklyTotalEvents(weeklyAggregation) /
+                    weeklyAggregation.periods.length) | number:'1.1-1' }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="chart-container">
+          <canvas #weeklyChart></canvas>
+        </div>
+
+        <!-- Detailed Table -->
+        <div class="detailed-table mt-4">
+          <h5 class="section-title">
+            <i class="bi bi-table"></i>
+            Detalle por Semana
+          </h5>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Semana</th>
+                  <th>Periodo</th>
+                  <th>Días</th>
+                  <th>Riego (L)</th>
+                  <th>Riego (L/m²)</th>
+                  <th>Drenaje (%)</th>
+                  <th>Eventos</th>
+                  <th>Vol. Promedio</th>
+                  <th>Duración Prom.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let period of weeklyAggregation.periods">
+                  <td><strong>{{ period.periodLabel }}</strong></td>
+                  <td>
+                    <small>
+                      {{ period.startDate | date:'dd/MM' }} - {{ period.endDate | date:'dd/MM' }}
+                    </small>
+                  </td>
+                  <td>{{ period.daysInPeriod }}</td>
+                  <td>{{ period.irrigation.totalVolume | number:'1.0-0' }}</td>
+                  <td>{{ period.irrigation.totalVolumePerM2 | number:'1.2-2' }}</td>
+                  <td>
+                    <span class="badge"
+                      [class.bg-success]="period.drainage.averageDrainPercentage >= 15 && period.drainage.averageDrainPercentage <= 25"
+                      [class.bg-warning]="period.drainage.averageDrainPercentage < 15 || period.drainage.averageDrainPercentage > 25"
+                      [class.bg-danger]="period.drainage.averageDrainPercentage < 10 || period.drainage.averageDrainPercentage > 35">
+                      {{ period.drainage.averageDrainPercentage | number:'1.1-1' }}%
+                    </span>
+                  </td>
+                  <td>{{ period.irrigation.numberOfEvents }}</td>
+                  <td>{{ period.irrigation.averageEventVolume | number:'1.1-1' }} L</td>
+                  <td>{{ period.irrigation.averageDuration | number:'1.0-0' }} min</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="table-primary">
+                  <th colspan="3">TOTAL</th>
+                  <th>{{ weeklyAggregation.totals.totalIrrigationVolume | number:'1.0-0' }}</th>
+                  <th>{{ weeklyAggregation.totals.totalIrrigationVolume / weeklyAggregation.metadata.area |
+                    number:'1.2-2' }}</th>
+                  <th>{{ weeklyAggregation.totals.averageDrainPercentage | number:'1.1-1' }}%</th>
+                  <th>{{ getWeeklyTotalEvents(weeklyAggregation) }}</th>
+                  <th colspan="2">-</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- GROWTH STAGE VIEW -->
+      <div *ngIf="currentAggregationView === 'stage' && stageAggregation" class="aggregation-view">
+
+        <!-- Growth Stage Timeline -->
+        <div class="growth-stage-timeline mb-4">
+          <div class="timeline-container">
+            <div *ngFor="let period of stageAggregation.periods" class="timeline-stage"
+              [style.flex]="period.daysInPeriod" [style.background]="period.growthStage?.color + '33'">
+              <div class="stage-header" [style.color]="period.growthStage?.color">
+                <i class="bi {{ period.growthStage?.icon }}"></i>
+                <strong>{{ period.periodLabel }}</strong>
+              </div>
+              <div class="stage-days">{{ period.daysInPeriod }} días</div>
+              <div class="stage-irrigation">
+                {{ period.irrigation.totalVolume | number:'1.0-0' }} L
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="chart-container">
+          <canvas #stageChart></canvas>
+        </div>
+
+        <!-- Stage Details Cards -->
+        <div class="stage-details mt-4">
+          <h5 class="section-title">
+            <i class="bi bi-info-circle"></i>
+            Detalle por Etapa de Crecimiento
+          </h5>
+          <div class="row g-3">
+            <div class="col-md-6" *ngFor="let period of stageAggregation.periods">
+              <div class="stage-detail-card" [style.border-left-color]="period.growthStage?.color">
+                <div class="stage-header-card">
+                  <i class="bi {{ period.growthStage?.icon }}" [style.color]="period.growthStage?.color"></i>
+                  <h6>{{ period.periodLabel }}</h6>
+                  <span class="stage-badge" [style.background]="period.growthStage?.color">
+                    Días {{ period.growthStage?.startDay }} - {{ period.growthStage?.endDay }}
+                  </span>
+                </div>
+                <p class="stage-description">{{ period.growthStage?.description }}</p>
+
+                <div class="stage-metrics">
+                  <div class="metric-row">
+                    <span class="metric-label">Periodo de datos:</span>
+                    <span class="metric-value">
+                      {{ period.startDate | date:'dd/MM/yyyy' }} - {{ period.endDate | date:'dd/MM/yyyy' }}
+                      ({{ period.daysInPeriod }} días)
+                    </span>
+                  </div>
+                  <div class="metric-row">
+                    <span class="metric-label">Riego total:</span>
+                    <span class="metric-value">{{ period.irrigation.totalVolume | number:'1.0-0' }} L</span>
+                  </div>
+                  <div class="metric-row">
+                    <span class="metric-label">Promedio diario:</span>
+                    <span class="metric-value">{{ period.irrigation.averageDailyVolume | number:'1.1-1' }} L/día</span>
+                  </div>
+                  <div class="metric-row">
+                    <span class="metric-label">Eventos de riego:</span>
+                    <span class="metric-value">{{ period.irrigation.numberOfEvents }}</span>
+                  </div>
+                  <div class="metric-row">
+                    <span class="metric-label">Drenaje promedio:</span>
+                    <span class="metric-value"
+                      [class.text-success]="period.drainage.averageDrainPercentage >= 15 && period.drainage.averageDrainPercentage <= 25"
+                      [class.text-warning]="period.drainage.averageDrainPercentage < 15 || period.drainage.averageDrainPercentage > 25">
+                      {{ period.drainage.averageDrainPercentage | number:'1.1-1' }}%
+                    </span>
+                  </div>
+                  <div class="metric-row" *ngIf="period.climate">
+                    <span class="metric-label">ET promedio:</span>
+                    <span class="metric-value">{{ period.climate.averageET | number:'1.2-2' }} mm/día</span>
+                  </div>
+                  <div class="metric-row" *ngIf="period.climate">
+                    <span class="metric-label">VPD promedio:</span>
+                    <span class="metric-value">{{ period.climate.averageVPD | number:'1.2-2' }} kPa</span>
+                  </div>
+                  <div class="metric-row" *ngIf="period.climate">
+                    <span class="metric-label">Grados día acumulados:</span>
+                    <span class="metric-value">{{ period.climate.totalDegreeDays | number:'1.0-0' }} °C·día</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NO DATA STATE -->
+      <div *ngIf="!weeklyAggregation && !stageAggregation" class="empty-state">
+        <div class="empty-icon">
+          <i class="bi bi-bar-chart"></i>
+        </div>
+        <h4>Sin Datos de Agregación</h4>
+        <p>Los datos de agregación se calculan automáticamente al procesar los KPIs.</p>
+      </div>
+
     </div>
 
   </div>
@@ -979,5 +1256,7 @@
       </div>
     </div>
   </div>
+
+
 </div>
 <div class="modal-backdrop fade" [class.show]="showDetailModal" *ngIf="showDetailModal"></div>

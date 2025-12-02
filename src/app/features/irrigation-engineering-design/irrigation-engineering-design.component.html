@@ -54,6 +54,12 @@
         Métricas de Riego
       </a>
     </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'substrate'" (click)="setActiveTab('substrate')">
+        <i class="bi bi-graph-up-arrow"></i>
+        Análisis de Sustrato
+      </a>
+    </li>
   </ul>
 
   <!-- ==================== LOADING STATE ==================== -->
@@ -677,6 +683,11 @@
         </ng-template>
       </div>
     </div>
+  </div>
+
+  <!-- ==================== SUBSTRATE ANALYSIS TAB ==================== -->
+  <div *ngIf="activeTab === 'substrate' && !isLoading">
+    <app-substrate-curve-analyzer></app-substrate-curve-analyzer>
   </div>
 
 </div>

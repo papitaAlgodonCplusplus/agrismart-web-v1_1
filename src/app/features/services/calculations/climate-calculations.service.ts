@@ -34,6 +34,7 @@ export interface ClimateKPIs {
   saturationVaporPressure: number;
   realVaporPressure: number;
   vaporPressureDeficit: number;
+  averageTemperature: number;
   avgRealVaporPressure: number; // Batch 2
 
   // Solar Radiation
@@ -178,6 +179,7 @@ export class ClimateCalculationsService {
       climateData.relativeHumidityMax,
       climateData.relativeHumidityMin
     );
+    const averageTemperature = climateData.tempAvg;
     const earthSunInverseDistance = this.getEarthSunInverseDistance(climateData.date);
     const latitudeRadians = this.getLatitudeInRadians(
       locationData.latitudeGrades,
@@ -211,6 +213,7 @@ export class ClimateCalculationsService {
       realVaporPressure,
       vaporPressureDeficit,
       avgRealVaporPressure,
+      averageTemperature,
       extraterrestrialRadiation,
       clearSkySolarRadiation,
       netSolarRadiation,

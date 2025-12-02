@@ -1,0 +1,575 @@
+/* ============================================================================
+   IRRIGATION VOLUME CALCULATOR STYLES
+   ============================================================================ */
+
+/* ==================== VARIABLES ==================== */
+$optimal-color: #28a745;
+$acceptable-color: #ffc107;
+$caution-color: #fd7e14;
+$critical-color: #dc3545;
+$primary-color: #007bff;
+$dark-color: #343a40;
+$light-bg: #f8f9fa;
+$border-color: #dee2e6;
+
+/* ==================== MAIN CONTAINER ==================== */
+.irrigation-volume-calculator {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ==================== HEADER ==================== */
+.calculator-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid $border-color;
+
+  .header-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: $dark-color;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    i {
+      color: $primary-color;
+    }
+  }
+
+  .header-subtitle {
+    color: #6c757d;
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+/* ==================== PRESETS SECTION ==================== */
+.presets-section {
+  margin-bottom: 2rem;
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: $dark-color;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .presets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .preset-card {
+    background: $light-bg;
+    border: 2px solid $border-color;
+    border-radius: 10px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    gap: 1rem;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-color: $primary-color;
+    }
+
+    &.active {
+      background: #e7f3ff;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+
+    .preset-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: $primary-color;
+      flex-shrink: 0;
+    }
+
+    .preset-content {
+      flex: 1;
+
+      .preset-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: $dark-color;
+        margin-bottom: 0.25rem;
+      }
+
+      .preset-description {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+      }
+
+      .preset-values {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+
+        .value-badge {
+          display: inline-block;
+          padding: 0.25rem 0.5rem;
+          background: white;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: $primary-color;
+        }
+      }
+
+      .preset-suitable {
+        font-size: 0.75rem;
+        color: #6c757d;
+
+        i {
+          color: $optimal-color;
+        }
+      }
+    }
+  }
+}
+
+/* ==================== DEPLETION SLIDER SECTION ==================== */
+.depletion-slider-section {
+  background: $light-bg;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .current-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+
+    .value-number {
+      font-weight: 700;
+    }
+
+    .value-unit {
+      font-size: 1.5rem;
+      margin-left: 0.25rem;
+    }
+  }
+
+  .zones-background {
+    display: flex;
+    height: 40px;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+
+    .zone {
+      height: 100%;
+      transition: all 0.3s ease;
+
+      &.zone-optimal {
+        background: linear-gradient(90deg, $optimal-color, #20c997);
+      }
+
+      &.zone-acceptable {
+        background: linear-gradient(90deg, #20c997, $acceptable-color);
+      }
+
+      &.zone-caution {
+        background: linear-gradient(90deg, $acceptable-color, $caution-color);
+      }
+
+      &.zone-critical {
+        background: linear-gradient(90deg, $caution-color, $critical-color);
+      }
+    }
+  }
+
+  .depletion-slider {
+    width: 100%;
+    height: 12px;
+    border-radius: 6px;
+    background: transparent;
+    outline: none;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+
+    &::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--slider-color, $primary-color);
+      border: 3px solid white;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    &::-moz-range-thumb {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--slider-color, $primary-color);
+      border: 3px solid white;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+
+  .zone-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+
+    .zone-label {
+      font-size: 0.75rem;
+      text-align: center;
+      flex: 1;
+      font-weight: 600;
+
+      &.optimal { color: $optimal-color; }
+      &.acceptable { color: $acceptable-color; }
+      &.caution { color: $caution-color; }
+      &.critical { color: $critical-color; }
+    }
+  }
+
+  .current-zone-indicator {
+    text-align: center;
+    margin-top: 1rem;
+
+    .zone-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 1rem;
+
+      &.zone-optimal {
+        background: $optimal-color;
+        color: white;
+      }
+
+      &.zone-acceptable {
+        background: $acceptable-color;
+        color: $dark-color;
+      }
+
+      &.zone-caution {
+        background: $caution-color;
+        color: white;
+      }
+
+      &.zone-critical {
+        background: $critical-color;
+        color: white;
+      }
+    }
+  }
+}
+
+/* ==================== FORM SECTIONS ==================== */
+.form-section {
+  margin-bottom: 1.5rem;
+
+  .form-label {
+    font-weight: 600;
+    color: $dark-color;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+/* ==================== ADVANCED OPTIONS ==================== */
+.advanced-toggle {
+  text-align: center;
+  margin: 1rem 0;
+
+  .btn-link {
+    color: $primary-color;
+    text-decoration: none;
+    font-weight: 600;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.advanced-options {
+  background: $light-bg;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+/* ==================== ACTION BUTTONS ==================== */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+
+  .btn-calculate {
+    flex: 1;
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 123, 255, 0.3);
+    }
+  }
+}
+
+/* ==================== RESULTS SECTION ==================== */
+.results-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 3px solid $border-color;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.recommendation-alert {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  &.alert-orange {
+    background-color: #fff3cd;
+    border-left: 4px solid $caution-color;
+    color: #856404;
+  }
+
+  .alert-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+
+  .alert-content {
+    flex: 1;
+
+    .alert-heading {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .reasoning-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+
+      li {
+        padding: 0.5rem 0;
+        line-height: 1.5;
+
+        &::before {
+          content: ' ';
+          color: $optimal-color;
+          font-weight: 700;
+          margin-right: 0.5rem;
+        }
+      }
+    }
+  }
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+
+  .result-card {
+    background: white;
+    border: 2px solid $border-color;
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    &.primary-card {
+      border-color: $primary-color;
+      background: linear-gradient(135deg, #e7f3ff 0%, #ffffff 100%);
+    }
+
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card-content {
+      .card-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .card-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: $dark-color;
+        margin-bottom: 0.5rem;
+
+        &.large {
+          font-size: 2.5rem;
+          color: $primary-color;
+        }
+      }
+
+      .card-details {
+        font-size: 0.875rem;
+        color: #6c757d;
+      }
+    }
+  }
+}
+
+.apply-section {
+  text-align: center;
+  margin-top: 2rem;
+
+  .btn-apply {
+    padding: 1rem 3rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+    }
+
+    .volume-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.3);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      margin-left: 1rem;
+      font-size: 1rem;
+    }
+  }
+
+  .apply-note {
+    margin-top: 1rem;
+    color: #6c757d;
+    font-size: 0.875rem;
+  }
+}
+
+.loading-state {
+  text-align: center;
+  padding: 3rem;
+
+  .spinner-border {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .loading-text {
+    margin-top: 1rem;
+    color: #6c757d;
+    font-size: 1.1rem;
+  }
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .irrigation-volume-calculator {
+    padding: 1rem;
+  }
+
+  .calculator-header {
+    .header-title {
+      font-size: 1.5rem;
+    }
+  }
+
+  .presets-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+
+    .btn-calculate {
+      width: 100%;
+    }
+  }
+}

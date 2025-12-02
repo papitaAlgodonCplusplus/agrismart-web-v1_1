@@ -65,7 +65,12 @@
       "Bash(dotnet ef migrations add:*)",
       "Bash(repo_changes.txt)",
       "Bash(build_result.txt)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(ng generate component:*)",
+      "Bash(cat:*)",
+      "Bash(del PART2_substrate_html.txt PART3_substrate_html.txt)",
+      "Bash(echo:*)",
+      "Bash(del \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\AGGREGATION_TAB.txt\")"
     ],
     "deny": [],
     "ask": []

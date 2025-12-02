@@ -1,16 +1,25 @@
 // src/app/features/dashboard/process-kpis/process-kpis.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { Chart } from 'chart.js';
 
 // Services
 import { KPIOrchestatorService, DailyKPIOutput, KPICalculationInput } from '../services/calculations/kpi-orchestrator.service';
 import { CropService } from '../crops/services/crop.service';
 import { DeviceService } from '../devices/services/device.service';
 import { IrrigationSectorService } from '../services/irrigation-sector.service';
- 
+import { KpiAggregatorService } from './services/kpi-aggregator.service';
+import { GrowthStageCalculatorService } from './services/growth-stage-calculator.service';
+
+// Models
+import {
+  AggregationDataset,
+  AggregationChartConfig
+} from './models/aggregation.models';
+
 @Component({
   selector: 'app-process-kpis',
   standalone: true,
@@ -35,7 +44,20 @@ export class ProcessKPIsComponent implements OnInit, OnDestroy {
   isCalculating = false;
   error: string | null = null;
   showDetailModal = false;
-  activeTab: 'overview' | 'climate' | 'irrigation' | 'crop' | 'events' | 'planning' = 'overview';
+  activeTab: 'overview' | 'climate' | 'irrigation' | 'crop' | 'events' | 'planning' | 'aggregation' = 'overview';
+
+  // Aggregation properties
+  weeklyAggregation: AggregationDataset | null = null;
+  stageAggregation: AggregationDataset | null = null;
+  aggregationChartConfig!: AggregationChartConfig;
+  currentAggregationView: 'weekly' | 'stage' = 'weekly';
+  plantingDate: Date = new Date();
+
+  // Chart references
+  @ViewChild('weeklyChart', { static: false }) weeklyChartCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('stageChart', { static: false }) stageChartCanvas!: ElementRef<HTMLCanvasElement>;
+  private weeklyChart: Chart | null = null;
+  private stageChart: Chart | null = null;
 
   // Demo data for event detection and planning
   demoIrrigationEvents: any[] = [];
@@ -68,12 +90,15 @@ export class ProcessKPIsComponent implements OnInit, OnDestroy {
     private kpiOrchestrator: KPIOrchestatorService,
     private cropService: CropService,
     private deviceService: DeviceService,
-    private irrigationService: IrrigationSectorService
+    private irrigationService: IrrigationSectorService,
+    private kpiAggregator: KpiAggregatorService,
+    private growthStageService: GrowthStageCalculatorService
   ) {
     this.initializeForm();
+    this.aggregationChartConfig = this.kpiAggregator.getDefaultChartConfig();
   }
 
-  goToDashboard (): void {
+  goToDashboard(): void {
     window.location.href = '/dashboard';
   }
 
@@ -255,15 +280,18 @@ export class ProcessKPIsComponent implements OnInit, OnDestroy {
         cropProductionId: formValue.cropProductionId,
         startDate: new Date(formValue.startDate),
         endDate: new Date(formValue.endDate),
-        deviceIds: formValue.deviceIds && formValue.deviceIds.length > 0 
-          ? formValue.deviceIds 
+        deviceIds: formValue.deviceIds && formValue.deviceIds.length > 0
+          ? formValue.deviceIds
           : undefined
       };
 
       this.kpiData = await this.kpiOrchestrator.calculateKPIs(input);
-      
+
       if (this.kpiData.length === 0) {
         this.error = 'No se encontraron datos para el período seleccionado';
+      } else {
+        // Calculate aggregations after KPIs are loaded
+        this.calculateAggregations();
       }
 
     } catch (error: any) {
@@ -514,6 +542,21 @@ export class ProcessKPIsComponent implements OnInit, OnDestroy {
       default: return 0;
     }
   }
+  
+  // Helper methods for template usage (avoids arrow functions in templates which Angular disallows)
+  getWeeklyTotalEvents(weeklyAggregation: any): number {
+    if (!weeklyAggregation || !Array.isArray(weeklyAggregation.periods)) {
+      return 0;
+    }
+    return weeklyAggregation.periods.reduce((acc: number, p: any) => acc + (p?.irrigation?.numberOfEvents || 0), 0);
+  }
+
+  getWeeklyTotalDays(weeklyAggregation: any): number {
+    if (!weeklyAggregation || !Array.isArray(weeklyAggregation.periods)) {
+      return 0;
+    }
+    return weeklyAggregation.periods.reduce((acc: number, p: any) => acc + (p?.daysInPeriod || 0), 0);
+  }
 
   // CROP PRODUCTION FUNCTIONS (7/7) - BATCH 1: 4, BATCH 2: 3
   // ============================================================================
@@ -740,7 +783,7 @@ export class ProcessKPIsComponent implements OnInit, OnDestroy {
     const delta = this.getSolarInclination(date);
     const ws = this.getSolarSunsetAngle(date, latitudeRadians);
     return ws * Math.sin(latitudeRadians) * Math.sin(delta) +
-           Math.cos(latitudeRadians) * Math.cos(delta) * Math.sin(ws);
+      Math.cos(latitudeRadians) * Math.cos(delta) * Math.sin(ws);
   }
 
   /**
@@ -1674,5 +1717,251 @@ export class ProcessKPIsComponent implements OnInit, OnDestroy {
     }
 
     return result;
+  }
+
+  // ==========================================================================
+  // AGGREGATION METHODS (Task 1.4)
+  // ==========================================================================
+
+  /**
+   * Calculate aggregations for weekly and growth stage views
+   */
+  calculateAggregations(): void {
+    if (this.kpiData.length === 0) {
+      console.warn('No KPI data available for aggregation');
+      return;
+    }
+
+    // Get planting date from first KPI or estimate
+    this.plantingDate = this.estimatePlantingDate();
+
+    // Calculate weekly aggregation
+    this.weeklyAggregation = this.kpiAggregator.aggregateByWeek(
+      this.kpiData,
+      this.plantingDate
+    );
+
+    // Calculate growth stage aggregation
+    this.stageAggregation = this.kpiAggregator.aggregateByGrowthStage(
+      this.kpiData,
+      this.plantingDate
+    );
+
+    console.log('Weekly aggregation:', this.weeklyAggregation);
+    console.log('Stage aggregation:', this.stageAggregation);
+
+    // Render charts
+    this.renderAggregationCharts();
+  }
+
+  /**
+   * Estimate planting date from data
+   */
+  private estimatePlantingDate(): Date {
+    if (this.kpiData.length === 0) return new Date();
+
+    // Assume first KPI date is approximately 14 days after planting
+    const firstKPIDate = this.kpiData[0].date;
+    const estimatedPlanting = new Date(firstKPIDate);
+    estimatedPlanting.setDate(estimatedPlanting.getDate() - 14);
+
+    return estimatedPlanting;
+  }
+
+  /**
+   * Render aggregation charts
+   */
+  renderAggregationCharts(): void {
+    // Destroy existing charts
+    if (this.weeklyChart) {
+      this.weeklyChart.destroy();
+      this.weeklyChart = null;
+    }
+    if (this.stageChart) {
+      this.stageChart.destroy();
+      this.stageChart = null;
+    }
+
+    // Wait for canvases to be available
+    setTimeout(() => {
+      if (this.weeklyAggregation && this.weeklyChartCanvas) {
+        this.renderWeeklyChart();
+      }
+      if (this.stageAggregation && this.stageChartCanvas) {
+        this.renderStageChart();
+      }
+    }, 100);
+  }
+
+  /**
+   * Render weekly aggregation chart
+   */
+  private renderWeeklyChart(): void {
+    if (!this.weeklyAggregation || !this.weeklyChartCanvas) return;
+
+    const ctx = this.weeklyChartCanvas.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    const data = this.weeklyAggregation;
+    const labels = data.periods.map(p => p.periodLabel);
+
+    this.weeklyChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Riego (L/m²)',
+            data: data.periods.map(p => p.irrigation.totalVolumePerM2),
+            backgroundColor: this.aggregationChartConfig.colors.irrigation,
+            borderColor: this.aggregationChartConfig.colors.irrigation,
+            borderWidth: 2
+          },
+          {
+            label: 'Drenaje (L/m²)',
+            data: data.periods.map(p => p.drainage.totalVolumePerM2),
+            backgroundColor: this.aggregationChartConfig.colors.drainage,
+            borderColor: this.aggregationChartConfig.colors.drainage,
+            borderWidth: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Riego y Drenaje Acumulado por Semana',
+            font: { size: 18, weight: 'bold' }
+          },
+          legend: {
+            display: true,
+            position: 'top'
+          },
+          tooltip: {
+            callbacks: {
+              footer: (items) => {
+                const index = items[0].dataIndex;
+                const period = data.periods[index];
+                return `Eventos: ${period.irrigation.numberOfEvents}\nDrenaje: ${period.drainage.averageDrainPercentage.toFixed(1)}%`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Semana',
+              font: { size: 14, weight: 'bold' }
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Volumen (L/m²)',
+              font: { size: 14, weight: 'bold' }
+            },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Render growth stage aggregation chart
+   */
+  private renderStageChart(): void {
+    if (!this.stageAggregation || !this.stageChartCanvas) return;
+
+    const ctx = this.stageChartCanvas.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    const data = this.stageAggregation;
+    const labels = data.periods.map(p => p.periodLabel);
+    const colors = data.periods.map(p => p.growthStage?.color || '#6c757d');
+
+    this.stageChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Riego Total (L)',
+            data: data.periods.map(p => p.irrigation.totalVolume),
+            backgroundColor: colors.map(c => c + 'CC'),
+            borderColor: colors,
+            borderWidth: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Riego Acumulado por Etapa de Crecimiento',
+            font: { size: 18, weight: 'bold' }
+          },
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              footer: (items) => {
+                const index = items[0].dataIndex;
+                const period = data.periods[index];
+                return `Días: ${period.daysInPeriod}\nPromedio diario: ${period.irrigation.averageDailyVolume.toFixed(1)} L\nEventos: ${period.irrigation.numberOfEvents}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Etapa de Crecimiento',
+              font: { size: 14, weight: 'bold' }
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Volumen Total (L)',
+              font: { size: 14, weight: 'bold' }
+            },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Switch aggregation view
+   */
+  switchAggregationView(view: 'weekly' | 'stage'): void {
+    this.currentAggregationView = view;
+  }
+
+  /**
+   * Toggle chart data series
+   */
+  toggleChartSeries(series: 'irrigation' | 'drainage' | 'et'): void {
+    switch (series) {
+      case 'irrigation':
+        this.aggregationChartConfig.showIrrigation = !this.aggregationChartConfig.showIrrigation;
+        break;
+      case 'drainage':
+        this.aggregationChartConfig.showDrainage = !this.aggregationChartConfig.showDrainage;
+        break;
+      case 'et':
+        this.aggregationChartConfig.showET = !this.aggregationChartConfig.showET;
+        break;
+    }
+    this.renderAggregationCharts();
   }
 }

@@ -1,0 +1,405 @@
+<!-- ============================================================================
+     IRRIGATION VOLUME CALCULATOR COMPONENT TEMPLATE - PART 1
+     ============================================================================ -->
+
+<div class="irrigation-volume-calculator">
+
+  <!-- ==================== HEADER ==================== -->
+  <div class="calculator-header">
+    <div class="header-content">
+      <h3 class="header-title">
+        <i class="bi bi-calculator"></i>
+        Calculadora de Volumen de Riego
+      </h3>
+      <p class="header-subtitle">
+        Determine el volumen óptimo de riego basado en el agotamiento del agua disponible
+      </p>
+    </div>
+  </div>
+
+  <!-- ==================== NO SUBSTRATE CURVE WARNING ==================== -->
+  <div class="alert alert-warning" *ngIf="!substrateCurve">
+    <i class="bi bi-exclamation-triangle"></i>
+    <strong>Curva de sustrato no disponible.</strong>
+    Por favor seleccione un medio de cultivo y contenedor primero.
+  </div>
+
+  <!-- ==================== MAIN CALCULATOR (when substrate curve available) ==================== -->
+  <div class="calculator-main" *ngIf="substrateCurve">
+
+    <!-- ==================== QUICK PRESETS ==================== -->
+    <div class="presets-section">
+      <h5 class="section-title">
+        <i class="bi bi-lightning"></i>
+        Estrategias Rápidas
+      </h5>
+      <div class="presets-grid">
+        <div
+          *ngFor="let preset of presets"
+          class="preset-card"
+          [class.active]="selectedPresetId === preset.id"
+          (click)="applyPreset(preset)">
+          <div class="preset-icon">
+            <i class="bi {{ preset.icon }}"></i>
+          </div>
+          <div class="preset-content">
+            <h6 class="preset-name">{{ preset.name }}</h6>
+            <p class="preset-description">{{ preset.description }}</p>
+            <div class="preset-values">
+              <span class="value-badge">{{ preset.depletionPercentage }}% agotamiento</span>
+              <span class="value-badge">{{ preset.drainPercentage }}% drenaje</span>
+            </div>
+            <div class="preset-suitable">
+              <small>
+                <i class="bi bi-check-circle"></i>
+                {{ preset.suitableFor.join(' • ') }}
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ==================== MANUAL CONFIGURATION - PART 2 ==================== -->
+    <form [formGroup]="calculatorForm" class="calculator-form">
+
+      <!-- DEPLETION SLIDER (Primary Control) -->
+      <div class="form-section depletion-slider-section">
+        <div class="slider-header">
+          <label class="form-label">
+            <i class="bi bi-sliders"></i>
+            Porcentaje de Agotamiento
+          </label>
+          <div class="current-value" [style.color]="depletionColor">
+            <span class="value-number">{{ currentDepletionValue }}</span>
+            <span class="value-unit">%</span>
+          </div>
+        </div>
+
+        <!-- Visual Zones Background -->
+        <div class="zones-background">
+          <div class="zone zone-optimal" [style.width.%]="40"></div>
+          <div class="zone zone-acceptable" [style.width.%]="20"></div>
+          <div class="zone zone-caution" [style.width.%]="20"></div>
+          <div class="zone zone-critical" [style.width.%]="20"></div>
+        </div>
+
+        <!-- Slider Input -->
+        <input
+          type="range"
+          class="form-range depletion-slider"
+          formControlName="depletionPercentage"
+          [min]="config.minDepletionPercentage"
+          [max]="config.maxDepletionPercentage"
+          [value]="currentDepletionValue"
+          (input)="onDepletionSliderChange($event)"
+          (change)="onDepletionSliderRelease()"
+          [style.--slider-color]="depletionColor">
+
+        <!-- Zone Labels -->
+        <div class="zone-labels">
+          <span class="zone-label optimal">Óptimo<br>0-40%</span>
+          <span class="zone-label acceptable">Aceptable<br>40-60%</span>
+          <span class="zone-label caution">Precaución<br>60-80%</span>
+          <span class="zone-label critical">Crítico<br>80-100%</span>
+        </div>
+
+        <!-- Current Zone Indicator -->
+        <div class="current-zone-indicator" *ngIf="calculationResult">
+          <span
+            class="zone-badge"
+            [ngClass]="getZoneClass(calculationResult.recommendationLevel)">
+            <i class="bi bi-circle-fill"></i>
+            {{ calculationResult.recommendationLevel === 'optimal' ? 'Óptimo' :
+               calculationResult.recommendationLevel === 'acceptable' ? 'Aceptable' :
+               calculationResult.recommendationLevel === 'caution' ? 'Precaución' : 'Crítico' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- DRAIN PERCENTAGE -->
+      <div class="form-section">
+        <label class="form-label">
+          <i class="bi bi-funnel"></i>
+          Porcentaje de Drenaje Objetivo
+          <i
+            class="bi bi-question-circle-fill text-muted ms-2"
+            title="Agua que debe drenar para lixiviar sales. Típicamente 15-25%"></i>
+        </label>
+        <div class="input-group">
+          <input
+            type="number"
+            class="form-control"
+            formControlName="drainPercentage"
+            min="0"
+            max="50"
+            step="5"
+            (change)="calculate()">
+          <span class="input-group-text">%</span>
+        </div>
+      </div>
+
+      <!-- ADVANCED OPTIONS TOGGLE -->
+      <div class="advanced-toggle">
+        <button
+          type="button"
+          class="btn btn-link"
+          (click)="toggleAdvancedOptions()">
+          <i class="bi" [ngClass]="showAdvancedOptions ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+          {{ showAdvancedOptions ? 'Ocultar' : 'Mostrar' }} Opciones Avanzadas
+        </button>
+      </div>
+
+      <!-- ADVANCED OPTIONS -->
+      <div class="advanced-options" *ngIf="showAdvancedOptions">
+        <div class="row g-3">
+
+          <!-- Number of Containers -->
+          <div class="col-md-6">
+            <label class="form-label">
+              <i class="bi bi-box"></i>
+              Número de Contenedores
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="numberOfContainers"
+              min="1"
+              (change)="calculate()">
+          </div>
+
+          <!-- Containers per Plant -->
+          <div class="col-md-6">
+            <label class="form-label">
+              <i class="bi bi-diagram-3"></i>
+              Contenedores por Planta
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="containersPerPlant"
+              min="1"
+              (change)="calculate()">
+          </div>
+
+          <!-- Total Area -->
+          <div class="col-md-6">
+            <label class="form-label">
+              <i class="bi bi-bounding-box"></i>
+              Área Total (m²)
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="totalArea"
+              min="1"
+              step="0.1"
+              (change)="calculate()">
+          </div>
+
+          <!-- Plant Density -->
+          <div class="col-md-6">
+            <label class="form-label">
+              <i class="bi bi-grid"></i>
+              Densidad de Plantas (plantas/m²)
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="plantDensity"
+              min="0.1"
+              step="0.1"
+              (change)="calculate()">
+          </div>
+
+          <!-- System Flow Rate -->
+          <div class="col-md-6">
+            <label class="form-label">
+              <i class="bi bi-water"></i>
+              Caudal del Sistema (L/min)
+              <i
+                class="bi bi-question-circle-fill text-muted ms-2"
+                title="Flujo de agua total disponible. Usado para calcular duración."></i>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="systemFlowRate"
+              min="0.1"
+              step="0.1"
+              (change)="calculate()">
+          </div>
+
+          <!-- Number of Valves -->
+          <div class="col-md-6">
+            <label class="form-label">
+              <i class="bi bi-diagram-2"></i>
+              Número de Válvulas Simultáneas
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="numberOfValves"
+              min="1"
+              (change)="calculate()">
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-primary btn-calculate"
+          (click)="calculate()"
+          [disabled]="calculatorForm.invalid || !substrateCurve">
+          <i class="bi bi-calculator"></i>
+          Calcular Volumen
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="resetToDefaults()">
+          <i class="bi bi-arrow-counterclockwise"></i>
+          Restablecer
+        </button>
+      </div>
+
+    </form>
+    <!-- ==================== CALCULATION RESULTS - PART 3 ==================== -->
+    <div class="results-section" *ngIf="calculationResult && !isCalculating">
+
+      <!-- RECOMMENDATION ALERT -->
+      <div
+        class="alert recommendation-alert"
+        [ngClass]="{
+          'alert-success': calculationResult.recommendationLevel === 'optimal',
+          'alert-warning': calculationResult.recommendationLevel === 'acceptable',
+          'alert-orange': calculationResult.recommendationLevel === 'caution',
+          'alert-danger': calculationResult.recommendationLevel === 'critical'
+        }">
+        <div class="alert-icon">
+          <i class="bi" [ngClass]="{
+            'bi-check-circle-fill': calculationResult.recommendationLevel === 'optimal',
+            'bi-exclamation-circle-fill': calculationResult.recommendationLevel === 'acceptable',
+            'bi-exclamation-triangle-fill': calculationResult.recommendationLevel === 'caution',
+            'bi-x-circle-fill': calculationResult.recommendationLevel === 'critical'
+          }"></i>
+        </div>
+        <div class="alert-content">
+          <h5 class="alert-heading">{{ calculationResult.recommendation }}</h5>
+          <ul class="reasoning-list">
+            <li *ngFor="let reason of calculationResult.reasoning">{{ reason }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- RESULTS CARDS -->
+      <div class="results-grid">
+
+        <!-- Per Container Card -->
+        <div class="result-card">
+          <div class="card-icon">
+            <i class="bi bi-box text-primary"></i>
+          </div>
+          <div class="card-content">
+            <h6 class="card-title">Por Contenedor</h6>
+            <div class="card-value">
+              {{ formatVolume(calculationResult.volumeWithDrainPerContainer) }}
+            </div>
+            <div class="card-details">
+              <small>
+                Agua consumida: {{ formatVolume(calculationResult.waterDepletedPerContainer) }}<br>
+                + Drenaje: {{ formatVolume(calculationResult.volumeWithDrainPerContainer - calculationResult.volumeNeededPerContainer) }}
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total System Card -->
+        <div class="result-card primary-card">
+          <div class="card-icon">
+            <i class="bi bi-droplet-fill text-primary"></i>
+          </div>
+          <div class="card-content">
+            <h6 class="card-title">Volumen Total del Sistema</h6>
+            <div class="card-value large">
+              {{ formatVolume(calculationResult.totalVolumeWithDrain) }}
+            </div>
+            <div class="card-details">
+              <small>
+                {{ calculatorForm.value.numberOfContainers }} contenedores ×
+                {{ formatVolume(calculationResult.volumeWithDrainPerContainer) }}
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Per Area Card -->
+        <div class="result-card">
+          <div class="card-icon">
+            <i class="bi bi-grid text-success"></i>
+          </div>
+          <div class="card-content">
+            <h6 class="card-title">Por Área</h6>
+            <div class="card-value">
+              {{ calculationResult.volumePerSquareMeter | number:'1.2-2' }} L/m²
+            </div>
+            <div class="card-details">
+              <small>
+                Tasa de precipitación: {{ calculationResult.precipitationRate | number:'1.2-2' }} mm
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Duration Card (if available) -->
+        <div class="result-card" *ngIf="calculationResult.durationMinutes">
+          <div class="card-icon">
+            <i class="bi bi-clock text-info"></i>
+          </div>
+          <div class="card-content">
+            <h6 class="card-title">Duración Estimada</h6>
+            <div class="card-value">
+              {{ formatDuration(calculationResult.durationMinutes) }}
+            </div>
+            <div class="card-details">
+              <small>
+                Caudal: {{ calculatorForm.value.systemFlowRate }} L/min ×
+                {{ calculatorForm.value.numberOfValves }} válvula(s)
+              </small>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- APPLY IRRIGATION BUTTON -->
+      <div class="apply-section">
+        <button
+          type="button"
+          class="btn btn-lg btn-success btn-apply"
+          (click)="applyIrrigationNow()">
+          <i class="bi bi-play-circle-fill"></i>
+          Aplicar Riego Ahora
+          <span class="volume-badge">{{ formatVolume(calculationResult.totalVolumeWithDrain) }}</span>
+        </button>
+        <p class="apply-note">
+          <i class="bi bi-info-circle"></i>
+          Esta acción programará un evento de riego con el volumen calculado
+        </p>
+      </div>
+
+    </div>
+
+    <!-- ==================== LOADING STATE ==================== -->
+    <div class="loading-state" *ngIf="isCalculating">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Calculando...</span>
+      </div>
+      <p class="loading-text">Calculando volumen óptimo...</p>
+    </div>
+
+  </div>
+
+</div>

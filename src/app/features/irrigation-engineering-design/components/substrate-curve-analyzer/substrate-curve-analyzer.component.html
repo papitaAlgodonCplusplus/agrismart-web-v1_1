@@ -1,0 +1,445 @@
+<!-- ============================================================================
+     SUBSTRATE CURVE ANALYZER COMPONENT TEMPLATE - PART 1
+     ============================================================================ -->
+
+<div class="substrate-curve-analyzer">
+
+  <!-- ==================== HEADER ==================== -->
+  <div class="analyzer-header">
+    <div class="header-content">
+      <h3 class="header-title">
+        <i class="bi bi-graph-up"></i>
+        Análisis de Curva de Liberación de Sustrato
+      </h3>
+      <p class="header-subtitle">
+        Visualice las características de retención de agua del medio de cultivo
+      </p>
+    </div>
+  </div>
+
+  <!-- ==================== SUBSTRATE SELECTOR ==================== -->
+  <div class="selector-section" *ngIf="showSelector">
+    <form [formGroup]="selectionForm" class="selection-form">
+      <div class="row g-3">
+
+        <!-- Growing Medium Selector -->
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="bi bi-flower1 text-success"></i>
+              Medio de Cultivo
+            </label>
+            <select
+              formControlName="growingMediumId"
+              class="form-select"
+              (change)="onGrowingMediumChange()"
+              [class.is-invalid]="selectionForm.get('growingMediumId')?.invalid && selectionForm.get('growingMediumId')?.touched">
+              <option [value]="null" disabled>Seleccione medio de cultivo</option>
+              <option *ngFor="let medium of growingMedia" [value]="medium.id">
+                {{ medium.name }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="selectionForm.get('growingMediumId')?.invalid">
+              Por favor seleccione un medio de cultivo
+            </div>
+
+            <!-- Quick info about selected medium -->
+            <div class="medium-info" *ngIf="selectedGrowingMedium">
+              <small class="text-muted">
+                <i class="bi bi-info-circle"></i>
+                ATD: {{ selectedGrowingMedium.totalAvailableWaterPercentage }}% |
+                CC: {{ selectedGrowingMedium.containerCapacityPercentage }}%
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Container Selector -->
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="bi bi-box text-primary"></i>
+              Contenedor
+            </label>
+            <select
+              formControlName="containerId"
+              class="form-select"
+              [class.is-invalid]="selectionForm.get('containerId')?.invalid && selectionForm.get('containerId')?.touched">
+              <option [value]="null" disabled>Seleccione contenedor</option>
+              <option *ngFor="let container of containers" [value]="container.id">
+                {{ container.name }} ({{ container.volume }}L)
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="selectionForm.get('containerId')?.invalid">
+              Por favor seleccione un contenedor
+            </div>
+
+            <!-- Quick info about selected container -->
+            <div class="container-info" *ngIf="selectedContainer">
+              <small class="text-muted">
+                <i class="bi bi-info-circle"></i>
+                Volumen: {{ selectedContainer.volume }}L |
+                Dimensiones: {{ selectedContainer.height }}×{{ selectedContainer.width }}×{{ selectedContainer.length }}cm
+              </small>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Generate Button -->
+      <div class="row mt-3">
+        <div class="col-12">
+          <button
+            type="button"
+            class="btn btn-primary btn-generate"
+            (click)="generateCurve()"
+            [disabled]="selectionForm.invalid || isLoading">
+            <i class="bi" [ngClass]="isLoading ? 'bi-hourglass-split' : 'bi-graph-up-arrow'"></i>
+            {{ isLoading ? 'Generando...' : 'Generar Curva' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ==================== ERROR MESSAGE ==================== -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-triangle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- ==================== LOADING STATE ==================== -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="loading-text">Generando curva de liberación...</p>
+  </div>
+  <!-- ==================== CURVE VISUALIZATION - PART 2 ==================== -->
+  <div class="curve-visualization" *ngIf="currentCurve && !isLoading">
+
+    <!-- Chart Controls -->
+    <div class="chart-controls">
+      <div class="control-group">
+        <label class="control-label">Opciones de Visualización:</label>
+        <div class="btn-group btn-group-sm" role="group">
+          <button
+            type="button"
+            class="btn"
+            [class.btn-primary]="chartConfig.showAirContent"
+            [class.btn-outline-primary]="!chartConfig.showAirContent"
+            (click)="toggleAirContent()"
+            title="Mostrar/ocultar contenido de aire">
+            <i class="bi bi-wind"></i>
+            Aire
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [class.btn-success]="chartConfig.showWaterZones"
+            [class.btn-outline-success]="!chartConfig.showWaterZones"
+            (click)="toggleWaterZones()"
+            title="Mostrar/ocultar zonas de agua">
+            <i class="bi bi-droplet-fill"></i>
+            Zonas
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [class.btn-info]="chartConfig.showCharacteristicPoints"
+            [class.btn-outline-info]="!chartConfig.showCharacteristicPoints"
+            (click)="toggleCharacteristicPoints()"
+            title="Mostrar/ocultar puntos característicos">
+            <i class="bi bi-bullseye"></i>
+            Puntos
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="exportChartAsImage()"
+            title="Exportar gráfico como imagen">
+            <i class="bi bi-download"></i>
+            Exportar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Canvas -->
+    <div class="chart-container">
+      <canvas #curveCanvas></canvas>
+    </div>
+
+    <!-- ==================== WATER ZONES INFO CARDS ==================== -->
+    <div class="water-zones-info">
+      <div class="row g-3">
+
+        <!-- Total Available Water Card -->
+        <div class="col-md-4">
+          <div class="info-card total-water-card">
+            <div class="info-card-icon">
+              <i class="bi bi-droplet-fill"></i>
+            </div>
+            <div class="info-card-content">
+              <h6 class="info-card-title">Agua Total Disponible</h6>
+              <div class="info-card-value">
+                <span class="value-number">{{ currentCurve.waterZones.totalAvailableWater | number:'1.1-1' }}</span>
+                <span class="value-unit">%</span>
+              </div>
+              <div class="info-card-secondary" *ngIf="waterVolumes">
+                <span class="value-number">{{ waterVolumes.totalAvailableWaterLiters | number:'1.2-2' }}</span>
+                <span class="value-unit">L</span>
+              </div>
+              <p class="info-card-description">
+                Agua entre capacidad de contenedor (1 kPa) y punto de marchitez permanente
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Easily Available Water Card -->
+        <div class="col-md-4">
+          <div class="info-card easily-available-card">
+            <div class="info-card-icon">
+              <i class="bi bi-droplet-half"></i>
+            </div>
+            <div class="info-card-content">
+              <h6 class="info-card-title">Agua Fácilmente Disponible</h6>
+              <div class="info-card-value">
+                <span class="value-number">{{ currentCurve.waterZones.easilyAvailableWater | number:'1.1-1' }}</span>
+                <span class="value-unit">%</span>
+              </div>
+              <div class="info-card-secondary" *ngIf="waterVolumes">
+                <span class="value-number">{{ waterVolumes.easilyAvailableWaterLiters | number:'1.2-2' }}</span>
+                <span class="value-unit">L</span>
+              </div>
+              <p class="info-card-description">
+                Agua disponible sin estrés (1-5 kPa) - Rango óptimo de riego
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reserve Water Card -->
+        <div class="col-md-4">
+          <div class="info-card reserve-water-card">
+            <div class="info-card-icon">
+              <i class="bi bi-droplet"></i>
+            </div>
+            <div class="info-card-content">
+              <h6 class="info-card-title">Agua de Reserva</h6>
+              <div class="info-card-value">
+                <span class="value-number">{{ currentCurve.waterZones.reserveWater | number:'1.1-1' }}</span>
+                <span class="value-unit">%</span>
+              </div>
+              <div class="info-card-secondary" *ngIf="waterVolumes">
+                <span class="value-number">{{ waterVolumes.reserveWaterLiters | number:'1.2-2' }}</span>
+                <span class="value-unit">L</span>
+              </div>
+              <p class="info-card-description">
+                Agua de emergencia (5-10 kPa) - Evitar alcanzar este nivel
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- ==================== CHARACTERISTIC POINTS TABLE - PART 3 ==================== -->
+    <div class="characteristic-points-section">
+      <h5 class="section-title">
+        <i class="bi bi-table"></i>
+        Puntos Característicos de la Curva
+      </h5>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Potencial Mátrico (kPa)</th>
+              <th>Contenido de Agua (%)</th>
+              <th>Contenido de Aire (%)</th>
+              <th>Descripción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="point-saturated">
+              <td>{{ currentCurve.characteristicPoints.saturated.matricPotential }}</td>
+              <td>{{ currentCurve.characteristicPoints.saturated.volumetricWaterContent | number:'1.1-1' }}</td>
+              <td>{{ currentCurve.characteristicPoints.saturated.airContent | number:'1.1-1' }}</td>
+              <td>
+                <span class="badge bg-dark">Saturado</span>
+                Máxima capacidad de retención
+              </td>
+            </tr>
+            <tr class="point-container-capacity">
+              <td>{{ currentCurve.characteristicPoints.containerCapacity.matricPotential }}</td>
+              <td><strong>{{ currentCurve.characteristicPoints.containerCapacity.volumetricWaterContent | number:'1.1-1' }}</strong></td>
+              <td>{{ currentCurve.characteristicPoints.containerCapacity.airContent | number:'1.1-1' }}</td>
+              <td>
+                <span class="badge bg-primary">Capacidad de Contenedor</span>
+                Balance óptimo aire/agua
+              </td>
+            </tr>
+            <tr class="point-five-kpa">
+              <td>{{ currentCurve.characteristicPoints.fiveKpa.matricPotential }}</td>
+              <td>{{ currentCurve.characteristicPoints.fiveKpa.volumetricWaterContent | number:'1.1-1' }}</td>
+              <td>{{ currentCurve.characteristicPoints.fiveKpa.airContent | number:'1.1-1' }}</td>
+              <td>
+                <span class="badge bg-success">5 kPa</span>
+                Límite de agua fácilmente disponible
+              </td>
+            </tr>
+            <tr class="point-ten-kpa">
+              <td>{{ currentCurve.characteristicPoints.tenKpa.matricPotential }}</td>
+              <td>{{ currentCurve.characteristicPoints.tenKpa.volumetricWaterContent | number:'1.1-1' }}</td>
+              <td>{{ currentCurve.characteristicPoints.tenKpa.airContent | number:'1.1-1' }}</td>
+              <td>
+                <span class="badge bg-warning">10 kPa</span>
+                Inicio de estrés hídrico
+              </td>
+            </tr>
+            <tr class="point-pwp" *ngIf="currentCurve.characteristicPoints.permanentWiltingPoint">
+              <td>{{ currentCurve.characteristicPoints.permanentWiltingPoint.matricPotential }}</td>
+              <td>{{ currentCurve.characteristicPoints.permanentWiltingPoint.volumetricWaterContent | number:'1.1-1' }}</td>
+              <td>{{ currentCurve.characteristicPoints.permanentWiltingPoint.airContent | number:'1.1-1' }}</td>
+              <td>
+                <span class="badge bg-danger">Punto de Marchitez Permanente</span>
+                Agua no disponible para la planta
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ==================== INTERPRETATION GUIDE ==================== -->
+    <div class="interpretation-guide">
+      <h5 class="section-title">
+        <i class="bi bi-lightbulb"></i>
+        Guía de Interpretación
+      </h5>
+      <div class="guide-content">
+        <div class="row g-3">
+
+          <div class="col-md-6">
+            <div class="guide-card">
+              <h6 class="guide-card-title">
+                <i class="bi bi-check-circle text-success"></i>
+                Manejo Óptimo
+              </h6>
+              <ul class="guide-list">
+                <li>
+                  <strong>Regar antes de alcanzar 5 kPa:</strong>
+                  Mantener la humedad en la zona de agua fácilmente disponible (1-5 kPa)
+                </li>
+                <li>
+                  <strong>% Agotamiento ideal: 30-40%:</strong>
+                  Para un sustrato con 25% ATD, regar cuando se consuma 7.5-10% del volumen
+                </li>
+                <li>
+                  <strong>Volumen de riego:</strong>
+                  Reponer el agua consumida + 15-20% de drenaje para lixiviación
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="guide-card">
+              <h6 class="guide-card-title">
+                <i class="bi bi-exclamation-triangle text-warning"></i>
+                Situaciones a Evitar
+              </h6>
+              <ul class="guide-list">
+                <li>
+                  <strong>Sobresaturación (< 0.5 kPa):</strong>
+                  Exceso de agua, deficiencia de oxígeno en raíces
+                </li>
+                <li>
+                  <strong>Estrés hídrico (> 7 kPa):</strong>
+                  Agua difícilmente disponible, reduce crecimiento
+                </li>
+                <li>
+                  <strong>Agotamiento > 60%:</strong>
+                  Riesgo de marchitez y pérdida de producción
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Practical Example -->
+        <div class="practical-example" *ngIf="waterVolumes">
+          <h6 class="example-title">
+            <i class="bi bi-calculator"></i>
+            Ejemplo Práctico - Contenedor de {{ currentCurve.containerVolume }}L
+          </h6>
+          <div class="example-content">
+            <p>
+              <strong>Escenario:</strong> Regar con 30% de agotamiento del agua fácilmente disponible
+            </p>
+            <div class="calculation-steps">
+              <div class="step">
+                <span class="step-number">1</span>
+                <span class="step-text">
+                  Agua fácilmente disponible = {{ waterVolumes.easilyAvailableWaterLiters | number:'1.2-2' }} L
+                </span>
+              </div>
+              <div class="step">
+                <span class="step-number">2</span>
+                <span class="step-text">
+                  30% de agotamiento = {{ (waterVolumes.easilyAvailableWaterLiters * 0.3) | number:'1.2-2' }} L consumidos
+                </span>
+              </div>
+              <div class="step">
+                <span class="step-number">3</span>
+                <span class="step-text">
+                  Volumen a regar = {{ (waterVolumes.easilyAvailableWaterLiters * 0.3) | number:'1.2-2' }} L + 20% drenaje
+                  = <strong class="text-primary">{{ (waterVolumes.easilyAvailableWaterLiters * 0.3 * 1.2) | number:'1.2-2' }} L</strong>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== IRRIGATION VOLUME CALCULATOR WIDGET ==================== -->
+    <div class="irrigation-calculator-widget" *ngIf="currentCurve">
+      <div class="widget-header">
+        <h5 class="section-title">
+          <i class="bi bi-calculator-fill"></i>
+          Calculadora de Volumen de Riego
+        </h5>
+        <p class="widget-description">
+          Calcule el volumen óptimo de riego basado en el agotamiento del agua disponible de este sustrato
+        </p>
+      </div>
+      <app-irrigation-volume-calculator
+        [substrateCurve]="currentCurve"
+        [numberOfContainers]="1000"
+        [containersPerPlant]="1"
+        [totalArea]="1000"
+        [plantDensity]="2.5"
+        (volumeCalculated)="onVolumeCalculated($event)"
+        (applyIrrigation)="onApplyIrrigation($event)">
+      </app-irrigation-volume-calculator>
+    </div>
+
+  </div>
+
+  <!-- ==================== EMPTY STATE ==================== -->
+  <div class="empty-state" *ngIf="!currentCurve && !isLoading">
+    <div class="empty-state-icon">
+      <i class="bi bi-graph-up"></i>
+    </div>
+    <h4 class="empty-state-title">Sin Curva Generada</h4>
+    <p class="empty-state-text">
+      Seleccione un medio de cultivo y un contenedor, luego haga clic en "Generar Curva"
+      para visualizar las características de retención de agua.
+    </p>
+  </div>
+
+</div>

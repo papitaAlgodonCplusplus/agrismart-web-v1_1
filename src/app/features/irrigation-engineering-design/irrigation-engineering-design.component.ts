@@ -26,6 +26,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { IrrigationCalculationsService, IrrigationMetric, IrrigationMonitorResponse, IrrigationEventEntity, CropProductionEntity, MeasurementVariable, DeviceRawDataPoint } from '../services/irrigation-calculations.service';
 import { CropService } from '../../features/crops/services/crop.service';
 import { IrrigationSectorService } from '../services/irrigation-sector.service';
+import { SubstrateCurveAnalyzerComponent } from './components/substrate-curve-analyzer/substrate-curve-analyzer.component';
 
 @Component({
   selector: 'app-irrigation-engineering-design',
@@ -35,7 +36,8 @@ import { IrrigationSectorService } from '../services/irrigation-sector.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    FormsModule
+    FormsModule,
+    SubstrateCurveAnalyzerComponent
   ]
 })
 export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
@@ -43,7 +45,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   private currentUserId!: number;
 
   // ==================== UI STATE ====================
-  activeTab: 'plans' | 'entries' | 'modes' | 'history' | 'metrics' = 'plans';
+  activeTab: 'plans' | 'entries' | 'modes' | 'history' | 'metrics' | 'substrate' = 'plans';
   isLoading = false;
   isSaving = false;
 
@@ -1152,9 +1154,9 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Update existing setActiveTab to include 'metrics'
+   * Update existing setActiveTab to include 'metrics' and 'substrate'
    */
-  setActiveTab(tab: 'plans' | 'entries' | 'modes' | 'history' | 'metrics'): void {
+  setActiveTab(tab: 'plans' | 'entries' | 'modes' | 'history' | 'metrics' | 'substrate'): void {
     this.activeTab = tab as any;
     this.sortField = '';
     this.sortDirection = 'asc';
