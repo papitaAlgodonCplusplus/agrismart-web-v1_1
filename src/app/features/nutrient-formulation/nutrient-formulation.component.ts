@@ -17,6 +17,14 @@ import { NgZone } from '@angular/core';
 import { environment } from '../../../environments/environment';
 
 import { NutrientRecipeService, CreateRecipeRequest, NutrientRecipe } from '../../core/services/nutrient-recipe.service';
+import { SoilAnalysisService } from '../soil-analysis/services/soil-analysis.service';
+import { SoilFertigationCalculatorService } from './services/soil-fertigation-calculator.service';
+import { SoilAnalysisResponse } from '../soil-analysis/models/soil-analysis.models';
+import {
+  SoilFertigationInput,
+  SoilFertigationOutput,
+  AdjustedNutrientTargets
+} from './models/soil-fertigation.models';
 
 // Interfaces for the new API response
 interface CalculationResponse {
@@ -532,6 +540,21 @@ export class NutrientFormulationComponent implements OnInit {
     // Enhanced formulation results (includes Ca, Mg, pH, EC estimates)
     enhancedFormulationResults: any[] = [];
 
+    // Soil mode properties
+    formulationMode: 'hydroponics' | 'soil' = 'hydroponics';
+    soilAnalysisList: SoilAnalysisResponse[] = [];
+    selectedSoilAnalysis: SoilAnalysisResponse | null = null;
+    soilFertigationResult: SoilFertigationOutput | null = null;
+    adjustedTargets: AdjustedNutrientTargets[] = [];
+    showSoilComparison = false;
+
+    // Soil-specific form controls
+    soilIrrigationVolume = 1000;        // L per application
+    soilIrrigationsPerWeek = 3;         // Frequency
+    soilLeachingFraction = 20;          // %
+    soilApplicationEfficiency = 90;     // %
+    soilRootingDepth = 40;              // cm
+
     constructor(
         public fb: FormBuilder,
         private ngZone: NgZone,
@@ -545,7 +568,9 @@ export class NutrientFormulationComponent implements OnInit {
         public fertilizerService: FertilizerService,
         public cropService: CropService,
         public catalogService: CatalogService,
-        public apiService: ApiService
+        public apiService: ApiService,
+        private soilAnalysisService: SoilAnalysisService,
+        private soilFertigationCalc: SoilFertigationCalculatorService
     ) {
         Chart.register(...registerables);
         this.formulationForm = this.createForm();
@@ -4617,5 +4642,332 @@ export class NutrientFormulationComponent implements OnInit {
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
+    }
+
+    // ==========================================================================
+    // SOIL MODE METHODS
+    // ==========================================================================
+
+    /**
+     * Toggle between hydroponics and soil modes
+     */
+    switchFormulationMode(mode: 'hydroponics' | 'soil'): void {
+        this.formulationMode = mode;
+
+        if (mode === 'soil' && this.soilAnalysisList.length === 0) {
+            this.loadSoilAnalyses();
+        }
+
+        // Reset results when switching modes
+        this.calculationResults = null;
+        this.soilFertigationResult = null;
+    }
+
+    /**
+     * Load soil analyses for selected crop production
+     */
+    loadSoilAnalyses(): void {
+        const cropProductionId = this.formulationForm.get('cropId')?.value;
+        if (!cropProductionId) {
+            console.warn('No crop production selected');
+            return;
+        }
+
+        this.isLoading = true;
+
+        this.soilAnalysisService.getByCropProduction(cropProductionId, false)
+            .subscribe({
+                next: (analyses) => {
+                    this.soilAnalysisList = analyses;
+
+                    // Auto-select most recent analysis
+                    if (analyses.length > 0) {
+                        this.selectedSoilAnalysis = analyses[0];
+                    }
+
+                    this.isLoading = false;
+                },
+                error: (error) => {
+                    console.error('Error loading soil analyses:', error);
+                    this.errorMessage = 'Error al cargar análisis de suelo';
+                    this.isLoading = false;
+                }
+            });
+    }
+
+    /**
+     * Select soil analysis for calculations
+     */
+    onSoilAnalysisSelected(analysisId: number): void {
+        const analysis = this.soilAnalysisList.find(a => a.id === analysisId);
+        if (analysis) {
+            this.selectedSoilAnalysis = analysis;
+
+            // Recalculate if there's already a result
+            if (this.soilFertigationResult) {
+                this.calculateSoilFormulation();
+            }
+        }
+    }
+
+    /**
+     * Calculate soil-based fertigation
+     */
+    calculateSoilFormulation(): void {
+        if (!this.selectedSoilAnalysis) {
+            this.errorMessage = 'Por favor seleccione un análisis de suelo';
+            return;
+        }
+
+        if (!this.fertilizers || this.fertilizers.length === 0) {
+            this.errorMessage = 'Por favor seleccione al menos un fertilizante';
+            return;
+        }
+
+        this.isLoading = true;
+        this.errorMessage = '';
+        this.soilFertigationResult = null;
+
+        // Build input for soil calculation
+        const input: SoilFertigationInput = {
+            targetConcentrations: this.getTargetConcentrations(),
+            soilAnalysis: this.selectedSoilAnalysis,
+            waterAnalysis: this.getWaterAnalysisData(),
+            irrigationVolume: this.soilIrrigationVolume,
+            irrigationsPerWeek: this.soilIrrigationsPerWeek,
+            leachingFraction: this.soilLeachingFraction / 100,
+            applicationEfficiency: this.soilApplicationEfficiency / 100,
+            cropArea: 1000, // Default crop area
+            rootingDepth: this.soilRootingDepth,
+            fertilizers: this.fertilizers
+        };
+
+        // Step 1: Calculate adjusted targets
+        this.soilFertigationCalc.calculateSoilFertigation(input)
+            .subscribe({
+                next: (soilResult) => {
+                    this.soilFertigationResult = soilResult;
+                    this.adjustedTargets = soilResult.adjustedTargets;
+
+                    // Step 2: Call Python API with adjusted targets
+                    this.callPythonAPIWithAdjustedTargets(soilResult);
+                },
+                error: (error) => {
+                    console.error('Soil fertigation calculation error:', error);
+                    this.errorMessage = 'Error al calcular fertirriego para suelo';
+                    this.isLoading = false;
+                }
+            });
+    }
+
+    /**
+     * Call Python API with adjusted targets from soil calculation
+     */
+    private callPythonAPIWithAdjustedTargets(soilResult: SoilFertigationOutput): void {
+        // Build adjusted target concentrations
+        const adjustedConcentrations: any = {};
+        soilResult.adjustedTargets.forEach(target => {
+            adjustedConcentrations[target.nutrient] = target.adjustedTarget;
+        });
+
+        // Prepare request for Python API (similar structure to existing API calls)
+        const requestBody = {
+            fertilizers: this.mapFertilizersForAPI(this.fertilizers),
+            target_concentrations: adjustedConcentrations,
+            water_analysis: this.getWaterAnalysisData(),
+            calculation_settings: {
+                volume_liters: this.soilIrrigationVolume,
+                precision: 3,
+                units: 'mg/L',
+                leaching_fraction: this.soilLeachingFraction / 100
+            }
+        };
+
+        // Use the existing Python API endpoint
+        const apiUrl = `${environment.calculatorApi}/calculate-advanced?method=deterministic`;
+
+        // Make API call
+        this.http.post<any>(apiUrl, requestBody)
+            .subscribe({
+                next: (response) => {
+                    // Store the Python API response
+                    if (this.soilFertigationResult) {
+                        this.soilFertigationResult.fertilizerRecommendations = response;
+                    }
+
+                    this.calculationResults = response;
+                    this.isLoading = false;
+
+                    console.log('Soil fertigation calculation complete:', response);
+                },
+                error: (error) => {
+                    console.error('Python API error:', error);
+                    this.errorMessage = 'Error al calcular formulación con API de Python';
+                    this.isLoading = false;
+                }
+            });
+    }
+
+    /**
+     * Get target concentrations from selected crop phase
+     */
+    private getTargetConcentrations(): any {
+        // This should get the nutrient targets from the selected crop phase
+        // For now, using default values - should be replaced with actual crop phase requirements
+        return {
+            N: 150,
+            P: 40,
+            K: 200,
+            Ca: 180,
+            Mg: 50,
+            S: 80
+        };
+    }
+
+    /**
+     * Get water analysis data
+     */
+    private getWaterAnalysisData(): any {
+        const selectedWaterSource = this.waterSources.find(w => w.id === this.formulationForm.get('waterSourceId')?.value);
+
+        if (!selectedWaterSource) {
+            return {
+                N: 0, P: 0, K: 0, Ca: 0, Mg: 0, S: 0,
+                Fe: 0, Mn: 0, Zn: 0, Cu: 0, B: 0, Mo: 0
+            };
+        }
+
+        return {
+            N: selectedWaterSource.no3 || selectedWaterSource.nO3 || 0,
+            P: selectedWaterSource.po4 || 0,
+            K: selectedWaterSource.k || 0,
+            Ca: selectedWaterSource.ca || 0,
+            Mg: selectedWaterSource.mg || 0,
+            S: selectedWaterSource.sul || 0,
+            Fe: selectedWaterSource.fe || 0,
+            Mn: selectedWaterSource.mn || 0,
+            Zn: selectedWaterSource.zn || 0,
+            Cu: selectedWaterSource.cu || 0,
+            B: selectedWaterSource.b || 0,
+            Mo: selectedWaterSource.mo || 0
+        };
+    }
+
+    /**
+     * Map fertilizers for API
+     */
+    private mapFertilizersForAPI(fertilizers: any[]): any[] {
+        return fertilizers.map(f => ({
+            id: f.id,
+            name: f.name,
+            composition: f.composition || {}
+        }));
+    }
+
+    /**
+     * Toggle soil vs hydroponic comparison view
+     */
+    toggleSoilComparison(): void {
+        this.showSoilComparison = !this.showSoilComparison;
+    }
+
+    /**
+     * Navigate to soil analysis form to create new analysis
+     */
+    createNewSoilAnalysis(): void {
+        this.router.navigate(['/soil-analysis']);
+    }
+
+    // Helper methods for display
+
+    /**
+     * Get soil pH interpretation
+     */
+    getSoilPhInterpretation(ph: number | undefined): string {
+        if (!ph) return 'No disponible';
+
+        if (ph < 5.5) return 'Ácido (< 5.5)';
+        if (ph >= 5.5 && ph < 6.5) return 'Ligeramente ácido (5.5-6.5)';
+        if (ph >= 6.5 && ph < 7.5) return 'Neutro (6.5-7.5)';
+        if (ph >= 7.5 && ph < 8.5) return 'Ligeramente alcalino (7.5-8.5)';
+        return 'Alcalino (> 8.5)';
+    }
+
+    /**
+     * Get soil pH color class
+     */
+    getSoilPhColorClass(ph: number | undefined): string {
+        if (!ph) return 'text-muted';
+
+        if (ph < 5.5 || ph > 8.5) return 'text-danger';
+        if ((ph >= 5.5 && ph < 6.0) || (ph > 8.0 && ph <= 8.5)) return 'text-warning';
+        return 'text-success';
+    }
+
+    /**
+     * Get soil texture description
+     */
+    getSoilTextureDescription(): string {
+        if (!this.selectedSoilAnalysis) return '';
+
+        const textureInfo = this.selectedSoilAnalysis.textureInfo;
+        if (textureInfo) {
+            return textureInfo.description || textureInfo.textureClassName;
+        }
+
+        return this.selectedSoilAnalysis.textureClass || 'No especificado';
+    }
+
+    /**
+     * Format nutrient availability percentage
+     */
+    formatAvailability(factor: number): string {
+        return `${(factor * 100).toFixed(0)}%`;
+    }
+
+    /**
+     * Get availability color class
+     */
+    getAvailabilityColorClass(factor: number): string {
+        if (factor >= 0.7) return 'text-success';
+        if (factor >= 0.4) return 'text-warning';
+        return 'text-danger';
+    }
+
+    /**
+     * Calculate total nutrient reduction from soil
+     */
+    getTotalSoilContribution(): number {
+        if (!this.adjustedTargets || this.adjustedTargets.length === 0) return 0;
+
+        const totalOriginal = this.adjustedTargets.reduce((sum, t) => sum + t.originalTarget, 0);
+        const totalAdjusted = this.adjustedTargets.reduce((sum, t) => sum + t.adjustedTarget, 0);
+
+        if (totalOriginal === 0) return 0;
+
+        return ((totalOriginal - totalAdjusted) / totalOriginal) * 100;
+    }
+
+    /**
+     * Get formatted date from soil analysis
+     */
+    formatSoilAnalysisDate(analysis: SoilAnalysisResponse): string {
+        const date = new Date(analysis.sampleDate);
+        return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    /**
+     * Check if soil analysis is recent (< 6 months)
+     */
+    isSoilAnalysisRecent(analysis: SoilAnalysisResponse): boolean {
+        const analysisDate = new Date(analysis.sampleDate);
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+        return analysisDate >= sixMonthsAgo;
     }
 }

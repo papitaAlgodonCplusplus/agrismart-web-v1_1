@@ -91,6 +91,284 @@
                   {{ getRealFertilizersWithCompositions().length }} fertilizantes con composiciones
                 </div>
 
+                <!-- ==================== FORMULATION MODE SELECTOR ==================== -->
+                <div class="formulation-mode-selector mb-4">
+                  <div class="mode-selector-card">
+                    <h5 class="mode-selector-title">
+                      <i class="bi bi-sliders"></i>
+                      Tipo de Sistema de Cultivo
+                    </h5>
+                    <div class="btn-group btn-group-lg mode-toggle" role="group">
+                      <button
+                        type="button"
+                        class="btn"
+                        [class.btn-primary]="formulationMode === 'hydroponics'"
+                        [class.btn-outline-primary]="formulationMode !== 'hydroponics'"
+                        (click)="switchFormulationMode('hydroponics')">
+                        <i class="bi bi-droplet"></i>
+                        Hidroponía / Sustrato
+                      </button>
+                      <button
+                        type="button"
+                        class="btn"
+                        [class.btn-success]="formulationMode === 'soil'"
+                        [class.btn-outline-success]="formulationMode !== 'soil'"
+                        (click)="switchFormulationMode('soil')">
+                        <i class="bi bi-globe2"></i>
+                        Suelo / Fertirriego
+                      </button>
+                    </div>
+                    <p class="mode-description">
+                      <span *ngIf="formulationMode === 'hydroponics'">
+                        Solución nutritiva completa para cultivos hidropónicos o en sustrato inerte
+                      </span>
+                      <span *ngIf="formulationMode === 'soil'">
+                        Fertirriego ajustado basado en análisis de suelo y disponibilidad de nutrientes
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <!-- ==================== SOIL MODE: SOIL ANALYSIS SELECTOR ==================== -->
+                <div class="soil-analysis-section" *ngIf="formulationMode === 'soil'">
+                  <div class="section-card">
+                    <div class="section-header">
+                      <h5 class="section-title">
+                        <i class="bi bi-clipboard-data"></i>
+                        Análisis de Suelo
+                      </h5>
+                      <button
+                        class="btn btn-sm btn-outline-primary"
+                        (click)="createNewSoilAnalysis()">
+                        <i class="bi bi-plus-circle"></i>
+                        Nuevo Análisis
+                      </button>
+                    </div>
+
+                    <!-- Soil Analysis Selection -->
+                    <div class="soil-analysis-selector" *ngIf="soilAnalysisList.length > 0">
+                      <div class="row g-3">
+                        <div class="col-md-6">
+                          <label class="form-label">Seleccione Análisis de Suelo</label>
+                          <select
+                            class="form-select"
+                            [value]="selectedSoilAnalysis?.id"
+                            (change)="onSoilAnalysisSelected($any($event.target).value)">
+                            <option [value]="null" disabled>Seleccione un análisis</option>
+                            <option
+                              *ngFor="let analysis of soilAnalysisList"
+                              [value]="analysis.id">
+                              {{ formatSoilAnalysisDate(analysis) }} - {{ analysis.labName }}
+                              <span *ngIf="!isSoilAnalysisRecent(analysis)"> (Antiguo)</span>
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <!-- Selected Soil Analysis Details -->
+                      <div class="soil-analysis-details" *ngIf="selectedSoilAnalysis">
+                        <div class="analysis-summary">
+                          <div class="row g-3 mt-3">
+
+                            <!-- pH -->
+                            <div class="col-md-3">
+                              <div class="soil-param-card">
+                                <div class="param-icon" [ngClass]="getSoilPhColorClass(selectedSoilAnalysis.phSoil)">
+                                  <i class="bi bi-droplet-half"></i>
+                                </div>
+                                <div class="param-content">
+                                  <label>pH del Suelo</label>
+                                  <div class="param-value" [ngClass]="getSoilPhColorClass(selectedSoilAnalysis.phSoil)">
+                                    {{ selectedSoilAnalysis.phSoil | number:'1.1-1' }}
+                                  </div>
+                                  <small class="param-interpretation">
+                                    {{ getSoilPhInterpretation(selectedSoilAnalysis.phSoil) }}
+                                  </small>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Texture -->
+                            <div class="col-md-3">
+                              <div class="soil-param-card">
+                                <div class="param-icon text-warning">
+                                  <i class="bi bi-layers"></i>
+                                </div>
+                                <div class="param-content">
+                                  <label>Textura</label>
+                                  <div class="param-value">
+                                    {{ selectedSoilAnalysis.textureClass || 'N/A' }}
+                                  </div>
+                                  <small class="param-interpretation">
+                                    {{ getSoilTextureDescription() }}
+                                  </small>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Organic Matter -->
+                            <div class="col-md-3">
+                              <div class="soil-param-card">
+                                <div class="param-icon text-success">
+                                  <i class="bi bi-tree"></i>
+                                </div>
+                                <div class="param-content">
+                                  <label>Materia Orgánica</label>
+                                  <div class="param-value">
+                                    {{ selectedSoilAnalysis.organicMatterPercent | number:'1.1-1' }}%
+                                  </div>
+                                  <small class="param-interpretation">
+                                    <span *ngIf="(selectedSoilAnalysis.organicMatterPercent || 0) > 4">Excelente</span>
+                                    <span *ngIf="(selectedSoilAnalysis.organicMatterPercent || 0) >= 2 && (selectedSoilAnalysis.organicMatterPercent || 0) <= 4">Bueno</span>
+                                    <span *ngIf="(selectedSoilAnalysis.organicMatterPercent || 0) < 2">Bajo</span>
+                                  </small>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- CEC -->
+                            <div class="col-md-3">
+                              <div class="soil-param-card">
+                                <div class="param-icon text-info">
+                                  <i class="bi bi-battery-charging"></i>
+                                </div>
+                                <div class="param-content">
+                                  <label>CIC</label>
+                                  <div class="param-value">
+                                    {{ selectedSoilAnalysis.cationExchangeCapacity | number:'1.1-1' }}
+                                  </div>
+                                  <small class="param-interpretation">meq/100g</small>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+
+                          <!-- Nutrient Levels -->
+                          <div class="nutrient-levels-summary mt-3">
+                            <h6 class="summary-title">Niveles de Nutrientes (ppm)</h6>
+                            <div class="row g-2">
+                              <div class="col-md-2" *ngIf="selectedSoilAnalysis.totalNitrogen">
+                                <div class="nutrient-badge">
+                                  <span class="nutrient-label">N</span>
+                                  <span class="nutrient-value">{{ selectedSoilAnalysis.totalNitrogen | number:'1.0-0' }}</span>
+                                </div>
+                              </div>
+                              <div class="col-md-2" *ngIf="selectedSoilAnalysis.phosphorus">
+                                <div class="nutrient-badge">
+                                  <span class="nutrient-label">P</span>
+                                  <span class="nutrient-value">{{ selectedSoilAnalysis.phosphorus | number:'1.0-0' }}</span>
+                                </div>
+                              </div>
+                              <div class="col-md-2" *ngIf="selectedSoilAnalysis.potassium">
+                                <div class="nutrient-badge">
+                                  <span class="nutrient-label">K</span>
+                                  <span class="nutrient-value">{{ selectedSoilAnalysis.potassium | number:'1.0-0' }}</span>
+                                </div>
+                              </div>
+                              <div class="col-md-2" *ngIf="selectedSoilAnalysis.calcium">
+                                <div class="nutrient-badge">
+                                  <span class="nutrient-label">Ca</span>
+                                  <span class="nutrient-value">{{ selectedSoilAnalysis.calcium | number:'1.0-0' }}</span>
+                                </div>
+                              </div>
+                              <div class="col-md-2" *ngIf="selectedSoilAnalysis.magnesium">
+                                <div class="nutrient-badge">
+                                  <span class="nutrient-label">Mg</span>
+                                  <span class="nutrient-value">{{ selectedSoilAnalysis.magnesium | number:'1.0-0' }}</span>
+                                </div>
+                              </div>
+                              <div class="col-md-2" *ngIf="selectedSoilAnalysis.sulfur">
+                                <div class="nutrient-badge">
+                                  <span class="nutrient-label">S</span>
+                                  <span class="nutrient-value">{{ selectedSoilAnalysis.sulfur | number:'1.0-0' }}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- No Soil Analysis Available -->
+                    <div class="alert alert-warning" *ngIf="soilAnalysisList.length === 0 && !isLoading">
+                      <i class="bi bi-exclamation-triangle"></i>
+                      <strong>No hay análisis de suelo disponibles.</strong>
+                      <p class="mb-0">
+                        Para utilizar el modo de fertirriego en suelo, primero debe crear un análisis de suelo
+                        con los resultados del laboratorio.
+                      </p>
+                      <button class="btn btn-sm btn-primary mt-2" (click)="createNewSoilAnalysis()">
+                        <i class="bi bi-plus-circle"></i>
+                        Crear Análisis de Suelo
+                      </button>
+                    </div>
+
+                    <!-- Soil Irrigation Parameters -->
+                    <div class="soil-irrigation-params" *ngIf="selectedSoilAnalysis">
+                      <h6 class="params-title mt-4">
+                        <i class="bi bi-sliders"></i>
+                        Parámetros de Fertirriego
+                      </h6>
+                      <div class="row g-3">
+
+                        <div class="col-md-3">
+                          <label class="form-label">Volumen por Aplicación (L)</label>
+                          <input
+                            type="number"
+                            class="form-control"
+                            [(ngModel)]="soilIrrigationVolume"
+                            min="100"
+                            step="100">
+                        </div>
+
+                        <div class="col-md-3">
+                          <label class="form-label">Aplicaciones por Semana</label>
+                          <input
+                            type="number"
+                            class="form-control"
+                            [(ngModel)]="soilIrrigationsPerWeek"
+                            min="1"
+                            max="14"
+                            step="1">
+                        </div>
+
+                        <div class="col-md-3">
+                          <label class="form-label">
+                            Fracción de Lixiviación (%)
+                            <i class="bi bi-question-circle text-muted"
+                               title="Agua extra aplicada para lavar sales (típico: 15-25%)"></i>
+                          </label>
+                          <input
+                            type="number"
+                            class="form-control"
+                            [(ngModel)]="soilLeachingFraction"
+                            min="0"
+                            max="50"
+                            step="5">
+                        </div>
+
+                        <div class="col-md-3">
+                          <label class="form-label">
+                            Profundidad Radicular (cm)
+                            <i class="bi bi-question-circle text-muted"
+                               title="Profundidad efectiva de raíces"></i>
+                          </label>
+                          <input
+                            type="number"
+                            class="form-control"
+                            [(ngModel)]="soilRootingDepth"
+                            min="10"
+                            max="100"
+                            step="5">
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
                 <!-- Configuration Card -->
                 <div class="card">
                   <div class="card-header">
@@ -447,6 +725,92 @@
                   </div>
                 </div>
                 <!-- ==================== END LOADED RECIPE SECTION ==================== -->
+
+                <!-- ==================== SOIL MODE: ADJUSTED TARGETS DISPLAY ==================== -->
+                <div class="adjusted-targets-section" *ngIf="formulationMode === 'soil' && soilFertigationResult">
+                  <div class="section-card">
+                    <div class="section-header">
+                      <h5 class="section-title">
+                        <i class="bi bi-calculator"></i>
+                        Objetivos Ajustados para Fertirriego
+                      </h5>
+                      <span class="badge bg-success">
+                        Ahorro total: {{ getTotalSoilContribution() | number:'1.0-0' }}%
+                      </span>
+                    </div>
+
+                    <!-- Adjusted Targets Table -->
+                    <div class="table-responsive">
+                      <table class="table table-hover adjusted-targets-table">
+                        <thead>
+                          <tr>
+                            <th>Nutriente</th>
+                            <th>Objetivo Original</th>
+                            <th>Aporte del Suelo</th>
+                            <th>Aporte del Agua</th>
+                            <th>Disponibilidad</th>
+                            <th>Objetivo Ajustado</th>
+                            <th>Justificación</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let target of adjustedTargets">
+                            <td><strong>{{ target.nutrient }}</strong></td>
+                            <td>{{ target.originalTarget | number:'1.1-1' }} ppm</td>
+                            <td>
+                              <span class="badge bg-info">
+                                {{ target.soilContribution | number:'1.1-1' }} ppm
+                              </span>
+                            </td>
+                            <td>{{ target.waterContribution | number:'1.1-1' }} ppm</td>
+                            <td>
+                              <span [ngClass]="getAvailabilityColorClass(target.availabilityFactor)">
+                                {{ formatAvailability(target.availabilityFactor) }}
+                              </span>
+                            </td>
+                            <td>
+                              <strong class="text-primary">
+                                {{ target.adjustedTarget | number:'1.1-1' }} ppm
+                              </strong>
+                            </td>
+                            <td>
+                              <small class="text-muted">{{ target.reasoning }}</small>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <!-- Warnings and Recommendations -->
+                    <div class="warnings-recommendations" *ngIf="soilFertigationResult.warnings.length > 0 || soilFertigationResult.recommendations.length > 0">
+
+                      <!-- Warnings -->
+                      <div class="alert alert-warning" *ngIf="soilFertigationResult.warnings.length > 0">
+                        <h6 class="alert-heading">
+                          <i class="bi bi-exclamation-triangle"></i>
+                          Advertencias
+                        </h6>
+                        <ul class="mb-0">
+                          <li *ngFor="let warning of soilFertigationResult.warnings">{{ warning }}</li>
+                        </ul>
+                      </div>
+
+                      <!-- Recommendations -->
+                      <div class="alert alert-info" *ngIf="soilFertigationResult.recommendations.length > 0">
+                        <h6 class="alert-heading">
+                          <i class="bi bi-lightbulb"></i>
+                          Recomendaciones
+                        </h6>
+                        <ul class="mb-0">
+                          <li *ngFor="let rec of soilFertigationResult.recommendations">{{ rec }}</li>
+                        </ul>
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+
                 <!-- ==================== SIMPLE FORMULATION RESULTS ==================== -->
                 <div *ngIf="simpleFormulationResult" class="card mt-4">
                   <div class="card-header">
