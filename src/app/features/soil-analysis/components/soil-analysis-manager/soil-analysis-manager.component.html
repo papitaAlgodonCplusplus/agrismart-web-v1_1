@@ -1,0 +1,149 @@
+<div class="soil-analysis-manager">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="bi bi-clipboard-data"></i>
+        Análisis de Suelo
+      </h1>
+      <p class="page-subtitle">
+        Gestión de análisis de suelo y recomendaciones nutricionales
+      </p>
+    </div>
+    <div class="header-actions" *ngIf="activeView === 'list'">
+      <button class="btn btn-primary" (click)="onCreateNew()">
+        <i class="bi bi-plus-circle"></i>
+        Nuevo Análisis
+      </button>
+    </div>
+  </div>
+
+  <!-- NAVIGATION TABS -->
+  <div class="view-tabs">
+    <button
+      class="tab-btn"
+      [class.active]="activeView === 'list'"
+      (click)="switchView('list')">
+      <i class="bi bi-list-ul"></i>
+      Lista de Análisis
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="showForm"
+      (click)="onCreateNew()"
+      *ngIf="activeView === 'list'">
+      <i class="bi bi-file-earmark-plus"></i>
+      Nuevo
+    </button>
+  </div>
+
+  <!-- ERROR MESSAGE -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-triangle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- LOADING STATE -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-3">Cargando análisis de suelo...</p>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div *ngIf="activeView === 'list' && !isLoading" class="list-view">
+
+    <!-- EMPTY STATE -->
+    <div *ngIf="soilAnalyses.length === 0" class="empty-state">
+      <i class="bi bi-clipboard-x"></i>
+      <h3>No hay análisis de suelo registrados</h3>
+      <p>Comience agregando un nuevo análisis de laboratorio</p>
+      <button class="btn btn-primary" (click)="onCreateNew()">
+        <i class="bi bi-plus-circle"></i>
+        Crear Primer Análisis
+      </button>
+    </div>
+
+    <!-- ANALYSIS CARDS -->
+    <div *ngIf="soilAnalyses.length > 0" class="analysis-grid">
+      <div *ngFor="let analysis of soilAnalyses" class="analysis-card">
+        <div class="card-header">
+          <div class="card-date">
+            <i class="bi bi-calendar3"></i>
+            {{ analysis.sampleDate | date:'dd/MM/yyyy' }}
+          </div>
+          <div class="card-status">
+            <span class="badge bg-success" *ngIf="analysis.active">Activo</span>
+            <span class="badge bg-secondary" *ngIf="!analysis.active">Inactivo</span>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="card-info" *ngIf="analysis.labName">
+            <strong>Laboratorio:</strong> {{ analysis.labName }}
+          </div>
+          <div class="card-info" *ngIf="analysis.labReportNumber">
+            <strong>Reporte:</strong> {{ analysis.labReportNumber }}
+          </div>
+          <div class="card-info" *ngIf="analysis.sampleDepth">
+            <strong>Profundidad:</strong> {{ analysis.sampleDepth }}
+          </div>
+
+          <!-- Key Metrics -->
+          <div class="key-metrics mt-3">
+            <div class="metric" *ngIf="analysis.phSoil">
+              <span class="metric-label">pH:</span>
+              <span class="metric-value">{{ analysis.phSoil | number:'1.1-1' }}</span>
+            </div>
+            <div class="metric" *ngIf="analysis.textureClass">
+              <span class="metric-label">Textura:</span>
+              <span class="metric-value">{{ analysis.textureClass }}</span>
+            </div>
+            <div class="metric" *ngIf="analysis.organicMatterPercent">
+              <span class="metric-label">M.O.:</span>
+              <span class="metric-value">{{ analysis.organicMatterPercent | number:'1.1-1' }}%</span>
+            </div>
+          </div>
+
+          <!-- Interpretation Level -->
+          <div class="interpretation-badge" *ngIf="analysis.interpretationLevel">
+            <span
+              class="badge"
+              [class.bg-danger]="analysis.interpretationLevel === 'Low'"
+              [class.bg-warning]="analysis.interpretationLevel === 'Medium'"
+              [class.bg-success]="analysis.interpretationLevel === 'High'"
+              [class.bg-info]="analysis.interpretationLevel === 'Very High'">
+              {{ analysis.interpretationLevel }}
+            </span>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn btn-sm btn-outline-primary" (click)="onEdit(analysis)">
+            <i class="bi bi-pencil"></i>
+            Editar
+          </button>
+          <button class="btn btn-sm btn-outline-danger" (click)="onDelete(analysis)">
+            <i class="bi bi-trash"></i>
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FORM VIEW -->
+  <div *ngIf="activeView === 'form'" class="form-view">
+    <app-soil-analysis-form
+      [cropProductionId]="cropProductionId"
+      [existingSoilAnalysis]="selectedAnalysis"
+      [mode]="formMode"
+      (saved)="onFormSaved($event)"
+      (cancelled)="onFormCancelled()">
+    </app-soil-analysis-form>
+  </div>
+
+</div>

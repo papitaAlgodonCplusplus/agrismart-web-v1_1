@@ -23,6 +23,8 @@ import { CompanyFormComponent } from './features/companies/company-form/company-
 import { FarmListComponent } from './features/farms/farm-list/farm-list.component';
 import { FarmFormComponent } from './features/farms/farm-form/farm-form.component';
 
+import { SoilAnalysisManagerComponent } from './features/soil-analysis/components/soil-analysis-manager/soil-analysis-manager.component';
+
 // NEW: Import the new components
 import { CropListComponent } from './features/crops/crop-list/crop-list.component';
 import { CropFormComponent } from './features/crops/crop-form/crop-form.component';
@@ -134,6 +136,11 @@ export const routes: Routes = [
         component: ProcessKPIsComponent,
         canActivate: [AuthGuard],
         data: { title: 'Process KPIs' }
+      },
+      {
+        path: 'soil-analysis',
+        component: SoilAnalysisManagerComponent,
+        data: { title: 'Análisis de Suelo' }
       },
       {
         path: 'crops',

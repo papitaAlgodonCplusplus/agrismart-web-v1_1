@@ -730,6 +730,10 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/water-chemistry']);
   }
 
+  navigateToSoilAnalysis(): void {
+    this.router.navigate(['/soil-analysis']);
+  }
+
   navigateToFertilizers(): void {
     this.router.navigate(['/fertilizers']);
   }

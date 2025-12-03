@@ -61,6 +61,56 @@ namespace AgriSmart.Infrastructure.Data
             // Configure Active column with default value
             entity.Property(e => e.Active).HasDefaultValue(true);
 
+            // Configure SoilAnalysis decimal columns
+            var soilAnalysisEntity = modelBuilder.Entity<SoilAnalysis>();
+
+            // Physical properties - percentages (0-100)
+            soilAnalysisEntity.Property(e => e.SandPercent).HasColumnType("decimal(5,2)");
+            soilAnalysisEntity.Property(e => e.SiltPercent).HasColumnType("decimal(5,2)");
+            soilAnalysisEntity.Property(e => e.ClayPercent).HasColumnType("decimal(5,2)");
+            soilAnalysisEntity.Property(e => e.OrganicMatterPercent).HasColumnType("decimal(5,2)");
+            soilAnalysisEntity.Property(e => e.BaseSaturationPercent).HasColumnType("decimal(5,2)");
+            soilAnalysisEntity.Property(e => e.BasePercentCa).HasColumnType("decimal(5,2)");
+            soilAnalysisEntity.Property(e => e.BasePercentMg).HasColumnType("decimal(5,2)");
+            soilAnalysisEntity.Property(e => e.BasePercentK).HasColumnType("decimal(5,2)");
+            soilAnalysisEntity.Property(e => e.BasePercentNa).HasColumnType("decimal(5,2)");
+
+            // pH (3.0-10.0)
+            soilAnalysisEntity.Property(e => e.PhSoil).HasColumnType("decimal(4,2)");
+
+            // Bulk density (typically 0.5-2.5 g/cm3)
+            soilAnalysisEntity.Property(e => e.BulkDensity).HasColumnType("decimal(5,3)");
+
+            // Electrical conductivity (can be higher, in dS/m or mS/cm)
+            soilAnalysisEntity.Property(e => e.ElectricalConductivity).HasColumnType("decimal(8,3)");
+
+            // CEC (typically 0-60 meq/100g)
+            soilAnalysisEntity.Property(e => e.CationExchangeCapacity).HasColumnType("decimal(6,2)");
+
+            // Nutrients in ppm (can range from 0-10000+ ppm)
+            soilAnalysisEntity.Property(e => e.NitrateNitrogen).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.AmmoniumNitrogen).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.TotalNitrogen).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Phosphorus).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Potassium).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Calcium).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.CalciumCarbonate).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Magnesium).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Sulfur).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Sodium).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Chloride).HasColumnType("decimal(10,2)");
+
+            // Micronutrients in ppm (typically 0-1000 ppm)
+            soilAnalysisEntity.Property(e => e.Iron).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Manganese).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Zinc).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Copper).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Boron).HasColumnType("decimal(10,2)");
+            soilAnalysisEntity.Property(e => e.Molybdenum).HasColumnType("decimal(10,2)");
+
+            // Ratios (can vary widely)
+            soilAnalysisEntity.Property(e => e.CaToMgRatio).HasColumnType("decimal(8,3)");
+            soilAnalysisEntity.Property(e => e.MgToKRatio).HasColumnType("decimal(8,3)");
 
             // Configure NutrientFormulationRecipe
             modelBuilder.Entity<NutrientFormulationRecipe>(entity =>
@@ -162,6 +212,7 @@ namespace AgriSmart.Infrastructure.Data
         public DbSet<NutrientFormulationRecipe> NutrientFormulationRecipes { get; set; }
         public DbSet<NutrientFormulationRecipeFertilizer> NutrientFormulationRecipeFertilizers { get; set; }
         public DbSet<IrrigationPlanEntryHistory> IrrigationPlanEntryHistories { get; set; }
+        public DbSet<SoilAnalysis> SoilAnalysis { get; set; }
 
     }
 }

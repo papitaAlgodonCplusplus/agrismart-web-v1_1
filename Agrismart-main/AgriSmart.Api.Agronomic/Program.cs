@@ -35,7 +35,11 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Creat
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 
 builder.Services.Configure<AgriSmartDbConfiguration>(builder.Configuration.GetSection("AgriSmartDbConfiguration"));
 builder.Services.Configure<FileLoggingConfiguration>(builder.Configuration.GetSection("FileLoggingConfiguration"));
@@ -202,6 +206,18 @@ builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(DeleteIrrigationPlanEntryHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(GetAllIrrigationPlanEntriesHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(GetIrrigationPlanEntryByIdHandler).Assembly);
+
+    // ========== NEW: SOIL ANALYSIS HANDLERS ==========
+    cfg.RegisterServicesFromAssembly(typeof(CreateSoilAnalysisHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(UpdateSoilAnalysisHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(DeleteSoilAnalysisHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetSoilAnalysisByIdHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetSoilAnalysesByCropProductionHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetLatestSoilAnalysisByCropProductionHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetAllSoilTextureClassesHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(GetAvailableNutrientsHandler).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(ValidateTextureHandler).Assembly);
+    // ================================================
     // ========================================================
 });
 
@@ -309,6 +325,11 @@ builder.Services.AddTransient<IIrrigationModeQueryRepository, IrrigationModeQuer
 // IrrigationPlanEntry Repositories
 builder.Services.AddTransient<IIrrigationPlanEntryCommandRepository, IrrigationPlanEntryCommandRepository>();
 builder.Services.AddTransient<IIrrigationPlanEntryQueryRepository, IrrigationPlanEntryQueryRepository>();
+
+// ========== NEW: SOIL ANALYSIS REPOSITORIES ==========
+builder.Services.AddTransient<ISoilAnalysisCommandRepository, SoilAnalysisCommandRepository>();
+builder.Services.AddTransient<ISoilAnalysisQueryRepository, SoilAnalysisQueryRepository>();
+// ====================================================
 // =============================================================
 
 

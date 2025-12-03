@@ -1,522 +1,5 @@
 # 📘 **DETAILED IMPLEMENTATION GUIDE: WEEK 4 - SOIL FERTIGATION MODULE**
-
----
-
-## 🎯 **OBJECTIVE**
-Implement complete soil analysis storage and fertigation calculation support, extending the existing nutrient formulation system to work with soil-based crops. This requires backend API development before frontend implementation.
-
----
-
-# PART 1: DATABASE SCHEMA (SQL Server)
-
-## 📋 **STEP 1: Create Soil Analysis Table** (30 minutes)
-
-**File**: `Database/Tables/SoilAnalysis.sql`
-
-```sql
--- ============================================================================
--- SOIL ANALYSIS TABLE
--- Stores laboratory soil test results for soil-based crop production
--- ============================================================================
-
-CREATE TABLE dbo.SoilAnalysis (
-    -- Primary Key
-    Id INT IDENTITY(1,1) PRIMARY KEY,
-    
-    -- Foreign Keys
-    CropProductionId INT NOT NULL,
-    AnalyticalEntityId INT NULL,        -- Lab that performed analysis
-    
-    -- Metadata
-    SampleDate DATETIME NOT NULL,
-    LabReportNumber NVARCHAR(100) NULL,
-    LabName NVARCHAR(200) NULL,
-    SampleDepth NVARCHAR(50) NULL,      -- e.g., "0-20cm", "20-40cm"
-    SampleLocation NVARCHAR(200) NULL,  -- Field location/GPS coordinates
-    
-    -- Physical Properties - Texture
-    SandPercent DECIMAL(5,2) NULL,      -- % (0-100)
-    SiltPercent DECIMAL(5,2) NULL,      -- % (0-100)
-    ClayPercent DECIMAL(5,2) NULL,      -- % (0-100)
-    TextureClass NVARCHAR(50) NULL,     -- Sandy Loam, Clay Loam, etc.
-    BulkDensity DECIMAL(5,2) NULL,      -- g/cm³ (typically 1.0-1.6)
-    
-    -- Chemical Properties - General
-    PhSoil DECIMAL(4,2) NULL,           -- pH (4.0-9.0)
-    ElectricalConductivity DECIMAL(6,2) NULL,  -- dS/m (salinity indicator)
-    OrganicMatterPercent DECIMAL(5,2) NULL,    -- % (0-100)
-    CationExchangeCapacity DECIMAL(6,2) NULL,  -- meq/100g or cmol(+)/kg
-    
-    -- Macronutrients - Nitrogen (ppm or mg/kg)
-    NitrateNitrogen DECIMAL(7,2) NULL,      -- NO3-N (ppm)
-    AmmoniumNitrogen DECIMAL(7,2) NULL,     -- NH4-N (ppm)
-    TotalNitrogen DECIMAL(7,2) NULL,        -- Total N (ppm)
-    
-    -- Macronutrients - Phosphorus (ppm)
-    Phosphorus DECIMAL(7,2) NULL,           -- P - Olsen/Bray/Mehlich method
-    PhosphorusMethod NVARCHAR(50) NULL,     -- 'Olsen', 'Bray1', 'Mehlich3', etc.
-    
-    -- Macronutrients - Potassium (ppm)
-    Potassium DECIMAL(7,2) NULL,            -- K - Exchangeable
-    
-    -- Macronutrients - Calcium (ppm)
-    Calcium DECIMAL(7,2) NULL,              -- Ca - Exchangeable
-    CalciumCarbonate DECIMAL(5,2) NULL,     -- CaCO3 % (for calcareous soils)
-    
-    -- Macronutrients - Magnesium (ppm)
-    Magnesium DECIMAL(7,2) NULL,            -- Mg - Exchangeable
-    
-    -- Macronutrients - Sulfur (ppm)
-    Sulfur DECIMAL(7,2) NULL,               -- S - Extractable (SO4-S)
-    
-    -- Secondary Nutrients (ppm)
-    Sodium DECIMAL(7,2) NULL,               -- Na - Exchangeable
-    Chloride DECIMAL(7,2) NULL,             -- Cl
-    
-    -- Micronutrients (ppm)
-    Iron DECIMAL(7,2) NULL,                 -- Fe - DTPA extractable
-    Manganese DECIMAL(7,2) NULL,            -- Mn - DTPA extractable
-    Zinc DECIMAL(7,2) NULL,                 -- Zn - DTPA extractable
-    Copper DECIMAL(7,2) NULL,               -- Cu - DTPA extractable
-    Boron DECIMAL(7,2) NULL,                -- B - Hot water extractable
-    Molybdenum DECIMAL(7,2) NULL,           -- Mo - Ammonium oxalate extractable
-    
-    -- Ratios and Calculated Values
-    CaToMgRatio DECIMAL(6,2) NULL,          -- Ideal: 3:1 to 5:1
-    MgToKRatio DECIMAL(6,2) NULL,           -- Ideal: 3:1 to 5:1
-    BasePercentCa DECIMAL(5,2) NULL,        -- % of CEC occupied by Ca (ideal 60-70%)
-    BasePercentMg DECIMAL(5,2) NULL,        -- % of CEC occupied by Mg (ideal 10-20%)
-    BasePercentK DECIMAL(5,2) NULL,         -- % of CEC occupied by K (ideal 2-5%)
-    BasePercentNa DECIMAL(5,2) NULL,        -- % of CEC occupied by Na (ideal <5%)
-    BaseSaturationPercent DECIMAL(5,2) NULL, -- Total base saturation %
-    
-    -- Interpretation/Recommendations
-    InterpretationLevel NVARCHAR(50) NULL,   -- 'Low', 'Medium', 'High', 'Very High'
-    Recommendations NVARCHAR(MAX) NULL,      -- Lab recommendations text
-    Notes NVARCHAR(MAX) NULL,                -- Additional notes
-    
-    -- System Fields
-    Active BIT NOT NULL DEFAULT 1,
-    DateCreated DATETIME NOT NULL DEFAULT GETDATE(),
-    DateUpdated DATETIME NULL,
-    CreatedBy INT NULL,
-    UpdatedBy INT NULL,
-    
-    -- Constraints
-    CONSTRAINT FK_SoilAnalysis_CropProduction 
-        FOREIGN KEY (CropProductionId) 
-        REFERENCES dbo.CropProduction(Id),
-    CONSTRAINT FK_SoilAnalysis_AnalyticalEntity 
-        FOREIGN KEY (AnalyticalEntityId) 
-        REFERENCES dbo.AnalyticalEntity(Id),
-    CONSTRAINT FK_SoilAnalysis_CreatedBy 
-        FOREIGN KEY (CreatedBy) 
-        REFERENCES dbo.[User](Id),
-    CONSTRAINT FK_SoilAnalysis_UpdatedBy 
-        FOREIGN KEY (UpdatedBy) 
-        REFERENCES dbo.[User](Id),
-    
-    -- Validation Constraints
-    CONSTRAINT CK_SoilAnalysis_TextureSum 
-        CHECK (SandPercent IS NULL OR SiltPercent IS NULL OR ClayPercent IS NULL 
-               OR (SandPercent + SiltPercent + ClayPercent BETWEEN 98 AND 102)),
-    CONSTRAINT CK_SoilAnalysis_PhRange 
-        CHECK (PhSoil IS NULL OR PhSoil BETWEEN 3.0 AND 10.0),
-    CONSTRAINT CK_SoilAnalysis_PercentRanges 
-        CHECK (
-            (SandPercent IS NULL OR SandPercent BETWEEN 0 AND 100) AND
-            (SiltPercent IS NULL OR SiltPercent BETWEEN 0 AND 100) AND
-            (ClayPercent IS NULL OR ClayPercent BETWEEN 0 AND 100) AND
-            (OrganicMatterPercent IS NULL OR OrganicMatterPercent BETWEEN 0 AND 100) AND
-            (BaseSaturationPercent IS NULL OR BaseSaturationPercent BETWEEN 0 AND 100)
-        )
-);
-
--- Indexes
-CREATE NONCLUSTERED INDEX IX_SoilAnalysis_CropProduction 
-    ON dbo.SoilAnalysis(CropProductionId);
-
-CREATE NONCLUSTERED INDEX IX_SoilAnalysis_SampleDate 
-    ON dbo.SoilAnalysis(SampleDate DESC);
-
-CREATE NONCLUSTERED INDEX IX_SoilAnalysis_Active 
-    ON dbo.SoilAnalysis(Active) 
-    INCLUDE (CropProductionId, SampleDate);
-
-GO
-
--- ============================================================================
--- AUDIT TRIGGER
--- ============================================================================
-CREATE TRIGGER TR_SoilAnalysis_Audit
-ON dbo.SoilAnalysis
-AFTER UPDATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    UPDATE sa
-    SET DateUpdated = GETDATE()
-    FROM dbo.SoilAnalysis sa
-    INNER JOIN inserted i ON sa.Id = i.Id;
-END;
-GO
-```
-
----
-
-## 📋 **STEP 2: Create Soil Texture Reference Table** (15 minutes)
-
-```sql
--- ============================================================================
--- SOIL TEXTURE CLASSIFICATION TABLE
--- Reference table for USDA soil texture classes
--- ============================================================================
-
-CREATE TABLE dbo.SoilTextureClass (
-    Id INT IDENTITY(1,1) PRIMARY KEY,
-    TextureClassName NVARCHAR(50) NOT NULL UNIQUE,
-    
-    -- Texture Triangle Boundaries (USDA classification)
-    SandMin DECIMAL(5,2) NOT NULL,
-    SandMax DECIMAL(5,2) NOT NULL,
-    SiltMin DECIMAL(5,2) NOT NULL,
-    SiltMax DECIMAL(5,2) NOT NULL,
-    ClayMin DECIMAL(5,2) NOT NULL,
-    ClayMax DECIMAL(5,2) NOT NULL,
-    
-    -- Water Holding Characteristics (typical values)
-    TypicalFieldCapacity DECIMAL(5,2) NULL,      -- % volume at 0.33 bar
-    TypicalWiltingPoint DECIMAL(5,2) NULL,       -- % volume at 15 bar
-    TypicalAvailableWater DECIMAL(5,2) NULL,     -- % volume (FC - WP)
-    TypicalSaturatedHydraulicConductivity DECIMAL(7,2) NULL, -- cm/hour
-    
-    -- Management Characteristics
-    DrainageClass NVARCHAR(50) NULL,             -- 'Excellent', 'Good', 'Moderate', 'Poor'
-    WorkabilityClass NVARCHAR(50) NULL,          -- 'Easy', 'Moderate', 'Difficult'
-    ErosionSusceptibility NVARCHAR(50) NULL,     -- 'Low', 'Moderate', 'High'
-    
-    Description NVARCHAR(500) NULL,
-    Active BIT NOT NULL DEFAULT 1
-);
-
--- Insert USDA Soil Texture Classes
-INSERT INTO dbo.SoilTextureClass 
-(TextureClassName, SandMin, SandMax, SiltMin, SiltMax, ClayMin, ClayMax, 
- TypicalFieldCapacity, TypicalWiltingPoint, TypicalAvailableWater, Description)
-VALUES
-('Sand', 85, 100, 0, 15, 0, 10, 9, 4, 5, 'Very coarse texture, excellent drainage, low water holding'),
-('Loamy Sand', 70, 90, 0, 30, 0, 15, 12, 6, 6, 'Coarse texture, rapid drainage'),
-('Sandy Loam', 50, 80, 0, 50, 0, 20, 18, 9, 9, 'Moderately coarse, good drainage and workability'),
-('Loam', 23, 52, 28, 50, 7, 27, 27, 13, 14, 'Medium texture, balanced properties, ideal for most crops'),
-('Silt Loam', 0, 50, 50, 88, 0, 27, 33, 15, 18, 'Moderately fine, good water holding, good fertility'),
-('Silt', 0, 20, 80, 100, 0, 12, 36, 17, 19, 'Fine texture, high water holding, poor workability when wet'),
-('Sandy Clay Loam', 45, 80, 0, 28, 20, 35, 24, 13, 11, 'Moderately coarse, moderate water holding'),
-('Clay Loam', 20, 45, 15, 53, 27, 40, 31, 17, 14, 'Moderately fine, good water and nutrient holding'),
-('Silty Clay Loam', 0, 20, 40, 73, 27, 40, 35, 19, 16, 'Fine texture, high water holding, slow drainage'),
-('Sandy Clay', 45, 65, 0, 20, 35, 55, 27, 17, 10, 'Fine texture with sand, sticky when wet'),
-('Silty Clay', 0, 20, 40, 60, 40, 60, 37, 21, 16, 'Very fine, very high water holding, very slow drainage'),
-('Clay', 0, 45, 0, 40, 40, 100, 39, 23, 16, 'Very fine texture, very high water and nutrient holding, poor drainage');
-
-GO
-```
-
----
-
-## 📋 **STEP 3: Create Soil Nutrient Availability Factors Table** (15 minutes)
-
-```sql
--- ============================================================================
--- SOIL NUTRIENT AVAILABILITY FACTORS
--- pH-dependent availability coefficients for soil nutrients
--- ============================================================================
-
-CREATE TABLE dbo.SoilNutrientAvailability (
-    Id INT IDENTITY(1,1) PRIMARY KEY,
-    Nutrient NVARCHAR(20) NOT NULL,
-    PhRangeMin DECIMAL(4,2) NOT NULL,
-    PhRangeMax DECIMAL(4,2) NOT NULL,
-    AvailabilityFactor DECIMAL(5,4) NOT NULL,  -- 0.0 to 1.0 (0% to 100%)
-    Description NVARCHAR(200) NULL,
-    
-    CONSTRAINT CK_AvailabilityFactor 
-        CHECK (AvailabilityFactor BETWEEN 0 AND 1)
-);
-
--- Insert availability factors by pH range
-INSERT INTO dbo.SoilNutrientAvailability (Nutrient, PhRangeMin, PhRangeMax, AvailabilityFactor, Description)
-VALUES
--- Nitrogen (relatively stable across pH range)
-('N', 4.0, 5.5, 0.60, 'Low availability in acidic soils'),
-('N', 5.5, 7.5, 0.75, 'Optimal availability'),
-('N', 7.5, 9.0, 0.60, 'Reduced availability in alkaline soils'),
-
--- Phosphorus (highly pH dependent)
-('P', 4.0, 5.5, 0.15, 'Very low - fixed by Fe and Al'),
-('P', 5.5, 7.0, 0.40, 'Optimal availability range'),
-('P', 7.0, 8.0, 0.25, 'Reduced - fixed by Ca'),
-('P', 8.0, 9.0, 0.10, 'Very low - precipitated as Ca phosphates'),
-
--- Potassium (moderate pH dependency)
-('K', 4.0, 5.5, 0.70, 'Good availability in acidic soils'),
-('K', 5.5, 8.0, 0.85, 'Optimal availability'),
-('K', 8.0, 9.0, 0.75, 'Good availability'),
-
--- Calcium (higher in alkaline soils)
-('Ca', 4.0, 6.0, 0.60, 'Lower availability in acidic soils'),
-('Ca', 6.0, 8.5, 0.90, 'High availability'),
-('Ca', 8.5, 9.0, 0.85, 'Very high availability'),
-
--- Magnesium
-('Mg', 4.0, 5.5, 0.50, 'Moderate availability'),
-('Mg', 5.5, 8.0, 0.75, 'Optimal availability'),
-('Mg', 8.0, 9.0, 0.70, 'Good availability'),
-
--- Sulfur
-('S', 4.0, 5.5, 0.60, 'Moderate availability'),
-('S', 5.5, 8.0, 0.80, 'Optimal availability'),
-('S', 8.0, 9.0, 0.70, 'Reduced availability'),
-
--- Iron (highly pH dependent)
-('Fe', 4.0, 6.0, 0.90, 'High availability in acidic soils'),
-('Fe', 6.0, 7.0, 0.60, 'Moderate availability'),
-('Fe', 7.0, 8.0, 0.25, 'Low availability'),
-('Fe', 8.0, 9.0, 0.05, 'Very low - chlorosis risk'),
-
--- Manganese
-('Mn', 4.0, 6.0, 0.85, 'High availability'),
-('Mn', 6.0, 7.5, 0.60, 'Moderate availability'),
-('Mn', 7.5, 9.0, 0.20, 'Low availability'),
-
--- Zinc
-('Zn', 4.0, 6.0, 0.75, 'Good availability'),
-('Zn', 6.0, 7.0, 0.60, 'Moderate availability'),
-('Zn', 7.0, 9.0, 0.25, 'Low availability'),
-
--- Copper
-('Cu', 4.0, 6.0, 0.70, 'Good availability'),
-('Cu', 6.0, 7.5, 0.60, 'Moderate availability'),
-('Cu', 7.5, 9.0, 0.35, 'Reduced availability'),
-
--- Boron (relatively stable)
-('B', 4.0, 6.0, 0.50, 'Moderate availability'),
-('B', 6.0, 8.0, 0.70, 'Optimal availability'),
-('B', 8.0, 9.0, 0.60, 'Good availability'),
-
--- Molybdenum (increases with pH - opposite of most micronutrients)
-('Mo', 4.0, 5.5, 0.20, 'Very low in acidic soils'),
-('Mo', 5.5, 7.0, 0.60, 'Moderate availability'),
-('Mo', 7.0, 9.0, 0.90, 'High availability in alkaline soils');
-
-GO
-```
-
----
-
-## 📋 **STEP 4: Create Stored Procedures** (30 minutes)
-
-```sql
--- ============================================================================
--- STORED PROCEDURE: Get Soil Analysis by Crop Production
--- ============================================================================
-CREATE PROCEDURE dbo.sp_GetSoilAnalysisByCropProduction
-    @CropProductionId INT,
-    @IncludeInactive BIT = 0
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    SELECT 
-        sa.*,
-        stc.TextureClassName,
-        stc.TypicalFieldCapacity,
-        stc.TypicalWiltingPoint,
-        stc.TypicalAvailableWater,
-        ae.Name AS LabEntityName
-    FROM dbo.SoilAnalysis sa
-    LEFT JOIN dbo.SoilTextureClass stc ON sa.TextureClass = stc.TextureClassName
-    LEFT JOIN dbo.AnalyticalEntity ae ON sa.AnalyticalEntityId = ae.Id
-    WHERE sa.CropProductionId = @CropProductionId
-      AND (sa.Active = 1 OR @IncludeInactive = 1)
-    ORDER BY sa.SampleDate DESC;
-END;
-GO
-
--- ============================================================================
--- STORED PROCEDURE: Calculate Nutrient Availability
--- Returns available nutrient concentration based on soil test and pH
--- ============================================================================
-CREATE PROCEDURE dbo.sp_CalculateSoilNutrientAvailability
-    @SoilAnalysisId INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    DECLARE @Ph DECIMAL(4,2);
-    
-    -- Get soil pH
-    SELECT @Ph = PhSoil
-    FROM dbo.SoilAnalysis
-    WHERE Id = @SoilAnalysisId;
-    
-    -- Return available nutrients
-    SELECT 
-        'N' AS Nutrient,
-        sa.TotalNitrogen AS SoilTestValue,
-        ISNULL(sna.AvailabilityFactor, 0.60) AS AvailabilityFactor,
-        sa.TotalNitrogen * ISNULL(sna.AvailabilityFactor, 0.60) AS AvailableNutrient
-    FROM dbo.SoilAnalysis sa
-    LEFT JOIN dbo.SoilNutrientAvailability sna 
-        ON sna.Nutrient = 'N' 
-        AND @Ph BETWEEN sna.PhRangeMin AND sna.PhRangeMax
-    WHERE sa.Id = @SoilAnalysisId
-    
-    UNION ALL
-    
-    SELECT 
-        'P' AS Nutrient,
-        sa.Phosphorus,
-        ISNULL(sna.AvailabilityFactor, 0.25),
-        sa.Phosphorus * ISNULL(sna.AvailabilityFactor, 0.25)
-    FROM dbo.SoilAnalysis sa
-    LEFT JOIN dbo.SoilNutrientAvailability sna 
-        ON sna.Nutrient = 'P' 
-        AND @Ph BETWEEN sna.PhRangeMin AND sna.PhRangeMax
-    WHERE sa.Id = @SoilAnalysisId
-    
-    UNION ALL
-    
-    SELECT 
-        'K' AS Nutrient,
-        sa.Potassium,
-        ISNULL(sna.AvailabilityFactor, 0.80),
-        sa.Potassium * ISNULL(sna.AvailabilityFactor, 0.80)
-    FROM dbo.SoilAnalysis sa
-    LEFT JOIN dbo.SoilNutrientAvailability sna 
-        ON sna.Nutrient = 'K' 
-        AND @Ph BETWEEN sna.PhRangeMin AND sna.PhRangeMax
-    WHERE sa.Id = @SoilAnalysisId
-    
-    UNION ALL
-    
-    SELECT 
-        'Ca' AS Nutrient,
-        sa.Calcium,
-        ISNULL(sna.AvailabilityFactor, 0.85),
-        sa.Calcium * ISNULL(sna.AvailabilityFactor, 0.85)
-    FROM dbo.SoilAnalysis sa
-    LEFT JOIN dbo.SoilNutrientAvailability sna 
-        ON sna.Nutrient = 'Ca' 
-        AND @Ph BETWEEN sna.PhRangeMin AND sna.PhRangeMax
-    WHERE sa.Id = @SoilAnalysisId
-    
-    UNION ALL
-    
-    SELECT 
-        'Mg' AS Nutrient,
-        sa.Magnesium,
-        ISNULL(sna.AvailabilityFactor, 0.70),
-        sa.Magnesium * ISNULL(sna.AvailabilityFactor, 0.70)
-    FROM dbo.SoilAnalysis sa
-    LEFT JOIN dbo.SoilNutrientAvailability sna 
-        ON sna.Nutrient = 'Mg' 
-        AND @Ph BETWEEN sna.PhRangeMin AND sna.PhRangeMax
-    WHERE sa.Id = @SoilAnalysisId;
-END;
-GO
-
--- ============================================================================
--- STORED PROCEDURE: Determine Soil Texture Class
--- Automatically classifies soil based on sand/silt/clay percentages
--- ============================================================================
-CREATE PROCEDURE dbo.sp_DetermineSoilTextureClass
-    @SandPercent DECIMAL(5,2),
-    @SiltPercent DECIMAL(5,2),
-    @ClayPercent DECIMAL(5,2),
-    @TextureClass NVARCHAR(50) OUTPUT
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    -- Validate percentages sum to ~100
-    IF ABS((@SandPercent + @SiltPercent + @ClayPercent) - 100) > 2
-    BEGIN
-        SET @TextureClass = 'Invalid - Percentages do not sum to 100';
-        RETURN;
-    END;
-    
-    -- Determine texture class using USDA soil triangle
-    SELECT TOP 1 @TextureClass = TextureClassName
-    FROM dbo.SoilTextureClass
-    WHERE @SandPercent BETWEEN SandMin AND SandMax
-      AND @SiltPercent BETWEEN SiltMin AND SiltMax
-      AND @ClayPercent BETWEEN ClayMin AND ClayMax
-      AND Active = 1
-    ORDER BY 
-        -- Prefer more specific matches
-        ABS((@SandPercent - (SandMin + SandMax)/2)) + 
-        ABS((@SiltPercent - (SiltMin + SiltMax)/2)) + 
-        ABS((@ClayPercent - (ClayMin + ClayMax)/2));
-    
-    IF @TextureClass IS NULL
-        SET @TextureClass = 'Unclassified';
-END;
-GO
-```
-
----
-
-## 📋 **STEP 5: Sample Data Insert** (15 minutes)
-
-```sql
--- ============================================================================
--- SAMPLE DATA: Insert test soil analysis records
--- ============================================================================
-
--- Sample 1: Sandy Loam soil, good fertility
-INSERT INTO dbo.SoilAnalysis (
-    CropProductionId, SampleDate, LabName, LabReportNumber,
-    SandPercent, SiltPercent, ClayPercent, TextureClass,
-    PhSoil, ElectricalConductivity, OrganicMatterPercent, CationExchangeCapacity,
-    NitrateNitrogen, Phosphorus, PhosphorusMethod, Potassium, Calcium, Magnesium, Sulfur,
-    Iron, Manganese, Zinc, Copper, Boron,
-    InterpretationLevel, Active, CreatedBy
-)
-VALUES (
-    1, -- Replace with actual CropProductionId
-    '2024-01-15',
-    'AgriTest Laboratory',
-    'AT-2024-0015',
-    65.0, 25.0, 10.0, 'Sandy Loam',
-    6.8, 0.8, 3.2, 12.5,
-    25.0, 18.0, 'Mehlich3', 180.0, 1200.0, 150.0, 12.0,
-    4.5, 8.0, 1.2, 0.8, 0.6,
-    'Medium', 1, 1
-);
-
--- Sample 2: Clay Loam soil, high CEC
-INSERT INTO dbo.SoilAnalysis (
-    CropProductionId, SampleDate, LabName, LabReportNumber,
-    SandPercent, SiltPercent, ClayPercent, TextureClass,
-    PhSoil, ElectricalConductivity, OrganicMatterPercent, CationExchangeCapacity,
-    NitrateNitrogen, Phosphorus, PhosphorusMethod, Potassium, Calcium, Magnesium, Sulfur,
-    InterpretationLevel, Active, CreatedBy
-)
-VALUES (
-    1, -- Replace with actual CropProductionId
-    '2024-01-20',
-    'Soil Sciences Inc.',
-    'SSI-2024-0042',
-    32.0, 35.0, 33.0, 'Clay Loam',
-    7.2, 1.2, 4.8, 24.0,
-    18.0, 35.0, 'Olsen', 250.0, 2500.0, 380.0, 15.0,
-    'High', 1, 1
-);
-
-GO
-```
-
----
+ 
 
 # PART 2: BACKEND API (.NET/C#)
 
@@ -2503,4 +1986,908 @@ export class SoilAnalysisFormComponent implements OnInit {
 
 ---
 
-**Continue to STEP 16 (Template) and STEP 17 (Styles)?**
+## 📋 **STEP 16: Create Soil Analysis Form Template** (1 hour)
+
+**File**: `src/app/features/soil-analysis/components/soil-analysis-form/soil-analysis-form.component.html`
+
+```html
+<!-- ============================================================================
+     SOIL ANALYSIS FORM COMPONENT TEMPLATE
+     ============================================================================ -->
+
+<div class="soil-analysis-form">
+
+  <!-- FORM HEADER -->
+  <div class="form-header">
+    <h3 class="form-title">
+      <i class="bi bi-clipboard-data"></i>
+      {{ mode === 'edit' ? 'Editar' : 'Nuevo' }} Análisis de Suelo
+    </h3>
+    <p class="form-subtitle">
+      Ingrese los resultados del análisis de laboratorio
+    </p>
+  </div>
+
+  <!-- ERROR MESSAGE -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-triangle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- MAIN FORM -->
+  <form [formGroup]="soilAnalysisForm" (ngSubmit)="onSubmit()">
+
+    <!-- ==================== METADATA SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header">
+        <h5 class="section-title">
+          <i class="bi bi-info-circle"></i>
+          Información General
+        </h5>
+      </div>
+      <div class="section-content">
+        <div class="row g-3">
+          
+          <!-- Sample Date -->
+          <div class="col-md-3">
+            <label class="form-label required">Fecha de Muestreo</label>
+            <input 
+              type="date" 
+              class="form-control"
+              formControlName="sampleDate"
+              [class.is-invalid]="isFieldInvalid('sampleDate')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('sampleDate')">
+              {{ getFieldError('sampleDate') }}
+            </div>
+          </div>
+
+          <!-- Lab Report Number -->
+          <div class="col-md-3">
+            <label class="form-label">Número de Reporte</label>
+            <input 
+              type="text" 
+              class="form-control"
+              formControlName="labReportNumber"
+              placeholder="Ej: AT-2024-0015">
+          </div>
+
+          <!-- Lab Name -->
+          <div class="col-md-6">
+            <label class="form-label">Laboratorio</label>
+            <input 
+              type="text" 
+              class="form-control"
+              formControlName="labName"
+              placeholder="Nombre del laboratorio">
+          </div>
+
+          <!-- Sample Depth -->
+          <div class="col-md-6">
+            <label class="form-label">Profundidad de Muestra</label>
+            <input 
+              type="text" 
+              class="form-control"
+              formControlName="sampleDepth"
+              placeholder="Ej: 0-20cm">
+          </div>
+
+          <!-- Sample Location -->
+          <div class="col-md-6">
+            <label class="form-label">Ubicación de Muestra</label>
+            <input 
+              type="text" 
+              class="form-control"
+              formControlName="sampleLocation"
+              placeholder="Sector, coordenadas GPS, etc.">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PHYSICAL PROPERTIES SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header clickable" (click)="toggleSection('physical')">
+        <h5 class="section-title">
+          <i class="bi" [ngClass]="showPhysicalProperties ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+          <i class="bi bi-layers"></i>
+          Propiedades Físicas - Textura
+        </h5>
+      </div>
+      <div class="section-content" *ngIf="showPhysicalProperties">
+        <div class="row g-3">
+          
+          <!-- Sand Percent -->
+          <div class="col-md-4">
+            <label class="form-label">Arena (%)</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="sandPercent"
+              min="0"
+              max="100"
+              step="0.1"
+              [class.is-invalid]="isFieldInvalid('sandPercent')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('sandPercent')">
+              {{ getFieldError('sandPercent') }}
+            </div>
+          </div>
+
+          <!-- Silt Percent -->
+          <div class="col-md-4">
+            <label class="form-label">Limo (%)</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="siltPercent"
+              min="0"
+              max="100"
+              step="0.1"
+              [class.is-invalid]="isFieldInvalid('siltPercent')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('siltPercent')">
+              {{ getFieldError('siltPercent') }}
+            </div>
+          </div>
+
+          <!-- Clay Percent -->
+          <div class="col-md-4">
+            <label class="form-label">Arcilla (%)</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="clayPercent"
+              min="0"
+              max="100"
+              step="0.1"
+              [class.is-invalid]="isFieldInvalid('clayPercent')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('clayPercent')">
+              {{ getFieldError('clayPercent') }}
+            </div>
+          </div>
+
+          <!-- Texture Validation Status -->
+          <div class="col-12" *ngIf="texturePercentageSum > 0">
+            <div 
+              class="alert"
+              [class.alert-success]="isTextureSumValid && textureValidation?.isValid"
+              [class.alert-warning]="!isTextureSumValid"
+              [class.alert-info]="isTextureSumValid && !textureValidation?.isValid">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi" [ngClass]="{
+                  'bi-check-circle-fill': isTextureSumValid && textureValidation?.isValid,
+                  'bi-exclamation-triangle-fill': !isTextureSumValid,
+                  'bi-info-circle-fill': isTextureSumValid && !textureValidation?.isValid
+                }"></i>
+                <div>
+                  <strong>Suma: {{ texturePercentageSum | number:'1.1-1' }}%</strong>
+                  <span *ngIf="textureValidation?.textureClass"> - 
+                    Clase: <strong>{{ textureValidation.textureClass }}</strong>
+                  </span>
+                  <div *ngIf="!isTextureSumValid" class="small">
+                    ⚠️ Los porcentajes deben sumar 100% (±2%)
+                  </div>
+                  <div *ngIf="textureValidation?.textureInfo" class="small mt-1">
+                    {{ textureValidation.textureInfo.description }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Texture Class (auto-filled or manual) -->
+          <div class="col-md-6">
+            <label class="form-label">Clase Textural</label>
+            <select class="form-select" formControlName="textureClass">
+              <option value="">Seleccione clase textural</option>
+              <option *ngFor="let tc of textureClasses" [value]="tc.textureClassName">
+                {{ tc.textureClassName }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Bulk Density -->
+          <div class="col-md-6">
+            <label class="form-label">
+              Densidad Aparente (g/cm³)
+              <i class="bi bi-question-circle text-muted" 
+                 title="Típicamente 1.0-1.6 g/cm³"></i>
+            </label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="bulkDensity"
+              min="0"
+              max="3"
+              step="0.01"
+              placeholder="Ej: 1.35">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CHEMICAL PROPERTIES SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header clickable" (click)="toggleSection('chemical')">
+        <h5 class="section-title">
+          <i class="bi" [ngClass]="showChemicalProperties ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+          <i class="bi bi-droplet-half"></i>
+          Propiedades Químicas Generales
+        </h5>
+      </div>
+      <div class="section-content" *ngIf="showChemicalProperties">
+        <div class="row g-3">
+          
+          <!-- pH -->
+          <div class="col-md-3">
+            <label class="form-label">
+              pH del Suelo
+              <i class="bi bi-question-circle text-muted" 
+                 title="Rango típico: 4.0-9.0. Óptimo: 6.0-7.0"></i>
+            </label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="phSoil"
+              min="3"
+              max="10"
+              step="0.1"
+              placeholder="Ej: 6.8"
+              [class.is-invalid]="isFieldInvalid('phSoil')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('phSoil')">
+              {{ getFieldError('phSoil') }}
+            </div>
+          </div>
+
+          <!-- EC -->
+          <div class="col-md-3">
+            <label class="form-label">
+              CE (dS/m)
+              <i class="bi bi-question-circle text-muted" 
+                 title="Conductividad Eléctrica - Indicador de salinidad"></i>
+            </label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="electricalConductivity"
+              min="0"
+              step="0.1"
+              placeholder="Ej: 0.8">
+          </div>
+
+          <!-- Organic Matter -->
+          <div class="col-md-3">
+            <label class="form-label">
+              Materia Orgánica (%)
+              <i class="bi bi-question-circle text-muted" 
+                 title="Rango típico: 1-10%"></i>
+            </label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="organicMatterPercent"
+              min="0"
+              max="100"
+              step="0.1"
+              placeholder="Ej: 3.2"
+              [class.is-invalid]="isFieldInvalid('organicMatterPercent')">
+          </div>
+
+          <!-- CEC -->
+          <div class="col-md-3">
+            <label class="form-label">
+              CIC (meq/100g)
+              <i class="bi bi-question-circle text-muted" 
+                 title="Capacidad de Intercambio Catiónico"></i>
+            </label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="cationExchangeCapacity"
+              min="0"
+              step="0.1"
+              placeholder="Ej: 12.5">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MACRONUTRIENTS SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header clickable" (click)="toggleSection('macro')">
+        <h5 class="section-title">
+          <i class="bi" [ngClass]="showMacronutrients ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+          <i class="bi bi-graph-up"></i>
+          Macronutrientes (ppm o mg/kg)
+        </h5>
+      </div>
+      <div class="section-content" *ngIf="showMacronutrients">
+        
+        <!-- Nitrogen -->
+        <div class="nutrient-group">
+          <h6 class="nutrient-group-title">Nitrógeno</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">NO₃-N (ppm)</label>
+              <input 
+                type="number" 
+                class="form-control"
+                formControlName="nitrateNitrogen"
+                min="0"
+                step="0.1"
+                placeholder="Nitrato">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">NH₄-N (ppm)</label>
+              <input 
+                type="number" 
+                class="form-control"
+                formControlName="ammoniumNitrogen"
+                min="0"
+                step="0.1"
+                placeholder="Amonio">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">N Total (ppm)</label>
+              <input 
+                type="number" 
+                class="form-control"
+                formControlName="totalNitrogen"
+                min="0"
+                step="0.1"
+                placeholder="Total">
+            </div>
+          </div>
+        </div>
+
+        <!-- Phosphorus -->
+        <div class="nutrient-group">
+          <h6 class="nutrient-group-title">Fósforo</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">P (ppm)</label>
+              <input 
+                type="number" 
+                class="form-control"
+                formControlName="phosphorus"
+                min="0"
+                step="0.1"
+                placeholder="Fósforo disponible">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Método de Extracción</label>
+              <select class="form-select" formControlName="phosphorusMethod">
+                <option *ngFor="let method of phosphorusMethods" [value]="method">
+                  {{ method }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Other Macronutrients -->
+        <div class="nutrient-group">
+          <h6 class="nutrient-group-title">Otros Macronutrientes</h6>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">K (ppm)</label>
+              <input 
+                type="number" 
+                class="form-control"
+                formControlName="potassium"
+                min="0"
+                step="0.1"
+                placeholder="Potasio">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Ca (ppm)</label>
+              <input 
+                type="number" 
+                class="form-control"
+                formControlName="calcium"
+                min="0"
+                step="0.1"
+                placeholder="Calcio">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Mg (ppm)</label>
+              <input 
+                type="number" 
+                class="form-control"
+                formControlName="magnesium"
+                min="0"
+                step="0.1"
+                placeholder="Magnesio">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">S (ppm)</label>
+              <input 
+                type="number" 
+                class="form-control"
+                formControlName="sulfur"
+                min="0"
+                step="0.1"
+                placeholder="Azufre">
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary Nutrients -->
+        <div class="nutrient-group">
+          <h6 class="nutrient-group-title">Nutrientes Secundarios</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Na (ppm)</label>
+              <input 
+                type="number" 
+                class="form-control"
+                formControlName="sodium"
+                min="0"
+                step="0.1"
+                placeholder="Sodio">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cl (ppm)</label>
+              <input 
+                type="number" 
+                class="form-control"
+                formControlName="chloride"
+                min="0"
+                step="0.1"
+                placeholder="Cloruro">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== MICRONUTRIENTS SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header clickable" (click)="toggleSection('micro')">
+        <h5 class="section-title">
+          <i class="bi" [ngClass]="showMicronutrients ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+          <i class="bi bi-plus-circle"></i>
+          Micronutrientes (ppm o mg/kg)
+        </h5>
+      </div>
+      <div class="section-content" *ngIf="showMicronutrients">
+        <div class="row g-3">
+          
+          <div class="col-md-4">
+            <label class="form-label">Fe (ppm)</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="iron"
+              min="0"
+              step="0.1"
+              placeholder="Hierro">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Mn (ppm)</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="manganese"
+              min="0"
+              step="0.1"
+              placeholder="Manganeso">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Zn (ppm)</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="zinc"
+              min="0"
+              step="0.1"
+              placeholder="Zinc">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Cu (ppm)</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="copper"
+              min="0"
+              step="0.1"
+              placeholder="Cobre">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">B (ppm)</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="boron"
+              min="0"
+              step="0.1"
+              placeholder="Boro">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Mo (ppm)</label>
+            <input 
+              type="number" 
+              class="form-control"
+              formControlName="molybdenum"
+              min="0"
+              step="0.01"
+              placeholder="Molibdeno">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== INTERPRETATION SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header clickable" (click)="toggleSection('interpretation')">
+        <h5 class="section-title">
+          <i class="bi" [ngClass]="showInterpretation ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+          <i class="bi bi-file-earmark-text"></i>
+          Interpretación y Recomendaciones
+        </h5>
+      </div>
+      <div class="section-content" *ngIf="showInterpretation">
+        <div class="row g-3">
+          
+          <!-- Interpretation Level -->
+          <div class="col-md-12">
+            <label class="form-label">Nivel de Interpretación</label>
+            <select class="form-select" formControlName="interpretationLevel">
+              <option value="">Seleccione nivel</option>
+              <option *ngFor="let level of interpretationLevels" [value]="level">
+                {{ level }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Recommendations -->
+          <div class="col-md-12">
+            <label class="form-label">Recomendaciones del Laboratorio</label>
+            <textarea 
+              class="form-control"
+              formControlName="recommendations"
+              rows="4"
+              placeholder="Ingrese las recomendaciones del laboratorio..."></textarea>
+          </div>
+
+          <!-- Notes -->
+          <div class="col-md-12">
+            <label class="form-label">Notas Adicionales</label>
+            <textarea 
+              class="form-control"
+              formControlName="notes"
+              rows="3"
+              placeholder="Observaciones, condiciones especiales, etc..."></textarea>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FORM ACTIONS ==================== -->
+    <div class="form-actions">
+      <button 
+        type="button" 
+        class="btn btn-outline-secondary"
+        (click)="onCancel()"
+        [disabled]="isSubmitting">
+        <i class="bi bi-x-circle"></i>
+        Cancelar
+      </button>
+
+      <button 
+        type="button" 
+        class="btn btn-outline-warning"
+        (click)="onReset()"
+        [disabled]="isSubmitting">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        Restablecer
+      </button>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary"
+        [disabled]="isSubmitting || soilAnalysisForm.invalid">
+        <span *ngIf="!isSubmitting">
+          <i class="bi bi-check-circle"></i>
+          {{ mode === 'edit' ? 'Actualizar' : 'Guardar' }} Análisis
+        </span>
+        <span *ngIf="isSubmitting">
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Guardando...
+        </span>
+      </button>
+    </div>
+
+  </form>
+
+</div>
+```
+
+---
+
+## 📋 **STEP 17: Create Component Styles** (30 minutes)
+
+**File**: `src/app/features/soil-analysis/components/soil-analysis-form/soil-analysis-form.component.css`
+
+```css
+/* ============================================================================
+   SOIL ANALYSIS FORM STYLES
+   ============================================================================ */
+
+/* Main Container */
+.soil-analysis-form {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Header */
+.form-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid #007bff;
+}
+
+.form-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #343a40;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.form-title i {
+  color: #007bff;
+}
+
+.form-subtitle {
+  color: #6c757d;
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Form Sections */
+.form-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.form-section:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.section-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.section-header.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.section-header.clickable:hover .section-title {
+  color: #007bff;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #343a40;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.section-content {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 2000px;
+  }
+}
+
+/* Nutrient Groups */
+.nutrient-group {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #007bff;
+}
+
+.nutrient-group-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Form Controls */
+.form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.form-label.required::after {
+  content: '*';
+  color: #dc3545;
+  margin-left: 0.25rem;
+}
+
+.form-label i.bi-question-circle {
+  font-size: 0.875rem;
+  cursor: help;
+}
+
+.form-control,
+.form-select {
+  border: 2px solid #ced4da;
+  border-radius: 6px;
+  padding: 0.625rem 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: #dc3545;
+}
+
+.invalid-feedback {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+}
+
+/* Texture Validation Alert */
+.alert {
+  border-radius: 8px;
+  border: none;
+  padding: 1rem;
+}
+
+.alert i {
+  font-size: 1.25rem;
+}
+
+.alert-success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.alert-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.alert-info {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #dee2e6;
+}
+
+.form-actions .btn {
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.form-actions .btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.form-actions .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .soil-analysis-form {
+    padding: 1rem;
+  }
+
+  .form-title {
+    font-size: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+
+  .nutrient-group {
+    padding: 0.75rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .form-actions,
+  .section-header.clickable i.bi-chevron-down,
+  .section-header.clickable i.bi-chevron-right {
+    display: none;
+  }
+
+  .form-section {
+    page-break-inside: avoid;
+  }
+}
+```
+
+---
+
+## ⏱️ **TOTAL TIME BREAKDOWN FOR WEEK 4**
+
+| Phase | Step | Time | Cumulative |
+|-------|------|------|------------|
+| **SQL** | 1. SoilAnalysis Table | 30 min | 30 min |
+| | 2. Texture Reference Table | 15 min | 45 min |
+| | 3. Nutrient Availability Table | 15 min | 1h |
+| | 4. Stored Procedures | 30 min | **1h 30min** |
+| | 5. Sample Data | 15 min | **1h 45min** |
+| **Backend** | 6. Entity Models | 30 min | 2h 15min |
+| | 7. DTOs | 20 min | 2h 35min |
+| | 8. Repository | 30 min | 3h 5min |
+| | 9. Controller | 30 min | 3h 35min |
+| | 10. Service Layer | 45 min | 4h 20min |
+| | 11. AutoMapper | 15 min | 4h 35min |
+| | 12. Startup Config | 10 min | **4h 45min** |
+| **Frontend** | 13. Angular Models | 20 min | 5h 5min |
+| | 14. Angular Service | 30

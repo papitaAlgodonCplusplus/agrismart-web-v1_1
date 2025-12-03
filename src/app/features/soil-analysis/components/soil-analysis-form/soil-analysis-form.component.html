@@ -1,0 +1,619 @@
+<!-- ============================================================================
+     SOIL ANALYSIS FORM COMPONENT TEMPLATE
+     ============================================================================ -->
+
+<div class="soil-analysis-form">
+
+  <!-- FORM HEADER -->
+  <div class="form-header">
+    <h3 class="form-title">
+      <i class="bi bi-clipboard-data"></i>
+      {{ mode === 'edit' ? 'Editar' : 'Nuevo' }} Análisis de Suelo
+    </h3>
+    <p class="form-subtitle">
+      Ingrese los resultados del análisis de laboratorio
+    </p>
+  </div>
+
+  <!-- ERROR MESSAGE -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-triangle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- MAIN FORM -->
+  <form [formGroup]="soilAnalysisForm" (ngSubmit)="onSubmit()">
+
+    <!-- ==================== METADATA SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header">
+        <h5 class="section-title">
+          <i class="bi bi-info-circle"></i>
+          Información General
+        </h5>
+      </div>
+      <div class="section-content">
+        <div class="row g-3">
+
+          <!-- Sample Date -->
+          <div class="col-md-3">
+            <label class="form-label required">Fecha de Muestreo</label>
+            <input
+              type="date"
+              class="form-control"
+              formControlName="sampleDate"
+              [class.is-invalid]="isFieldInvalid('sampleDate')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('sampleDate')">
+              {{ getFieldError('sampleDate') }}
+            </div>
+          </div>
+
+          <!-- Lab Report Number -->
+          <div class="col-md-3">
+            <label class="form-label">Número de Reporte</label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="labReportNumber"
+              placeholder="Ej: AT-2024-0015">
+          </div>
+
+          <!-- Lab Name -->
+          <div class="col-md-6">
+            <label class="form-label">Laboratorio</label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="labName"
+              placeholder="Nombre del laboratorio">
+          </div>
+
+          <!-- Sample Depth -->
+          <div class="col-md-6">
+            <label class="form-label">Profundidad de Muestra</label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="sampleDepth"
+              placeholder="Ej: 0-20cm">
+          </div>
+
+          <!-- Sample Location -->
+          <div class="col-md-6">
+            <label class="form-label">Ubicación de Muestra</label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="sampleLocation"
+              placeholder="Sector, coordenadas GPS, etc.">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PHYSICAL PROPERTIES SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header clickable" (click)="toggleSection('physical')">
+        <h5 class="section-title">
+          <i class="bi" [ngClass]="showPhysicalProperties ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+          <i class="bi bi-layers"></i>
+          Propiedades Físicas - Textura
+        </h5>
+      </div>
+      <div class="section-content" *ngIf="showPhysicalProperties">
+        <div class="row g-3">
+
+          <!-- Sand Percent -->
+          <div class="col-md-4">
+            <label class="form-label">Arena (%)</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="sandPercent"
+              min="0"
+              max="100"
+              step="0.1"
+              [class.is-invalid]="isFieldInvalid('sandPercent')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('sandPercent')">
+              {{ getFieldError('sandPercent') }}
+            </div>
+          </div>
+
+          <!-- Silt Percent -->
+          <div class="col-md-4">
+            <label class="form-label">Limo (%)</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="siltPercent"
+              min="0"
+              max="100"
+              step="0.1"
+              [class.is-invalid]="isFieldInvalid('siltPercent')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('siltPercent')">
+              {{ getFieldError('siltPercent') }}
+            </div>
+          </div>
+
+          <!-- Clay Percent -->
+          <div class="col-md-4">
+            <label class="form-label">Arcilla (%)</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="clayPercent"
+              min="0"
+              max="100"
+              step="0.1"
+              [class.is-invalid]="isFieldInvalid('clayPercent')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('clayPercent')">
+              {{ getFieldError('clayPercent') }}
+            </div>
+          </div>
+
+          <!-- Texture Validation Status -->
+          <div class="col-12" *ngIf="texturePercentageSum > 0">
+            <div
+              class="alert"
+              [class.alert-success]="isTextureSumValid && textureValidation?.isValid"
+              [class.alert-warning]="!isTextureSumValid"
+              [class.alert-info]="isTextureSumValid && !textureValidation?.isValid">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi" [ngClass]="{
+                  'bi-check-circle-fill': isTextureSumValid && textureValidation?.isValid,
+                  'bi-exclamation-triangle-fill': !isTextureSumValid,
+                  'bi-info-circle-fill': isTextureSumValid && !textureValidation?.isValid
+                }"></i>
+                <div>
+                  <strong>Suma: {{ texturePercentageSum | number:'1.1-1' }}%</strong>
+                  <span *ngIf="textureValidation?.textureClass"> -
+                    Clase: <strong>{{ textureValidation?.textureClass }}</strong>
+                  </span>
+                  <div *ngIf="!isTextureSumValid" class="small">
+                    ⚠️ Los porcentajes deben sumar 100% (±2%)
+                  </div>
+                  <div *ngIf="textureValidation?.textureInfo" class="small mt-1">
+                    {{ textureValidation?.textureInfo?.description }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Texture Class (auto-filled or manual) -->
+          <div class="col-md-6">
+            <label class="form-label">Clase Textural</label>
+            <select class="form-select" formControlName="textureClass">
+              <option value="">Seleccione clase textural</option>
+              <option *ngFor="let tc of textureClasses" [value]="tc.textureClassName">
+                {{ tc.textureClassName }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Bulk Density -->
+          <div class="col-md-6">
+            <label class="form-label">
+              Densidad Aparente (g/cm³)
+              <i class="bi bi-question-circle text-muted"
+                 title="Típicamente 1.0-1.6 g/cm³"></i>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="bulkDensity"
+              min="0"
+              max="3"
+              step="0.01"
+              placeholder="Ej: 1.35">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== CHEMICAL PROPERTIES SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header clickable" (click)="toggleSection('chemical')">
+        <h5 class="section-title">
+          <i class="bi" [ngClass]="showChemicalProperties ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+          <i class="bi bi-droplet-half"></i>
+          Propiedades Químicas Generales
+        </h5>
+      </div>
+      <div class="section-content" *ngIf="showChemicalProperties">
+        <div class="row g-3">
+
+          <!-- pH -->
+          <div class="col-md-3">
+            <label class="form-label">
+              pH del Suelo
+              <i class="bi bi-question-circle text-muted"
+                 title="Rango típico: 4.0-9.0. Óptimo: 6.0-7.0"></i>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="phSoil"
+              min="3"
+              max="10"
+              step="0.1"
+              placeholder="Ej: 6.8"
+              [class.is-invalid]="isFieldInvalid('phSoil')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('phSoil')">
+              {{ getFieldError('phSoil') }}
+            </div>
+          </div>
+
+          <!-- EC -->
+          <div class="col-md-3">
+            <label class="form-label">
+              CE (dS/m)
+              <i class="bi bi-question-circle text-muted"
+                 title="Conductividad Eléctrica - Indicador de salinidad"></i>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="electricalConductivity"
+              min="0"
+              step="0.1"
+              placeholder="Ej: 0.8">
+          </div>
+
+          <!-- Organic Matter -->
+          <div class="col-md-3">
+            <label class="form-label">
+              Materia Orgánica (%)
+              <i class="bi bi-question-circle text-muted"
+                 title="Rango típico: 1-10%"></i>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="organicMatterPercent"
+              min="0"
+              max="100"
+              step="0.1"
+              placeholder="Ej: 3.2"
+              [class.is-invalid]="isFieldInvalid('organicMatterPercent')">
+          </div>
+
+          <!-- CEC -->
+          <div class="col-md-3">
+            <label class="form-label">
+              CIC (meq/100g)
+              <i class="bi bi-question-circle text-muted"
+                 title="Capacidad de Intercambio Catiónico"></i>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="cationExchangeCapacity"
+              min="0"
+              step="0.1"
+              placeholder="Ej: 12.5">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MACRONUTRIENTS SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header clickable" (click)="toggleSection('macro')">
+        <h5 class="section-title">
+          <i class="bi" [ngClass]="showMacronutrients ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+          <i class="bi bi-graph-up"></i>
+          Macronutrientes (ppm o mg/kg)
+        </h5>
+      </div>
+      <div class="section-content" *ngIf="showMacronutrients">
+
+        <!-- Nitrogen -->
+        <div class="nutrient-group">
+          <h6 class="nutrient-group-title">Nitrógeno</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">NO₃-N (ppm)</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="nitrateNitrogen"
+                min="0"
+                step="0.1"
+                placeholder="Nitrato">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">NH₄-N (ppm)</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="ammoniumNitrogen"
+                min="0"
+                step="0.1"
+                placeholder="Amonio">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">N Total (ppm)</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="totalNitrogen"
+                min="0"
+                step="0.1"
+                placeholder="Total">
+            </div>
+          </div>
+        </div>
+
+        <!-- Phosphorus -->
+        <div class="nutrient-group">
+          <h6 class="nutrient-group-title">Fósforo</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">P (ppm)</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="phosphorus"
+                min="0"
+                step="0.1"
+                placeholder="Fósforo disponible">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Método de Extracción</label>
+              <select class="form-select" formControlName="phosphorusMethod">
+                <option *ngFor="let method of phosphorusMethods" [value]="method">
+                  {{ method }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Other Macronutrients -->
+        <div class="nutrient-group">
+          <h6 class="nutrient-group-title">Otros Macronutrientes</h6>
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">K (ppm)</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="potassium"
+                min="0"
+                step="0.1"
+                placeholder="Potasio">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Ca (ppm)</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="calcium"
+                min="0"
+                step="0.1"
+                placeholder="Calcio">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Mg (ppm)</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="magnesium"
+                min="0"
+                step="0.1"
+                placeholder="Magnesio">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">S (ppm)</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="sulfur"
+                min="0"
+                step="0.1"
+                placeholder="Azufre">
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary Nutrients -->
+        <div class="nutrient-group">
+          <h6 class="nutrient-group-title">Nutrientes Secundarios</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Na (ppm)</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="sodium"
+                min="0"
+                step="0.1"
+                placeholder="Sodio">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cl (ppm)</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="chloride"
+                min="0"
+                step="0.1"
+                placeholder="Cloruro">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== MICRONUTRIENTS SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header clickable" (click)="toggleSection('micro')">
+        <h5 class="section-title">
+          <i class="bi" [ngClass]="showMicronutrients ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+          <i class="bi bi-plus-circle"></i>
+          Micronutrientes (ppm o mg/kg)
+        </h5>
+      </div>
+      <div class="section-content" *ngIf="showMicronutrients">
+        <div class="row g-3">
+
+          <div class="col-md-4">
+            <label class="form-label">Fe (ppm)</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="iron"
+              min="0"
+              step="0.1"
+              placeholder="Hierro">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Mn (ppm)</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="manganese"
+              min="0"
+              step="0.1"
+              placeholder="Manganeso">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Zn (ppm)</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="zinc"
+              min="0"
+              step="0.1"
+              placeholder="Zinc">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Cu (ppm)</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="copper"
+              min="0"
+              step="0.1"
+              placeholder="Cobre">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">B (ppm)</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="boron"
+              min="0"
+              step="0.1"
+              placeholder="Boro">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Mo (ppm)</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="molybdenum"
+              min="0"
+              step="0.01"
+              placeholder="Molibdeno">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== INTERPRETATION SECTION ==================== -->
+    <div class="form-section">
+      <div class="section-header clickable" (click)="toggleSection('interpretation')">
+        <h5 class="section-title">
+          <i class="bi" [ngClass]="showInterpretation ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+          <i class="bi bi-file-earmark-text"></i>
+          Interpretación y Recomendaciones
+        </h5>
+      </div>
+      <div class="section-content" *ngIf="showInterpretation">
+        <div class="row g-3">
+
+          <!-- Interpretation Level -->
+          <div class="col-md-12">
+            <label class="form-label">Nivel de Interpretación</label>
+            <select class="form-select" formControlName="interpretationLevel">
+              <option value="">Seleccione nivel</option>
+              <option *ngFor="let level of interpretationLevels" [value]="level">
+                {{ level }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Recommendations -->
+          <div class="col-md-12">
+            <label class="form-label">Recomendaciones del Laboratorio</label>
+            <textarea
+              class="form-control"
+              formControlName="recommendations"
+              rows="4"
+              placeholder="Ingrese las recomendaciones del laboratorio..."></textarea>
+          </div>
+
+          <!-- Notes -->
+          <div class="col-md-12">
+            <label class="form-label">Notas Adicionales</label>
+            <textarea
+              class="form-control"
+              formControlName="notes"
+              rows="3"
+              placeholder="Observaciones, condiciones especiales, etc..."></textarea>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FORM ACTIONS ==================== -->
+    <div class="form-actions">
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="onCancel()"
+        [disabled]="isSubmitting">
+        <i class="bi bi-x-circle"></i>
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-outline-warning"
+        (click)="onReset()"
+        [disabled]="isSubmitting">
+        <i class="bi bi-arrow-counterclockwise"></i>
+        Restablecer
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="isSubmitting || soilAnalysisForm.invalid">
+        <span *ngIf="!isSubmitting">
+          <i class="bi bi-check-circle"></i>
+          {{ mode === 'edit' ? 'Actualizar' : 'Guardar' }} Análisis
+        </span>
+        <span *ngIf="isSubmitting">
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Guardando...
+        </span>
+      </button>
+    </div>
+
+  </form>
+
+</div>

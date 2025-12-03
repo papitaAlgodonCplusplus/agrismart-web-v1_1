@@ -43,7 +43,8 @@ namespace AgriSmart.Application.Agronomic.Mappers
                 cfg.AddProfile<MeasurementVariableMappingProfile>();
                 cfg.AddProfile<IrrigationEventMappingProfile>();
                 cfg.AddProfile<IrrigationMeasurementMappingProfile>();
-                
+                cfg.AddProfile<SoilAnalysisMappingProfile>();
+
 
             });
 

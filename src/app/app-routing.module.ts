@@ -35,6 +35,9 @@ import { IrrigationEngineeringDesignComponent } from './features/irrigation-engi
 import { FertilizerListComponent } from './features/fertilizers/fertilizer-list/fertilizer-list.component';
 import { FertilizerInputListComponent } from './features/fertilizer-inputs/fertilizer-input-list/fertilizer-input-list.component';
 
+// Soil Analysis
+import { SoilAnalysisManagerComponent } from './features/soil-analysis/components/soil-analysis-manager/soil-analysis-manager.component';
+
 // Users & Administration
 // import { UserListComponent } from './features/users/user-list/user-list.component';
 import { ProfileComponent } from './features/profile/profile.component';
@@ -153,11 +156,18 @@ const routes: Routes = [
           }
         ]
       },
-      // Fertilizers Management
+      // Water Chemistry
       {
         path: 'water-chemistry',
         component: WaterChemistryComponent
       },
+
+      // Soil Analysis
+      {
+        path: 'soil-analysis',
+        component: SoilAnalysisManagerComponent
+      },
+
       // Fertilizers Management
       {
         path: 'fertilizers',

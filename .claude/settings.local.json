@@ -70,7 +70,8 @@
       "Bash(cat:*)",
       "Bash(del PART2_substrate_html.txt PART3_substrate_html.txt)",
       "Bash(echo:*)",
-      "Bash(del \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\AGGREGATION_TAB.txt\")"
+      "Bash(del \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\AGGREGATION_TAB.txt\")",
+      "Bash(sqlcmd:*)"
     ],
     "deny": [],
     "ask": []
