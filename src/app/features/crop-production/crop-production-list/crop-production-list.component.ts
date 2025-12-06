@@ -1,364 +1,106 @@
 // src/app/features/crop-production/crop-production-list/crop-production-list.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CropProductionService } from '../services/crop-production.service';
-import { CropProduction } from '../../../core/models/models';
-import { Observable } from 'rxjs';
+import { CropProductionService, CropProductionCreateRequest, CropProductionUpdateRequest } from '../services/crop-production.service';
+import { CropService } from '../../crops/services/crop.service';
+import { ProductionUnitService } from '../../production-units/services/production-unit.service';
+import { CropProduction, Crop, ProductionUnit } from '../../../core/models/models';
+import { Observable, Subject, of } from 'rxjs';
+import { takeUntil, map, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-crop-production-list',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ReactiveFormsModule
   ],
-  template: `
-    <div class="container-fluid">
-      <div class="row mb-4">
-        <div class="col-12">
-          <h2>Lista de Producciones de Cultivo</h2>
-          <hr>
-        </div>
-      </div>
-
-      <!-- Filters and Actions -->
-      <div class="row mb-4">
-        <div class="col-lg-8">
-          <div class="row align-items-end">
-            <div class="col-md-2">
-              <label class="form-label">Solo Activas</label>
-              <div class="form-check">
-                <input 
-                  type="checkbox" 
-                  id="onlyActives"
-                  class="form-check-input" 
-                  [(ngModel)]="onlyActive"
-                  (change)="loadCropProductions()">
-                <label class="form-check-label" for="onlyActives">
-                  Mostrar solo activas
-                </label>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Filtro por Estado</label>
-              <select 
-                class="form-select"
-                [(ngModel)]="selectedStatus"
-                (change)="loadCropProductions()">
-                <option value="">Todos los estados</option>
-                <option value="Preparacion">Preparación</option>
-                <option value="Siembra">Siembra</option>
-                <option value="Crecimiento">Crecimiento</option>
-                <option value="Floracion">Floración</option>
-                <option value="Fructificacion">Fructificación</option>
-                <option value="Cosecha">Cosecha</option>
-                <option value="Finalizada">Finalizada</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Filtro por Cultivo</label>
-              <select 
-                class="form-select"
-                [(ngModel)]="selectedCropId"
-                (change)="loadCropProductions()">
-                <option value="">Todos los cultivos</option>
-                <option *ngFor="let crop of crops" [value]="crop.id">
-                  {{ crop.name }}
-                </option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <button class="btn btn-primary" (click)="loadCropProductions()">
-                <i class="bi bi-search me-1"></i>Consultar
-              </button>
-            </div>
-            <div class="col-md-2">
-              <button class="btn btn-success" (click)="createNew()">
-                <i class="bi bi-plus me-1"></i>Nueva
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-4">
-          <div class="input-group">
-            <input 
-              type="text" 
-              class="form-control" 
-              placeholder="Buscar producciones..."
-              [(ngModel)]="searchTerm"
-              (keyup.enter)="loadCropProductions()">
-            <button class="btn btn-outline-secondary" (click)="loadCropProductions()">
-              <i class="bi bi-search"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Loading State -->
-      <div class="row" *ngIf="isLoading">
-        <div class="col-12 text-center">
-          <div class="spinner-border" role="status">
-            <span class="visually-hidden">Cargando...</span>
-          </div>
-          <p class="mt-2">Cargando producciones de cultivo...</p>
-        </div>
-      </div>
-
-      <!-- Crop Productions Table -->
-      <div class="row" *ngIf="!isLoading && (cropProductions$ | async) as cropProductions">
-        <div class="col-12">
-          <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h5 class="mb-0">
-                <i class="bi bi-seedling me-2"></i>
-                Producciones de Cultivo ({{ cropProductions.length }})
-              </h5>
-            </div>
-            <div class="card-body p-0">
-              <div class="table-responsive">
-                <table class="table table-striped table-hover mb-0">
-                  <thead class="table-dark">
-                    <tr>
-                      <th>ID</th>
-                      <th>Código</th>
-                      <th>Cultivo</th>
-                      <th>Unidad de Producción</th>
-                      <th>Estado</th>
-                      <th>Fecha Siembra</th>
-                      <th>Fecha Est. Cosecha</th>
-                      <th>Progreso</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let production of cropProductions; trackBy: trackByFn">
-                      <td>
-                        <span class="badge bg-secondary">{{ production.id }}</span>
-                      </td>
-                      <td>
-                        <strong>{{ production.code || 'CP-' + production.id }}</strong>
-                        <div class="text-muted small" *ngIf="production.description">
-                          {{ production.description | slice:0:30 }}{{ production.description.length > 30 ? '...' : '' }}
-                        </div>
-                      </td>
-                      <td>
-                        <div class="d-flex align-items-center">
-                          <i class="bi bi-flower1 me-2 text-success"></i>
-                          <div>
-                            <strong>{{ production.crop?.name || 'Sin cultivo' }}</strong>
-                            <div class="text-muted small">{{ production.crop?.variety || '' }}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <i class="bi bi-grid-3x3-gap me-1"></i>
-                        {{ production.productionUnit?.name || 'Sin unidad' }}
-                        <div class="text-muted small">
-                          <i class="bi bi-geo-alt"></i>
-                          {{ production.productionUnit?.farm?.name || '' }}
-                        </div>
-                      </td>
-                      <td>
-                        <span class="badge" [ngClass]="getStatusClass(production.status)">
-                          <i class="bi" [ngClass]="getStatusIcon(production.status)"></i>
-                          {{ getStatusText(production.status) }}
-                        </span>
-                      </td>
-                      <td>
-                        <i class="bi bi-calendar-date me-1"></i>
-                        {{ production.plantingDate | date:'shortDate' }}
-                      </td>
-                      <td>
-                        <i class="bi bi-calendar-check me-1"></i>
-                        {{ production.estimatedHarvestDate | date:'shortDate' }}
-                        <div class="text-muted small" *ngIf="production.estimatedHarvestDate && getDaysToHarvest(production.estimatedHarvestDate) !== null">
-                          {{ getDaysToHarvest(production.estimatedHarvestDate)! > 0 ? 
-                             getDaysToHarvest(production.estimatedHarvestDate)! + ' días restantes' : 
-                             'Listo para cosecha' }}
-                        </div>
-                      </td>
-                      <td>
-                        <div class="progress" style="width: 100px; height: 20px;">
-                          <div 
-                            class="progress-bar"
-                            [class.bg-success]="(production.progress ?? 0) >= 100"
-                            [class.bg-info]="(production.progress ?? 0) < 100"
-                            [style.width.%]="production.progress ?? 0">
-                            {{ production.progress ?? 0 }}%
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="btn-group" role="group">
-                          <button 
-                            type="button" 
-                            class="btn btn-sm btn-outline-info"
-                            (click)="view(production)"
-                            title="Ver detalles">
-                            <i class="bi bi-eye"></i>
-                          </button>
-                          <button 
-                            type="button" 
-                            class="btn btn-sm btn-outline-primary"
-                            (click)="edit(production)"
-                            title="Editar">
-                            <i class="bi bi-pencil"></i>
-                          </button>
-                          <button 
-                            type="button" 
-                            class="btn btn-sm btn-outline-success"
-                            (click)="manageIrrigation(production)"
-                            title="Gestionar irrigación">
-                            <i class="bi bi-droplet"></i>
-                          </button>
-                          <button 
-                            type="button" 
-                            class="btn btn-sm btn-outline-danger"
-                            (click)="delete(production)"
-                            title="Eliminar">
-                            <i class="bi bi-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                <!-- Empty State -->
-                <div class="text-center p-4" *ngIf="cropProductions.length === 0">
-                  <i class="bi bi-seedling display-4 text-muted"></i>
-                  <h5 class="mt-3">No se encontraron producciones de cultivo</h5>
-                  <p class="text-muted">
-                    {{ getEmptyStateMessage() }}
-                  </p>
-                  <button class="btn btn-primary" (click)="createNew()">
-                    <i class="bi bi-plus me-1"></i>
-                    Crear primera producción de cultivo
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Success/Error Messages -->
-      <div class="row" *ngIf="successMessage">
-        <div class="col-12">
-          <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>
-            {{ successMessage }}
-            <button type="button" class="btn-close" (click)="successMessage = ''"></button>
-          </div>
-        </div>
-      </div>
-
-      <div class="row" *ngIf="errorMessage">
-        <div class="col-12">
-          <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            {{ errorMessage }}
-            <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Statistics Cards -->
-      <div class="row mt-4" *ngIf="(cropProductions$ | async) as cropProductions">
-        <div class="col-md-3">
-          <div class="card text-white bg-primary">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h4>{{ cropProductions.length }}</h4>
-                  <p class="mb-0">Total Producciones</p>
-                </div>
-                <i class="bi bi-seedling display-6"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-success">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h4>{{ getProductionsByStatus(cropProductions, 'Crecimiento').length }}</h4>
-                  <p class="mb-0">En Crecimiento</p>
-                </div>
-                <i class="bi bi-graph-up-arrow display-6"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-warning">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h4>{{ getProductionsByStatus(cropProductions, 'Cosecha').length }}</h4>
-                  <p class="mb-0">Listas para Cosecha</p>
-                </div>
-                <i class="bi bi-scissors display-6"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-info">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h4>{{ getAverageProgress(cropProductions) | number:'1.0-0' }}%</h4>
-                  <p class="mb-0">Progreso Promedio</p>
-                </div>
-                <i class="bi bi-bar-chart display-6"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .table th {
-      border-top: none;
-      font-weight: 600;
-    }
-    .btn-group .btn {
-      border-radius: 0.375rem;
-      margin-right: 2px;
-    }
-    .progress {
-      border-radius: 10px;
-    }
-    .card {
-      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-      border: 1px solid rgba(0, 0, 0, 0.125);
-    }
-  `]
+  templateUrl: './crop-production-list.component.html',
+  styleUrls: ['./crop-production-list.component.css']
 })
-export class CropProductionListComponent implements OnInit {
+export class CropProductionListComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
   cropProductions$: Observable<CropProduction[]> | undefined;
-  crops: any[] = [];
+  crops: Crop[] = [];
+  productionUnits: any[] = [];
+  containers: any[] = [];
+  growingMediums: any[] = [];
+  droppers: any[] = [];
   onlyActive = true;
   selectedStatus = '';
   selectedCropId = '';
   searchTerm = '';
   isLoading = false;
+  isLoadingCrops = false;
+  isLoadingUnits = false;
+  isSubmitting = false;
   errorMessage = '';
   successMessage = '';
+  formErrorMessage = '';
+
+  // Modal states
+  showCreateModal = false;
+  showEditModal = false;
+  showViewModal = false;
+  showIrrigationModal = false;
+  selectedProduction: CropProduction | null = null;
+
+  // Form
+  productionForm!: FormGroup;
+  statusOptions = ['Preparacion', 'Siembra', 'Crecimiento', 'Floracion', 'Fructificacion', 'Cosecha', 'Finalizada'];
 
   constructor(
     private cropProductionService: CropProductionService,
+    private cropService: CropService,
+    private productionUnitService: ProductionUnitService,
+    private fb: FormBuilder,
     private router: Router
-  ) {}
+  ) {
+    this.initForm();
+  }
 
   ngOnInit(): void {
     this.loadCrops();
+    this.loadProductionUnits();
+    this.loadContainers();
+    this.loadGrowingMediums();
+    this.loadDroppers();
     this.loadCropProductions();
+  }
+
+  initForm(): void {
+    this.productionForm = this.fb.group({
+      cropId: [null, Validators.required],
+      productionUnitId: [null, Validators.required],
+      name: ['', Validators.required],
+      containerId: [null, Validators.required],
+      growingMediumId: [null, Validators.required],
+      dropperId: [null, Validators.required],
+      width: [null, [Validators.required, Validators.min(0)]],
+      length: [null, [Validators.required, Validators.min(0)]],
+      betweenRowDistance: [null, [Validators.required, Validators.min(0)]],
+      betweenContainerDistance: [null, [Validators.required, Validators.min(0)]],
+      betweenPlantDistance: [null, [Validators.required, Validators.min(0)]],
+      plantsPerContainer: [null, [Validators.required, Validators.min(1)]],
+      numberOfDroppersPerContainer: [null, [Validators.required, Validators.min(0)]],
+      windSpeedMeasurementHeight: [null, [Validators.required, Validators.min(0)]],
+      startDate: ['', Validators.required],
+      endDate: ['', Validators.required],
+      altitude: [null, Validators.required],
+      latitude: [null, Validators.required],
+      longitude: [null, Validators.required],
+      depletionPercentage: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
+      drainThreshold: [null, [Validators.required, Validators.min(0)]]
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadCropProductions(): void {
@@ -373,9 +115,30 @@ export class CropProductionListComponent implements OnInit {
       searchTerm: this.searchTerm.trim()
     };
 
-    this.cropProductions$ = this.cropProductionService.getAll(filters);
-    
-    this.cropProductions$.subscribe({
+    this.cropProductions$ = this.cropProductionService.getAll(filters).pipe(
+      map((productions: any) => {
+        console.log('Raw crop productions response:', productions);
+        // Ensure we always have an array
+        if (!productions.cropProductions) {
+          console.warn('API returned undefined/null for crop productions');
+          return [];
+        }
+        if (!Array.isArray(productions.cropProductions)) {
+          console.warn('API returned non-array for crop productions:', productions.cropProductions);
+           
+          return [];
+        }
+        return productions.cropProductions;
+      }),
+      catchError(error => {
+        console.error('Error loading crop productions:', error);
+        this.errorMessage = 'Error al cargar las producciones de cultivo';
+        this.isLoading = false;
+        return of([]);
+      })
+    );
+
+    this.cropProductions$.pipe(takeUntil(this.destroy$)).subscribe({
       next: (productions) => {
         this.isLoading = false;
         console.log(`Loaded ${productions.length} crop productions`);
@@ -389,30 +152,228 @@ export class CropProductionListComponent implements OnInit {
   }
 
   private loadCrops(): void {
-    // This should use CropService
-    // For now, mock data
-    this.crops = [
-      { id: 1, name: 'Tomate' },
-      { id: 2, name: 'Lechuga' },
-      { id: 3, name: 'Pepino' },
-      { id: 4, name: 'Pimiento' }
+    this.isLoadingCrops = true;
+
+    this.cropService.getAll(true)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (crops: Crop[]) => {
+          this.crops = crops;
+          this.isLoadingCrops = false;
+          console.log(`Loaded ${crops.length} crops`);
+        },
+        error: (error) => {
+          this.isLoadingCrops = false;
+          console.error('Error loading crops:', error);
+          this.errorMessage = 'Error al cargar el catálogo de cultivos';
+        }
+      });
+  }
+
+  private loadProductionUnits(): void {
+    this.isLoadingUnits = true;
+
+    this.productionUnitService.getAll()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (units: any) => {
+          console.log('Raw production units response:', units);
+          this.productionUnits = units.productionUnits;
+          this.isLoadingUnits = false;
+          console.log(`Loaded ${units.length} production units`);
+        },
+        error: (error) => {
+          this.isLoadingUnits = false;
+          console.error('Error loading production units:', error);
+          this.errorMessage = 'Error al cargar las unidades de producción';
+        }
+      });
+  }
+
+  private loadContainers(): void {
+    // TODO: Replace with actual API call when endpoint is available
+    this.containers = [
+      { id: 1, name: 'Maceta Estándar' },
+      { id: 2, name: 'Maceta Grande' },
+      { id: 3, name: 'Contenedor NFT' },
+      { id: 4, name: 'Bolsa de Cultivo' }
+    ];
+  }
+
+  private loadGrowingMediums(): void {
+    // TODO: Replace with actual API call when endpoint is available
+    this.growingMediums = [
+      { id: 1, name: 'Tierra' },
+      { id: 2, name: 'Fibra de Coco' },
+      { id: 3, name: 'Perlita' },
+      { id: 4, name: 'Vermiculita' },
+      { id: 5, name: 'Mezcla Hidropónica' }
+    ];
+  }
+
+  private loadDroppers(): void {
+    // TODO: Replace with actual API call when endpoint is available
+    this.droppers = [
+      { id: 1, name: 'Gotero 2L/h' },
+      { id: 2, name: 'Gotero 4L/h' },
+      { id: 3, name: 'Gotero 8L/h' },
+      { id: 4, name: 'Microaspersor' }
     ];
   }
 
   createNew(): void {
-    this.router.navigate(['/crop-production/new']);
+    this.selectedProduction = null;
+    this.formErrorMessage = '';
+    this.productionForm.reset({
+      cropId: null,
+      productionUnitId: null,
+      name: '',
+      containerId: null,
+      growingMediumId: null,
+      dropperId: null,
+      width: null,
+      length: null,
+      betweenRowDistance: null,
+      betweenContainerDistance: null,
+      betweenPlantDistance: null,
+      plantsPerContainer: null,
+      numberOfDroppersPerContainer: null,
+      windSpeedMeasurementHeight: 2,
+      startDate: '',
+      endDate: '',
+      altitude: 0,
+      latitude: null,
+      longitude: null,
+      depletionPercentage: 50,
+      drainThreshold: 10
+    });
+    this.showCreateModal = true;
   }
 
   view(production: CropProduction): void {
-    this.router.navigate(['/crop-production', production.id]);
+    this.selectedProduction = production;
+    this.showViewModal = true;
   }
 
   edit(production: CropProduction): void {
-    this.router.navigate(['/crop-production', production.id, 'edit']);
+    this.selectedProduction = production;
+    this.formErrorMessage = '';
+
+    // Populate form with existing values
+    // Note: Some fields may not exist in the production object if it was created with old schema
+    this.productionForm.patchValue({
+      cropId: production.cropId,
+      productionUnitId: production.productionUnitId,
+      name: (production as any).name || production.code || '',
+      containerId: (production as any).containerId || null,
+      growingMediumId: (production as any).growingMediumId || null,
+      dropperId: (production as any).dropperId || null,
+      width: (production as any).width || null,
+      length: (production as any).length || null,
+      betweenRowDistance: (production as any).betweenRowDistance || null,
+      betweenContainerDistance: (production as any).betweenContainerDistance || null,
+      betweenPlantDistance: (production as any).betweenPlantDistance || null,
+      plantsPerContainer: (production as any).plantsPerContainer || null,
+      numberOfDroppersPerContainer: (production as any).numberOfDroppersPerContainer || null,
+      windSpeedMeasurementHeight: (production as any).windSpeedMeasurementHeight || 2,
+      startDate: (production as any).startDate ? this.formatDateForInput((production as any).startDate) : (production.plantingDate ? this.formatDateForInput(production.plantingDate) : ''),
+      endDate: (production as any).endDate ? this.formatDateForInput((production as any).endDate) : (production.estimatedHarvestDate ? this.formatDateForInput(production.estimatedHarvestDate) : ''),
+      altitude: (production as any).altitude || 0,
+      latitude: (production as any).latitude || null,
+      longitude: (production as any).longitude || null,
+      depletionPercentage: (production as any).depletionPercentage || 50,
+      drainThreshold: (production as any).drainThreshold || 10
+    });
+
+    this.showEditModal = true;
   }
 
   manageIrrigation(production: CropProduction): void {
-    this.router.navigate(['/crop-production', production.id, 'irrigation']);
+    this.selectedProduction = production;
+    this.showIrrigationModal = true;
+  }
+
+  closeModal(): void {
+    this.showCreateModal = false;
+    this.showEditModal = false;
+    this.showViewModal = false;
+    this.showIrrigationModal = false;
+    this.selectedProduction = null;
+    this.formErrorMessage = '';
+  }
+
+  saveProduction(): void {
+    if (this.productionForm.invalid) {
+      this.formErrorMessage = 'Por favor, complete todos los campos requeridos';
+      Object.keys(this.productionForm.controls).forEach(key => {
+        this.productionForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.formErrorMessage = '';
+
+    const formValue = this.productionForm.value;
+
+    if (this.selectedProduction) {
+      // Update existing production
+      const updateData: CropProductionUpdateRequest = {
+        ...formValue,
+        plantingDate: formValue.plantingDate,
+        estimatedHarvestDate: formValue.estimatedHarvestDate || undefined
+      };
+
+      this.cropProductionService.update(this.selectedProduction.id, updateData)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (production) => {
+            this.isSubmitting = false;
+            this.onProductionSaved();
+            console.log('Production updated:', production);
+          },
+          error: (error) => {
+            this.isSubmitting = false;
+            this.formErrorMessage = error.message || 'Error al actualizar la producción';
+            console.error('Update error:', error);
+          }
+        });
+    } else {
+      // Create new production
+      const createData: CropProductionCreateRequest = {
+        ...formValue,
+        startDate: formValue.startDate,
+        endDate: formValue.endDate
+      };
+
+      console.log('Creating crop production with data:', createData);
+
+      this.cropProductionService.create(createData)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (production) => {
+            this.isSubmitting = false;
+            this.onProductionSaved();
+            console.log('Production created:', production);
+          },
+          error: (error) => {
+            this.isSubmitting = false;
+            this.formErrorMessage = error.message || 'Error al crear la producción';
+            console.error('Create error:', error);
+          }
+        });
+    }
+  }
+
+  onProductionSaved(): void {
+    this.closeModal();
+    this.successMessage = 'Producción guardada correctamente';
+    this.loadCropProductions();
+
+    // Auto-hide success message after 5 seconds
+    setTimeout(() => {
+      this.successMessage = '';
+    }, 5000);
   }
 
   delete(production: CropProduction): void {
@@ -481,12 +442,12 @@ export class CropProductionListComponent implements OnInit {
 
   getDaysToHarvest(harvestDate: Date | string | null | undefined): number | null {
     if (!harvestDate) return null;
-    
+
     const today = new Date();
     const harvest = new Date(harvestDate);
     const diffTime = harvest.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return diffDays;
   }
 
@@ -505,12 +466,25 @@ export class CropProductionListComponent implements OnInit {
   }
 
   getProductionsByStatus(productions: CropProduction[], status: string): CropProduction[] {
+    if (!productions || !Array.isArray(productions)) {
+      console.warn('getProductionsByStatus received non-array:', productions);
+      return [];
+    }
     return productions.filter(p => p.status === status);
   }
 
   getAverageProgress(productions: CropProduction[]): number {
-    if (productions.length === 0) return 0;
+    if (!productions || !Array.isArray(productions) || productions.length === 0) return 0;
     const total = productions.reduce((sum, p) => sum + (p.progress || 0), 0);
     return total / productions.length;
+  }
+
+  formatDateForInput(date: Date | string | null | undefined): string {
+    if (!date) return '';
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

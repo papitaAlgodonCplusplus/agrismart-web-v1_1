@@ -639,6 +639,11 @@ export class NutrientFormulationComponent implements OnInit {
     onCropPhaseChange(): void {
         const cropPhaseId = this.formulationForm.get('cropPhaseId')?.value;
         if (cropPhaseId) {
+            // Find the selected phase and set the cropId
+            const selectedPhase = this.cropPhases.find(p => p.id === +cropPhaseId);
+            if (selectedPhase) {
+                this.formulationForm.patchValue({ cropId: selectedPhase.cropId });
+            }
             this.loadPhaseRequirements(cropPhaseId);
         }
     }
@@ -761,6 +766,7 @@ export class NutrientFormulationComponent implements OnInit {
     // Alias for template compatibility
     onPhaseChange(event?: any): void {
         this.onCropPhaseChange();
+        this.loadSoilAnalyses();
     }
     getStatusClass(target: number, achieved: number): string {
         const difference = Math.abs(target - achieved);
@@ -4667,18 +4673,19 @@ export class NutrientFormulationComponent implements OnInit {
      * Load soil analyses for selected crop production
      */
     loadSoilAnalyses(): void {
-        const cropProductionId = this.formulationForm.get('cropId')?.value;
-        if (!cropProductionId) {
-            console.warn('No crop production selected');
+        const cropPhaseId = this.formulationForm.get('cropPhaseId')?.value;
+        if (!cropPhaseId) {
+            this.errorMessage = 'No se encontró la producción de cultivo para la fase seleccionada';
             return;
         }
 
         this.isLoading = true;
 
-        this.soilAnalysisService.getByCropProduction(cropProductionId, false)
+        console.log('Loading soil analyses for crop production:', cropPhaseId);
+        this.soilAnalysisService.getByCropProduction(cropPhaseId, false)
             .subscribe({
-                next: (analyses) => {
-                    this.soilAnalysisList = analyses;
+                next: (analyses: any) => {
+                    this.soilAnalysisList = analyses.soilAnalyses;
 
                     // Auto-select most recent analysis
                     if (analyses.length > 0) {

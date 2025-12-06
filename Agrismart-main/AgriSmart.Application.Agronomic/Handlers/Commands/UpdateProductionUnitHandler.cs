@@ -35,10 +35,22 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
 
                 if (getResult != null)
                 {
+                    getResult.FarmId = command.FarmId;
                     getResult.ProductionUnitTypeId = command.ProductionUnitTypeId;
                     getResult.Name = command.Name;
                     getResult.Description = command.Description;
+                    getResult.Location = command.Location;
+                    getResult.Area = command.Area;
+                    getResult.Capacity = command.Capacity;
+                    getResult.SoilType = command.SoilType;
+                    getResult.Drainage = command.Drainage;
+                    getResult.GreenhouseType = command.GreenhouseType;
+                    getResult.Ventilation = command.Ventilation;
+                    getResult.LightingSystem = command.LightingSystem;
+                    getResult.Irrigation = command.Irrigation;
+                    getResult.ClimateControl = command.ClimateControl;
                     getResult.Active = command.Active;
+                    getResult.UpdatedBy = _productionUnitCommandRepository.GetSessionUserId();
                 }
 
                 ProductionUnit updateProductionUnitResult = await _productionUnitCommandRepository.UpdateAsync(getResult);
@@ -52,6 +64,16 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                         ProductionUnitTypeId = updateProductionUnitResult.ProductionUnitTypeId,
                         Name = updateProductionUnitResult.Name,
                         Description = updateProductionUnitResult.Description,
+                        Location = updateProductionUnitResult.Location,
+                        Area = updateProductionUnitResult.Area,
+                        Capacity = updateProductionUnitResult.Capacity,
+                        SoilType = updateProductionUnitResult.SoilType,
+                        Drainage = updateProductionUnitResult.Drainage,
+                        GreenhouseType = updateProductionUnitResult.GreenhouseType,
+                        Ventilation = updateProductionUnitResult.Ventilation,
+                        LightingSystem = updateProductionUnitResult.LightingSystem,
+                        Irrigation = updateProductionUnitResult.Irrigation,
+                        ClimateControl = updateProductionUnitResult.ClimateControl,
                         Active = updateProductionUnitResult.Active
                     };
 

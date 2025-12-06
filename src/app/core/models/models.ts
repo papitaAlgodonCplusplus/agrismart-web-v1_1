@@ -2250,6 +2250,13 @@ export interface ProductionUnit {
     latitude: number;
     longitude: number;
   };
+  soilType?: string;
+  drainage?: string;
+  irrigation?: boolean;
+  greenhouseType?: string;
+  climateControl?: boolean;
+  ventilation?: string;
+  lightingSystem?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt?: Date;

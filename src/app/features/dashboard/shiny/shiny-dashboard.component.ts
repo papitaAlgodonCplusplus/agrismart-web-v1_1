@@ -209,6 +209,19 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   activeDeviceIds: Set<string> = new Set();
   inactiveDevices: DeviceData[] = [];
   windDataLoaded = false;
+
+  // Collapse state properties (collapsed by default)
+  isChartsCollapsed = true;
+  isWindRoseCollapsed = true;
+  isThermostatCollapsed = true;
+  isTSRChartCollapsed = true;
+  isPARChartCollapsed = true;
+  isFlowDevicesCollapsed = true;
+  isSoilDevicesCollapsed = true;
+  isPhDevicesCollapsed = true;
+  isPressureDevicesCollapsed = true;
+  isClimateDevicesCollapsed = true;
+
   // Sensor units mapping
   private sensorUnits: { [key: string]: string } = {
     // pH sensors
@@ -2008,6 +2021,47 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   // Track by function for PAR
   trackByPARIndex(index: number, item: any): number {
     return index;
+  }
+
+  // Toggle methods for collapsible sections
+  toggleHistoricalCharts(): void {
+    this.isChartsCollapsed = !this.isChartsCollapsed;
+  }
+
+  toggleWindRose(): void {
+    this.isWindRoseCollapsed = !this.isWindRoseCollapsed;
+  }
+
+  toggleThermostat(): void {
+    this.isThermostatCollapsed = !this.isThermostatCollapsed;
+  }
+
+  toggleTSRChart(): void {
+    this.isTSRChartCollapsed = !this.isTSRChartCollapsed;
+  }
+
+  togglePARChart(): void {
+    this.isPARChartCollapsed = !this.isPARChartCollapsed;
+  }
+
+  toggleFlowDevices(): void {
+    this.isFlowDevicesCollapsed = !this.isFlowDevicesCollapsed;
+  }
+
+  toggleSoilDevices(): void {
+    this.isSoilDevicesCollapsed = !this.isSoilDevicesCollapsed;
+  }
+
+  togglePhDevices(): void {
+    this.isPhDevicesCollapsed = !this.isPhDevicesCollapsed;
+  }
+
+  togglePressureDevices(): void {
+    this.isPressureDevicesCollapsed = !this.isPressureDevicesCollapsed;
+  }
+
+  toggleClimateDevices(): void {
+    this.isClimateDevicesCollapsed = !this.isClimateDevicesCollapsed;
   }
 
 }

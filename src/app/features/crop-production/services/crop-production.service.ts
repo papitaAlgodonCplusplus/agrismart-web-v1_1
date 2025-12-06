@@ -29,45 +29,27 @@ export interface CropProductionFilters {
 }
 
 export interface CropProductionCreateRequest {
-  code?: string;
   cropId: number;
   productionUnitId: number;
-  plantingDate: Date | string;
-  estimatedHarvestDate?: Date | string;
-  status?: string;
-  plantedArea?: number;
-  expectedYield?: number;
-  description?: string;
-  plantingSettings?: {
-    seedDensity?: number;
-    rowSpacing?: number;
-    plantSpacing?: number;
-    depth?: number;
-    seedTreatment?: string;
-  };
-  irrigationSettings?: {
-    irrigationMethod?: string;
-    waterRequirementPerWeek?: number;
-    irrigationFrequency?: string;
-  };
-  fertilizationPlan?: {
-    baseFertilizer?: string;
-    growthFertilizer?: string;
-    floweringFertilizer?: string;
-    fruitingFertilizer?: string;
-  };
-  pestManagementPlan?: {
-    preventiveTreatments?: string[];
-    monitoringSchedule?: string;
-    organicApproach?: boolean;
-  };
-  harvestPlan?: {
-    expectedHarvestWeeks?: number;
-    harvestMethod?: string;
-    postHarvestTreatment?: string;
-    targetMarket?: string;
-  };
-  isActive?: boolean;
+  name: string;
+  containerId: number;
+  growingMediumId: number;
+  dropperId: number;
+  width: number;
+  length: number;
+  betweenRowDistance: number;
+  betweenContainerDistance: number;
+  betweenPlantDistance: number;
+  plantsPerContainer: number;
+  numberOfDroppersPerContainer: number;
+  windSpeedMeasurementHeight: number;
+  startDate: Date | string;
+  endDate: Date | string;
+  altitude: number;
+  latitude: number;
+  longitude: number;
+  depletionPercentage: number;
+  drainThreshold: number;
 }
 
 export interface CropProductionUpdateRequest extends Partial<CropProductionCreateRequest> {
@@ -306,7 +288,7 @@ export class CropProductionService {
       }
     }
 
-    return this.apiService.get<CropProduction[]>(this.baseUrl, params);
+    return this.apiService.get<any[]>(this.baseUrl, params);
   }
 
   /**
@@ -322,17 +304,12 @@ export class CropProductionService {
   create(data: CropProductionCreateRequest): Observable<CropProduction> {
     const payload = {
       ...data,
-      plantingDate: typeof data.plantingDate === 'string'
-        ? data.plantingDate
-        : data.plantingDate.toISOString(),
-      ...(data.estimatedHarvestDate && {
-        estimatedHarvestDate: typeof data.estimatedHarvestDate === 'string'
-          ? data.estimatedHarvestDate
-          : data.estimatedHarvestDate.toISOString()
-      }),
-      status: data.status || 'Preparacion',
-      progress: 0,
-      isActive: data.isActive !== undefined ? data.isActive : true
+      startDate: typeof data.startDate === 'string'
+        ? data.startDate
+        : data.startDate.toISOString(),
+      endDate: typeof data.endDate === 'string'
+        ? data.endDate
+        : data.endDate.toISOString()
     };
 
     return this.apiService.post<CropProduction>(this.baseUrl, payload);
@@ -344,15 +321,15 @@ export class CropProductionService {
   update(id: number, data: CropProductionUpdateRequest): Observable<CropProduction> {
     const payload = {
       ...data,
-      ...(data.plantingDate && {
-        plantingDate: typeof data.plantingDate === 'string'
-          ? data.plantingDate
-          : data.plantingDate.toISOString()
+      ...(data.startDate && {
+        startDate: typeof data.startDate === 'string'
+          ? data.startDate
+          : data.startDate.toISOString()
       }),
-      ...(data.estimatedHarvestDate && {
-        estimatedHarvestDate: typeof data.estimatedHarvestDate === 'string'
-          ? data.estimatedHarvestDate
-          : data.estimatedHarvestDate.toISOString()
+      ...(data.endDate && {
+        endDate: typeof data.endDate === 'string'
+          ? data.endDate
+          : data.endDate.toISOString()
       }),
       ...(data.actualHarvestDate && {
         actualHarvestDate: typeof data.actualHarvestDate === 'string'

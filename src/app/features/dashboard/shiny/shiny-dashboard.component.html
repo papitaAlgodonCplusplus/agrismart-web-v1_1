@@ -89,37 +89,62 @@
   </div>
 
   <!-- Charts Section -->
-  <div *ngIf="showCharts && !isLoading && !error" class="charts-section">
-    <div class="charts-header">
-      <h2>Gráficos de Datos Históricos</h2>
-      <div class="chart-type-selector">
-        <button *ngFor="let type of getAvailableChartTypes()"
-          [class]="'chart-type-btn ' + (selectedChartType === type ? 'active' : '')" (click)="selectChartType(type)">
-          {{ getChartTypeLabel(type) }}
+  <div *ngIf="showCharts && !isLoading && !error" class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="bi bi-graph-up"></i> Gráficos de Datos Históricos
+        </h5>
+        <button class="btn btn-sm btn-light" (click)="toggleHistoricalCharts()">
+          <i class="bi" [class.bi-chevron-down]="isChartsCollapsed"
+             [class.bi-chevron-up]="!isChartsCollapsed"></i>
+          {{ isChartsCollapsed ? 'Expandir' : 'Contraer' }}
         </button>
       </div>
     </div>
-
-    <div class="charts-grid">
-      <div *ngFor="let chartType of getChartsForType(selectedChartType)" class="chart-container">
-        <div class="chart-header">
-          <h3>{{ chartType }} {{ getSensorUnit(chartType) ? '(' + getSensorUnit(chartType) + ')' : '' }}</h3>
+    <div class="card-body" *ngIf="!isChartsCollapsed">
+      <div class="charts-section">
+        <div class="chart-type-selector">
+          <button *ngFor="let type of getAvailableChartTypes()"
+            [class]="'chart-type-btn ' + (selectedChartType === type ? 'active' : '')" (click)="selectChartType(type)">
+            {{ getChartTypeLabel(type) }}
+          </button>
         </div>
-        <div class="chart-content">
-          <canvas class="mini-chart" [id]="'chart-' + selectedChartType + '-' + chartType"></canvas>
+
+        <div class="charts-grid">
+          <div *ngFor="let chartType of getChartsForType(selectedChartType)" class="chart-container">
+            <div class="chart-header">
+              <h3>{{ chartType }} {{ getSensorUnit(chartType) ? '(' + getSensorUnit(chartType) + ')' : '' }}</h3>
+            </div>
+            <div class="chart-content">
+              <canvas class="mini-chart" [id]="'chart-' + selectedChartType + '-' + chartType"></canvas>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="chart-card wind-rose-card">
-      <div class="chart-header">
-        <h3>
-          <i class="fas fa-wind"></i> Rosa de Vientos
-        </h3>
-        <div class="chart-info">
-          <small>Distribución de velocidad y dirección del viento</small>
+  <div *ngIf="showCharts && !isLoading && !error">
+
+    <div class="card mb-4">
+      <div class="card-header bg-info text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-wind"></i> Rosa de Vientos
+          </h5>
+          <button class="btn btn-sm btn-light" (click)="toggleWindRose()">
+            <i class="bi" [class.bi-chevron-down]="isWindRoseCollapsed"
+               [class.bi-chevron-up]="!isWindRoseCollapsed"></i>
+            {{ isWindRoseCollapsed ? 'Expandir' : 'Contraer' }}
+          </button>
         </div>
       </div>
+      <div class="card-body" *ngIf="!isWindRoseCollapsed">
+        <div class="chart-card wind-rose-card">
+          <div class="chart-info">
+            <small>Distribución de velocidad y dirección del viento</small>
+          </div>
 
       <div class="chart-content custom-wind-rose-container" *ngIf="windRoseSegments.length > 0">
         <svg [attr.width]="windRoseConfig.size" [attr.height]="windRoseConfig.size"
@@ -192,20 +217,29 @@
         <p>No hay datos de viento disponibles</p>
         <small>Esperando lecturas de los sensores de viento</small>
       </div>
-    </div>
-
-    <!-- Add this AFTER the wind-rose-card section in shiny-dashboard.component.html -->
-
-    <!-- THERMOSTAT TEMPERATURE CARD -->
-    <div class="chart-card thermostat-card">
-      <div class="chart-header">
-        <h3>
-          <i class="fas fa-thermometer-half"></i> Monitoreo de Temperatura
-        </h3>
-        <div class="chart-info">
-          <small>Lecturas en tiempo real con rangos óptimos y normales para Costa Rica</small>
         </div>
       </div>
+    </div>
+
+    <!-- THERMOSTAT TEMPERATURE CARD -->
+    <div class="card mb-4">
+      <div class="card-header bg-warning text-dark">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-thermometer-half"></i> Monitoreo de Temperatura
+          </h5>
+          <button class="btn btn-sm btn-light" (click)="toggleThermostat()">
+            <i class="bi" [class.bi-chevron-down]="isThermostatCollapsed"
+               [class.bi-chevron-up]="!isThermostatCollapsed"></i>
+            {{ isThermostatCollapsed ? 'Expandir' : 'Contraer' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body" *ngIf="!isThermostatCollapsed">
+        <div class="chart-card thermostat-card">
+          <div class="chart-info mb-3">
+            <small>Lecturas en tiempo real con rangos óptimos y normales para Costa Rica</small>
+          </div>
 
       <div class="chart-content thermostat-container" *ngIf="thermostatData.length > 0">
         <!-- Main Thermostats Grid -->
@@ -379,23 +413,29 @@
         <p>No hay datos de temperatura disponibles</p>
         <small>Esperando lecturas de los sensores de temperatura</small>
       </div>
-    </div>
-
-    <!-- ============================================================================
-     TSR DLIg CHART - COMPLETE HTML
-     Add to shiny-dashboard.component.html after the thermostat-card section
-     ============================================================================ -->
-
-    <!-- TSR DLIg CHART CARD -->
-    <div class="chart-card tsr-dlig-card">
-      <div class="chart-header">
-        <h3>
-          <i class="fas fa-sun"></i> Radiación Solar Total (TSR) - DLIg
-        </h3>
-        <div class="chart-info">
-          <small>Daily Light Integral - Global | Período: {{ tsrChartData.dataPoints.length }} horas</small>
         </div>
       </div>
+    </div>
+
+    <!-- TSR DLIg CHART CARD -->
+    <div class="card mb-4">
+      <div class="card-header bg-success text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-sun"></i> Radiación Solar Total (TSR) - DLIg
+          </h5>
+          <button class="btn btn-sm btn-light" (click)="toggleTSRChart()">
+            <i class="bi" [class.bi-chevron-down]="isTSRChartCollapsed"
+               [class.bi-chevron-up]="!isTSRChartCollapsed"></i>
+            {{ isTSRChartCollapsed ? 'Expandir' : 'Contraer' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body" *ngIf="!isTSRChartCollapsed">
+        <div class="chart-card tsr-dlig-card">
+          <div class="chart-info mb-3">
+            <small>Daily Light Integral - Global | Período: {{ tsrChartData.dataPoints.length }} horas</small>
+          </div>
 
       <!-- DLIg Summary Cards -->
       <div class="dlig-summary-cards">
@@ -591,20 +631,29 @@
           <span class="tsr-footer-badge">Rango típico: 10-50 MJ/m²/día</span>
         </small>
       </div>
-    </div>
-
-
-
-    <!-- PAR DLIp CHART CARD -->
-    <div class="chart-card par-dlip-card">
-      <div class="chart-header">
-        <h3>
-          <i class="fas fa-lightbulb"></i> PAR & DLIp - Radiación Fotosintética Activa
-        </h3>
-        <div class="chart-info">
-          <small>Daily Light Integral - PAR | Período: {{ parChartData.dataPoints.length }} horas</small>
         </div>
       </div>
+    </div>
+
+    <!-- PAR DLIp CHART CARD -->
+    <div class="card mb-4">
+      <div class="card-header bg-dark text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-lightbulb"></i> PAR & DLIp - Radiación Fotosintética Activa
+          </h5>
+          <button class="btn btn-sm btn-light" (click)="togglePARChart()">
+            <i class="bi" [class.bi-chevron-down]="isPARChartCollapsed"
+               [class.bi-chevron-up]="!isPARChartCollapsed"></i>
+            {{ isPARChartCollapsed ? 'Expandir' : 'Contraer' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body" *ngIf="!isPARChartCollapsed">
+        <div class="chart-card par-dlip-card">
+          <div class="chart-info mb-3">
+            <small>Daily Light Integral - PAR | Período: {{ parChartData.dataPoints.length }} horas</small>
+          </div>
 
       <!-- DLIp Summary Cards -->
       <div class="dlip-summary-cards">
@@ -816,15 +865,31 @@
           <span class="par-footer-badge">Rango óptimo: 20-60 mol/m²/día</span>
         </small>
       </div>
+        </div>
+      </div>
     </div>
   </div>
+
   <!-- Dashboard Content -->
   <div *ngIf="!isLoading && !error" class="dashboard-content">
 
     <!-- Flow Meters Section -->
-    <div class="dashboard-section">
-      <h2>Medidores de Flujo</h2>
-      <div class="devices-grid">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="bi bi-droplet"></i> Medidores de Flujo
+          </h5>
+          <button class="btn btn-sm btn-light" (click)="toggleFlowDevices()">
+            <i class="bi" [class.bi-chevron-down]="isFlowDevicesCollapsed"
+               [class.bi-chevron-up]="!isFlowDevicesCollapsed"></i>
+            {{ isFlowDevicesCollapsed ? 'Expandir' : 'Contraer' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body" *ngIf="!isFlowDevicesCollapsed">
+        <div class="dashboard-section">
+          <div class="devices-grid">
         <div *ngFor="let device of flowDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
@@ -874,13 +939,28 @@
             </div>
           </div>
         </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Soil Sensors Section -->
-    <div class="dashboard-section">
-      <h2>Sensores de Suelo</h2>
-      <div class="devices-grid">
+    <div class="card mb-4">
+      <div class="card-header bg-success text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="bi bi-moisture"></i> Sensores de Suelo
+          </h5>
+          <button class="btn btn-sm btn-light" (click)="toggleSoilDevices()">
+            <i class="bi" [class.bi-chevron-down]="isSoilDevicesCollapsed"
+               [class.bi-chevron-up]="!isSoilDevicesCollapsed"></i>
+            {{ isSoilDevicesCollapsed ? 'Expandir' : 'Contraer' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body" *ngIf="!isSoilDevicesCollapsed">
+        <div class="dashboard-section">
+          <div class="devices-grid">
         <div *ngFor="let device of soilDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
@@ -923,13 +1003,28 @@
             </div>
           </div>
         </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- pH Sensors Section -->
-    <div class="dashboard-section">
-      <h2>Sensores de pH</h2>
-      <div class="devices-grid">
+    <div class="card mb-4">
+      <div class="card-header bg-warning text-dark">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="bi bi-vial"></i> Sensores de pH
+          </h5>
+          <button class="btn btn-sm btn-light" (click)="togglePhDevices()">
+            <i class="bi" [class.bi-chevron-down]="isPhDevicesCollapsed"
+               [class.bi-chevron-up]="!isPhDevicesCollapsed"></i>
+            {{ isPhDevicesCollapsed ? 'Expandir' : 'Contraer' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body" *ngIf="!isPhDevicesCollapsed">
+        <div class="dashboard-section">
+          <div class="devices-grid">
         <div *ngFor="let device of phDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
@@ -985,13 +1080,28 @@
             </div>
           </div>
         </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Pressure Sensors Section -->
-    <div class="dashboard-section">
-      <h2>Sensores de Presión</h2>
-      <div class="devices-grid">
+    <div class="card mb-4">
+      <div class="card-header bg-info text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="bi bi-speedometer"></i> Sensores de Presión
+          </h5>
+          <button class="btn btn-sm btn-light" (click)="togglePressureDevices()">
+            <i class="bi" [class.bi-chevron-down]="isPressureDevicesCollapsed"
+               [class.bi-chevron-up]="!isPressureDevicesCollapsed"></i>
+            {{ isPressureDevicesCollapsed ? 'Expandir' : 'Contraer' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body" *ngIf="!isPressureDevicesCollapsed">
+        <div class="dashboard-section">
+          <div class="devices-grid">
         <div *ngFor="let device of pressureDevices" class="device-card"
           [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
@@ -1050,13 +1160,28 @@
             </div>
           </div>
         </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Climate Station Section -->
-    <div class="dashboard-section">
-      <h2>Estación Climática</h2>
-      <div class="devices-grid">
+    <div class="card mb-4">
+      <div class="card-header bg-secondary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="bi bi-cloud-sun"></i> Estación Climática
+          </h5>
+          <button class="btn btn-sm btn-light" (click)="toggleClimateDevices()">
+            <i class="bi" [class.bi-chevron-down]="isClimateDevicesCollapsed"
+               [class.bi-chevron-up]="!isClimateDevicesCollapsed"></i>
+            {{ isClimateDevicesCollapsed ? 'Expandir' : 'Contraer' }}
+          </button>
+        </div>
+      </div>
+      <div class="card-body" *ngIf="!isClimateDevicesCollapsed">
+        <div class="dashboard-section">
+          <div class="devices-grid">
         <div *ngFor="let device of climateDevices" class="device-card climate-card"
           [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
@@ -1128,6 +1253,8 @@
                 <span class="value">{{ formatDate(device.lastUpdate) }}</span>
               </div>
             </div>
+          </div>
+        </div>
           </div>
         </div>
       </div>

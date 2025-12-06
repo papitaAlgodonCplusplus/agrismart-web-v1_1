@@ -212,6 +212,37 @@
               </div>
             </div>
 
+            <!-- Crop Production Management -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToCropProduction()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-egg text-primary"></i>
+                </div>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Producciones</h6>
+                  <p class="quick-action-description">Gestionar producciones activas</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Production Units -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToProductionUnits()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-grid-3x3-gap text-info"></i>
+                </div>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Unidades de Producción</h6>
+                  <p class="quick-action-description">Gestionar áreas productivas</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </div>
+            </div>
 
             <!-- Technical Tools Section -->
             <div class="col-12 mb-3 mt-3">
@@ -419,115 +450,137 @@
     </button>
   </div>
   <br />
-  <div class="row mb-3" *ngIf="aggregateClimateKPIs">
-    <div class="col-md-3">
-      <div class="stat-box">
-        <i class="bi bi-thermometer-half text-danger"></i>
-        <h6>Temperatura Promedio</h6>
-        <h3>{{ aggregateClimateKPIs.tempAvg | number:'1.1-1' }}°C</h3>
-        <small class="text-muted">
-          Min: {{ aggregateClimateKPIs.tempMin | number:'1.1-1' }}°C |
-          Max: {{ aggregateClimateKPIs.tempMax | number:'1.1-1' }}°C
-        </small>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="stat-box">
-        <i class="bi bi-wind text-info"></i>
-        <h6>Velocidad del Viento</h6>
-        <h3>{{ aggregateClimateKPIs.windSpeedAvg | number:'1.1-1' }} m/s</h3>
-        <small class="text-muted">Promedio del período</small>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="stat-box">
-        <i class="bi bi-brightness-high text-warning"></i>
-        <h6>Radiación Solar</h6>
-        <h3>{{ aggregateClimateKPIs.solarRadiationAvg | number:'1.0-0' }} W/m²</h3>
-        <small class="text-muted">PAR promedio</small>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="stat-box bg-primary text-white">
-        <i class="bi bi-droplet"></i>
-        <h6>Evapotranspiración</h6>
-        <h3>{{ aggregateClimateKPIs.cropETAvg | number:'1.2-2' }} mm/día</h3>
-        <small>Min: {{ aggregateClimateKPIs.cropETMin | number:'1.2-2' }} | Max: {{ aggregateClimateKPIs.cropETMax |
-          number:'1.2-2' }}</small>
-      </div>
-    </div>
-  </div>
 
-  <!-- Replace the ET Trend Table section (around line 215) -->
-  <div class="table-responsive">
-    <table class="table table-sm table-hover">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Temp (°C)</th>
-          <th>Viento (m/s)</th>
-          <th>Radiación (W/m²)</th>
-          <th>ET Referencia</th>
-          <th>ET Cultivo</th>
-          <th>Déficit Vapor</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let kpi of getClimateKPIsPaginated()">
-          <td>{{ kpi.date | date:'short' }}</td>
-          <td>{{ kpi.tempAvg | number:'1.1-1' }}</td>
-          <td>{{ kpi.windSpeed | number:'1.1-1' }}</td>
-          <td>{{ kpi.solarRadiation | number:'1.0-0' }}</td>
-          <td>{{ kpi.referenceET | number:'1.2-2' }} mm/día</td>
-          <td><strong>{{ kpi.cropET | number:'1.2-2' }} mm/día</strong></td>
-          <td>{{ kpi.vaporPressureDeficit | number:'1.2-2' }} kPa</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Add pagination controls -->
-    <div class="table-pagination">
-      <div class="d-flex justify-content-between align-items-center">
-        <div class="pagination-info">
-          <small class="text-muted">
-            Mostrando {{ (climateKPIsPage - 1) * climateKPIsPageSize + 1 }} -
-            {{ (climateKPIsPage * climateKPIsPageSize) < climateKPIs.length ? (climateKPIsPage * climateKPIsPageSize) :
-              climateKPIs.length }} de {{ climateKPIs.length }} registros </small>
+  <!-- Climate KPIs Section with Collapse/Expand -->
+  <div class="row mt-4" *ngIf="aggregateClimateKPIs">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="bi bi-cloud-sun"></i> KPIs Climáticos
+            </h5>
+            <button class="btn btn-sm btn-light" (click)="toggleClimateKPIs()">
+              <i class="bi" [class.bi-chevron-down]="isClimateKPIsCollapsed" [class.bi-chevron-up]="!isClimateKPIsCollapsed"></i>
+              {{ isClimateKPIsCollapsed ? 'Expandir' : 'Contraer' }}
+            </button>
+          </div>
         </div>
-        <nav aria-label="Paginación de tabla">
-          <ul class="pagination pagination-sm mb-0">
-            <li class="page-item" [class.disabled]="climateKPIsPage === 1">
-              <button class="page-link" (click)="goToClimateKPIsPage(1)" [disabled]="climateKPIsPage === 1">
-                <i class="bi bi-chevron-bar-left"></i>
-              </button>
-            </li>
-            <li class="page-item" [class.disabled]="climateKPIsPage === 1">
-              <button class="page-link" (click)="goToClimateKPIsPage(climateKPIsPage - 1)"
-                [disabled]="climateKPIsPage === 1">
-                <i class="bi bi-chevron-left"></i>
-              </button>
-            </li>
-            <li class="page-item" *ngFor="let page of getPageNumbers(climateKPIsPage, getClimateKPIsTotalPages())"
-              [class.active]="page === climateKPIsPage" [class.disabled]="page === '...'">
-              <button class="page-link" *ngIf="page !== '...'" (click)="goToClimateKPIsPage(page)">
-                {{ page }}
-              </button>
-              <span class="page-link" *ngIf="page === '...'">...</span>
-            </li>
-            <li class="page-item" [class.disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
-              <button class="page-link" (click)="goToClimateKPIsPage(climateKPIsPage + 1)"
-                [disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
-                <i class="bi bi-chevron-right"></i>
-              </button>
-            </li>
-            <li class="page-item" [class.disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
-              <button class="page-link" (click)="goToClimateKPIsPage(getClimateKPIsTotalPages())"
-                [disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
-                <i class="bi bi-chevron-bar-right"></i>
-              </button>
-            </li>
-          </ul>
-        </nav>
+        <div class="card-body" *ngIf="!isClimateKPIsCollapsed">
+          <!-- Summary Stats -->
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <div class="stat-box">
+                <i class="bi bi-thermometer-half text-danger"></i>
+                <h6>Temperatura Promedio</h6>
+                <h3>{{ aggregateClimateKPIs.tempAvg | number:'1.1-1' }}°C</h3>
+                <small class="text-muted">
+                  Min: {{ aggregateClimateKPIs.tempMin | number:'1.1-1' }}°C |
+                  Max: {{ aggregateClimateKPIs.tempMax | number:'1.1-1' }}°C
+                </small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-box">
+                <i class="bi bi-wind text-info"></i>
+                <h6>Velocidad del Viento</h6>
+                <h3>{{ aggregateClimateKPIs.windSpeedAvg | number:'1.1-1' }} m/s</h3>
+                <small class="text-muted">Promedio del período</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-box">
+                <i class="bi bi-brightness-high text-warning"></i>
+                <h6>Radiación Solar</h6>
+                <h3>{{ aggregateClimateKPIs.solarRadiationAvg | number:'1.0-0' }} W/m²</h3>
+                <small class="text-muted">PAR promedio</small>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-box bg-primary text-white">
+                <i class="bi bi-droplet"></i>
+                <h6>Evapotranspiración</h6>
+                <h3>{{ aggregateClimateKPIs.cropETAvg | number:'1.2-2' }} mm/día</h3>
+                <small>Min: {{ aggregateClimateKPIs.cropETMin | number:'1.2-2' }} | Max: {{ aggregateClimateKPIs.cropETMax |
+                  number:'1.2-2' }}</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- ET Trend Table -->
+          <div class="table-responsive">
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Temp (°C)</th>
+                  <th>Viento (m/s)</th>
+                  <th>Radiación (W/m²)</th>
+                  <th>ET Referencia</th>
+                  <th>ET Cultivo</th>
+                  <th>Déficit Vapor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let kpi of getClimateKPIsPaginated()">
+                  <td>{{ kpi.date | date:'short' }}</td>
+                  <td>{{ kpi.tempAvg | number:'1.1-1' }}</td>
+                  <td>{{ kpi.windSpeed | number:'1.1-1' }}</td>
+                  <td>{{ kpi.solarRadiation | number:'1.0-0' }}</td>
+                  <td>{{ kpi.referenceET | number:'1.2-2' }} mm/día</td>
+                  <td><strong>{{ kpi.cropET | number:'1.2-2' }} mm/día</strong></td>
+                  <td>{{ kpi.vaporPressureDeficit | number:'1.2-2' }} kPa</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Pagination controls -->
+            <div class="table-pagination">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="pagination-info">
+                  <small class="text-muted">
+                    Mostrando {{ (climateKPIsPage - 1) * climateKPIsPageSize + 1 }} -
+                    {{ (climateKPIsPage * climateKPIsPageSize) < climateKPIs.length ? (climateKPIsPage * climateKPIsPageSize) :
+                      climateKPIs.length }} de {{ climateKPIs.length }} registros </small>
+                </div>
+                <nav aria-label="Paginación de tabla">
+                  <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" [class.disabled]="climateKPIsPage === 1">
+                      <button class="page-link" (click)="goToClimateKPIsPage(1)" [disabled]="climateKPIsPage === 1">
+                        <i class="bi bi-chevron-bar-left"></i>
+                      </button>
+                    </li>
+                    <li class="page-item" [class.disabled]="climateKPIsPage === 1">
+                      <button class="page-link" (click)="goToClimateKPIsPage(climateKPIsPage - 1)"
+                        [disabled]="climateKPIsPage === 1">
+                        <i class="bi bi-chevron-left"></i>
+                      </button>
+                    </li>
+                    <li class="page-item" *ngFor="let page of getPageNumbers(climateKPIsPage, getClimateKPIsTotalPages())"
+                      [class.active]="page === climateKPIsPage" [class.disabled]="page === '...'">
+                      <button class="page-link" *ngIf="page !== '...'" (click)="goToClimateKPIsPage(page)">
+                        {{ page }}
+                      </button>
+                      <span class="page-link" *ngIf="page === '...'">...</span>
+                    </li>
+                    <li class="page-item" [class.disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
+                      <button class="page-link" (click)="goToClimateKPIsPage(climateKPIsPage + 1)"
+                        [disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
+                        <i class="bi bi-chevron-right"></i>
+                      </button>
+                    </li>
+                    <li class="page-item" [class.disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
+                      <button class="page-link" (click)="goToClimateKPIsPage(getClimateKPIsTotalPages())"
+                        [disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
+                        <i class="bi bi-chevron-bar-right"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -538,11 +591,17 @@
     <div class="col-12">
       <div class="card">
         <div class="card-header bg-info text-white">
-          <h5 class="mb-0">
-            <i class="bi bi-water"></i> Métricas de Riego
-          </h5>
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="bi bi-water"></i> Métricas de Riego
+            </h5>
+            <button class="btn btn-sm btn-light" (click)="toggleIrrigationMetrics()">
+              <i class="bi" [class.bi-chevron-down]="isIrrigationMetricsCollapsed" [class.bi-chevron-up]="!isIrrigationMetricsCollapsed"></i>
+              {{ isIrrigationMetricsCollapsed ? 'Expandir' : 'Contraer' }}
+            </button>
+          </div>
         </div>
-        <div class="card-body">
+        <div class="card-body" *ngIf="!isIrrigationMetricsCollapsed">
           <!-- Irrigation Summary -->
           <div class="row mb-3">
             <div class="col-md-3">
@@ -692,11 +751,17 @@
     <div class="col-12">
       <div class="card">
         <div class="card-header bg-success text-white">
-          <h5 class="mb-0">
-            <i class="bi bi-trophy"></i> Recomendaciones de Fertilización
-          </h5>
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="bi bi-trophy"></i> Recomendaciones de Fertilización
+            </h5>
+            <button class="btn btn-sm btn-light" (click)="toggleFertilizerDosages()">
+              <i class="bi" [class.bi-chevron-down]="isFertilizerDosagesCollapsed" [class.bi-chevron-up]="!isFertilizerDosagesCollapsed"></i>
+              {{ isFertilizerDosagesCollapsed ? 'Expandir' : 'Contraer' }}
+            </button>
+          </div>
         </div>
-        <div class="card-body">
+        <div class="card-body" *ngIf="!isFertilizerDosagesCollapsed">
           <!-- Fertilizer Summary -->
           <div class="row mb-3">
             <div class="col-md-4">
@@ -767,45 +832,6 @@
             <strong>Información:</strong> Los cálculos se basan en los requerimientos nutricionales de la fase de
             cultivo actual
             y la evapotranspiración calculada. Las dosis se ajustan automáticamente según las condiciones climáticas.
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="row mt-4" *ngIf="fertilizerDosages.length > 0">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header bg-success text-white">
-            <div class="d-flex justify-content-between align-items-center">
-              <h5 class="mb-0">
-                <i class="bi bi-trophy"></i> Recomendaciones de Fertilización
-              </h5>
-              <span class="badge bg-light text-dark">{{ getPaginationInfo() }}</span>
-            </div>
-          </div>
-          <div class="card-body">
-            <!-- Existing content... -->
-
-            <!-- ADD THIS PAGINATION CONTROL -->
-            <div class="pagination-controls mt-3">
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="pagination-info">
-                  <i class="bi bi-info-circle me-2"></i>
-                  <span class="text-muted">{{ getPaginationInfo() }}</span>
-                </div>
-              </div>
-
-              <div class="mt-2" *ngIf="isLoadingMore">
-                <div class="progress" style="height: 3px;">
-                  <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar"
-                    style="width: 100%"></div>
-                </div>
-              </div>
-
-              <div class="alert alert-info mt-2 mb-0" *ngIf="!hasMoreData && !isLoadingMore">
-                <i class="bi bi-check-circle me-2"></i>
-                <strong>Todos los datos cargados.</strong> No hay más registros disponibles.
-              </div>
-            </div>
           </div>
         </div>
       </div>

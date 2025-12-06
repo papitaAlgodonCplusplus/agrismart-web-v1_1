@@ -157,9 +157,14 @@ export class DashboardComponent implements OnInit {
   pageSizeBulk = 500;
   // Add to the component class properties (around line 130)
   climateKPIsPage = 1;
-  climateKPIsPageSize = 20;
+  climateKPIsPageSize = 5;
   irrigationMetricsPage = 1;
-  irrigationMetricsPageSize = 20;
+  irrigationMetricsPageSize = 5;
+
+  // Collapse state properties (collapsed by default)
+  isClimateKPIsCollapsed = true;
+  isIrrigationMetricsCollapsed = true;
+  isFertilizerDosagesCollapsed = true;
 
   // Add aggregate statistics properties
   aggregateClimateKPIs: {
@@ -1465,6 +1470,19 @@ export class DashboardComponent implements OnInit {
   closeFertilizerDetailsModal(): void {
     this.showFertilizerDetailsModal = false;
     this.selectedFertilizerDosage = null;
+  }
+
+  // Toggle methods for collapse/expand functionality
+  toggleClimateKPIs(): void {
+    this.isClimateKPIsCollapsed = !this.isClimateKPIsCollapsed;
+  }
+
+  toggleIrrigationMetrics(): void {
+    this.isIrrigationMetricsCollapsed = !this.isIrrigationMetricsCollapsed;
+  }
+
+  toggleFertilizerDosages(): void {
+    this.isFertilizerDosagesCollapsed = !this.isFertilizerDosagesCollapsed;
   }
 
 }

@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angu
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SoilAnalysisService } from '../../services/soil-analysis.service';
+import { Router } from '@angular/router';
 import {
   SoilAnalysis,
   SoilAnalysisResponse,
@@ -50,6 +51,7 @@ export class SoilAnalysisFormComponent implements OnInit, OnDestroy {
 
   constructor(
     private fb: FormBuilder,
+    private router: Router,
     private soilAnalysisService: SoilAnalysisService
   ) { }
 
@@ -126,12 +128,17 @@ export class SoilAnalysisFormComponent implements OnInit, OnDestroy {
     });
   }
 
+  navigateBack(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
   private loadTextureClasses(): void {
     this.soilAnalysisService.getTextureClasses()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (classes) => {
-          this.textureClasses = classes;
+        next: (classes: any) => {
+          console.log('Texture classes response:', classes);
+          this.textureClasses = classes.textureClasses;
         },
         error: (error) => {
           console.error('Error loading texture classes:', error);

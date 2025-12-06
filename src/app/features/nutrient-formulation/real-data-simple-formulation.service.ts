@@ -70,7 +70,7 @@ export class RealDataSimpleFormulationService {
     console.log('Fertilizers:', realFertilizers);
 
     // Validate inputs
-    if (!realRequirements || !this.isValidRequirement(realRequirements)) {
+    if (!realRequirements) {
       const error = 'Se requieren datos reales de requerimientos nutricionales de la base de datos';
       console.error(error);
       return throwError(() => new Error(error));

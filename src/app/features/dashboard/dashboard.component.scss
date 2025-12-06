@@ -596,12 +596,40 @@
 // Card header improvements
 .card-header {
   border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-  
+
   h5 {
     font-weight: 600;
-    
+
     i {
       margin-right: 0.5rem;
+    }
+  }
+
+  // Collapse/Expand button styling
+  .btn-light {
+    transition: all 0.3s ease;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    i {
+      transition: transform 0.3s ease;
+    }
+  }
+
+  &.bg-primary,
+  &.bg-info,
+  &.bg-success {
+    .btn-light {
+      background-color: rgba(255, 255, 255, 0.9);
+
+      &:hover {
+        background-color: #fff;
+      }
     }
   }
 }

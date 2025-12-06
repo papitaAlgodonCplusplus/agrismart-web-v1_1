@@ -217,7 +217,7 @@ export class ProductionUnitService {
       }
     }
 
-    return this.apiService.get<ProductionUnit[]>(this.baseUrl, params);
+    return this.apiService.get<any[]>(this.baseUrl, params);
   }
 
   /**

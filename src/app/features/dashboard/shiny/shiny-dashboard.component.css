@@ -3021,3 +3021,91 @@
     transform: none;
   }
 }
+
+/* ========================================================================
+   COLLAPSE/EXPAND BUTTON STYLES
+   ======================================================================== */
+
+/* Card header styling for collapsible sections */
+.card-header {
+  border-radius: 8px 8px 0 0 !important;
+}
+
+.card-header .btn-light {
+  transition: all 0.3s ease;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  font-size: 0.875rem;
+}
+
+.card-header .btn-light:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background-color: #ffffff;
+}
+
+.card-header .btn-light:active {
+  transform: scale(0.98);
+}
+
+/* Icon transitions */
+.card-header .bi {
+  transition: transform 0.3s ease;
+  font-size: 1rem;
+}
+
+/* Card body animation */
+.card-body {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card spacing */
+.card.mb-4 {
+  margin-bottom: 1.5rem !important;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.card.mb-4:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Header color variations */
+.card-header.bg-primary {
+  background-color: #667eea !important;
+}
+
+.card-header.bg-info {
+  background-color: #4ecdc4 !important;
+}
+
+.card-header.bg-warning {
+  background-color: #f7b731 !important;
+}
+
+.card-header.bg-success {
+  background-color: #5cb85c !important;
+}
+
+.card-header.bg-dark {
+  background-color: #343a40 !important;
+}
+
+.card-header.bg-secondary {
+  background-color: #6c757d !important;
+}

@@ -43,6 +43,17 @@
   font-size: 1rem;
 }
 
+.header-go-back {
+  margin-right: auto;
+}
+
+.header-go-back .btn {
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: #d1d1d1;
+}
+
 .header-actions .btn {
   font-weight: 600;
   padding: 12px 24px;
@@ -293,5 +304,81 @@
 
   .card-actions .btn {
     width: 100%;
+  }
+}
+
+/* ============================================================================
+   CROP PRODUCTION SELECTOR
+   ============================================================================ */
+
+.crop-production-selector {
+  animation: fadeInDown 0.5s ease;
+}
+
+.crop-production-selector .card {
+  border: 2px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.crop-production-selector .card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+.crop-production-selector .form-label {
+  color: #495057;
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.crop-production-selector .form-label i {
+  margin-right: 8px;
+  color: #667eea;
+}
+
+.crop-production-selector .form-select {
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.crop-production-selector .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.crop-production-selector .form-select:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.selected-production-info {
+  padding: 15px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.selected-production-info strong {
+  color: #495057;
+  font-size: 1.1rem;
+}
+
+.selected-production-info .badge {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

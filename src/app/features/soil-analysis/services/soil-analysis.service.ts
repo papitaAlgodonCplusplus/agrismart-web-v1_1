@@ -87,12 +87,26 @@ export class SoilAnalysisService {
    * Create new soil analysis
    */
   create(soilAnalysis: SoilAnalysis): Observable<SoilAnalysisResponse> {
+    console.log('Creating soil analysis with data:', soilAnalysis);
     return this.apiService.post<any>(this.baseEndpoint, soilAnalysis).pipe(
       map(response => {
+        console.log('Create response:', response);
+
+        // Handle wrapped response format
         if (response.success && response.result) {
           return response.result;
         }
-        throw new Error('Failed to create soil analysis');
+
+        // Handle direct response format (API returns the entity directly)
+        if (response.id && response.cropProductionId) {
+          console.log('Using direct response format');
+          return response;
+        }
+
+        // If we get here, something is wrong
+        console.error('Invalid response structure:', response);
+        const errorMsg = response.message || response.exception || 'Failed to create soil analysis';
+        throw new Error(errorMsg);
       }),
       catchError(this.handleError)
     );
@@ -105,10 +119,23 @@ export class SoilAnalysisService {
     const updateData = { ...soilAnalysis, id: id };
     return this.apiService.put<any>(this.baseEndpoint, updateData).pipe(
       map(response => {
+        console.log('Update response:', response);
+
+        // Handle wrapped response format
         if (response.success && response.result) {
           return response.result;
         }
-        throw new Error('Failed to update soil analysis');
+
+        // Handle direct response format (API returns the entity directly)
+        if (response.id && response.cropProductionId) {
+          console.log('Using direct response format');
+          return response;
+        }
+
+        // If we get here, something is wrong
+        console.error('Invalid response structure:', response);
+        const errorMsg = response.message || response.exception || 'Failed to update soil analysis';
+        throw new Error(errorMsg);
       }),
       catchError(this.handleError)
     );
@@ -130,10 +157,7 @@ export class SoilAnalysisService {
   getTextureClasses(): Observable<SoilTextureInfo[]> {
     return this.apiService.get<any>(`${this.baseEndpoint}/texture-classes`).pipe(
       map(response => {
-        if (response.success && response.result?.textureClasses) {
-          return response.result.textureClasses;
-        }
-        return [];
+        return response
       }),
       catchError(this.handleError)
     );
@@ -178,14 +202,29 @@ export class SoilAnalysisService {
    */
   private handleError(error: any): Observable<never> {
     console.error('Soil Analysis Service Error:', error);
+    console.error('Error details:', {
+      status: error.status,
+      statusText: error.statusText,
+      error: error.error,
+      message: error.message
+    });
+
     let errorMessage = 'An error occurred';
 
-    if (error.error?.exception) {
+    // Check for validation errors
+    if (error.status === 400 && error.error?.errors) {
+      const validationErrors = Object.entries(error.error.errors)
+        .map(([field, messages]: [string, any]) => `${field}: ${messages.join(', ')}`)
+        .join('; ');
+      errorMessage = `Validation errors: ${validationErrors}`;
+    } else if (error.error?.exception) {
       errorMessage = error.error.exception;
     } else if (error.error?.message) {
       errorMessage = error.error.message;
     } else if (error.message) {
       errorMessage = error.message;
+    } else if (error.statusText) {
+      errorMessage = `${error.status}: ${error.statusText}`;
     }
 
     return throwError(() => new Error(errorMessage));

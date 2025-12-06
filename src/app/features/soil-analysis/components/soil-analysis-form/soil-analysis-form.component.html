@@ -38,10 +38,7 @@
           <!-- Sample Date -->
           <div class="col-md-3">
             <label class="form-label required">Fecha de Muestreo</label>
-            <input
-              type="date"
-              class="form-control"
-              formControlName="sampleDate"
+            <input type="date" class="form-control" formControlName="sampleDate"
               [class.is-invalid]="isFieldInvalid('sampleDate')">
             <div class="invalid-feedback" *ngIf="isFieldInvalid('sampleDate')">
               {{ getFieldError('sampleDate') }}
@@ -51,40 +48,25 @@
           <!-- Lab Report Number -->
           <div class="col-md-3">
             <label class="form-label">Número de Reporte</label>
-            <input
-              type="text"
-              class="form-control"
-              formControlName="labReportNumber"
-              placeholder="Ej: AT-2024-0015">
+            <input type="text" class="form-control" formControlName="labReportNumber" placeholder="Ej: AT-2024-0015">
           </div>
 
           <!-- Lab Name -->
           <div class="col-md-6">
             <label class="form-label">Laboratorio</label>
-            <input
-              type="text"
-              class="form-control"
-              formControlName="labName"
-              placeholder="Nombre del laboratorio">
+            <input type="text" class="form-control" formControlName="labName" placeholder="Nombre del laboratorio">
           </div>
 
           <!-- Sample Depth -->
           <div class="col-md-6">
             <label class="form-label">Profundidad de Muestra</label>
-            <input
-              type="text"
-              class="form-control"
-              formControlName="sampleDepth"
-              placeholder="Ej: 0-20cm">
+            <input type="text" class="form-control" formControlName="sampleDepth" placeholder="Ej: 0-20cm">
           </div>
 
           <!-- Sample Location -->
           <div class="col-md-6">
             <label class="form-label">Ubicación de Muestra</label>
-            <input
-              type="text"
-              class="form-control"
-              formControlName="sampleLocation"
+            <input type="text" class="form-control" formControlName="sampleLocation"
               placeholder="Sector, coordenadas GPS, etc.">
           </div>
 
@@ -107,13 +89,7 @@
           <!-- Sand Percent -->
           <div class="col-md-4">
             <label class="form-label">Arena (%)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="sandPercent"
-              min="0"
-              max="100"
-              step="0.1"
+            <input type="number" class="form-control" formControlName="sandPercent" min="0" max="100" step="0.1"
               [class.is-invalid]="isFieldInvalid('sandPercent')">
             <div class="invalid-feedback" *ngIf="isFieldInvalid('sandPercent')">
               {{ getFieldError('sandPercent') }}
@@ -123,13 +99,7 @@
           <!-- Silt Percent -->
           <div class="col-md-4">
             <label class="form-label">Limo (%)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="siltPercent"
-              min="0"
-              max="100"
-              step="0.1"
+            <input type="number" class="form-control" formControlName="siltPercent" min="0" max="100" step="0.1"
               [class.is-invalid]="isFieldInvalid('siltPercent')">
             <div class="invalid-feedback" *ngIf="isFieldInvalid('siltPercent')">
               {{ getFieldError('siltPercent') }}
@@ -139,13 +109,7 @@
           <!-- Clay Percent -->
           <div class="col-md-4">
             <label class="form-label">Arcilla (%)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="clayPercent"
-              min="0"
-              max="100"
-              step="0.1"
+            <input type="number" class="form-control" formControlName="clayPercent" min="0" max="100" step="0.1"
               [class.is-invalid]="isFieldInvalid('clayPercent')">
             <div class="invalid-feedback" *ngIf="isFieldInvalid('clayPercent')">
               {{ getFieldError('clayPercent') }}
@@ -154,9 +118,7 @@
 
           <!-- Texture Validation Status -->
           <div class="col-12" *ngIf="texturePercentageSum > 0">
-            <div
-              class="alert"
-              [class.alert-success]="isTextureSumValid && textureValidation?.isValid"
+            <div class="alert" [class.alert-success]="isTextureSumValid && textureValidation?.isValid"
               [class.alert-warning]="!isTextureSumValid"
               [class.alert-info]="isTextureSumValid && !textureValidation?.isValid">
               <div class="d-flex align-items-center gap-2">
@@ -196,16 +158,9 @@
           <div class="col-md-6">
             <label class="form-label">
               Densidad Aparente (g/cm³)
-              <i class="bi bi-question-circle text-muted"
-                 title="Típicamente 1.0-1.6 g/cm³"></i>
+              <i class="bi bi-question-circle text-muted" title="Típicamente 1.0-1.6 g/cm³"></i>
             </label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="bulkDensity"
-              min="0"
-              max="3"
-              step="0.01"
+            <input type="number" class="form-control" formControlName="bulkDensity" min="0" max="3" step="0.01"
               placeholder="Ej: 1.35">
           </div>
 
@@ -229,18 +184,10 @@
           <div class="col-md-3">
             <label class="form-label">
               pH del Suelo
-              <i class="bi bi-question-circle text-muted"
-                 title="Rango típico: 4.0-9.0. Óptimo: 6.0-7.0"></i>
+              <i class="bi bi-question-circle text-muted" title="Rango típico: 4.0-9.0. Óptimo: 6.0-7.0"></i>
             </label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="phSoil"
-              min="3"
-              max="10"
-              step="0.1"
-              placeholder="Ej: 6.8"
-              [class.is-invalid]="isFieldInvalid('phSoil')">
+            <input type="number" class="form-control" formControlName="phSoil" min="3" max="10" step="0.1"
+              placeholder="Ej: 6.8" [class.is-invalid]="isFieldInvalid('phSoil')">
             <div class="invalid-feedback" *ngIf="isFieldInvalid('phSoil')">
               {{ getFieldError('phSoil') }}
             </div>
@@ -250,15 +197,9 @@
           <div class="col-md-3">
             <label class="form-label">
               CE (dS/m)
-              <i class="bi bi-question-circle text-muted"
-                 title="Conductividad Eléctrica - Indicador de salinidad"></i>
+              <i class="bi bi-question-circle text-muted" title="Conductividad Eléctrica - Indicador de salinidad"></i>
             </label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="electricalConductivity"
-              min="0"
-              step="0.1"
+            <input type="number" class="form-control" formControlName="electricalConductivity" min="0" step="0.1"
               placeholder="Ej: 0.8">
           </div>
 
@@ -266,33 +207,19 @@
           <div class="col-md-3">
             <label class="form-label">
               Materia Orgánica (%)
-              <i class="bi bi-question-circle text-muted"
-                 title="Rango típico: 1-10%"></i>
+              <i class="bi bi-question-circle text-muted" title="Rango típico: 1-10%"></i>
             </label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="organicMatterPercent"
-              min="0"
-              max="100"
-              step="0.1"
-              placeholder="Ej: 3.2"
-              [class.is-invalid]="isFieldInvalid('organicMatterPercent')">
+            <input type="number" class="form-control" formControlName="organicMatterPercent" min="0" max="100"
+              step="0.1" placeholder="Ej: 3.2" [class.is-invalid]="isFieldInvalid('organicMatterPercent')">
           </div>
 
           <!-- CEC -->
           <div class="col-md-3">
             <label class="form-label">
               CIC (meq/100g)
-              <i class="bi bi-question-circle text-muted"
-                 title="Capacidad de Intercambio Catiónico"></i>
+              <i class="bi bi-question-circle text-muted" title="Capacidad de Intercambio Catiónico"></i>
             </label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="cationExchangeCapacity"
-              min="0"
-              step="0.1"
+            <input type="number" class="form-control" formControlName="cationExchangeCapacity" min="0" step="0.1"
               placeholder="Ej: 12.5">
           </div>
 
@@ -317,32 +244,17 @@
           <div class="row g-3">
             <div class="col-md-4">
               <label class="form-label">NO₃-N (ppm)</label>
-              <input
-                type="number"
-                class="form-control"
-                formControlName="nitrateNitrogen"
-                min="0"
-                step="0.1"
+              <input type="number" class="form-control" formControlName="nitrateNitrogen" min="0" step="0.1"
                 placeholder="Nitrato">
             </div>
             <div class="col-md-4">
               <label class="form-label">NH₄-N (ppm)</label>
-              <input
-                type="number"
-                class="form-control"
-                formControlName="ammoniumNitrogen"
-                min="0"
-                step="0.1"
+              <input type="number" class="form-control" formControlName="ammoniumNitrogen" min="0" step="0.1"
                 placeholder="Amonio">
             </div>
             <div class="col-md-4">
               <label class="form-label">N Total (ppm)</label>
-              <input
-                type="number"
-                class="form-control"
-                formControlName="totalNitrogen"
-                min="0"
-                step="0.1"
+              <input type="number" class="form-control" formControlName="totalNitrogen" min="0" step="0.1"
                 placeholder="Total">
             </div>
           </div>
@@ -354,12 +266,7 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">P (ppm)</label>
-              <input
-                type="number"
-                class="form-control"
-                formControlName="phosphorus"
-                min="0"
-                step="0.1"
+              <input type="number" class="form-control" formControlName="phosphorus" min="0" step="0.1"
                 placeholder="Fósforo disponible">
             </div>
             <div class="col-md-6">
@@ -379,42 +286,22 @@
           <div class="row g-3">
             <div class="col-md-3">
               <label class="form-label">K (ppm)</label>
-              <input
-                type="number"
-                class="form-control"
-                formControlName="potassium"
-                min="0"
-                step="0.1"
+              <input type="number" class="form-control" formControlName="potassium" min="0" step="0.1"
                 placeholder="Potasio">
             </div>
             <div class="col-md-3">
               <label class="form-label">Ca (ppm)</label>
-              <input
-                type="number"
-                class="form-control"
-                formControlName="calcium"
-                min="0"
-                step="0.1"
+              <input type="number" class="form-control" formControlName="calcium" min="0" step="0.1"
                 placeholder="Calcio">
             </div>
             <div class="col-md-3">
               <label class="form-label">Mg (ppm)</label>
-              <input
-                type="number"
-                class="form-control"
-                formControlName="magnesium"
-                min="0"
-                step="0.1"
+              <input type="number" class="form-control" formControlName="magnesium" min="0" step="0.1"
                 placeholder="Magnesio">
             </div>
             <div class="col-md-3">
               <label class="form-label">S (ppm)</label>
-              <input
-                type="number"
-                class="form-control"
-                formControlName="sulfur"
-                min="0"
-                step="0.1"
+              <input type="number" class="form-control" formControlName="sulfur" min="0" step="0.1"
                 placeholder="Azufre">
             </div>
           </div>
@@ -426,22 +313,11 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">Na (ppm)</label>
-              <input
-                type="number"
-                class="form-control"
-                formControlName="sodium"
-                min="0"
-                step="0.1"
-                placeholder="Sodio">
+              <input type="number" class="form-control" formControlName="sodium" min="0" step="0.1" placeholder="Sodio">
             </div>
             <div class="col-md-6">
               <label class="form-label">Cl (ppm)</label>
-              <input
-                type="number"
-                class="form-control"
-                formControlName="chloride"
-                min="0"
-                step="0.1"
+              <input type="number" class="form-control" formControlName="chloride" min="0" step="0.1"
                 placeholder="Cloruro">
             </div>
           </div>
@@ -464,67 +340,33 @@
 
           <div class="col-md-4">
             <label class="form-label">Fe (ppm)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="iron"
-              min="0"
-              step="0.1"
-              placeholder="Hierro">
+            <input type="number" class="form-control" formControlName="iron" min="0" step="0.1" placeholder="Hierro">
           </div>
 
           <div class="col-md-4">
             <label class="form-label">Mn (ppm)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="manganese"
-              min="0"
-              step="0.1"
+            <input type="number" class="form-control" formControlName="manganese" min="0" step="0.1"
               placeholder="Manganeso">
           </div>
 
           <div class="col-md-4">
             <label class="form-label">Zn (ppm)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="zinc"
-              min="0"
-              step="0.1"
-              placeholder="Zinc">
+            <input type="number" class="form-control" formControlName="zinc" min="0" step="0.1" placeholder="Zinc">
           </div>
 
           <div class="col-md-4">
             <label class="form-label">Cu (ppm)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="copper"
-              min="0"
-              step="0.1"
-              placeholder="Cobre">
+            <input type="number" class="form-control" formControlName="copper" min="0" step="0.1" placeholder="Cobre">
           </div>
 
           <div class="col-md-4">
             <label class="form-label">B (ppm)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="boron"
-              min="0"
-              step="0.1"
-              placeholder="Boro">
+            <input type="number" class="form-control" formControlName="boron" min="0" step="0.1" placeholder="Boro">
           </div>
 
           <div class="col-md-4">
             <label class="form-label">Mo (ppm)</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="molybdenum"
-              min="0"
-              step="0.01"
+            <input type="number" class="form-control" formControlName="molybdenum" min="0" step="0.01"
               placeholder="Molibdeno">
           </div>
 
@@ -558,20 +400,14 @@
           <!-- Recommendations -->
           <div class="col-md-12">
             <label class="form-label">Recomendaciones del Laboratorio</label>
-            <textarea
-              class="form-control"
-              formControlName="recommendations"
-              rows="4"
+            <textarea class="form-control" formControlName="recommendations" rows="4"
               placeholder="Ingrese las recomendaciones del laboratorio..."></textarea>
           </div>
 
           <!-- Notes -->
           <div class="col-md-12">
             <label class="form-label">Notas Adicionales</label>
-            <textarea
-              class="form-control"
-              formControlName="notes"
-              rows="3"
+            <textarea class="form-control" formControlName="notes" rows="3"
               placeholder="Observaciones, condiciones especiales, etc..."></textarea>
           </div>
 
@@ -581,28 +417,17 @@
 
     <!-- ==================== FORM ACTIONS ==================== -->
     <div class="form-actions">
-      <button
-        type="button"
-        class="btn btn-outline-secondary"
-        (click)="onCancel()"
-        [disabled]="isSubmitting">
+      <button type="button" class="btn btn-outline-secondary" (click)="onCancel()" [disabled]="isSubmitting">
         <i class="bi bi-x-circle"></i>
         Cancelar
       </button>
 
-      <button
-        type="button"
-        class="btn btn-outline-warning"
-        (click)="onReset()"
-        [disabled]="isSubmitting">
+      <button type="button" class="btn btn-outline-warning" (click)="onReset()" [disabled]="isSubmitting">
         <i class="bi bi-arrow-counterclockwise"></i>
         Restablecer
       </button>
 
-      <button
-        type="submit"
-        class="btn btn-primary"
-        [disabled]="isSubmitting || soilAnalysisForm.invalid">
+      <button type="submit" class="btn btn-primary" [disabled]="isSubmitting || soilAnalysisForm.invalid">
         <span *ngIf="!isSubmitting">
           <i class="bi bi-check-circle"></i>
           {{ mode === 'edit' ? 'Actualizar' : 'Guardar' }} Análisis

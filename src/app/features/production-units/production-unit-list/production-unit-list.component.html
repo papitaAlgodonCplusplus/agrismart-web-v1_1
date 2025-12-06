@@ -1,0 +1,816 @@
+<!-- Production Unit List Component -->
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="mb-1">
+            <i class="bi bi-grid-3x3-gap me-2 text-primary"></i>
+            Unidades de Producción
+          </h2>
+          <p class="text-muted mb-0">Gestión de espacios de cultivo y producción</p>
+        </div>
+        <button class="btn btn-primary btn-lg" (click)="openCreateModal()">
+          <i class="bi bi-plus-circle me-2"></i>
+          Nueva Unidad
+        </button>
+      </div>
+      <hr class="mt-3">
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="row align-items-end g-3">
+            <!-- Search -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-search me-1"></i>
+                Buscar
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Nombre, descripción, ubicación..."
+                [(ngModel)]="searchTerm"
+                (keyup.enter)="loadProductionUnits()">
+            </div>
+
+            <!-- Farm Filter -->
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-geo-alt me-1"></i>
+                Finca
+              </label>
+              <select
+                class="form-select"
+                [(ngModel)]="selectedFarmId"
+                (change)="loadProductionUnits()">
+                <option value="">Todas las fincas</option>
+                <option *ngFor="let farm of farms" [value]="farm.id">
+                  {{ farm.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Type Filter -->
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">
+                <i class="bi bi-tag me-1"></i>
+                Tipo
+              </label>
+              <select
+                class="form-select"
+                [(ngModel)]="selectedTypeId"
+                (change)="loadProductionUnits()">
+                <option value="">Todos los tipos</option>
+                <option *ngFor="let type of productionUnitTypes" [value]="type.id">
+                  {{ type.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Only Active Filter -->
+            <div class="col-md-2">
+              <label class="form-label fw-semibold d-block">
+                <i class="bi bi-filter me-1"></i>
+                Estado
+              </label>
+              <div class="form-check form-switch">
+                <input
+                  type="checkbox"
+                  id="onlyActiveSwitch"
+                  class="form-check-input"
+                  [(ngModel)]="onlyActive"
+                  (change)="loadProductionUnits()">
+                <label class="form-check-label" for="onlyActiveSwitch">
+                  Solo activas
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div class="row" *ngIf="successMessage">
+    <div class="col-12">
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        {{ successMessage }}
+        <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" *ngIf="errorMessage">
+    <div class="col-12">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        {{ errorMessage }}
+        <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="row" *ngIf="isLoading">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+          <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="text-muted mb-0">Cargando unidades de producción...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Production Units Table -->
+  <div class="row" *ngIf="!isLoading && (productionUnits$ | async) as productionUnits">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white border-bottom">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="bi bi-list-ul me-2 text-primary"></i>
+              Listado ({{ productionUnits.length }})
+            </h5>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline-secondary" (click)="loadProductionUnits()">
+                <i class="bi bi-arrow-clockwise me-1"></i>
+                Actualizar
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th class="text-center" style="width: 60px;">ID</th>
+                  <th style="min-width: 200px;">Nombre</th>
+                  <th style="min-width: 150px;">Tipo</th>
+                  <th style="min-width: 150px;">Finca</th>
+                  <th class="text-end" style="width: 120px;">Área (m²)</th>
+                  <th class="text-end" style="width: 120px;">Capacidad</th>
+                  <th class="text-center" style="width: 100px;">Estado</th>
+                  <th class="text-center" style="width: 200px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let unit of productionUnits; trackBy: trackByFn">
+                  <td class="text-center">
+                    <span class="badge bg-secondary rounded-pill">{{ unit.id }}</span>
+                  </td>
+                  <td>
+                    <div>
+                      <strong class="d-block">{{ unit.name }}</strong>
+                      <small class="text-muted" *ngIf="unit.location">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        {{ unit.location }}
+                      </small>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="getTypeClass(getProductionTypeName(unit.productionUnitTypeId))">
+                      <i class="bi bi-tag-fill me-1"></i>
+                      {{ getProductionTypeName(unit.productionUnitTypeId) || 'Sin tipo' }}
+                    </span>
+                  </td>
+                  <td>
+                    <i class="bi bi-building me-1 text-muted"></i>
+                    {{  getFarmName(unit.farmId) || 'Sin asignar' }}
+                  </td>
+                  <td class="text-end">
+                    <span class="badge bg-info bg-opacity-10 text-info">
+                      {{ unit.area | number:'1.2-2' }}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <span class="badge bg-warning bg-opacity-10 text-warning">
+                      {{ unit.capacity || 0 | number }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge" [ngClass]="unit.isActive ? 'bg-success' : 'bg-danger'">
+                      <i class="bi" [ngClass]="unit.isActive ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+                      {{ unit.isActive ? 'Activa' : 'Inactiva' }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button
+                        type="button"
+                        class="btn btn-outline-info"
+                        (click)="viewDetails(unit)"
+                        title="Ver detalles">
+                        <i class="bi bi-eye-fill"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary"
+                        (click)="openEditModal(unit)"
+                        title="Editar">
+                        <i class="bi bi-pencil-fill"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn"
+                        [ngClass]="unit.isActive ? 'btn-outline-warning' : 'btn-outline-success'"
+                        (click)="toggleStatus(unit)"
+                        [title]="unit.isActive ? 'Desactivar' : 'Activar'">
+                        <i class="bi" [ngClass]="unit.isActive ? 'bi-pause-fill' : 'bi-play-fill'"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger"
+                        (click)="confirmDelete(unit)"
+                        title="Eliminar">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Empty State -->
+            <div class="text-center py-5" *ngIf="productionUnits.length === 0">
+              <i class="bi bi-grid-3x3-gap display-1 text-muted opacity-50"></i>
+              <h5 class="mt-3 mb-2">No se encontraron unidades de producción</h5>
+              <p class="text-muted mb-4">
+                {{ onlyActive
+                  ? 'No hay unidades de producción activas con los filtros seleccionados'
+                  : 'No hay unidades de producción registradas' }}
+              </p>
+              <button class="btn btn-primary" (click)="openCreateModal()">
+                <i class="bi bi-plus-circle me-2"></i>
+                Crear primera unidad
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="row mt-4" *ngIf="(productionUnits$ | async) as productionUnits">
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-0 bg-primary bg-gradient text-white h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-uppercase mb-1 opacity-75">Total</h6>
+              <h2 class="mb-0 fw-bold">{{ productionUnits.length }}</h2>
+            </div>
+            <i class="bi bi-grid-3x3-gap display-4 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-0 bg-success bg-gradient text-white h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-uppercase mb-1 opacity-75">Activas</h6>
+              <h2 class="mb-0 fw-bold">{{ getActiveCount(productionUnits) }}</h2>
+            </div>
+            <i class="bi bi-check-circle-fill display-4 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-0 bg-info bg-gradient text-white h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-uppercase mb-1 opacity-75">Área Total</h6>
+              <h2 class="mb-0 fw-bold">{{ getTotalArea(productionUnits) | number:'1.0-0' }}</h2>
+              <small class="opacity-75">m²</small>
+            </div>
+            <i class="bi bi-arrows-fullscreen display-4 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-0 bg-warning bg-gradient text-white h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="text-uppercase mb-1 opacity-75">Capacidad Total</h6>
+              <h2 class="mb-0 fw-bold">{{ getTotalCapacity(productionUnits) | number:'1.0-0' }}</h2>
+            </div>
+            <i class="bi bi-stack display-4 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal fade" id="productionUnitModal" tabindex="-1" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="bi" [ngClass]="isEditMode ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
+          {{ isEditMode ? 'Editar' : 'Nueva' }} Unidad de Producción
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="productionUnitForm">
+          <!-- Basic Information -->
+          <div class="row mb-3">
+            <div class="col-12">
+              <h6 class="border-bottom pb-2 mb-3">
+                <i class="bi bi-info-circle me-2"></i>Información Básica
+              </h6>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="name" class="form-label fw-semibold">
+                Nombre <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                id="name"
+                class="form-control"
+                formControlName="name"
+                placeholder="Ej: Invernadero A1"
+                [class.is-invalid]="productionUnitForm.get('name')?.invalid && productionUnitForm.get('name')?.touched">
+              <div class="invalid-feedback" *ngIf="productionUnitForm.get('name')?.errors?.['required']">
+                El nombre es requerido
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="farmId" class="form-label fw-semibold">
+                Finca <span class="text-danger">*</span>
+              </label>
+              <select
+                id="farmId"
+                class="form-select"
+                formControlName="farmId"
+                [class.is-invalid]="productionUnitForm.get('farmId')?.invalid && productionUnitForm.get('farmId')?.touched">
+                <option [ngValue]="null">Seleccione una finca</option>
+                <option *ngFor="let farm of farms" [ngValue]="farm.id">
+                  {{ farm.name }}
+                </option>
+              </select>
+              <div class="invalid-feedback">
+                Debe seleccionar una finca
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="productionUnitTypeId" class="form-label fw-semibold">
+                Tipo <span class="text-danger">*</span>
+              </label>
+              <select
+                id="productionUnitTypeId"
+                class="form-select"
+                formControlName="productionUnitTypeId"
+                [class.is-invalid]="productionUnitForm.get('productionUnitTypeId')?.invalid && productionUnitForm.get('productionUnitTypeId')?.touched">
+                <option [ngValue]="null">Seleccione un tipo</option>
+                <option *ngFor="let type of productionUnitTypes" [ngValue]="type.id">
+                  {{ type.name }}
+                </option>
+              </select>
+              <div class="invalid-feedback">
+                Debe seleccionar un tipo
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="location" class="form-label fw-semibold">
+                Ubicación
+              </label>
+              <input
+                type="text"
+                id="location"
+                class="form-control"
+                formControlName="location"
+                placeholder="Ej: Sector Norte, Lote 3">
+            </div>
+
+            <div class="col-12 mb-3">
+              <label for="description" class="form-label fw-semibold">
+                Descripción
+              </label>
+              <textarea
+                id="description"
+                class="form-control"
+                formControlName="description"
+                rows="3"
+                placeholder="Descripción detallada de la unidad de producción"></textarea>
+            </div>
+          </div>
+
+          <!-- Dimensions -->
+          <div class="row mb-3">
+            <div class="col-12">
+              <h6 class="border-bottom pb-2 mb-3">
+                <i class="bi bi-rulers me-2"></i>Dimensiones y Capacidad
+              </h6>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="area" class="form-label fw-semibold">
+                Área (m²)
+              </label>
+              <div class="input-group">
+                <input
+                  type="number"
+                  id="area"
+                  class="form-control"
+                  formControlName="area"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0">
+                <span class="input-group-text">m²</span>
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="capacity" class="form-label fw-semibold">
+                Capacidad
+              </label>
+              <div class="input-group">
+                <input
+                  type="number"
+                  id="capacity"
+                  class="form-control"
+                  formControlName="capacity"
+                  placeholder="0"
+                  step="1"
+                  min="0">
+                <span class="input-group-text">unidades</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Settings -->
+          <div class="row mb-3">
+            <div class="col-12">
+              <h6 class="border-bottom pb-2 mb-3">
+                <i class="bi bi-gear me-2"></i>Configuración Adicional
+              </h6>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="soilType" class="form-label fw-semibold">
+                Tipo de Suelo
+              </label>
+              <input
+                type="text"
+                id="soilType"
+                class="form-control"
+                formControlName="soilType"
+                placeholder="Ej: Franco arcilloso">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="drainage" class="form-label fw-semibold">
+                Drenaje
+              </label>
+              <select id="drainage" class="form-select" formControlName="drainage">
+                <option value="">Seleccione</option>
+                <option value="Excelente">Excelente</option>
+                <option value="Bueno">Bueno</option>
+                <option value="Regular">Regular</option>
+                <option value="Pobre">Pobre</option>
+              </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="greenhouseType" class="form-label fw-semibold">
+                Tipo de Invernadero
+              </label>
+              <input
+                type="text"
+                id="greenhouseType"
+                class="form-control"
+                formControlName="greenhouseType"
+                placeholder="Ej: Túnel alto">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="ventilation" class="form-label fw-semibold">
+                Sistema de Ventilación
+              </label>
+              <input
+                type="text"
+                id="ventilation"
+                class="form-control"
+                formControlName="ventilation"
+                placeholder="Ej: Natural, Forzada">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="lightingSystem" class="form-label fw-semibold">
+                Sistema de Iluminación
+              </label>
+              <input
+                type="text"
+                id="lightingSystem"
+                class="form-control"
+                formControlName="lightingSystem"
+                placeholder="Ej: LED, Natural">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <div class="pt-4">
+                <div class="form-check form-switch">
+                  <input
+                    type="checkbox"
+                    id="irrigation"
+                    class="form-check-input"
+                    formControlName="irrigation">
+                  <label class="form-check-label fw-semibold" for="irrigation">
+                    <i class="bi bi-droplet me-1"></i>Sistema de Riego
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <div class="pt-4">
+                <div class="form-check form-switch">
+                  <input
+                    type="checkbox"
+                    id="climateControl"
+                    class="form-check-input"
+                    formControlName="climateControl">
+                  <label class="form-check-label fw-semibold" for="climateControl">
+                    <i class="bi bi-thermometer-half me-1"></i>Control Climático
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <div class="pt-2">
+                <div class="form-check form-switch">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    class="form-check-input"
+                    formControlName="isActive">
+                  <label class="form-check-label fw-semibold" for="isActive">
+                    <i class="bi bi-toggle-on me-1"></i>Activa
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Error Message -->
+          <div class="alert alert-danger" *ngIf="formErrorMessage">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            {{ formErrorMessage }}
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">
+          <i class="bi bi-x-circle me-1"></i>
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="saveProductionUnit()" [disabled]="isSubmitting || productionUnitForm.invalid">
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!isSubmitting" class="bi bi-save me-1"></i>
+          {{ isEditMode ? 'Actualizar' : 'Crear' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Details Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1" [class.show]="showViewModal" [style.display]="showViewModal ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-eye-fill me-2"></i>
+          Detalles de Unidad de Producción
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeViewModal()"></button>
+      </div>
+      <div class="modal-body" *ngIf="selectedUnit">
+        <div class="row">
+          <!-- Header Info -->
+          <div class="col-12 mb-4">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h4 class="mb-1">{{ selectedUnit.name }}</h4>
+                <p class="text-muted mb-2" *ngIf="selectedUnit.description">
+                  {{ selectedUnit.description }}
+                </p>
+              </div>
+              <span class="badge" [ngClass]="selectedUnit.isActive ? 'bg-success' : 'bg-danger'">
+                {{ selectedUnit.isActive ? 'Activa' : 'Inactiva' }}
+              </span>
+            </div>
+            <hr>
+          </div>
+
+          <!-- Basic Information -->
+          <div class="col-md-6 mb-3">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">
+                  <i class="bi bi-tag me-1"></i>Tipo
+                </h6>
+                <p class="card-text mb-0">
+                  <span class="badge" [ngClass]="getTypeClass(selectedUnit.productionUnitType?.name)">
+                    {{ selectedUnit.productionUnitType?.name || 'Sin tipo' }}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">
+                  <i class="bi bi-building me-1"></i>Finca
+                </h6>
+                <p class="card-text mb-0">{{ selectedUnit.farm?.name || 'Sin asignar' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">
+                  <i class="bi bi-geo-alt me-1"></i>Ubicación
+                </h6>
+                <p class="card-text mb-0">{{ selectedUnit.location || 'No especificada' }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">
+                  <i class="bi bi-hash me-1"></i>ID
+                </h6>
+                <p class="card-text mb-0">
+                  <span class="badge bg-secondary">{{ selectedUnit.id }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dimensions -->
+          <div class="col-12 mb-3">
+            <h6 class="border-bottom pb-2">Dimensiones y Capacidad</h6>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <div class="card bg-info bg-opacity-10 border-info">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-info">
+                  <i class="bi bi-arrows-fullscreen me-1"></i>Área
+                </h6>
+                <h4 class="card-text mb-0">{{ selectedUnit.area | number:'1.2-2' }} m²</h4>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <div class="card bg-warning bg-opacity-10 border-warning">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-warning">
+                  <i class="bi bi-stack me-1"></i>Capacidad
+                </h6>
+                <h4 class="card-text mb-0">{{ selectedUnit.capacity || 0 | number }}</h4>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Details -->
+          <div class="col-12 mb-3" *ngIf="selectedUnit.soilType || selectedUnit.drainage || selectedUnit.greenhouseType">
+            <h6 class="border-bottom pb-2">Detalles Adicionales</h6>
+          </div>
+
+          <div class="col-md-4 mb-3" *ngIf="selectedUnit.soilType">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted small">Tipo de Suelo</h6>
+                <p class="card-text mb-0">{{ selectedUnit.soilType }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3" *ngIf="selectedUnit.drainage">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted small">Drenaje</h6>
+                <p class="card-text mb-0">{{ selectedUnit.drainage }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3" *ngIf="selectedUnit.greenhouseType">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted small">Tipo Invernadero</h6>
+                <p class="card-text mb-0">{{ selectedUnit.greenhouseType }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3" *ngIf="selectedUnit.ventilation">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted small">Ventilación</h6>
+                <p class="card-text mb-0">{{ selectedUnit.ventilation }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3" *ngIf="selectedUnit.lightingSystem">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted small">Iluminación</h6>
+                <p class="card-text mb-0">{{ selectedUnit.lightingSystem }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Features -->
+          <div class="col-12 mb-3">
+            <h6 class="border-bottom pb-2">Características</h6>
+          </div>
+
+          <div class="col-12 mb-3">
+            <div class="d-flex gap-2 flex-wrap">
+              <span class="badge" [ngClass]="selectedUnit.irrigation ? 'bg-primary' : 'bg-secondary'">
+                <i class="bi me-1" [ngClass]="selectedUnit.irrigation ? 'bi-check-circle' : 'bi-x-circle'"></i>
+                Sistema de Riego
+              </span>
+              <span class="badge" [ngClass]="selectedUnit.climateControl ? 'bg-primary' : 'bg-secondary'">
+                <i class="bi me-1" [ngClass]="selectedUnit.climateControl ? 'bi-check-circle' : 'bi-x-circle'"></i>
+                Control Climático
+              </span>
+            </div>
+          </div>
+
+          <!-- Timestamps -->
+          <div class="col-12 mt-3">
+            <div class="card bg-light">
+              <div class="card-body">
+                <div class="row text-muted small">
+                  <div class="col-md-6">
+                    <i class="bi bi-calendar-plus me-1"></i>
+                    <strong>Creado:</strong> {{ selectedUnit.createdAt | date:'medium' }}
+                  </div>
+                  <div class="col-md-6" *ngIf="selectedUnit.updatedAt">
+                    <i class="bi bi-calendar-check me-1"></i>
+                    <strong>Actualizado:</strong> {{ selectedUnit.updatedAt | date:'medium' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeViewModal()">
+          <i class="bi bi-x-circle me-1"></i>
+          Cerrar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="editFromView()">
+          <i class="bi bi-pencil me-1"></i>
+          Editar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showModal || showViewModal" *ngIf="showModal || showViewModal"></div>
