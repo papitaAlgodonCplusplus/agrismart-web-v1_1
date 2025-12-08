@@ -3,8 +3,10 @@ using AgriSmart.Core.Repositories.Commands;
 using AgriSmart.Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Threading.Tasks;
+using System.Data;
 
 namespace AgriSmart.Infrastructure.Repositories.Command
 {
@@ -62,11 +64,8 @@ namespace AgriSmart.Infrastructure.Repositories.Command
                 return false;
             }
 
-            // Soft delete
-            soilAnalysis.Active = false;
-            soilAnalysis.DateUpdated = DateTime.Now;
-            soilAnalysis.UpdatedBy = GetSessionUserId();
-
+            // Hard delete - physically remove from database
+            _context.Set<SoilAnalysis>().Remove(soilAnalysis);
             await _context.SaveChangesAsync();
 
             return true;

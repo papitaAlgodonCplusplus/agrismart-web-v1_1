@@ -112,6 +112,15 @@ namespace AgriSmart.Infrastructure.Data
             soilAnalysisEntity.Property(e => e.CaToMgRatio).HasColumnType("decimal(8,3)");
             soilAnalysisEntity.Property(e => e.MgToKRatio).HasColumnType("decimal(8,3)");
 
+            // Configure nullable foreign keys and properties
+            soilAnalysisEntity.Property(e => e.CropProductionId).IsRequired(false);
+            soilAnalysisEntity.Property(e => e.AnalyticalEntityId).IsRequired(false);
+            soilAnalysisEntity.Property(e => e.SampleDate).IsRequired(false);
+            soilAnalysisEntity.Property(e => e.Active).IsRequired(false);
+
+            // Configure for database triggers
+            soilAnalysisEntity.ToTable(tb => tb.HasTrigger("TR_SoilAnalysis"));
+
             // Configure NutrientFormulationRecipe
             modelBuilder.Entity<NutrientFormulationRecipe>(entity =>
             {

@@ -16,12 +16,17 @@ import {
   providedIn: 'root'
 })
 export class SoilAnalysisService {
-  private readonly baseEndpoint = '/SoilAnalysis';
-
   constructor(
     private apiService: ApiService,
     private http: HttpClient
   ) { }
+
+  /**
+   * Build the base endpoint for a specific crop production
+   */
+  private getBaseEndpoint(cropProductionId: number): string {
+    return `/CropProduction/${cropProductionId}/SoilAnalysis`;
+  }
 
   /**
    * Get all soil analyses for a crop production
@@ -31,15 +36,12 @@ export class SoilAnalysisService {
     includeInactive: boolean = true
   ): Observable<SoilAnalysisResponse[]> {
     let params = new HttpParams()
-      .set('cropProductionId', cropProductionId.toString())
       .set('includeInactive', includeInactive.toString());
 
-    return this.apiService.get<any>(this.baseEndpoint, params).pipe(
+    return this.apiService.get<any>(this.getBaseEndpoint(cropProductionId), params).pipe(
       map(response => {
         console.log('API Response for getByCropProduction:', response);
-
         return response;
-
       }),
       catchError(this.handleError)
     );
@@ -48,8 +50,8 @@ export class SoilAnalysisService {
   /**
    * Get soil analysis by ID
    */
-  getById(id: number): Observable<SoilAnalysisResponse> {
-    return this.apiService.get<any>(`${this.baseEndpoint}/${id}`).pipe(
+  getById(cropProductionId: number, id: number): Observable<SoilAnalysisResponse> {
+    return this.apiService.get<any>(`${this.getBaseEndpoint(cropProductionId)}/${id}`).pipe(
       map(response => {
         if (response.success && response.result?.soilAnalysis) {
           return response.result.soilAnalysis;
@@ -64,9 +66,7 @@ export class SoilAnalysisService {
    * Get latest soil analysis for a crop production
    */
   getLatest(cropProductionId: number): Observable<SoilAnalysisResponse | null> {
-    let params = new HttpParams().set('cropProductionId', cropProductionId.toString());
-
-    return this.apiService.get<any>(`${this.baseEndpoint}/latest`, params).pipe(
+    return this.apiService.get<any>(`${this.getBaseEndpoint(cropProductionId)}/latest`).pipe(
       map(response => {
         if (response.success && response.result?.soilAnalysis) {
           return response.result.soilAnalysis;
@@ -86,9 +86,9 @@ export class SoilAnalysisService {
   /**
    * Create new soil analysis
    */
-  create(soilAnalysis: SoilAnalysis): Observable<SoilAnalysisResponse> {
+  create(cropProductionId: number, soilAnalysis: SoilAnalysis): Observable<SoilAnalysisResponse> {
     console.log('Creating soil analysis with data:', soilAnalysis);
-    return this.apiService.post<any>(this.baseEndpoint, soilAnalysis).pipe(
+    return this.apiService.post<any>(this.getBaseEndpoint(cropProductionId), soilAnalysis).pipe(
       map(response => {
         console.log('Create response:', response);
 
@@ -115,9 +115,9 @@ export class SoilAnalysisService {
   /**
    * Update existing soil analysis
    */
-  update(id: number, soilAnalysis: SoilAnalysis): Observable<SoilAnalysisResponse> {
+  update(cropProductionId: number, id: number, soilAnalysis: SoilAnalysis): Observable<SoilAnalysisResponse> {
     const updateData = { ...soilAnalysis, id: id };
-    return this.apiService.put<any>(this.baseEndpoint, updateData).pipe(
+    return this.apiService.put<any>(`${this.getBaseEndpoint(cropProductionId)}/${id}`, updateData).pipe(
       map(response => {
         console.log('Update response:', response);
 
@@ -142,10 +142,10 @@ export class SoilAnalysisService {
   }
 
   /**
-   * Delete soil analysis (soft delete)
+   * Delete soil analysis (hard delete)
    */
-  delete(id: number): Observable<boolean> {
-    return this.apiService.delete<any>(`${this.baseEndpoint}/${id}`).pipe(
+  delete(cropProductionId: number, id: number): Observable<boolean> {
+    return this.apiService.delete<any>(`${this.getBaseEndpoint(cropProductionId)}/${id}`).pipe(
       map(response => response.success),
       catchError(this.handleError)
     );
@@ -155,7 +155,7 @@ export class SoilAnalysisService {
    * Get all soil texture classes (reference data)
    */
   getTextureClasses(): Observable<SoilTextureInfo[]> {
-    return this.apiService.get<any>(`${this.baseEndpoint}/texture-classes`).pipe(
+    return this.apiService.get<any>('/SoilAnalysis/texture-classes').pipe(
       map(response => {
         return response
       }),
@@ -166,8 +166,8 @@ export class SoilAnalysisService {
   /**
    * Get available nutrients for a soil analysis
    */
-  getAvailableNutrients(id: number): Observable<{ [key: string]: number }> {
-    return this.apiService.get<any>(`${this.baseEndpoint}/${id}/available-nutrients`).pipe(
+  getAvailableNutrients(cropProductionId: number, id: number): Observable<{ [key: string]: number }> {
+    return this.apiService.get<any>(`${this.getBaseEndpoint(cropProductionId)}/${id}/available-nutrients`).pipe(
       map(response => {
         if (response.success && response.result?.availableNutrients) {
           return response.result.availableNutrients;
@@ -191,7 +191,7 @@ export class SoilAnalysisService {
       .set('silt', silt.toString())
       .set('clay', clay.toString());
 
-    return this.apiService.get<any>(`${this.baseEndpoint}/validate-texture`, params).pipe(
+    return this.apiService.get<any>('/SoilAnalysis/validate-texture', params).pipe(
       map(response => response.result),
       catchError(this.handleError)
     );

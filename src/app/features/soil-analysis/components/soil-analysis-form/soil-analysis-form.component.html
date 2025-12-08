@@ -35,6 +35,24 @@
       <div class="section-content">
         <div class="row g-3">
 
+          <!-- Crop Production Selection -->
+          <div class="col-md-6">
+            <label class="form-label required">Producción de Cultivo</label>
+            <select class="form-select" formControlName="cropProductionId"
+              [class.is-invalid]="isFieldInvalid('cropProductionId')"
+              [disabled]="isLoadingProductions">
+              <option [ngValue]="null" disabled>
+                {{ isLoadingProductions ? 'Cargando...' : 'Seleccione una producción de cultivo' }}
+              </option>
+              <option *ngFor="let production of cropProductions" [ngValue]="production.id">
+                {{ production.name || 'Cultivo desconocido' }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('cropProductionId')">
+              {{ getFieldError('cropProductionId') }}
+            </div>
+          </div>
+
           <!-- Sample Date -->
           <div class="col-md-3">
             <label class="form-label required">Fecha de Muestreo</label>

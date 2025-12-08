@@ -39,7 +39,7 @@
               (change)="onCropProductionChange()" [disabled]="isLoadingProductions || cropProductions.length === 0">
               <option [ngValue]="null" disabled>Seleccione una producción...</option>
               <option *ngFor="let production of cropProductions" [ngValue]="production.id">
-                {{ production.code }} - {{ production.crop?.name }} ({{ production.plantingDate | date:'dd/MM/yyyy' }})
+                {{ production.name }} ({{ production.startDate | date:'dd/MM/yyyy' }})
               </option>
             </select>
             <small class="text-muted" *ngIf="isLoadingProductions">

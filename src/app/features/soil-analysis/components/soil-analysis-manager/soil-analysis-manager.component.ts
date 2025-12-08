@@ -165,10 +165,10 @@ export class SoilAnalysisManagerComponent implements OnInit, OnDestroy {
   }
 
   onDelete(analysis: SoilAnalysisResponse): void {
-    if (!analysis.id) return;
+    if (!analysis.id || !this.cropProductionId) return;
 
     if (confirm(`¿Está seguro de eliminar el análisis de suelo del ${new Date(analysis.sampleDate).toLocaleDateString()}?`)) {
-      this.soilAnalysisService.delete(analysis.id)
+      this.soilAnalysisService.delete(this.cropProductionId, analysis.id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {

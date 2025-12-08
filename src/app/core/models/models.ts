@@ -2265,6 +2265,7 @@ export interface ProductionUnit {
 // src/app/core/models/crop-production.model.ts
 export interface CropProduction {
   containerId?: any;
+  startDate: Date;
   dropperId: any;
   growingMediumId: any;
   numberOfDroppersPerContainer: number;

@@ -20,6 +20,7 @@ import { NutrientRecipeService, CreateRecipeRequest, NutrientRecipe } from '../.
 import { SoilAnalysisService } from '../soil-analysis/services/soil-analysis.service';
 import { SoilFertigationCalculatorService } from './services/soil-fertigation-calculator.service';
 import { SoilAnalysisResponse } from '../soil-analysis/models/soil-analysis.models';
+import { CropProductionService } from '../crop-production/services/crop-production.service';
 import {
   SoilFertigationInput,
   SoilFertigationOutput,
@@ -570,7 +571,8 @@ export class NutrientFormulationComponent implements OnInit {
         public catalogService: CatalogService,
         public apiService: ApiService,
         private soilAnalysisService: SoilAnalysisService,
-        private soilFertigationCalc: SoilFertigationCalculatorService
+        private soilFertigationCalc: SoilFertigationCalculatorService,
+        private cropProductionService: CropProductionService
     ) {
         Chart.register(...registerables);
         this.formulationForm = this.createForm();
@@ -4673,33 +4675,56 @@ export class NutrientFormulationComponent implements OnInit {
      * Load soil analyses for selected crop production
      */
     loadSoilAnalyses(): void {
-        const cropPhaseId = this.formulationForm.get('cropPhaseId')?.value;
-        if (!cropPhaseId) {
-            this.errorMessage = 'No se encontró la producción de cultivo para la fase seleccionada';
-            return;
-        }
-
         this.isLoading = true;
 
-        console.log('Loading soil analyses for crop production:', cropPhaseId);
-        this.soilAnalysisService.getByCropProduction(cropPhaseId, false)
-            .subscribe({
-                next: (analyses: any) => {
-                    this.soilAnalysisList = analyses.soilAnalyses;
+        // Since soil analyses are now attached to crop productions,
+        // we need to load all crop productions and fetch their soil analyses
+        console.log('Loading soil analyses from all crop productions');
+
+        this.cropProductionService.getAll().subscribe({
+            next: (response: any) => {
+                const productions = Array.isArray(response) ? response : (response.cropProductions || response.result || []);
+
+                if (productions.length === 0) {
+                    this.soilAnalysisList = [];
+                    this.isLoading = false;
+                    return;
+                }
+
+                // Fetch soil analyses for all crop productions
+                const soilAnalysisRequests: Observable<any>[] = productions.map((prod: any) =>
+                    this.soilAnalysisService.getByCropProduction(prod.id, false).pipe(
+                        catchError(() => of({ soilAnalyses: [] }))
+                    )
+                );
+
+                forkJoin<any[]>(soilAnalysisRequests).pipe(
+                    catchError(error => {
+                        console.error('Error loading soil analyses:', error);
+                        this.errorMessage = 'Error al cargar análisis de suelo';
+                        this.isLoading = false;
+                        return of([]);
+                    })
+                ).subscribe((allAnalyses: any[]) => {
+                    // Flatten and combine all soil analyses
+                    this.soilAnalysisList = allAnalyses.reduce((acc, curr) => {
+                        return acc.concat(curr.soilAnalyses || []);
+                    }, []);
 
                     // Auto-select most recent analysis
-                    if (analyses.length > 0) {
-                        this.selectedSoilAnalysis = analyses[0];
+                    if (this.soilAnalysisList.length > 0) {
+                        this.selectedSoilAnalysis = this.soilAnalysisList[0];
                     }
 
                     this.isLoading = false;
-                },
-                error: (error) => {
-                    console.error('Error loading soil analyses:', error);
-                    this.errorMessage = 'Error al cargar análisis de suelo';
-                    this.isLoading = false;
-                }
-            });
+                });
+            },
+            error: (error) => {
+                console.error('Error loading crop productions:', error);
+                this.errorMessage = 'Error al cargar producciones de cultivo';
+                this.isLoading = false;
+            }
+        });
     }
 
     /**

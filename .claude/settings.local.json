@@ -71,7 +71,10 @@
       "Bash(del PART2_substrate_html.txt PART3_substrate_html.txt)",
       "Bash(echo:*)",
       "Bash(del \"C:\\Users\\AlexQQ\\Desktop\\agrismart-web-v1_1\\AGGREGATION_TAB.txt\")",
-      "Bash(sqlcmd:*)"
+      "Bash(sqlcmd:*)",
+      "Bash(Select-String -Pattern \"Build succeeded|Build FAILED|error [A-Z]+\")",
+      "Bash(curl:*)",
+      "Bash(dotnet clean:*)"
     ],
     "deny": [],
     "ask": []

@@ -11,13 +11,11 @@ namespace AgriSmart.Core.Entities
     public class SoilAnalysis : BaseEntity
     {
         // Foreign Keys
-        [Required]
-        public int CropProductionId { get; set; }
+        public int? CropProductionId { get; set; }
         public int? AnalyticalEntityId { get; set; }
 
         // Metadata
-        [Required]
-        public DateTime SampleDate { get; set; }
+        public DateTime? SampleDate { get; set; }
 
         [MaxLength(100)]
         public string LabReportNumber { get; set; }
@@ -106,8 +104,7 @@ namespace AgriSmart.Core.Entities
         public string Notes { get; set; }
 
         // System Fields
-        [Required]
-        public bool Active { get; set; } = true;
+        public bool? Active { get; set; } = true;
 
         // Navigation Properties
         [ForeignKey("CropProductionId")]

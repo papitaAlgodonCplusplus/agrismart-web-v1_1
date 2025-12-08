@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angu
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SoilAnalysisService } from '../../services/soil-analysis.service';
+import { CropProductionService } from '../../../crop-production/services/crop-production.service';
 import { Router } from '@angular/router';
 import {
   SoilAnalysis,
@@ -9,6 +10,7 @@ import {
   SoilTextureInfo,
   TextureValidation
 } from '../../models/soil-analysis.models';
+import { CropProduction } from '../../../../core/models/models';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 
@@ -32,8 +34,10 @@ export class SoilAnalysisFormComponent implements OnInit, OnDestroy {
   soilAnalysisForm!: FormGroup;
   textureClasses: SoilTextureInfo[] = [];
   textureValidation: TextureValidation | null = null;
+  cropProductions: CropProduction[] = [];
 
   isSubmitting = false;
+  isLoadingProductions = false;
   errorMessage = '';
 
   // Form sections visibility
@@ -52,12 +56,14 @@ export class SoilAnalysisFormComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private soilAnalysisService: SoilAnalysisService
+    private soilAnalysisService: SoilAnalysisService,
+    private cropProductionService: CropProductionService
   ) { }
 
   ngOnInit(): void {
     this.initializeForm();
     this.loadTextureClasses();
+    this.loadCropProductions();
     this.setupTextureValidation();
 
     if (this.existingSoilAnalysis) {
@@ -76,6 +82,9 @@ export class SoilAnalysisFormComponent implements OnInit, OnDestroy {
 
   private initializeForm(): void {
     this.soilAnalysisForm = this.fb.group({
+      // Crop Production Association
+      cropProductionId: [this.cropProductionId || null, Validators.required],
+
       // Metadata
       sampleDate: [new Date().toISOString().split('T')[0], Validators.required],
       labReportNumber: [''],
@@ -142,6 +151,25 @@ export class SoilAnalysisFormComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading texture classes:', error);
+        }
+      });
+  }
+
+  private loadCropProductions(): void {
+    this.isLoadingProductions = true;
+    this.cropProductionService.getAll()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          console.log('Crop productions response:', response);
+          const productions = Array.isArray(response) ? response : (response.cropProductions || response.result || []);
+          this.cropProductions = productions;
+          this.isLoadingProductions = false;
+        },
+        error: (error) => {
+          console.error('Error loading crop productions:', error);
+          this.cropProductions = [];
+          this.isLoadingProductions = false;
         }
       });
   }
@@ -227,15 +255,17 @@ export class SoilAnalysisFormComponent implements OnInit, OnDestroy {
     this.isSubmitting = true;
     this.errorMessage = '';
 
+    const formValue = this.soilAnalysisForm.value;
+    const selectedCropProductionId = formValue.cropProductionId;
+
     const soilAnalysisData: SoilAnalysis = {
-      ...this.soilAnalysisForm.value,
-      cropProductionId: this.cropProductionId,
+      ...formValue,
       active: true
     };
 
     const operation = this.mode === 'edit' && this.existingSoilAnalysis
-      ? this.soilAnalysisService.update(this.existingSoilAnalysis.id!, soilAnalysisData)
-      : this.soilAnalysisService.create(soilAnalysisData);
+      ? this.soilAnalysisService.update(selectedCropProductionId, this.existingSoilAnalysis.id!, soilAnalysisData)
+      : this.soilAnalysisService.create(selectedCropProductionId, soilAnalysisData);
 
     operation
       .pipe(takeUntil(this.destroy$))
