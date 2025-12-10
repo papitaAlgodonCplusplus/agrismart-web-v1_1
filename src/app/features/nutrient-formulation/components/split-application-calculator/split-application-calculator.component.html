@@ -1,0 +1,671 @@
+<div class="split-application-calculator">
+
+  <!-- HEADER -->
+  <div class="calculator-header">
+    <h2 class="calculator-title">
+      <i class="bi bi-calendar-check"></i>
+      Calculadora de Aplicaciones Divididas
+    </h2>
+    <p class="calculator-subtitle">
+      Optimice el programa de fertilización dividiendo las aplicaciones según las fases de crecimiento del cultivo
+    </p>
+  </div>
+
+  <!-- ERROR MESSAGE -->
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="bi bi-exclamation-triangle"></i>
+    {{ errorMessage }}
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="row">
+
+    <!-- ==================== LEFT COLUMN: INPUT FORM ==================== -->
+    <div class="col-lg-4">
+      <div class="input-card">
+        <h5 class="card-title">
+          <i class="bi bi-gear"></i>
+          Configuración
+        </h5>
+
+        <form [formGroup]="splitForm">
+
+          <!-- Crop Information -->
+          <div class="form-section">
+            <h6 class="section-label">Información del Cultivo</h6>
+
+            <div class="mb-3">
+              <label class="form-label">Cultivo</label>
+              <select class="form-select" formControlName="cropName">
+                <option value="" disabled>Seleccione un cultivo</option>
+                <option *ngFor="let crop of crops" [value]="crop.name">
+                  {{ crop.name }}
+                </option>
+              </select>
+              <small class="form-text text-muted" *ngIf="isLoadingData">
+                Cargando cultivos...
+              </small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Área (ha)</label>
+              <input type="number" class="form-control" formControlName="cropArea" step="0.1"
+                [class.is-invalid]="isFieldInvalid('cropArea')">
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('cropArea')">
+                {{ getFieldError('cropArea') }}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Fecha de Siembra</label>
+              <input type="date" class="form-control" formControlName="plantingDate"
+                [class.is-invalid]="isFieldInvalid('plantingDate')">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Duración del Ciclo (días)</label>
+              <input type="number" class="form-control" formControlName="cycleDays"
+                [class.is-invalid]="isFieldInvalid('cycleDays')">
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('cycleDays')">
+                {{ getFieldError('cycleDays') }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Nutrients -->
+          <div class="form-section">
+            <h6 class="section-label">Nutrientes Totales (kg/ha)</h6>
+
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label">N</label>
+                <input type="number" class="form-control" formControlName="totalN" step="10">
+              </div>
+              <div class="col-6">
+                <label class="form-label">P</label>
+                <input type="number" class="form-control" formControlName="totalP" step="10">
+              </div>
+              <div class="col-6">
+                <label class="form-label">K</label>
+                <input type="number" class="form-control" formControlName="totalK" step="10">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Ca</label>
+                <input type="number" class="form-control" formControlName="totalCa" step="10">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Mg</label>
+                <input type="number" class="form-control" formControlName="totalMg" step="5">
+              </div>
+              <div class="col-6">
+                <label class="form-label">S</label>
+                <input type="number" class="form-control" formControlName="totalS" step="5">
+              </div>
+            </div>
+          </div>
+
+          <!-- Split Strategy -->
+          <div class="form-section">
+            <h6 class="section-label">Estrategia de División</h6>
+
+            <div class="mb-3">
+              <label class="form-label">Estrategia Predefinida</label>
+              <select class="form-select" formControlName="strategyPreset">
+                <option value="">Personalizada</option>
+                <option *ngFor="let preset of strategyPresets" [value]="preset.id">
+                  {{ preset.name }}
+                </option>
+              </select>
+              <small class="form-text text-muted" *ngIf="selectedPreset">
+                {{ selectedPreset.description }}
+              </small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Tipo de Distribución</label>
+              <select class="form-select" formControlName="splitStrategy">
+                <option value="equal">Igual - División uniforme</option>
+                <option value="demand-based">Basada en Demanda - Según fase fenológica</option>
+                <option value="custom">Personalizada</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Número de Aplicaciones</label>
+              <input type="number" class="form-control" formControlName="numberOfSplits" min="2" max="12"
+                [class.is-invalid]="isFieldInvalid('numberOfSplits')">
+            </div>
+          </div>
+
+          <!-- Application Method -->
+          <div class="form-section">
+            <h6 class="section-label">Método de Aplicación</h6>
+
+            <div class="mb-3">
+              <select class="form-select" formControlName="applicationMethod">
+                <option value="fertigation">Fertirriego</option>
+                <option value="foliar">Foliar</option>
+                <option value="soil-broadcast">Suelo - Al voleo</option>
+                <option value="soil-banded">Suelo - En banda</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Constraints -->
+          <div class="form-section">
+            <h6 class="section-label">Restricciones</h6>
+
+            <div class="mb-3">
+              <label class="form-label">Días Mínimos entre Aplicaciones</label>
+              <input type="number" class="form-control" formControlName="minDaysBetween" min="1">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">
+                Máximo N por Aplicación (kg/ha)
+                <i class="bi bi-question-circle text-muted" title="Previene quemadura de raíces"></i>
+              </label>
+              <input type="number" class="form-control" formControlName="maxNPerApp" min="10">
+            </div>
+          </div>
+
+          <!-- Environmental -->
+          <div class="form-section">
+            <h6 class="section-label">Factores Ambientales</h6>
+
+            <div class="mb-3">
+              <label class="form-label">Tipo de Suelo</label>
+              <select class="form-select" formControlName="soilType">
+                <option value="sandy">Arenoso</option>
+                <option value="loam">Franco</option>
+                <option value="clay">Arcilloso</option>
+              </select>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="rainyCheck" formControlName="rainySeasonAdjustment">
+              <label class="form-check-label" for="rainyCheck">
+                Ajustar para época lluviosa
+              </label>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="form-actions">
+            <button type="button" class="btn btn-primary btn-lg w-100 mb-2" (click)="calculate()"
+              [disabled]="isCalculating || splitForm.invalid">
+              <span *ngIf="!isCalculating">
+                <i class="bi bi-calculator"></i>
+                Calcular Programa
+              </span>
+              <span *ngIf="isCalculating">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Calculando...
+              </span>
+            </button>
+
+            <button type="button" class="btn btn-outline-secondary w-100" (click)="reset()">
+              <i class="bi bi-arrow-counterclockwise"></i>
+              Restablecer
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== RIGHT COLUMN: RESULTS ==================== -->
+    <div class="col-lg-8">
+
+      <!-- NO RESULTS YET -->
+      <div class="no-results" *ngIf="!calculationResult">
+        <div class="no-results-icon">
+          <i class="bi bi-calendar3"></i>
+        </div>
+        <h5>Configure los parámetros y calcule</h5>
+        <p class="text-muted">
+          Complete el formulario de la izquierda y presione "Calcular Programa" para generar
+          el cronograma de aplicaciones divididas optimizado para su cultivo.
+        </p>
+      </div>
+
+      <!-- RESULTS DISPLAY -->
+      <div class="results-container" *ngIf="calculationResult">
+
+        <!-- Summary Card -->
+        <div class="summary-card">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <div class="summary-stat">
+                <div class="stat-icon">
+                  <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-content">
+                  <label>Aplicaciones</label>
+                  <div class="stat-value">{{ calculationResult.numberOfSplits }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="summary-stat">
+                <div class="stat-icon">
+                  <i class="bi bi-clock"></i>
+                </div>
+                <div class="stat-content">
+                  <label>Intervalo Promedio</label>
+                  <div class="stat-value">
+                    {{ calculationResult.summary.averageDaysBetweenApplications | number:'1.0-0' }}d
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="summary-stat">
+                <div class="stat-icon">
+                  <i class="bi bi-speedometer2"></i>
+                </div>
+                <div class="stat-content">
+                  <label>Eficiencia</label>
+                  <div class="stat-value"
+                    [ngClass]="getEfficiencyColorClass(calculationResult.efficiency.nutrientUseEfficiency)">
+                    {{ calculationResult.efficiency.nutrientUseEfficiency | number:'1.0-0' }}%
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="summary-stat">
+                <div class="stat-icon">
+                  <i class="bi bi-droplet"></i>
+                </div>
+                <div class="stat-content">
+                  <label>Riesgo Lixiviación</label>
+                  <div class="stat-value" [ngClass]="getRiskColorClass(calculationResult.efficiency.leachingRisk)">
+                    {{ calculationResult.efficiency.leachingRisk }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- View Selector -->
+        <div class="view-selector">
+          <div class="btn-group" role="group">
+            <button type="button" class="btn" [class.btn-primary]="activeView === 'table'"
+              [class.btn-outline-primary]="activeView !== 'table'" (click)="switchView('table')">
+              <i class="bi bi-table"></i>
+              Tabla
+            </button>
+            <button type="button" class="btn" [class.btn-primary]="activeView === 'timeline'"
+              [class.btn-outline-primary]="activeView !== 'timeline'" (click)="switchView('timeline')">
+              <i class="bi bi-clock-history"></i>
+              Línea de Tiempo
+            </button>
+            <button type="button" class="btn" [class.btn-primary]="activeView === 'chart'"
+              [class.btn-outline-primary]="activeView !== 'chart'" (click)="switchView('chart')">
+              <i class="bi bi-bar-chart"></i>
+              Gráfico
+            </button>
+          </div>
+
+          <div class="export-buttons">
+            <button class="btn btn-outline-success btn-sm" (click)="exportToCSV()" title="Exportar a CSV">
+              <i class="bi bi-file-earmark-spreadsheet"></i>
+              CSV
+            </button>
+            <button class="btn btn-outline-primary btn-sm" (click)="printSchedule()" title="Imprimir">
+              <i class="bi bi-printer"></i>
+              Imprimir
+            </button>
+          </div>
+        </div>
+
+        <!-- TABLE VIEW -->
+        <div class="applications-table" *ngIf="activeView === 'table'">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Fecha</th>
+                  <th>Día</th>
+                  <th>Fase</th>
+                  <th>N</th>
+                  <th>P</th>
+                  <th>K</th>
+                  <th>Ca</th>
+                  <th>Mg</th>
+                  <th>S</th>
+                  <th>Prioridad</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let app of calculationResult.applications">
+                  <td><strong>{{ app.applicationNumber }}</strong></td>
+                  <td>{{ formatDate(app.applicationDate) }}</td>
+                  <td>{{ app.daysAfterPlanting }}</td>
+                  <td>
+                    <span class="badge bg-info">{{ app.growthStage }}</span>
+                  </td>
+                  <td>{{ app.nutrients.N | number:'1.1-1' }}</td>
+                  <td>{{ app.nutrients.P | number:'1.1-1' }}</td>
+                  <td>{{ app.nutrients.K | number:'1.1-1' }}</td>
+                  <td>{{ app.nutrients.Ca | number:'1.1-1' }}</td>
+                  <td>{{ app.nutrients.Mg | number:'1.1-1' }}</td>
+                  <td>{{ app.nutrients.S | number:'1.1-1' }}</td>
+                  <td>
+                    <span [ngClass]="getPriorityBadgeClass(app.priority)">
+                      {{ app.priority }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="table-active">
+                  <td colspan="4"><strong>TOTAL</strong></td>
+                  <td><strong>{{ calculationResult.totalNutrients.N | number:'1.1-1' }}</strong></td>
+                  <td><strong>{{ calculationResult.totalNutrients.P | number:'1.1-1' }}</strong></td>
+                  <td><strong>{{ calculationResult.totalNutrients.K | number:'1.1-1' }}</strong></td>
+                  <td><strong>{{ calculationResult.totalNutrients.Ca | number:'1.1-1' }}</strong></td>
+                  <td><strong>{{ calculationResult.totalNutrients.Mg | number:'1.1-1' }}</strong></td>
+                  <td><strong>{{ calculationResult.totalNutrients.S | number:'1.1-1' }}</strong></td>
+                  <td colspan="2"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- TIMELINE VIEW -->
+        <div class="timeline-view" *ngIf="activeView === 'timeline'">
+          <div class="timeline">
+            <div class="timeline-item" *ngFor="let app of calculationResult.applications; let i = index">
+              <div class="timeline-marker" [ngClass]="'priority-' + app.priority">
+                {{ app.applicationNumber }}
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-header">
+                  <h6>{{ formatDate(app.applicationDate) }}</h6>
+                  <span [ngClass]="getPriorityBadgeClass(app.priority)">
+                    {{ app.priority }}
+                  </span>
+                </div>
+                <div class="timeline-body">
+                  <p class="mb-2"><strong>{{ app.growthStage }}</strong> - Día {{ app.daysAfterPlanting }}</p>
+                  <div class="nutrients-summary">
+                    <span class="nutrient-pill">N: {{ app.nutrients.N | number:'1.0-0' }}</span>
+                    <span class="nutrient-pill">P: {{ app.nutrients.P | number:'1.0-0' }}</span>
+                    <span class="nutrient-pill">K: {{ app.nutrients.K | number:'1.0-0' }}</span>
+                  </div>
+                  <p class="text-muted small mt-2">{{ app.rationale }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHART VIEW -->
+        <div class="chart-view" *ngIf="activeView === 'chart'">
+          <div class="chart-container">
+            <h6 class="text-center mb-3">Distribución de Nutrientes por Aplicación (kg/ha)</h6>
+
+            <!-- Simple horizontal bar chart -->
+            <div class="nutrient-chart">
+              <div class="chart-row" *ngFor="let app of calculationResult.applications">
+                <div class="chart-label">
+                  App {{ app.applicationNumber }}
+                  <small>Día {{ app.daysAfterPlanting }}</small>
+                </div>
+                <div class="chart-bars">
+                  <div class="chart-bar n-bar"
+                    [style.width.%]="(app.nutrients.N / calculationResult.totalNutrients.N) * 100"
+                    title="N: {{ app.nutrients.N | number:'1.1-1' }} kg/ha">
+                    <span>N</span>
+                  </div>
+                  <div class="chart-bar p-bar"
+                    [style.width.%]="(app.nutrients.P / calculationResult.totalNutrients.P) * 100"
+                    title="P: {{ app.nutrients.P | number:'1.1-1' }} kg/ha">
+                    <span>P</span>
+                  </div>
+                  <div class="chart-bar k-bar"
+                    [style.width.%]="(app.nutrients.K / calculationResult.totalNutrients.K) * 100"
+                    title="K: {{ app.nutrients.K | number:'1.1-1' }} kg/ha">
+                    <span>K</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chart-legend">
+              <span class="legend-item">
+                <span class="legend-color n-color"></span> Nitrógeno (N)
+              </span>
+              <span class="legend-item">
+                <span class="legend-color p-color"></span> Fósforo (P)
+              </span>
+              <span class="legend-item">
+                <span class="legend-color k-color"></span> Potasio (K)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warnings and Recommendations -->
+        <div class="warnings-recommendations-section">
+
+          <!-- Warnings -->
+          <div class="alert alert-warning" *ngIf="calculationResult.warnings.length > 0">
+            <h6 class="alert-heading">
+              <i class="bi bi-exclamation-triangle"></i>
+              Advertencias
+            </h6>
+            <ul class="mb-0">
+              <li *ngFor="let warning of calculationResult.warnings">{{ warning }}</li>
+            </ul>
+          </div>
+
+          <!-- Recommendations -->
+          <div class="alert alert-info" *ngIf="calculationResult.recommendations.length > 0">
+            <h6 class="alert-heading">
+              <i class="bi bi-lightbulb"></i>
+              Recomendaciones
+            </h6>
+            <ul class="mb-0">
+              <li *ngFor="let rec of calculationResult.recommendations">{{ rec }}</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <!-- Comparison Toggle -->
+        <div class="comparison-toggle">
+          <button class="btn btn-outline-secondary" (click)="toggleComparison()">
+            <i class="bi bi-bar-chart-line"></i>
+            {{ showComparison ? 'Ocultar' : 'Ver' }} Comparación de Estrategias
+          </button>
+        </div>
+
+        <!-- Strategy Comparison -->
+        <div class="strategy-comparison" *ngIf="showComparison && strategyComparisons.length > 0">
+          <h5 class="section-title">
+            <i class="bi bi-bar-chart-line"></i>
+            Comparación de Estrategias
+          </h5>
+
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Estrategia</th>
+                  <th>Eficiencia Nutrientes</th>
+                  <th>Eficiencia Mano de Obra</th>
+                  <th>Costo-Eficiencia</th>
+                  <th>Puntuación General</th>
+                  <th>Riesgo Lixiviación</th>
+                  <th>Complejidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let comp of strategyComparisons">
+                  <td><strong>{{ comp.strategyName }}</strong></td>
+                  <td>
+                    <div class="progress">
+                      <div class="progress-bar bg-success" [style.width.%]="comp.nutrientEfficiency"
+                        [attr.aria-valuenow]="comp.nutrientEfficiency">
+                        {{ comp.nutrientEfficiency | number:'1.0-0' }}%
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="progress">
+                      <div class="progress-bar bg-info" [style.width.%]="comp.laborEfficiency"
+                        [attr.aria-valuenow]="comp.laborEfficiency">
+                        {{ comp.laborEfficiency | number:'1.0-0' }}%
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="progress">
+                      <div class="progress-bar bg-warning" [style.width.%]="comp.costEfficiency"
+                        [attr.aria-valuenow]="comp.costEfficiency">
+                        {{ comp.costEfficiency | number:'1.0-0' }}%
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <strong [ngClass]="getEfficiencyColorClass(comp.overallScore)">
+                      {{ comp.overallScore | number:'1.0-0' }}%
+                    </strong>
+                  </td>
+                  <td>
+                    <span class="badge" [class.bg-success]="comp.leachingRisk < 30"
+                      [class.bg-warning]="comp.leachingRisk >= 30 && comp.leachingRisk < 60"
+                      [class.bg-danger]="comp.leachingRisk >= 60">
+                      {{ comp.leachingRisk | number:'1.0-0' }}%
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary">{{ comp.complexity }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+
+
+      <!-- Growth Stages Info Card -->
+      <div class="growth-stages-card mt-3" *ngIf="growthStages.length > 0">
+        <h6 class="card-title">
+          <i class="bi bi-graph-up"></i>
+          Fases de Crecimiento
+        </h6>
+        <div class="stages-list">
+          <div class="stage-item" *ngFor="let stage of growthStages">
+            <div class="stage-header">
+              <strong>{{ stage.name }}</strong>
+              <span class="badge bg-secondary">{{ stage.durationDays }}d</span>
+            </div>
+            <small class="text-muted">Día {{ stage.startDay }} - {{ stage.endDay }}</small>
+            <div class="demand-indicators">
+              <span class="demand-badge" [style.width.%]="stage.nitrogenDemand * 100" title="Demanda de N">N</span>
+              <span class="demand-badge" [style.width.%]="stage.phosphorusDemand * 100" title="Demanda de P">P</span>
+              <span class="demand-badge" [style.width.%]="stage.potassiumDemand * 100" title="Demanda de K">K</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ==================== MODALS: Application Details ==================== -->
+<div *ngFor="let app of calculationResult?.applications">
+  <div class="modal fade" [id]="'appModal' + app.applicationNumber" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Aplicación {{ app.applicationNumber }} - {{ app.growthStage }}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <h6>Información General</h6>
+              <p><strong>Fecha:</strong> {{ formatDate(app.applicationDate) }}</p>
+              <p><strong>Días después de siembra:</strong> {{ app.daysAfterPlanting }}</p>
+              <p><strong>Fase de crecimiento:</strong> {{ app.growthStage }}</p>
+              <p><strong>Prioridad:</strong>
+                <span [ngClass]="getPriorityBadgeClass(app.priority)">{{ app.priority }}</span>
+              </p>
+            </div>
+            <div class="col-md-6">
+              <h6>Nutrientes (kg/ha)</h6>
+              <table class="table table-sm">
+                <tr>
+                  <td>Nitrógeno (N):</td>
+                  <td><strong>{{ app.nutrients.N | number:'1.1-1' }}</strong></td>
+                  <td>({{ app.percentOfTotal.N | number:'1.0-0' }}%)</td>
+                </tr>
+                <tr>
+                  <td>Fósforo (P):</td>
+                  <td><strong>{{ app.nutrients.P | number:'1.1-1' }}</strong></td>
+                  <td>({{ app.percentOfTotal.P | number:'1.0-0' }}%)</td>
+                </tr>
+                <tr>
+                  <td>Potasio (K):</td>
+                  <td><strong>{{ app.nutrients.K | number:'1.1-1' }}</strong></td>
+                  <td>({{ app.percentOfTotal.K | number:'1.0-0' }}%)</td>
+                </tr>
+                <tr>
+                  <td>Calcio (Ca):</td>
+                  <td><strong>{{ app.nutrients.Ca | number:'1.1-1' }}</strong></td>
+                  <td>({{ app.percentOfTotal.Ca | number:'1.0-0' }}%)</td>
+                </tr>
+                <tr>
+                  <td>Magnesio (Mg):</td>
+                  <td><strong>{{ app.nutrients.Mg | number:'1.1-1' }}</strong></td>
+                  <td>({{ app.percentOfTotal.Mg | number:'1.0-0' }}%)</td>
+                </tr>
+                <tr>
+                  <td>Azufre (S):</td>
+                  <td><strong>{{ app.nutrients.S | number:'1.1-1' }}</strong></td>
+                  <td>({{ app.percentOfTotal.S | number:'1.0-0' }}%)</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <hr>
+
+          <h6>Justificación</h6>
+          <p>{{ app.rationale }}</p>
+
+          <h6>Instrucciones de Aplicación</h6>
+          <p>{{ app.instructions }}</p>
+
+          <div class="alert alert-warning" *ngIf="app.warnings.length > 0">
+            <h6>⚠️ Advertencias</h6>
+            <ul class="mb-0">
+              <li *ngFor="let warning of app.warnings">{{ warning }}</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

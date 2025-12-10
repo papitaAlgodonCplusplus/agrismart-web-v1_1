@@ -2,7 +2,7 @@
 // This is the updated version that uses IrrigationPlanEntryHistory instead of IrrigationPlanEntry for execution history
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -19,12 +19,14 @@ import {
     IrrigationPlanEntry,
     CreateIrrigationPlanEntryCommand,
 } from '../services/irrigation-scheduling.service';
-import { 
+import {
     IrrigationPlanEntryHistoryService,
     IrrigationPlanEntryHistory,
     CreateIrrigationPlanEntryHistoryCommand
 } from '../services/irrigation-plan-entry-history.service';
 import { AlertService } from '../../core/services/alert.service';
+import { IrrigationDecisionEngineService } from '../services/irrigation-decision-engine.service';
+import { IrrigationRecommendation } from '../services/models/irrigation-decision.models';
 
 // Models
 import { CropProduction, Farm } from '../../core/models/models';
@@ -34,10 +36,11 @@ import { CropProduction, Farm } from '../../core/models/models';
     templateUrl: './on-demand-irrigation.component.html',
     styleUrls: ['./on-demand-irrigation.component.css'],
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule]
+    imports: [CommonModule, ReactiveFormsModule, FormsModule]
 })
 export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     private destroy$ = new Subject<void>();
+    private monitoringInterval: any;
 
     // Core Data
     onDemandMode: IrrigationMode | null = null;
@@ -59,6 +62,15 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     showExecutionForm = false;
     selectedHistory: IrrigationPlanEntryHistory | null = null;
 
+    // Auto Mode State
+    autoModeEnabled = false;
+    currentRecommendation: IrrigationRecommendation | null = null;
+    selectedCropProductionId: number | null = null;
+    isLoadingRecommendation = false;
+    lastRecommendationTime: Date | null = null;
+    nextCheckCountdown: number = 0;
+    private countdownInterval: any;
+
     // Messages
     errorMessage = '';
     successMessage = '';
@@ -71,7 +83,8 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         private cropProductionService: CropProductionService,
         private farmService: FarmService,
         private alertService: AlertService,
-        private router: Router
+        private router: Router,
+        private decisionEngine: IrrigationDecisionEngineService
     ) {
         this.initializeForm();
     }
@@ -81,6 +94,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.stopAutoMonitoring();
         this.destroy$.next();
         this.destroy$.complete();
     }
@@ -143,8 +157,8 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         this.cropProductionService.getAll()
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: (productions) => {
-                    this.cropProductions = productions;
+                next: (productions: any) => {
+                    this.cropProductions = productions.cropProductions;
                     this.filteredCropProductions = productions;
                 },
                 error: (error) => {
@@ -551,5 +565,218 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
 
     goToDashboard(): void {
         this.router.navigate(['/dashboard']);
+    }
+
+    // ==================== AUTO MODE METHODS ====================
+
+    toggleAutoMode(): void {
+        this.autoModeEnabled = !this.autoModeEnabled;
+
+        if (this.autoModeEnabled) {
+            if (!this.selectedCropProductionId) {
+                this.showError('Please select a crop production first');
+                this.autoModeEnabled = false;
+                return;
+            }
+            this.startAutoMonitoring();
+            this.showSuccess('Auto Mode enabled - monitoring irrigation needs');
+        } else {
+            this.stopAutoMonitoring();
+            this.showSuccess('Auto Mode disabled');
+        }
+    }
+
+    startAutoMonitoring(): void {
+        // Load initial recommendation
+        this.loadRecommendation();
+
+        // Set up periodic checking (every 5 minutes)
+        this.monitoringInterval = setInterval(() => {
+            this.loadRecommendation();
+        }, 300000); // 5 minutes
+
+        // Start countdown timer
+        this.startCountdown();
+    }
+
+    stopAutoMonitoring(): void {
+        if (this.monitoringInterval) {
+            clearInterval(this.monitoringInterval);
+            this.monitoringInterval = null;
+        }
+        if (this.countdownInterval) {
+            clearInterval(this.countdownInterval);
+            this.countdownInterval = null;
+        }
+        this.currentRecommendation = null;
+        this.lastRecommendationTime = null;
+        this.nextCheckCountdown = 0;
+    }
+
+    loadRecommendation(): void {
+        if (!this.selectedCropProductionId) {
+            return;
+        }
+
+        this.isLoadingRecommendation = true;
+        this.lastRecommendationTime = new Date();
+
+        this.decisionEngine.getRecommendation(this.selectedCropProductionId)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (recommendation) => {
+                    this.currentRecommendation = recommendation;
+                    this.isLoadingRecommendation = false;
+
+                    // Handle critical urgency - auto-execute
+                    if (recommendation.shouldIrrigate && recommendation.urgency === 'critical') {
+                        this.autoExecuteRecommendation(recommendation);
+                    }
+                },
+                error: (error) => {
+                    console.error('Error loading recommendation:', error);
+                    this.showError('Failed to load irrigation recommendation');
+                    this.isLoadingRecommendation = false;
+                }
+            });
+    }
+
+    startCountdown(): void {
+        this.nextCheckCountdown = 300; // 5 minutes in seconds
+        this.countdownInterval = setInterval(() => {
+            this.nextCheckCountdown--;
+            if (this.nextCheckCountdown <= 0) {
+                this.nextCheckCountdown = 300;
+            }
+        }, 1000);
+    }
+
+    formatCountdown(seconds: number): string {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    autoExecuteRecommendation(recommendation: IrrigationRecommendation): void {
+        if (!this.selectedCropProductionId || this.isExecuting) {
+            return;
+        }
+
+        // Find a suitable irrigation plan
+        const plan = this.irrigationPlans[0]; // Use first available plan
+        if (!plan) {
+            this.showError('No irrigation plan available for auto-execution');
+            return;
+        }
+
+        const now = new Date();
+        const userId = 1; // Placeholder
+
+        this.isExecuting = true;
+
+        // Create entry command
+        const entryCommand: CreateIrrigationPlanEntryCommand = {
+            irrigationPlanId: plan.id,
+            irrigationModeId: this.onDemandMode!.id,
+            startTime: this.schedulingService.toTimeSpan(now.getHours(), now.getMinutes()),
+            duration: recommendation.recommendedDuration,
+            sequence: 1,
+            active: true,
+            createdBy: userId
+        };
+
+        this.schedulingService.createIrrigationPlanEntry(entryCommand)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (entryResponse) => {
+                    // Create execution history
+                    const historyCommand: CreateIrrigationPlanEntryHistoryCommand = {
+                        irrigationPlanEntryId: entryResponse.id,
+                        irrigationPlanId: plan.id,
+                        irrigationModeId: this.onDemandMode!.id,
+                        executionStartTime: now,
+                        plannedDuration: recommendation.recommendedDuration,
+                        executionStatus: 'InProgress',
+                        isManualExecution: false,
+                        notes: `Auto-executed: ${recommendation.reasoning.join('; ')}`,
+                        createdBy: userId
+                    };
+
+                    this.historyService.create(historyCommand)
+                        .pipe(takeUntil(this.destroy$))
+                        .subscribe({
+                            next: () => {
+                                this.showSuccess(`Auto-irrigation started: ${recommendation.recommendedDuration} min (${recommendation.urgency} urgency)`);
+                                this.loadExecutionHistory();
+                                this.isExecuting = false;
+                            },
+                            error: (error) => {
+                                this.showError('Failed to create auto-execution history');
+                                console.error('Error:', error);
+                                this.isExecuting = false;
+                            }
+                        });
+                },
+                error: (error) => {
+                    this.showError('Failed to auto-execute irrigation');
+                    console.error('Error:', error);
+                    this.isExecuting = false;
+                }
+            });
+    }
+
+    manualExecuteRecommendation(): void {
+        if (!this.currentRecommendation || !this.selectedCropProductionId) {
+            return;
+        }
+
+        // Pre-fill the execution form with recommendation values
+        const recommendation = this.currentRecommendation;
+        const now = new Date();
+
+        this.executionForm.patchValue({
+            irrigationPlanId: this.irrigationPlans[0]?.id || null,
+            cropProductionId: this.selectedCropProductionId,
+            startHours: now.getHours(),
+            startMinutes: now.getMinutes(),
+            duration: recommendation.recommendedDuration,
+            sequence: 1,
+            notes: `Based on recommendation: ${recommendation.reasoning.join('; ')}`
+        });
+
+        this.showExecutionDialog();
+    }
+
+    dismissRecommendation(): void {
+        this.currentRecommendation = null;
+    }
+
+    getUrgencyClass(urgency: string): string {
+        switch (urgency) {
+            case 'critical': return 'urgency-critical';
+            case 'high': return 'urgency-high';
+            case 'medium': return 'urgency-medium';
+            case 'low': return 'urgency-low';
+            default: return '';
+        }
+    }
+
+    getUrgencyIcon(urgency: string): string {
+        switch (urgency) {
+            case 'critical': return 'bi-exclamation-triangle-fill';
+            case 'high': return 'bi-exclamation-circle-fill';
+            case 'medium': return 'bi-info-circle-fill';
+            case 'low': return 'bi-info-circle';
+            default: return 'bi-info-circle';
+        }
+    }
+
+    onCropProductionChange(cropProductionId: number): void {
+        this.selectedCropProductionId = cropProductionId;
+
+        // If auto mode is enabled, reload recommendation for new crop production
+        if (this.autoModeEnabled) {
+            this.loadRecommendation();
+        }
     }
 }

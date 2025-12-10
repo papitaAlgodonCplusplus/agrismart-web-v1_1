@@ -53,6 +53,13 @@
               Calculadora Avanzada
             </button>
           </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="split-app-tab" data-bs-toggle="tab" data-bs-target="#split-application"
+              type="button" role="tab" aria-controls="split-application" aria-selected="false">
+              <i class="bi bi-calendar-check me-2"></i>
+              Aplicaciones Divididas
+            </button>
+          </li>
         </ul>
       </div>
     </div>
@@ -1913,6 +1920,14 @@
         </div>
       </div>
       <!-- ==================== END ADVANCED CALCULATION TAB ==================== -->
+
+      <!-- ==================== SPLIT APPLICATION CALCULATOR TAB ==================== -->
+      <div class="tab-pane fade" id="split-application" role="tabpanel" aria-labelledby="split-app-tab">
+        <div class="tab-container" style="overflow-y: auto; overflow-x: hidden;">
+          <app-split-application-calculator></app-split-application-calculator>
+        </div>
+      </div>
+      <!-- ==================== END SPLIT APPLICATION CALCULATOR TAB ==================== -->
 
     </div>
   </div>

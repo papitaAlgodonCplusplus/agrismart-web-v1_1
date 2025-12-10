@@ -26,6 +26,7 @@ import {
   SoilFertigationOutput,
   AdjustedNutrientTargets
 } from './models/soil-fertigation.models';
+import { SplitApplicationCalculatorComponent } from './components/split-application-calculator/split-application-calculator.component';
 
 // Interfaces for the new API response
 interface CalculationResponse {
@@ -486,7 +487,7 @@ export interface FertilizerFilters {
 @Component({
     selector: 'app-nutrient-formulation',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, SplitApplicationCalculatorComponent],
     templateUrl: './nutrient-formulation.component.html',
     styleUrls: ['./nutrient-formulation.component.css']
 })

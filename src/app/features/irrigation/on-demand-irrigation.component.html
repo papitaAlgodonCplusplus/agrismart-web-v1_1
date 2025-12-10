@@ -95,6 +95,149 @@
       </div>
     </div>
 
+    <!-- Auto Mode Section -->
+    <div class="auto-mode-section">
+      <div class="auto-mode-header">
+        <div class="auto-mode-title">
+          <i class="bi bi-robot"></i>
+          <h2>Modo Automático</h2>
+          <p>Monitoreo inteligente y ejecución basada en sensores</p>
+        </div>
+        <div class="auto-mode-controls">
+          <div class="crop-selector">
+            <label for="autoModeCropProduction">Producción de Cultivo:</label>
+            <select
+              id="autoModeCropProduction"
+              class="form-control"
+              [(ngModel)]="selectedCropProductionId"
+              (change)="onCropProductionChange($any($event.target).value)">
+              <option [value]="null">Seleccione una producción</option>
+              <option *ngFor="let production of cropProductions" [value]="production.id">
+                {{ production.name }}
+              </option>
+            </select>
+          </div>
+          <button
+            class="btn btn-toggle"
+            [class.active]="autoModeEnabled"
+            (click)="toggleAutoMode()"
+            [disabled]="!selectedCropProductionId">
+            <i class="bi" [class.bi-toggle-off]="!autoModeEnabled" [class.bi-toggle-on]="autoModeEnabled"></i>
+            {{ autoModeEnabled ? 'Desactivar' : 'Activar' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Auto Mode Status -->
+      <div *ngIf="autoModeEnabled" class="auto-mode-status">
+        <div class="status-item">
+          <i class="bi bi-eye-fill"></i>
+          <span>Estado: <strong>Monitoreando</strong></span>
+        </div>
+        <div class="status-item" *ngIf="lastRecommendationTime">
+          <i class="bi bi-clock"></i>
+          <span>Última verificación: <strong>{{ formatDateTime(lastRecommendationTime) }}</strong></span>
+        </div>
+        <div class="status-item" *ngIf="nextCheckCountdown > 0">
+          <i class="bi bi-arrow-clockwise"></i>
+          <span>Próxima verificación en: <strong>{{ formatCountdown(nextCheckCountdown) }}</strong></span>
+        </div>
+        <div class="status-item" *ngIf="isLoadingRecommendation">
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          <span>Cargando recomendación...</span>
+        </div>
+      </div>
+
+      <!-- Current Recommendation Card -->
+      <div *ngIf="currentRecommendation && autoModeEnabled" class="recommendation-card" [class]="getUrgencyClass(currentRecommendation.urgency)">
+        <div class="recommendation-header">
+          <div class="recommendation-title">
+            <i class="bi" [class]="getUrgencyIcon(currentRecommendation.urgency)"></i>
+            <h3>Recomendación de Riego</h3>
+            <span class="urgency-badge" [class]="getUrgencyClass(currentRecommendation.urgency)">
+              {{ currentRecommendation.urgency | uppercase }}
+            </span>
+          </div>
+          <button class="btn-close-recommendation" (click)="dismissRecommendation()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="recommendation-body">
+          <div class="recommendation-decision">
+            <div class="decision-icon" [class.should-irrigate]="currentRecommendation.shouldIrrigate">
+              <i class="bi" [class.bi-droplet-fill]="currentRecommendation.shouldIrrigate" [class.bi-droplet]="!currentRecommendation.shouldIrrigate"></i>
+            </div>
+            <div class="decision-text">
+              <h4>{{ currentRecommendation.shouldIrrigate ? '¡Se recomienda regar!' : 'No se requiere riego' }}</h4>
+              <p *ngIf="currentRecommendation.shouldIrrigate">
+                El sistema recomienda ejecutar riego basado en las condiciones actuales
+              </p>
+              <p *ngIf="!currentRecommendation.shouldIrrigate">
+                Las condiciones actuales no requieren riego en este momento
+              </p>
+            </div>
+          </div>
+
+          <div class="recommendation-details" *ngIf="currentRecommendation.shouldIrrigate">
+            <div class="detail-item">
+              <label>Volumen Recomendado:</label>
+              <span class="value-highlight">{{ currentRecommendation.recommendedVolume }} L</span>
+            </div>
+            <div class="detail-item">
+              <label>Duración Recomendada:</label>
+              <span class="value-highlight">{{ formatDuration(currentRecommendation.recommendedDuration) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Confianza:</label>
+              <div class="confidence-bar">
+                <div class="confidence-fill" [style.width.%]="currentRecommendation.confidence"></div>
+                <span class="confidence-text">{{ currentRecommendation.confidence }}%</span>
+              </div>
+            </div>
+            <div class="detail-item" *ngIf="currentRecommendation.bestTimeToExecute">
+              <label>Mejor momento para ejecutar:</label>
+              <span>{{ formatDateTime(currentRecommendation.bestTimeToExecute) }}</span>
+            </div>
+          </div>
+
+          <div class="recommendation-reasoning">
+            <h5><i class="bi bi-lightbulb"></i> Razones:</h5>
+            <ul>
+              <li *ngFor="let reason of currentRecommendation.reasoning">{{ reason }}</li>
+            </ul>
+          </div>
+
+          <div class="recommendation-actions" *ngIf="currentRecommendation.shouldIrrigate">
+            <button
+              class="btn btn-secondary"
+              (click)="dismissRecommendation()">
+              <i class="bi bi-x-circle"></i>
+              Ignorar
+            </button>
+            <button
+              class="btn btn-primary"
+              (click)="manualExecuteRecommendation()"
+              [disabled]="isExecuting">
+              <i class="bi bi-play-fill"></i>
+              Ejecutar Ahora
+            </button>
+          </div>
+
+          <div class="auto-execution-notice" *ngIf="currentRecommendation.urgency === 'critical'">
+            <i class="bi bi-info-circle"></i>
+            <span>Las recomendaciones de urgencia CRÍTICA se ejecutan automáticamente</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Recommendation State -->
+      <div *ngIf="!currentRecommendation && autoModeEnabled && !isLoadingRecommendation" class="no-recommendation">
+        <i class="bi bi-check-circle"></i>
+        <p>Sistema monitoreando - No hay recomendaciones en este momento</p>
+      </div>
+    </div>
+
     <!-- Execution Form (Modal Style) -->
     <div *ngIf="showExecutionForm" class="execution-form-overlay">
       <div class="execution-form-modal">
