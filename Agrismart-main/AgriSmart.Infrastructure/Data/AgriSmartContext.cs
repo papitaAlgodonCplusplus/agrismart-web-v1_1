@@ -222,6 +222,7 @@ namespace AgriSmart.Infrastructure.Data
         public DbSet<NutrientFormulationRecipeFertilizer> NutrientFormulationRecipeFertilizers { get; set; }
         public DbSet<IrrigationPlanEntryHistory> IrrigationPlanEntryHistories { get; set; }
         public DbSet<SoilAnalysis> SoilAnalysis { get; set; }
+        public DbSet<CropProductionSpecs> CropProductionSpecs { get; set; }
 
     }
 }

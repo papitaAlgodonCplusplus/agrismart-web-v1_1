@@ -7,6 +7,7 @@ using AgriSmart.Core.Repositories.Queries;
 using AgriSmart.Infrastructure.Data;
 using AgriSmart.Infrastructure.Repositories.Command;
 using AgriSmart.Infrastructure.Repositories.Query;
+using AgriSmart.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Configuration;
@@ -76,6 +77,18 @@ builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(ProcessDeviceRawDataHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(DeviceSensorCacheRefreshHandler).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(DeviceSensorCacheRepository).Assembly); // Commented out due to build issues
+});
+
+// InfluxDB Service
+builder.Services.AddSingleton<InfluxDBService>(sp =>
+{
+    var config = builder.Configuration.GetSection("InfluxDB");
+    return new InfluxDBService(
+        url: config["Url"]!,
+        token: config["Token"]!,
+        org: config["Organization"]!,
+        bucket: config["Bucket"]!
+    );
 });
 
 // Services

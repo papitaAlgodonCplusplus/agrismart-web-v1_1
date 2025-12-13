@@ -1189,6 +1189,7 @@ export class IrrigationSectorService {
     console.log('Fetching device raw data hour with params:', params.toString());
     return this.apiService.getIot<any>('/DeviceRawData/hour', params).pipe(
       map(response => {
+        console.log('Received device raw data hour response:', response);
         const items: any[] = response.deviceRawDataHour || [];
         return items.map(item => {
           if (item && item.payload_Avg !== undefined) {

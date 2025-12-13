@@ -1,0 +1,342 @@
+<!-- Crop Production Specs List Component -->
+<div class="container-fluid crop-production-specs-container">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <button class="btn btn-outline-secondary me-3" (click)="navigateBack()">
+              <i class="bi bi-arrow-left"></i> Volver
+            </button>
+            <h2 class="d-inline-block mb-0">
+              <i class="bi bi-rulers text-info"></i>
+              Especificaciones de Producción
+            </h2>
+          </div>
+          <button class="btn btn-primary" (click)="openCreateModal()">
+            <i class="bi bi-plus-circle me-2"></i>
+            Nueva Configuración
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="bi bi-search"></i>
+        </span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Buscar por nombre o descripción..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+        />
+      </div>
+    </div>
+    <div class="col-md-6 text-end">
+      <div class="form-check form-switch d-inline-block">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="includeInactives"
+          [(ngModel)]="includeInactives"
+          (change)="toggleInactives()"
+        />
+        <label class="form-check-label" for="includeInactives">
+          Incluir inactivos
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div class="row" *ngIf="errorMessage">
+    <div class="col-12">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ errorMessage }}
+        <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="row" *ngIf="isLoading">
+    <div class="col-12 text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-3">Cargando especificaciones...</p>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="row" *ngIf="!isLoading">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th (click)="sort('name')" class="sortable">
+                    Nombre
+                    <i class="bi ms-1" [ngClass]="getSortIcon('name')"></i>
+                  </th>
+                  <th>Descripción</th>
+                  <th (click)="sort('betweenRowDistance')" class="sortable text-center">
+                    Entre Filas (m)
+                    <i class="bi ms-1" [ngClass]="getSortIcon('betweenRowDistance')"></i>
+                  </th>
+                  <th (click)="sort('betweenContainerDistance')" class="sortable text-center">
+                    Entre Contenedores (m)
+                    <i class="bi ms-1" [ngClass]="getSortIcon('betweenContainerDistance')"></i>
+                  </th>
+                  <th (click)="sort('betweenPlantDistance')" class="sortable text-center">
+                    Entre Plantas (m)
+                    <i class="bi ms-1" [ngClass]="getSortIcon('betweenPlantDistance')"></i>
+                  </th>
+                  <th (click)="sort('area')" class="sortable text-center">
+                    Área (m²)
+                    <i class="bi ms-1" [ngClass]="getSortIcon('area')"></i>
+                  </th>
+                  <th (click)="sort('containerVolume')" class="sortable text-center">
+                    Vol. Contenedor (L)
+                    <i class="bi ms-1" [ngClass]="getSortIcon('containerVolume')"></i>
+                  </th>
+                  <th (click)="sort('availableWaterPercentage')" class="sortable text-center">
+                    Agua Disponible (%)
+                    <i class="bi ms-1" [ngClass]="getSortIcon('availableWaterPercentage')"></i>
+                  </th>
+                  <th class="text-center">Estado</th>
+                  <th class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let specs of getPaginatedSpecs()">
+                  <td><strong>{{ specs.name }}</strong></td>
+                  <td>{{ specs.description || '-' }}</td>
+                  <td class="text-center">{{ specs.betweenRowDistance | number:'1.2-2' }}</td>
+                  <td class="text-center">{{ specs.betweenContainerDistance | number:'1.2-2' }}</td>
+                  <td class="text-center">{{ specs.betweenPlantDistance | number:'1.2-2' }}</td>
+                  <td class="text-center">{{ specs.area | number:'1.2-2' }}</td>
+                  <td class="text-center">{{ specs.containerVolume | number:'1.2-2' }}</td>
+                  <td class="text-center">{{ specs.availableWaterPercentage | number:'1.0-0' }}</td>
+                  <td class="text-center">
+                    <span class="badge" [ngClass]="specs.active ? 'bg-success' : 'bg-secondary'">
+                      {{ specs.active ? 'Activo' : 'Inactivo' }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <button
+                      class="btn btn-sm btn-outline-primary me-1"
+                      (click)="openEditModal(specs)"
+                      title="Editar"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="deleteSpecs(specs)"
+                      title="Eliminar"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredSpecs.length === 0">
+                  <td colspan="10" class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                    <p class="mt-2 mb-0">No se encontraron especificaciones</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="filteredSpecs.length > 0">
+            <div class="text-muted">
+              Mostrando {{ (currentPage - 1) * pageSize + 1 }} -
+              {{ Math.min(currentPage * pageSize, filteredSpecs.length) }} de
+              {{ filteredSpecs.length }} registros
+            </div>
+            <nav aria-label="Paginación">
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <button class="page-link" (click)="goToPage(currentPage - 1)">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                </li>
+                <li
+                  class="page-item"
+                  *ngFor="let page of getPageNumbers()"
+                  [class.active]="page === currentPage"
+                  [class.disabled]="page === -1"
+                >
+                  <button class="page-link" *ngIf="page !== -1" (click)="goToPage(page)">
+                    {{ page }}
+                  </button>
+                  <span class="page-link" *ngIf="page === -1">...</span>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <button class="page-link" (click)="goToPage(currentPage + 1)">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Create/Edit -->
+<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-rulers me-2"></i>
+          {{ isEditMode ? 'Editar' : 'Nueva' }} Configuración
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="specsForm">
+          <!-- Name and Description -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="name"
+                [class.is-invalid]="specsForm.get('name')?.invalid && specsForm.get('name')?.touched"
+              />
+              <div class="invalid-feedback" *ngIf="specsForm.get('name')?.invalid && specsForm.get('name')?.touched">
+                El nombre es requerido
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Descripción</label>
+              <input type="text" class="form-control" formControlName="description" />
+            </div>
+          </div>
+
+          <!-- Spacing Configuration -->
+          <h6 class="border-bottom pb-2 mb-3">Configuración de Espaciamiento</h6>
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Entre Filas (m) <span class="text-danger">*</span></label>
+              <input
+                type="number"
+                step="0.01"
+                class="form-control"
+                formControlName="betweenRowDistance"
+                [class.is-invalid]="specsForm.get('betweenRowDistance')?.invalid && specsForm.get('betweenRowDistance')?.touched"
+              />
+              <div class="invalid-feedback">Valor entre 0.01 y 100</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Entre Contenedores (m) <span class="text-danger">*</span></label>
+              <input
+                type="number"
+                step="0.01"
+                class="form-control"
+                formControlName="betweenContainerDistance"
+                [class.is-invalid]="specsForm.get('betweenContainerDistance')?.invalid && specsForm.get('betweenContainerDistance')?.touched"
+              />
+              <div class="invalid-feedback">Valor entre 0.01 y 100</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Entre Plantas (m) <span class="text-danger">*</span></label>
+              <input
+                type="number"
+                step="0.01"
+                class="form-control"
+                formControlName="betweenPlantDistance"
+                [class.is-invalid]="specsForm.get('betweenPlantDistance')?.invalid && specsForm.get('betweenPlantDistance')?.touched"
+              />
+              <div class="invalid-feedback">Valor entre 0.01 y 100</div>
+            </div>
+          </div>
+
+          <!-- Area and Container Configuration -->
+          <h6 class="border-bottom pb-2 mb-3">Configuración de Área y Contenedor</h6>
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Área Total (m²) <span class="text-danger">*</span></label>
+              <input
+                type="number"
+                step="0.01"
+                class="form-control"
+                formControlName="area"
+                [class.is-invalid]="specsForm.get('area')?.invalid && specsForm.get('area')?.touched"
+              />
+              <div class="invalid-feedback">Valor entre 0.01 y 1,000,000</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Volumen Contenedor (L) <span class="text-danger">*</span></label>
+              <input
+                type="number"
+                step="0.1"
+                class="form-control"
+                formControlName="containerVolume"
+                [class.is-invalid]="specsForm.get('containerVolume')?.invalid && specsForm.get('containerVolume')?.touched"
+              />
+              <div class="invalid-feedback">Valor entre 0.01 y 10,000</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Agua Disponible (%) <span class="text-danger">*</span></label>
+              <input
+                type="number"
+                step="1"
+                class="form-control"
+                formControlName="availableWaterPercentage"
+                [class.is-invalid]="specsForm.get('availableWaterPercentage')?.invalid && specsForm.get('availableWaterPercentage')?.touched"
+              />
+              <div class="invalid-feedback">Valor entre 0 y 100</div>
+            </div>
+          </div>
+
+          <!-- Active Status -->
+          <div class="row mb-3" *ngIf="isEditMode">
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="activeSwitch" formControlName="active" />
+                <label class="form-check-label" for="activeSwitch">Activo</label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSaving">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="saveSpecs()" [disabled]="isSaving || specsForm.invalid">
+          <span *ngIf="!isSaving">
+            <i class="bi bi-save me-2"></i>
+            {{ isEditMode ? 'Actualizar' : 'Crear' }}
+          </span>
+          <span *ngIf="isSaving">
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Guardando...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showModal" *ngIf="showModal"></div>

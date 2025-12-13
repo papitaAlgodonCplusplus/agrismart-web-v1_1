@@ -12,6 +12,7 @@ import { IrrigationCalculationsService } from '../services/irrigation-calculatio
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { IrrigationSectorService } from '../services/irrigation-sector.service';
+import { CropProductionSpecsService, CropProductionSpecs } from '../crop-production-specs/services/crop-production-specs.service';
 
 
 export interface ClimateKPIs {
@@ -94,6 +95,16 @@ interface RecentActivity {
   deviceId?: string;
 }
 
+interface FlowEvent {
+  deviceId: string;
+  sensorType: 'Water_flow_value' | 'Total_pulse';
+  changeDetectedAt: Date;
+  previousPayload: number;
+  currentPayload: number;
+  volumeOfWater?: number;
+  timeDifference: number;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -115,6 +126,7 @@ export class DashboardComponent implements OnInit {
   };
 
   recentActivities: RecentActivity[] = [];
+  flowEvents: FlowEvent[] = [];
   rawData: any = {
     farms: [],
     devices: [],
@@ -134,6 +146,9 @@ export class DashboardComponent implements OnInit {
   climateKPIs: ClimateKPIs[] = [];
   irrigationMetrics: IrrigationDashboardMetric[] = [];
   fertilizerDosages: FertilizerDosage[] = [];
+
+  // Crop production specs (for irrigation calculations)
+  cropProductionSpecs: CropProductionSpecs | null = null;
 
   // Location and production data
   cropProductionLocations: CropProductionLocation[] = [];
@@ -160,6 +175,8 @@ export class DashboardComponent implements OnInit {
   climateKPIsPageSize = 5;
   irrigationMetricsPage = 1;
   irrigationMetricsPageSize = 5;
+  flowEventsPage = 1;
+  flowEventsPageSize = 5;
 
   // Collapse state properties (collapsed by default)
   isClimateKPIsCollapsed = true;
@@ -182,6 +199,7 @@ export class DashboardComponent implements OnInit {
   // Modal properties for fertilizer details
   showFertilizerDetailsModal = false;
   selectedFertilizerDosage: FertilizerDosage | null = null;
+  lastLoadedData: string = '';
 
   constructor(
     private authService: AuthService,
@@ -192,6 +210,7 @@ export class DashboardComponent implements OnInit {
     private fertilizerServiceInjected: FertilizerService,
     private catalogServiceInjected: CatalogService,
     private irrigationCalcServiceInjected: IrrigationCalculationsService,
+    private cropProductionSpecsService: CropProductionSpecsService,
     private cdr: ChangeDetectorRef
   ) {
     // Assign injected services
@@ -227,6 +246,7 @@ export class DashboardComponent implements OnInit {
     this.loadCropProductionLocations();
     this.loadAvailableCatalogs();
     this.loadCropPhaseRequirements();
+    this.loadCropProductionSpecs();
   }
 
   private loadDashboardStats(): void {
@@ -235,6 +255,8 @@ export class DashboardComponent implements OnInit {
     this.currentPage = 1; // Reset pagination
     this.hasMoreData = true;
     this.totalRecordsLoaded = 0;
+    const today = new Date();
+    const twelveHourAgo = new Date(today.getTime() - (12 * 60 * 60 * 1000));
 
     // Load data from multiple endpoints including device raw data
     forkJoin({
@@ -243,17 +265,20 @@ export class DashboardComponent implements OnInit {
       crops: this.apiService.get('/Crop').pipe(catchError(() => of([]))),
       cropProductions: this.apiService.get('/CropProduction').pipe(catchError(() => of([]))),
       users: this.apiService.get('/User').pipe(catchError(() => of([]))),
-      deviceRawData: this.irrigationService.getDeviceRawDataHour(
+      deviceRawData: this.irrigationService.getDeviceRawData(
+        undefined,
+        twelveHourAgo.toISOString(),
+        today.toISOString(),
         undefined,
         undefined,
-        undefined,
-        undefined,
-        this.currentPage,
-        this.pageSize
+        undefined
+        // this.currentPage,
+        // this.pageSize
       ).pipe(catchError(() => of([])))
     }).subscribe({
       next: (data) => {
-        // console.log('Dashboard data loaded:', data);
+        
+        this.lastLoadedData = twelveHourAgo.toISOString();
         this.rawData = data;
         this.totalRecordsLoaded = Array.isArray(data.deviceRawData) ? data.deviceRawData.length : 0;
 
@@ -262,6 +287,7 @@ export class DashboardComponent implements OnInit {
           this.hasMoreData = false;
         }
 
+        this.detectFlowEvents();
         this.calculateIrrigationMetrics();
         this.calculateStats();
         this.generateRecentActivitiesFromRealData();
@@ -315,11 +341,11 @@ export class DashboardComponent implements OnInit {
 
     // Get set of active device names from raw data
     const activeDeviceNames = new Set(rawDeviceData.map((d: any) => d.sensor));
-    // console.log('Active devices from raw data:', activeDeviceNames);
+    // 
 
     // Count offline/inactive registered devices
     alerts += devices.filter((d: any) => !activeDeviceNames.has(d.name)).length;
-    // console.log('Offline/inactive devices:', devices.filter((d: any) => !activeDeviceNames.has(d.name)).map((d: any) => d.name));
+    // 
 
     // Analyze raw device data for alerts
     const deviceDataMap = new Map<string, any[]>();
@@ -331,7 +357,7 @@ export class DashboardComponent implements OnInit {
       }
       deviceDataMap.get(deviceName)!.push(data);
     });
-    // console.log('Device data map:', deviceDataMap);
+    // 
 
     // Check each active device for alert conditions
     deviceDataMap.forEach((dataPoints, deviceName) => {
@@ -385,6 +411,131 @@ export class DashboardComponent implements OnInit {
     return alerts;
   }
 
+  /**
+   * Detect flow events based on payload changes in Water_flow_value and Total_pulse sensors
+   */
+  private detectFlowEvents(): void {
+    this.flowEvents = [];
+    const rawDeviceData = this.rawData.deviceRawData || [];
+
+    // Group data by deviceId and sensor
+    const deviceSensorMap = new Map<string, Map<string, any[]>>();
+
+    rawDeviceData.forEach((data: any) => {
+      const sensor = data.sensor;
+
+      // Only process Water_flow_value and Total_pulse sensors
+      if (sensor !== 'Water_flow_value' && sensor !== 'Total_pulse') {
+        return;
+      }
+
+      const deviceId = data.deviceId;
+
+      if (!deviceSensorMap.has(deviceId)) {
+        deviceSensorMap.set(deviceId, new Map());
+      }
+
+      const sensorMap = deviceSensorMap.get(deviceId)!;
+      if (!sensorMap.has(sensor)) {
+        sensorMap.set(sensor, []);
+      }
+
+      sensorMap.get(sensor)!.push(data);
+    });
+
+    // Process each device separately
+    deviceSensorMap.forEach((sensorMap, deviceId) => {
+      // Sort readings by time for each sensor
+      sensorMap.forEach((readings, sensorType) => {
+        readings.sort((a, b) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime());
+      });
+
+      // Track which timestamps already have events to avoid duplicates
+      const eventTimestamps = new Set<string>();
+
+      // Detect changes in Water_flow_value
+      if (sensorMap.has('Water_flow_value')) {
+        const waterFlowReadings = sensorMap.get('Water_flow_value')!;
+
+        for (let i = 1; i < waterFlowReadings.length; i++) {
+          const current = waterFlowReadings[i];
+          const previous = waterFlowReadings[i - 1];
+
+          const currentPayload = parseFloat(current.payload);
+          const previousPayload = parseFloat(previous.payload);
+          const currentTime = new Date(current.recordDate);
+          const previousTime = new Date(previous.recordDate);
+
+          // Check if there was a change in payload
+          if (currentPayload !== previousPayload) {
+            const timeDiff = currentTime.getTime() - previousTime.getTime();
+            const timeKey = currentTime.toISOString();
+
+            // Check if Total_pulse also changed at the same time (within 5 seconds)
+            let isCombinedEvent = false;
+            if (sensorMap.has('Total_pulse')) {
+              const totalPulseReadings = sensorMap.get('Total_pulse')!;
+              isCombinedEvent = totalPulseReadings.some(tpReading => {
+                const tpTime = new Date(tpReading.recordDate);
+                return Math.abs(tpTime.getTime() - currentTime.getTime()) <= 5000; // 5 second window
+              });
+            }
+
+            // Only add if not already recorded at this timestamp
+            if (!eventTimestamps.has(timeKey)) {
+              this.flowEvents.push({
+                deviceId: deviceId,
+                sensorType: 'Water_flow_value',
+                changeDetectedAt: currentTime,
+                previousPayload: previousPayload,
+                currentPayload: currentPayload,
+                volumeOfWater: currentPayload,
+                timeDifference: timeDiff
+              });
+              eventTimestamps.add(timeKey);
+            }
+          }
+        }
+      }
+
+      // Detect changes in Total_pulse (only if not already counted)
+      if (sensorMap.has('Total_pulse')) {
+        const totalPulseReadings = sensorMap.get('Total_pulse')!;
+
+        for (let i = 1; i < totalPulseReadings.length; i++) {
+          const current = totalPulseReadings[i];
+          const previous = totalPulseReadings[i - 1];
+
+          const currentPayload = parseFloat(current.payload);
+          const previousPayload = parseFloat(previous.payload);
+          const currentTime = new Date(current.recordDate);
+          const previousTime = new Date(previous.recordDate);
+          const timeKey = currentTime.toISOString();
+
+          // Only add if there was a change AND it's not already recorded
+          if (currentPayload !== previousPayload && !eventTimestamps.has(timeKey)) {
+            const timeDiff = currentTime.getTime() - previousTime.getTime();
+
+            this.flowEvents.push({
+              deviceId: deviceId,
+              sensorType: 'Total_pulse',
+              changeDetectedAt: currentTime,
+              previousPayload: previousPayload,
+              currentPayload: currentPayload,
+              timeDifference: timeDiff
+            });
+            eventTimestamps.add(timeKey);
+          }
+        }
+      }
+    });
+
+    // Sort events by time (most recent first)
+    this.flowEvents.sort((a, b) => b.changeDetectedAt.getTime() - a.changeDetectedAt.getTime());
+
+    console.log(`Detected ${this.flowEvents.length} flow events across all devices`);
+  }
+
   private generateRecentActivitiesFromRealData(): void {
     this.recentActivities = [];
     let activityId = 1;
@@ -425,7 +576,7 @@ export class DashboardComponent implements OnInit {
       const batteryKeys = ['Bat', 'BAT', 'Bat_V', 'BatV'];
       for (const key of batteryKeys) {
         if (latestData.sensor === key && latestData !== null) {
-          // console.log(`Analyzing battery data for device: ${deviceName}`, latestData);
+          // 
           const batValue = parseFloat(latestData.payload);
           const timestamp = new Date(latestData.recordDate);
           if (batValue < 3.5) {
@@ -743,6 +894,10 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/fertilizers']);
   }
 
+  navigateToCropProductionSpecs(): void {
+    this.router.navigate(['/crop-production-specs']);
+  }
+
   navigateToIrrigationDesignRequirements(): void {
     this.router.navigate(['/irrigation-engineering-design']);
   }
@@ -782,20 +937,40 @@ export class DashboardComponent implements OnInit {
   private loadCropProductionLocations(): void {
     this.farmService.getAll(true).subscribe({
       next: (response: any) => {
-        // console.log('Farms loaded for locations:', response);
+        //
 
         // Extract farms array from response
         const farms = response.farms || response.result?.farms || [];
 
-        this.cropProductionLocations = farms.map((farm: any) => ({
-          id: farm.id,
-          name: farm.name,
-          latitude: farm.latitude || 0,
-          longitude: farm.longitude || 0,
-          altitude: farm.altitude || 100 // Default altitude if not provided
-        }));
+        if (farms.length === 0) {
+          console.error('No farms found - farm location data is required for climate calculations');
+          this.cropProductionLocations = [];
+          return;
+        }
 
-        // console.log(`Loaded ${this.cropProductionLocations.length} crop production locations`);
+        // Map farms to crop production locations with validation
+        this.cropProductionLocations = farms
+          .filter((farm: any) => {
+            // Only include farms with valid coordinates
+            if (!farm.latitude || !farm.longitude) {
+              console.warn(`Farm ${farm.name} (ID: ${farm.id}) missing coordinates - skipping`);
+              return false;
+            }
+            return true;
+          })
+          .map((farm: any) => ({
+            id: farm.id,
+            name: farm.name,
+            latitude: farm.latitude,
+            longitude: farm.longitude,
+            altitude: farm.altitude || 100 // TODO: Add altitude field to Farm entity - using default 100m
+          }));
+
+        if (this.cropProductionLocations.length === 0) {
+          console.error('No farms with valid coordinates found - location data is required for climate calculations');
+        }
+
+        //
       },
       error: (error) => {
         console.error('Error loading crop production locations:', error);
@@ -810,7 +985,7 @@ export class DashboardComponent implements OnInit {
   private loadAvailableCatalogs(): void {
     this.catalogService.getAll().subscribe({
       next: (response: any) => {
-        // console.log('Catalogs loaded:', response);
+        // 
 
         // Extract catalogs array from response
         this.availableCatalogs = response.catalogs || response.result?.catalogs || [];
@@ -820,7 +995,7 @@ export class DashboardComponent implements OnInit {
           this.loadAvailableFertilizers(this.availableCatalogs[0].id);
         }
 
-        // console.log(`Loaded ${this.availableCatalogs.length} catalogs`);
+        // 
       },
       error: (error) => {
         console.error('Error loading catalogs:', error);
@@ -839,7 +1014,7 @@ export class DashboardComponent implements OnInit {
   private loadAvailableFertilizers(catalogId: number): void {
     this.fertilizerService.getAll().subscribe({
       next: (response: any) => {
-        // console.log('Fertilizers loaded:', response);
+        // 
 
         // Handle different response structures
         let fertilizers = [];
@@ -864,7 +1039,7 @@ export class DashboardComponent implements OnInit {
           cost: f.pricePerUnit || 1.0
         }));
 
-        // console.log(`Loaded ${this.availableFertilizers.length} fertilizers`);
+        // 
       },
       error: (error) => {
         console.error('Error loading fertilizers:', error);
@@ -879,7 +1054,7 @@ export class DashboardComponent implements OnInit {
   private loadCropPhaseRequirements(): void {
     this.apiService.get<any>('/CropPhaseSolutionRequirement').subscribe({
       next: (response) => {
-        // console.log('CropPhaseSolutionRequirement loaded:', response);
+        //
 
         // Handle different response structures
         if (Array.isArray(response)) {
@@ -890,11 +1065,43 @@ export class DashboardComponent implements OnInit {
           this.cropPhaseRequirements = [];
         }
 
-        // console.log(`Loaded ${this.cropPhaseRequirements.length} crop phase requirements`);
+        //
       },
       error: (error) => {
         console.error('Error loading crop phase requirements:', error);
         this.cropPhaseRequirements = [];
+      }
+    });
+  }
+
+  /**
+   * Load active crop production specs for irrigation calculations
+   */
+  private loadCropProductionSpecs(): void {
+    this.cropProductionSpecsService.getAll(false).subscribe({
+      next: (response) => {
+        // Extract crop production specs array from response
+        let specs = [];
+        if (Array.isArray(response)) {
+          specs = response;
+        } else if (response && Array.isArray(response.cropProductionSpecs)) {
+          specs = response.cropProductionSpecs;
+        } else if (response && response.result && Array.isArray(response.result.cropProductionSpecs)) {
+          specs = response.result.cropProductionSpecs;
+        }
+
+        // Use the first active spec if available
+        if (specs.length > 0) {
+          this.cropProductionSpecs = specs[0];
+          console.log('Loaded crop production specs:', this.cropProductionSpecs);
+        } else {
+          console.warn('No active crop production specs found');
+          this.cropProductionSpecs = null;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading crop production specs:', error);
+        this.cropProductionSpecs = null;
       }
     });
   }
@@ -907,11 +1114,17 @@ export class DashboardComponent implements OnInit {
     const hourlyData = this.groupRawDataByHour();
 
     this.climateKPIs = Array.from(hourlyData.entries()).map(([hour, sensors]) => {
-      // console.log(`Calculating KPIs for hour: ${hour}`, sensors);
+      // 
 
       // Extract temperature from DS18B20 sensor
       const temps = this.extractSensorValues(sensors, 'temp')
         .map(v => v / 10); // Convert from sensor reading
+
+      // Extract humidity from HUM sensors
+      const humidities = [
+        ...this.extractSensorValues(sensors, 'HUM'),
+        ...this.extractSensorValues(sensors, 'Hum_SHT2x')
+      ];
 
       // Extract wind speed
       const windSpeeds = this.extractSensorValues(sensors, 'wind_speed_level');
@@ -919,20 +1132,35 @@ export class DashboardComponent implements OnInit {
       // Extract PAR (solar radiation)
       const solarRadiation = this.extractSensorValues(sensors, 'TSR');
 
-      //// console.log(`Hour: ${hour} - Temps:`, temps, 'WindSpeeds:', windSpeeds, 'SolarRadiation:', solarRadiation);
+      ////
 
-      // Get location for calculations TODO VERIFY MOCKED LOCATION
-      const location = this.cropProductionLocations[0] || {
-        latitude: 10,
-        longitude: -84,
-        altitude: 100
-      };
+      // Get location for calculations from farm data
+      if (!this.cropProductionLocations || this.cropProductionLocations.length === 0) {
+        console.error('No farm locations available - cannot calculate climate KPIs');
+        throw new Error('Farm location data is required for ET calculations');
+      }
+
+      const location = this.cropProductionLocations[0];
+
+      // Validate required fields
+      if (!location.latitude || !location.longitude) {
+        console.error('Farm location missing coordinates');
+        throw new Error('Farm latitude and longitude are required for ET calculations');
+      }
 
       // Calculate statistics
       const tempStats = this.calculateStatsValues(temps);
+      const humidityStats = this.calculateStatsValues(humidities);
       const windStats = this.calculateStatsValues(windSpeeds);
       const solarStats = this.calculateStatsValues(solarRadiation);
-      // // console.log(`Hour: ${hour} - TempStats:`, tempStats, 'WindStats:', windStats, 'SolarStats:', solarStats);
+      // //
+
+      // Calculate vapor pressures
+      const saturationVaporPressure = this.getSaturationVaporPressure(tempStats.avg);
+      const actualVaporPressure = humidityStats.avg > 0
+        ? (humidityStats.avg / 100) * saturationVaporPressure
+        : 0;
+      const vaporPressureDeficit = saturationVaporPressure - actualVaporPressure;
 
       // Calculate reference ET (simplified FAO-56)
       const referenceET = this.calculateReferenceET(
@@ -948,13 +1176,13 @@ export class DashboardComponent implements OnInit {
         tempMin: tempStats.min,
         tempMax: tempStats.max,
         tempAvg: tempStats.avg,
-        relativeHumidityMin: 40, // TODO: Add RH sensor
-        relativeHumidityMax: 80,
-        relativeHumidityAvg: 60,
+        relativeHumidityMin: humidityStats.min || 0,
+        relativeHumidityMax: humidityStats.max || 0,
+        relativeHumidityAvg: humidityStats.avg || 0,
         windSpeed: windStats.avg,
-        saturationVaporPressure: this.getSaturationVaporPressure(tempStats.avg),
-        actualVaporPressure: 0, // TODO: Calculate from RH
-        vaporPressureDeficit: 0,
+        saturationVaporPressure: saturationVaporPressure,
+        actualVaporPressure: actualVaporPressure,
+        vaporPressureDeficit: vaporPressureDeficit,
         solarRadiation: solarStats.avg,
         netRadiation: solarStats.avg * 0.6, // Approximation
         referenceET: referenceET,
@@ -971,6 +1199,35 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
+   * Calculate volume from Water_flow_value sensor changes
+   */
+  private calculateVolumeFromWaterFlowChanges(waterFlowData: any[]): number {
+    if (!waterFlowData || waterFlowData.length < 2) {
+      return 0;
+    }
+
+    // Sort by date
+    const sorted = [...waterFlowData].sort(
+      (a, b) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime()
+    );
+
+    // Calculate total volume as sum of all positive changes
+    let totalVolume = 0;
+    for (let i = 1; i < sorted.length; i++) {
+      const current = parseFloat(sorted[i].payload);
+      const previous = parseFloat(sorted[i - 1].payload);
+      const change = current - previous;
+
+      // Only count positive changes (water flowing)
+      if (change > 0) {
+        totalVolume += change;
+      }
+    }
+
+    return totalVolume;
+  }
+
+  /**
    * Calculate irrigation metrics from pressure and flow data
    */
   private calculateIrrigationMetrics(): void {
@@ -979,73 +1236,136 @@ export class DashboardComponent implements OnInit {
       d.sensor === 'IDC_intput_mA'
     );
 
-    const flowData = this.rawData.deviceRawData.filter((d: any) =>
-      d.sensor === 'Total_pulse'
+    // Get all flow data (Water_flow_value sensor)
+    const allFlowData = this.rawData.deviceRawData.filter((d: any) =>
+      d.sensor === 'Water_flow_value'
     );
 
-    const drainData = this.rawData.deviceRawData.filter((d: any) =>
-      d.sensor === 'rain_gauge_ml'
-    );
+    // Group flow data by device ID
+    const flowDataByDevice = new Map<string, any[]>();
+    allFlowData.forEach((reading: any) => {
+      if (!flowDataByDevice.has(reading.deviceId)) {
+        flowDataByDevice.set(reading.deviceId, []);
+      }
+      flowDataByDevice.get(reading.deviceId)!.push(reading);
+    });
 
-    // Mock crop production specs
-    const cropProduction = {
-      id: 1,
-      betweenRowDistance: 1.5,
-      betweenContainerDistance: 0.3,
-      betweenPlantDistance: 0.2,
-      area: 1000
-    };
+    // Use real crop production specs if available, otherwise skip calculations
+    if (!this.cropProductionSpecs) {
+      console.warn('No crop production specs available for irrigation calculations');
+      this.irrigationMetrics = [];
+      return;
+    }
 
-    // Detect irrigation events
-    const events = this.irrigationCalcService.getCropProductionIrrigationEvents(
+    const cropProduction = this.cropProductionSpecs;
+
+    // Try to detect irrigation events from pressure data first
+    let events = this.irrigationCalcService.getCropProductionIrrigationEvents(
       cropProduction,
       pressureData,
       0.002
     );
 
-    // Calculate volumes for each event
-    const eventsWithVolumes = this.irrigationCalcService.getIrrigationEventsVolumes(
-      events,
-      flowData,
-      drainData,
-      [
-        { id: 1, measurementVariableStandardId: 19, name: 'Irrigation Volume' },
-        { id: 2, measurementVariableStandardId: 20, name: 'Drain Volume' }
-      ]
-    );
+    console.log("Events detected from pressure data:", events);
 
-    // Calculate metrics
+    // If no events detected from pressure, detect from flow data for EACH device
+    if (events.length === 0 && flowDataByDevice.size > 0) {
+      flowDataByDevice.forEach((deviceFlowData, deviceId) => {
+        const deviceEvents = this.detectIrrigationEventsFromWaterFlow(deviceFlowData, cropProduction);
+
+        // Tag each event with the device ID so we know which device it came from
+        deviceEvents.forEach(event => {
+          (event as any).sourceDeviceId = deviceId;
+        });
+
+        events.push(...deviceEvents);
+      });
+    }
+
+    // Calculate volumes for each event using Water_flow_value changes
+    const eventsWithVolumes = events.map(event => {
+      const sourceDeviceId = (event as any).sourceDeviceId;
+      const eventStart = new Date(event.dateTimeStart);
+      const eventEnd = new Date(event.dateTimeEnd);
+
+      // Get Water_flow_value data for this event's time window
+      const deviceFlowData = sourceDeviceId
+        ? allFlowData.filter((d: any) => {
+            const recordDate = new Date(d.recordDate);
+            return d.deviceId === sourceDeviceId &&
+                   recordDate >= eventStart &&
+                   recordDate <= eventEnd;
+          })
+        : allFlowData.filter((d: any) => {
+            const recordDate = new Date(d.recordDate);
+            return recordDate >= eventStart && recordDate <= eventEnd;
+          });
+
+      // Calculate volume from Water_flow_value changes
+      const volume = this.calculateVolumeFromWaterFlowChanges(deviceFlowData);
+
+      console.log("Calculated volume for event:", volume);
+
+      return {
+        ...event,
+        irrigationVolume: volume
+      };
+    });
+
+    // Filter out events with zero volume (false positives from pressure noise)
+    const validEvents = eventsWithVolumes.filter(event => {
+      return event.irrigationVolume && event.irrigationVolume > 0;
+    });
+
+    console.log("Valid events after filtering zero volume:", validEvents);
+
+    // Calculate metrics manually using Water_flow_value volumes
     this.irrigationMetrics = [];
-    for (let i = 0; i < eventsWithVolumes.length; i++) {
-      const currentEvent = eventsWithVolumes[i];
-      const previousEvent = i > 0 ? eventsWithVolumes[i - 1] : undefined;
 
-      const inputs = previousEvent
-        ? [currentEvent, previousEvent]
-        : [currentEvent];
+    // Calculate plants per m² for metrics
+    const plantsPerM2 = 1 / (cropProduction.betweenRowDistance * cropProduction.betweenPlantDistance);
 
-      const metric = this.irrigationCalcService.calculateIrrigationMetrics(
-        inputs,
-        cropProduction,
-        [
-          { id: 1, measurementVariableStandardId: 19, name: 'Irrigation Volume' },
-          { id: 2, measurementVariableStandardId: 20, name: 'Drain Volume' }
-        ]
-      );
+    for (let i = 0; i < validEvents.length; i++) {
+      const currentEvent = validEvents[i];
+      const previousEvent = i > 0 ? validEvents[i - 1] : undefined;
 
-      // Convert to display format
+      const startTime = new Date(currentEvent.dateTimeStart);
+      const endTime = new Date(currentEvent.dateTimeEnd);
+      const lengthMs = endTime.getTime() - startTime.getTime();
+      const lengthHours = lengthMs / (1000 * 60 * 60);
+
+      // Calculate interval from previous event
+      let intervalHours = null;
+      if (previousEvent) {
+        const prevEnd = new Date(previousEvent.dateTimeEnd);
+        const intervalMs = startTime.getTime() - prevEnd.getTime();
+        intervalHours = intervalMs / (1000 * 60 * 60);
+      }
+
+      // Calculate volumes using Water_flow_value total volume
+      const totalVolume = currentEvent.irrigationVolume; // in Liters
+      const volumePerM2 = totalVolume / cropProduction.area;
+      const volumePerPlant = volumePerM2 / plantsPerM2;
+
+      // Calculate flow rate (L/h)
+      const flowRate = lengthHours > 0 ? totalVolume / lengthHours : 0;
+
+      // Calculate precipitation rate (L/m²/h)
+      const precipitationRate = lengthHours > 0 ? volumePerM2 / lengthHours : 0;
+
+      // Default drain percentage (would need drain sensors for actual value)
+      const drainPercentage = 20; // Default assumption
+
       this.irrigationMetrics.push({
-        date: metric.date,
-        intervalHours: metric.irrigationInterval
-          ? metric.irrigationInterval / (1000 * 60 * 60)
-          : null,
-        lengthMinutes: metric.irrigationLength / (1000 * 60),
-        volumePerM2: metric.irrigationVolumenM2.value,
-        volumePerPlant: metric.irrigationVolumenPerPlant.value,
-        totalVolume: metric.irrigationVolumenTotal.value,
-        drainPercentage: metric.drainPercentage,
-        flowRate: metric.irrigationFlow.value,
-        precipitationRate: metric.irrigationPrecipitation.value
+        date: startTime,
+        intervalHours: intervalHours,
+        lengthMinutes: lengthMs / (1000 * 60),
+        volumePerM2: volumePerM2,
+        volumePerPlant: volumePerPlant,
+        totalVolume: totalVolume,
+        drainPercentage: drainPercentage,
+        flowRate: flowRate,
+        precipitationRate: precipitationRate
       });
     }
 
@@ -1073,15 +1393,15 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    console.log('Calculating fertilizer dosages with available fertilizers:', this.availableFertilizers);
-    console.log('Crop phase requirements:', this.cropPhaseRequirements);
+    
+    
 
     // Get latest ET value (non-zero)
     const latestET = this.climateKPIs.length > 0
       ? this.climateKPIs.slice().reverse().find(kpi => kpi.cropET > 0)?.cropET || 0
       : 0;
 
-    console.log('Latest ET value:', latestET);
+    
 
     // Reset fertilizer dosages array
     this.fertilizerDosages = [];
@@ -1093,7 +1413,7 @@ export class DashboardComponent implements OnInit {
 
     // ITERATE THROUGH ALL CROP PHASE REQUIREMENTS
     for (const requirement of this.cropPhaseRequirements) {
-      console.log('Processing requirement:', requirement);
+      
 
       // Calculate requirements in ppm
       const requirements = {
@@ -1112,8 +1432,8 @@ export class DashboardComponent implements OnInit {
 
       // Calculate dosages for this phase requirement
       for (const fert of this.availableFertilizers) {
-        console.log('Evaluating fertilizer:', fert.name, fert);
-        console.log(`Remaining - N: ${remainingN}, P: ${remainingP}, K: ${remainingK}`);
+        
+        
         if (remainingN <= 0 && remainingK <= 0 && remainingP <= 0) break;
 
         let dosageNeeded = 0;
@@ -1129,7 +1449,7 @@ export class DashboardComponent implements OnInit {
           dosageNeeded = Math.max(dosageNeeded, (remainingP / 1000) / (fert.P2O5 * 0.44 / 100));
         }
 
-        console.log(`Calculated dosage needed for fertilizer ${fert.name}: ${dosageNeeded} g/L`);
+        
         // Only add if dosage is valid and within solubility limits
         if (dosageNeeded > 0) { // TODO check this condition  && dosageNeeded <= fert.solubility
           // Subtract nutrients provided by this fertilizer
@@ -1166,7 +1486,7 @@ export class DashboardComponent implements OnInit {
       }
     }
 
-    console.log(`Calculated ${this.fertilizerDosages.length} fertilizer dosages for ${this.cropPhaseRequirements.length} phases`);
+    
 
     // Update dashboard stats with total cost
     this.stats.fertilizerCost = this.fertilizerDosages.reduce(
@@ -1245,6 +1565,187 @@ export class DashboardComponent implements OnInit {
     return 0.000665 * P;
   }
 
+  /**
+   * Detect irrigation events from Water_flow_value sensor data
+   * When flow value changes, it indicates water flow
+   */
+  private detectIrrigationEventsFromWaterFlow(
+    flowReadings: any[],
+    cropProduction: any
+  ): any[] {
+    const events: any[] = [];
+
+    if (flowReadings.length < 2) {
+      return events;
+    }
+
+    // Sort by date
+    const sorted = [...flowReadings].sort(
+      (a, b) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime()
+    );
+
+    let eventStart: Date | null = null;
+    let previousFlowValue = parseFloat(sorted[0].payload);
+    let previousTime = new Date(sorted[0].recordDate);
+    let consecutiveZeroChangeCount = 0;
+
+    for (let i = 1; i < sorted.length; i++) {
+      const currentFlowValue = parseFloat(sorted[i].payload);
+      const currentTime = new Date(sorted[i].recordDate);
+
+      // Calculate flow change
+      const flowChange = currentFlowValue - previousFlowValue;
+
+      // If flow is increasing (water flowing)
+      if (flowChange > 0) {
+        consecutiveZeroChangeCount = 0; // Reset counter
+
+        if (eventStart === null) {
+          // Start of irrigation event
+          eventStart = previousTime;
+        }
+      }
+      // If flow is not increasing
+      else {
+        consecutiveZeroChangeCount++;
+
+        // End event if we have 3 consecutive non-increasing readings
+        if (eventStart !== null && consecutiveZeroChangeCount >= 3) {
+          // End of irrigation event
+          events.push({
+            recordDateTime: eventStart,
+            dateTimeStart: eventStart,
+            dateTimeEnd: previousTime,
+            cropProductionId: cropProduction.id,
+            irrigationMeasurements: []
+          });
+
+          eventStart = null;
+          consecutiveZeroChangeCount = 0;
+        }
+      }
+
+      previousFlowValue = currentFlowValue;
+      previousTime = currentTime;
+    }
+
+    // Handle ongoing event (irrigation still in progress at end of data)
+    if (eventStart !== null) {
+      events.push({
+        recordDateTime: eventStart,
+        dateTimeStart: eventStart,
+        dateTimeEnd: new Date(sorted[sorted.length - 1].recordDate),
+        cropProductionId: cropProduction.id,
+        irrigationMeasurements: []
+      });
+    }
+
+    return events;
+  }
+
+  /**
+   * Detect irrigation events from flow sensor data (Total_pulse) - DEPRECATED
+   * Use detectIrrigationEventsFromWaterFlow instead
+   */
+  private detectIrrigationEventsFromFlow(
+    flowReadings: any[],
+    cropProduction: any
+  ): any[] {
+    const events: any[] = [];
+
+    if (flowReadings.length < 2) {
+      //console.log.*
+      return events;
+    }
+
+    // Sort by date
+    const sorted = [...flowReadings].sort(
+      (a, b) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime()
+    );
+
+    const firstPulseCount = Number(sorted[0].payload);
+    const lastPulseCount = Number(sorted[sorted.length - 1].payload);
+    const totalPulseDiff = lastPulseCount - firstPulseCount;
+
+    //console.log.*
+    //console.log.*
+
+    let eventStart: Date | null = null;
+    let eventStartPulses = 0;
+    let previousPulseCount = Number(sorted[0].payload);
+    let previousTime = new Date(sorted[0].recordDate);
+    let flowDetected = false;
+    let consecutiveNonIncreasingCount = 0;
+
+    for (let i = 1; i < sorted.length; i++) {
+      const currentPulseCount = Number(sorted[i].payload);
+      const currentTime = new Date(sorted[i].recordDate);
+
+      // Calculate pulse difference
+      const pulseDiff = currentPulseCount - previousPulseCount;
+
+      // If pulses are increasing (water flowing)
+      if (pulseDiff > 0) {
+        flowDetected = true;
+        consecutiveNonIncreasingCount = 0; // Reset counter
+
+        if (eventStart === null) {
+          // Start of irrigation event
+          eventStart = previousTime;
+          eventStartPulses = previousPulseCount;
+          //console.log.*
+        }
+      }
+      // If pulses are NOT increasing
+      else {
+        consecutiveNonIncreasingCount++;
+
+        // End event if we have 2 consecutive non-increasing readings or large time gap
+        if (eventStart !== null && consecutiveNonIncreasingCount >= 2) {
+          // End of irrigation event
+          const totalPulses = previousPulseCount - eventStartPulses;
+          //console.log.*
+
+          events.push({
+            recordDateTime: eventStart,
+            dateTimeStart: eventStart,
+            dateTimeEnd: previousTime,
+            cropProductionId: cropProduction.id,
+            irrigationMeasurements: []
+          });
+
+          eventStart = null;
+          consecutiveNonIncreasingCount = 0;
+        }
+      }
+
+      previousPulseCount = currentPulseCount;
+      previousTime = currentTime;
+    }
+
+    // Handle ongoing event (irrigation still in progress at end of data)
+    if (eventStart !== null) {
+      const totalPulses = Number(sorted[sorted.length - 1].payload) - eventStartPulses;
+      //console.log.*
+
+      events.push({
+        recordDateTime: eventStart,
+        dateTimeStart: eventStart,
+        dateTimeEnd: new Date(sorted[sorted.length - 1].recordDate),
+        cropProductionId: cropProduction.id,
+        irrigationMeasurements: []
+      });
+    }
+
+    if (!flowDetected) {
+      console.warn('  ⚠️ No flow detected - all pulse counts are identical');
+    } else {
+      //console.log.*
+    }
+
+    return events;
+  }
+
 
   /**
    * Load next page of device raw data and append to existing data
@@ -1266,7 +1767,7 @@ export class DashboardComponent implements OnInit {
       this.pageSize
     ).subscribe({
       next: (newData) => {
-        // console.log(`Loaded page ${this.currentPage}:`, newData);
+
 
         // Append new data to existing deviceRawData
         if (Array.isArray(newData) && newData.length > 0) {
@@ -1283,6 +1784,7 @@ export class DashboardComponent implements OnInit {
           }
 
           // Recalculate everything with new data
+          this.detectFlowEvents();
           this.calculateStats();
           this.generateRecentActivitiesFromRealData();
           this.calculateClimateKPIs();
@@ -1309,10 +1811,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  /**
+    /**
   * Load next page of device raw data and append to existing data
   */
-  loadMoreDeviceDataBulk(): void {
+  loadMoreDeviceDataBulk24(): void {
     if (this.isLoadingMore || !this.hasMoreData) {
       return;
     }
@@ -1320,17 +1822,24 @@ export class DashboardComponent implements OnInit {
     this.isLoadingMore = true;
     this.currentPage++;
 
-    this.irrigationService.getDeviceRawDataHour(
+    const minus24hours = this.lastLoadedData
+      ? new Date(this.lastLoadedData)
+      : new Date();
+    minus24hours.setHours(minus24hours.getHours() - 24);
+
+    this.irrigationService.getDeviceRawData(
+      undefined,
+      minus24hours.toISOString(),
+      this.lastLoadedData,
       undefined,
       undefined,
       undefined,
-      undefined,
-      this.currentPage,
-      this.pageSizeBulk
+      // this.currentPage,
+      // this.pageSizeBulk
     ).subscribe({
       next: (newData) => {
-        // console.log(`Loaded page ${this.currentPage}:`, newData);
 
+        this.lastLoadedData = minus24hours.toISOString();
         // Append new data to existing deviceRawData
         if (Array.isArray(newData) && newData.length > 0) {
           this.rawData.deviceRawData = [
@@ -1346,6 +1855,7 @@ export class DashboardComponent implements OnInit {
           }
 
           // Recalculate everything with new data
+          this.detectFlowEvents();
           this.calculateStats();
           this.generateRecentActivitiesFromRealData();
           this.calculateClimateKPIs();
@@ -1354,12 +1864,89 @@ export class DashboardComponent implements OnInit {
           this.cdr.markForCheck();
           this.cdr.detectChanges();
 
-          // console.log(`Total records loaded: ${this.totalRecordsLoaded}`);
-          // console log all available sensor in this.rawData
+          //
+          //
           const availableSensors = new Set(
             (this.rawData.deviceRawData || []).map((d: any) => d.sensor)
           );
-          // console.log('Available sensors after bulk load:', Array.from(availableSensors).sort());
+          //
+        } else {
+          // No more data available
+          this.hasMoreData = false;
+        }
+
+        this.isLoadingMore = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error loading more device data:', error);
+        this.errorMessage = 'Error al cargar más datos';
+        this.isLoadingMore = false;
+        this.currentPage--; // Revert page increment on error
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /**
+  * Load next page of device raw data and append to existing data
+  */
+  loadMoreDeviceDataBulk(): void {
+    if (this.isLoadingMore || !this.hasMoreData) {
+      return;
+    }
+
+    this.isLoadingMore = true;
+    this.currentPage++;
+
+    const minus6hours = this.lastLoadedData
+      ? new Date(this.lastLoadedData)
+      : new Date();
+    minus6hours.setHours(minus6hours.getHours() - 6);
+
+    this.irrigationService.getDeviceRawData(
+      undefined,
+      minus6hours.toISOString(),
+      this.lastLoadedData,
+      undefined,
+      undefined,
+      undefined,
+      // this.currentPage,
+      // this.pageSizeBulk
+    ).subscribe({
+      next: (newData) => {
+
+        this.lastLoadedData = minus6hours.toISOString();
+        // Append new data to existing deviceRawData
+        if (Array.isArray(newData) && newData.length > 0) {
+          this.rawData.deviceRawData = [
+            ...(this.rawData.deviceRawData || []),
+            ...newData
+          ];
+
+          this.totalRecordsLoaded += newData.length;
+
+          // Check if we got less than pageSize, meaning no more data
+          if (newData.length < this.pageSize) {
+            this.hasMoreData = false;
+          }
+
+          // Recalculate everything with new data
+          this.detectFlowEvents();
+          this.calculateStats();
+          this.generateRecentActivitiesFromRealData();
+          this.calculateClimateKPIs();
+          this.calculateIrrigationMetrics();
+          this.calculateFertilizerDosages();
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+
+          //
+          //
+          const availableSensors = new Set(
+            (this.rawData.deviceRawData || []).map((d: any) => d.sensor)
+          );
+          //
         } else {
           // No more data available
           this.hasMoreData = false;
@@ -1483,6 +2070,71 @@ export class DashboardComponent implements OnInit {
 
   toggleFertilizerDosages(): void {
     this.isFertilizerDosagesCollapsed = !this.isFertilizerDosagesCollapsed;
+  }
+
+  /**
+   * Get total count of events detected
+   */
+  getTotalEventsDetected(): number {
+    return this.flowEvents.length;
+  }
+
+  /**
+   * Get events grouped by device
+   */
+  getEventsByDevice(): Map<string, FlowEvent[]> {
+    const grouped = new Map<string, FlowEvent[]>();
+
+    this.flowEvents.forEach(event => {
+      if (!grouped.has(event.deviceId)) {
+        grouped.set(event.deviceId, []);
+      }
+      grouped.get(event.deviceId)!.push(event);
+    });
+
+    return grouped;
+  }
+
+  /**
+   * Format time difference in human-readable format
+   */
+  formatTimeDifference(milliseconds: number): string {
+    const seconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes % 60}m`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds % 60}s`;
+    } else {
+      return `${seconds}s`;
+    }
+  }
+
+  /**
+   * Get paginated flow events for a specific device
+   */
+  getFlowEventsPaginatedForDevice(deviceEvents: FlowEvent[]): FlowEvent[] {
+    const startIndex = (this.flowEventsPage - 1) * this.flowEventsPageSize;
+    const endIndex = startIndex + this.flowEventsPageSize;
+    return deviceEvents.slice(startIndex, endIndex);
+  }
+
+  /**
+   * Get total pages for flow events of a device
+   */
+  getFlowEventsTotalPagesForDevice(deviceEvents: FlowEvent[]): number {
+    return Math.ceil(deviceEvents.length / this.flowEventsPageSize);
+  }
+
+  /**
+   * Navigate to specific page in flow events
+   */
+  goToFlowEventsPage(page: any): void {
+    if (typeof page === 'number' && page >= 1) {
+      this.flowEventsPage = page;
+    }
   }
 
 }

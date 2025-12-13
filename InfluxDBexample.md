@@ -659,3 +659,213 @@ csharppolicy.WithOrigins("https://yourfrontend.com")
       .AllowAnyMethod()
       .AllowAnyHeader();
 This solution gives you a complete REST API to query your InfluxDB from any C# backend!
+
+
+------------
+
+THIS IS THE SCRIPT RUNNING IN THE MACHINE 
+
+# ============================================================================
+# Direct SQL to InfluxDB Data Pump - No Telegraf Required!
+# Modified to process data from 2 days ago to now, ordered by RecordDate DESC
+# ============================================================================
+
+# Configuration
+$sqlConnectionString = "Server=sql5110.site4now.net;Database=db_9aab5e_ucragrismart;User Id=db_9aab5e_ucragrismart_admin;Password=@6r15m@r7;"
+$influxUrl = "http://localhost:8086/api/v2/write?org=AgriSmart&bucket=AgriSmartDevice&precision=ns"
+$influxToken = "i4E84myrFfyH-otPa2Ph5YkF-e5nJP4e39rV-AAdbjDrwG1Lu7NofaiVhQ3-DEf9XiwHZEkPhPHRY2p5MqRuZA=="
+$lastDateFile = "C:\InfluxDataPump\last_processed_date.txt"
+$logFile = "C:\InfluxDataPump\pump.log"
+$batchSize = 500  # Records per batch
+$intervalSeconds = 1  # Check every second
+
+# Create directory if it doesn't exist
+$dir = Split-Path $lastDateFile
+if (!(Test-Path $dir)) {
+    New-Item -ItemType Directory -Path $dir -Force | Out-Null
+}
+
+function Write-Log {
+    param([string]$Message)
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $logMessage = "[$timestamp] $Message"
+    Write-Host $logMessage
+    Add-Content -Path $logFile -Value $logMessage
+}
+
+function Get-LastProcessedDate {
+    if (Test-Path $lastDateFile) {
+        try {
+            $dateString = Get-Content $lastDateFile -ErrorAction Stop
+            return [DateTime]::Parse($dateString)
+        }
+        catch {
+            # Start from 2 days ago if file is invalid
+            return (Get-Date).AddDays(-2)
+        }
+    }
+    # First run - start from 2 days ago
+    return (Get-Date).AddDays(-2)
+}
+
+function Set-LastProcessedDate {
+    param([DateTime]$Date)
+    $Date.ToString("yyyy-MM-dd HH:mm:ss.fff") | Out-File $lastDateFile -Encoding ASCII -Force
+}
+
+function ConvertTo-InfluxLineProtocol {
+    param($row)
+    
+    $id = $row["Id"]
+    $device = $row["DeviceId"]
+    $sensor = $row["Sensor"]
+    $cid = $row["ClientId"]
+    $uid = $row["UserId"]
+    $payload = $row["Payload"]
+    $summ = if ($row["Summarized"] -eq $true) { "true" } else { "false" }
+    
+    # Convert RecordDate to Unix nanoseconds
+    try {
+        $recordDate = [DateTime]$row["RecordDate"]
+        $unixEpoch = [DateTime]::new(1970, 1, 1, 0, 0, 0, [DateTimeKind]::Utc)
+        $timestamp = [long](($recordDate.ToUniversalTime() - $unixEpoch).TotalMilliseconds * 1000000)
+    }
+    catch {
+        $now = [DateTime]::UtcNow
+        $unixEpoch = [DateTime]::new(1970, 1, 1, 0, 0, 0, [DateTimeKind]::Utc)
+        $timestamp = [long](($now - $unixEpoch).TotalMilliseconds * 1000000)
+    }
+    
+    # Escape special characters
+    $payload = $payload -replace '\\', '\\' -replace '"', '\"' -replace '\n', '\n' -replace '\r', ''
+    $cid = $cid -replace ' ', '\ ' -replace ',', '\,' -replace '=', '\='
+    $uid = $uid -replace ' ', '\ ' -replace ',', '\,' -replace '=', '\='
+    $device = $device -replace ' ', '\ ' -replace ',', '\,' -replace '=', '\='
+    $sensor = $sensor -replace ' ', '\ ' -replace ',', '\,' -replace '=', '\='
+    
+    # InfluxDB Line Protocol format
+    return "device_raw,device=$device,sensor=$sensor client_id=`"$cid`",user_id=`"$uid`",payload=`"$payload`",summarized=$summ,id=${id}i $timestamp"
+}
+
+function Send-ToInfluxDB {
+    param([string]$LineProtocolData)
+    
+    try {
+        $headers = @{
+            "Authorization" = "Token $influxToken"
+            "Content-Type" = "text/plain; charset=utf-8"
+        }
+        
+        $response = Invoke-RestMethod -Uri $influxUrl -Method Post -Headers $headers -Body $LineProtocolData -TimeoutSec 30
+        return $true
+    }
+    catch {
+        Write-Log "ERROR sending to InfluxDB: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+function Process-NewRecords {
+    $lastDate = Get-LastProcessedDate
+    $lastDateStr = $lastDate.ToString("yyyy-MM-dd HH:mm:ss.fff")
+    
+    $query = @"
+SELECT TOP ($batchSize) [Id]
+      ,[RecordDate]
+      ,[ClientId]
+      ,[UserId]
+      ,[DeviceId]
+      ,[Sensor]
+      ,[Payload]
+      ,[Summarized]
+  FROM [dbo].[DeviceRawData]
+  WHERE [RecordDate] > '$lastDateStr'
+  ORDER BY [RecordDate] ASC
+"@
+
+    try {
+        # Query SQL Server
+        Add-Type -AssemblyName "System.Data"
+        
+        $conn = New-Object System.Data.SqlClient.SqlConnection
+        $conn.ConnectionString = $sqlConnectionString
+        $conn.Open()
+
+        $cmd = $conn.CreateCommand()
+        $cmd.CommandText = $query
+        $cmd.CommandTimeout = 30
+
+        $adapter = New-Object System.Data.SqlClient.SqlDataAdapter $cmd
+        $table = New-Object System.Data.DataTable
+        [void]$adapter.Fill($table)
+        
+        $conn.Close()
+        
+        if ($table.Rows.Count -eq 0) {
+            return 0
+        }
+        
+        # Convert to Line Protocol
+        $lines = @()
+        $maxDate = $lastDate
+        
+        foreach ($row in $table.Rows) {
+            $line = ConvertTo-InfluxLineProtocol -row $row
+            $lines += $line
+            
+            $currentDate = [DateTime]$row["RecordDate"]
+            if ($currentDate -gt $maxDate) {
+                $maxDate = $currentDate
+            }
+        }
+        
+        # Send to InfluxDB
+        $lineProtocolData = $lines -join "`n"
+        $success = Send-ToInfluxDB -LineProtocolData $lineProtocolData
+        
+        if ($success) {
+            Set-LastProcessedDate -Date $maxDate
+            Write-Log "Successfully wrote $($table.Rows.Count) records to InfluxDB (up to date: $($maxDate.ToString('yyyy-MM-dd HH:mm:ss.fff')))"
+            return $table.Rows.Count
+        }
+        else {
+            Write-Log "Failed to write to InfluxDB, will retry next cycle"
+            return 0
+        }
+    }
+    catch {
+        Write-Log "ERROR processing records: $($_.Exception.Message)"
+        return 0
+    }
+}
+
+# ============================================================================
+# Main Loop
+# ============================================================================
+
+Write-Log "=========================================="
+Write-Log "Direct SQL to InfluxDB Data Pump Started"
+Write-Log "Starting from: $((Get-LastProcessedDate).ToString('yyyy-MM-dd HH:mm:ss'))"
+Write-Log "Checking every $intervalSeconds second(s)"
+Write-Log "Batch size: $batchSize records"
+Write-Log "=========================================="
+
+while ($true) {
+    try {
+        $recordsProcessed = Process-NewRecords
+        
+        if ($recordsProcessed -eq 0) {
+            # No new records, wait before checking again
+            Start-Sleep -Seconds $intervalSeconds
+        }
+        else {
+            # Records were processed, check immediately for more
+            # This allows rapid catch-up if there's a backlog
+            Start-Sleep -Milliseconds 100
+        }
+    }
+    catch {
+        Write-Log "CRITICAL ERROR in main loop: $($_.Exception.Message)"
+        Start-Sleep -Seconds 5
+    }
+}

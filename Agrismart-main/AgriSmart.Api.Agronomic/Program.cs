@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging.Configuration;
 using AgriSmart.Core.Repositories.Queries;
+using AgriSmart.Core.Repositories.Query;
 using AgriSmart.Infrastructure.Repositories.Query;
 using AgriSmart.Application.Agronomic.Handlers.Queries;
 using AgriSmart.Application.Agronomic.Handlers.Commands;
@@ -21,6 +22,7 @@ using AgriSmart.Calculator.Interfaces;
 using AgriSmart.Calculator.Logic;
 using AgriSmart.Infrastructure.Mappings; // Commented out due to build issues
 using AgriSmart.Application.Agronomic.Commands;
+using AgriSmart.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,8 +52,24 @@ builder.Services.AddDbContext<AgriSmartContext>(options =>
     options.UseSqlServer(builder.Configuration.GetSection("AgriSmartDbConfiguration").GetSection("ConnectionString").Value);
 });
 
+// InfluxDB Service
+builder.Services.AddSingleton<InfluxDBService>(sp =>
+{
+    var config = builder.Configuration.GetSection("InfluxDB");
+    return new InfluxDBService(
+        url: config["Url"]!,
+        token: config["Token"]!,
+        org: config["Organization"]!,
+        bucket: config["Bucket"]!
+    );
+});
+
 builder.Services.AddScoped<IIrrigationPlanEntryHistoryCommandRepository, IrrigationPlanEntryHistoryCommandRepository>();
 builder.Services.AddScoped<IIrrigationPlanEntryHistoryQueryRepository, IrrigationPlanEntryHistoryQueryRepository>();
+
+// CropProductionSpecs repositories
+builder.Services.AddScoped<ICropProductionSpecsCommandRepository, CropProductionSpecsCommandRepository>();
+builder.Services.AddScoped<ICropProductionSpecsQueryRepository, CropProductionSpecsQueryRepository>();
 
 
 //ILogger to file
@@ -235,6 +253,7 @@ builder.Services.AddTransient<ICropProductionIrrigationSectorQueryRepository, Cr
 builder.Services.AddTransient<IDeviceQueryRepository, DeviceQueryRepository>();
 builder.Services.AddTransient<IDeviceCommandRepository, DeviceCommandRepository>();
 builder.Services.AddTransient<IDeviceRawDataCommandRepository, DeviceRawDataCommandRepository>();
+builder.Services.AddScoped<IDeviceRawDataQueryRepository, DeviceRawDataQueryRepository>();
 builder.Services.AddTransient<IFertilizerQueryRepository, FertilizerQueryRepository>();
 builder.Services.AddTransient<IFertilizerChemistryQueryRepository, FertilizerChemistryQueryRepository>();
 builder.Services.AddTransient<IFertilizerInputQueryRepository, FertilizerInputQueryRepository>();

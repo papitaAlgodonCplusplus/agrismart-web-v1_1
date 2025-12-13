@@ -143,6 +143,11 @@ export const routes: Routes = [
         data: { title: 'Análisis de Suelo' }
       },
       {
+        path: 'crop-production-specs',
+        loadComponent: () => import('./features/crop-production-specs/crop-production-specs-list.component').then(m =>
+          m.CropProductionSpecsListComponent)
+      },
+      {
         path: 'crops',
         component: CropListComponent,
         data: { title: 'Catálogo de Cultivos' }

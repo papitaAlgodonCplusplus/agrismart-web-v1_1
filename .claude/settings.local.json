@@ -74,7 +74,15 @@
       "Bash(sqlcmd:*)",
       "Bash(Select-String -Pattern \"Build succeeded|Build FAILED|error [A-Z]+\")",
       "Bash(curl:*)",
-      "Bash(dotnet clean:*)"
+      "Bash(dotnet clean:*)",
+      "Bash(dotnet add:*)",
+      "Bash(Select-String -Pattern \"Build|ERROR|Warning\")",
+      "Bash(Select-Object -First 20)",
+      "Bash(Select-String -Pattern \"error|ERROR|Error\")",
+      "Bash(Select-Object -First 30)",
+      "Bash(npx tsc:*)",
+      "Bash(Select-String -Pattern \"kpi-orchestrator.service.ts\")",
+      "Bash(Select-Object -First 10)"
     ],
     "deny": [],
     "ask": []

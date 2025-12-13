@@ -6,6 +6,9 @@ import { Router } from '@angular/router';
 import { CropProductionService, CropProductionCreateRequest, CropProductionUpdateRequest } from '../services/crop-production.service';
 import { CropService } from '../../crops/services/crop.service';
 import { ProductionUnitService } from '../../production-units/services/production-unit.service';
+import { ContainerService } from '../../services/container.service';
+import { DropperService } from '../../services/dropper.service';
+import { GrowingMediumService } from '../../growing-medium/services/growing-medium.service';
 import { CropProduction, Crop, ProductionUnit } from '../../../core/models/models';
 import { Observable, Subject, of } from 'rxjs';
 import { takeUntil, map, catchError } from 'rxjs/operators';
@@ -57,6 +60,9 @@ export class CropProductionListComponent implements OnInit, OnDestroy {
     private cropProductionService: CropProductionService,
     private cropService: CropService,
     private productionUnitService: ProductionUnitService,
+    private containerService: ContainerService,
+    private dropperService: DropperService,
+    private growingMediumService: GrowingMediumService,
     private fb: FormBuilder,
     private router: Router
   ) {
@@ -191,34 +197,69 @@ export class CropProductionListComponent implements OnInit, OnDestroy {
   }
 
   private loadContainers(): void {
-    // TODO: Replace with actual API call when endpoint is available
-    this.containers = [
-      { id: 1, name: 'Maceta Estándar' },
-      { id: 2, name: 'Maceta Grande' },
-      { id: 3, name: 'Contenedor NFT' },
-      { id: 4, name: 'Bolsa de Cultivo' }
-    ];
+    this.containerService.getAll(false)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          // Extract containers array from response
+          if (Array.isArray(response)) {
+            this.containers = response;
+          } else if (response && Array.isArray(response.containers)) {
+            this.containers = response.containers;
+          } else if (response && response.result && Array.isArray(response.result.containers)) {
+            this.containers = response.result.containers;
+          }
+          console.log(`Loaded ${this.containers.length} containers`);
+        },
+        error: (error) => {
+          console.error('Error loading containers:', error);
+          this.errorMessage = 'Error al cargar los contenedores';
+        }
+      });
   }
 
   private loadGrowingMediums(): void {
-    // TODO: Replace with actual API call when endpoint is available
-    this.growingMediums = [
-      { id: 1, name: 'Tierra' },
-      { id: 2, name: 'Fibra de Coco' },
-      { id: 3, name: 'Perlita' },
-      { id: 4, name: 'Vermiculita' },
-      { id: 5, name: 'Mezcla Hidropónica' }
-    ];
+    this.growingMediumService.getAll(false)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          // Extract growing medium array from response
+          if (Array.isArray(response)) {
+            this.growingMediums = response;
+          } else if (response && Array.isArray(response.growingMedia)) {
+            this.growingMediums = response.growingMedia;
+          } else if (response && response.result && Array.isArray(response.result.growingMedia)) {
+            this.growingMediums = response.result.growingMedia;
+          }
+          console.log(`Loaded ${this.growingMediums.length} growing mediums`);
+        },
+        error: (error) => {
+          console.error('Error loading growing mediums:', error);
+          this.errorMessage = 'Error al cargar los medios de cultivo';
+        }
+      });
   }
 
   private loadDroppers(): void {
-    // TODO: Replace with actual API call when endpoint is available
-    this.droppers = [
-      { id: 1, name: 'Gotero 2L/h' },
-      { id: 2, name: 'Gotero 4L/h' },
-      { id: 3, name: 'Gotero 8L/h' },
-      { id: 4, name: 'Microaspersor' }
-    ];
+    this.dropperService.getAll(false)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          // Extract droppers array from response
+          if (Array.isArray(response)) {
+            this.droppers = response;
+          } else if (response && Array.isArray(response.droppers)) {
+            this.droppers = response.droppers;
+          } else if (response && response.result && Array.isArray(response.result.droppers)) {
+            this.droppers = response.result.droppers;
+          }
+          console.log(`Loaded ${this.droppers.length} droppers`);
+        },
+        error: (error) => {
+          console.error('Error loading droppers:', error);
+          this.errorMessage = 'Error al cargar los goteros';
+        }
+      });
   }
 
   createNew(): void {

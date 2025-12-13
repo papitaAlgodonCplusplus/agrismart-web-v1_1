@@ -24,9 +24,10 @@ import {
 import { AlertService } from '../../core/services/alert.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { IrrigationCalculationsService, IrrigationMetric, IrrigationMonitorResponse, IrrigationEventEntity, CropProductionEntity, MeasurementVariable, DeviceRawDataPoint } from '../services/irrigation-calculations.service';
-import { CropService } from '../../features/crops/services/crop.service';
+import { CropProductionService } from '../crop-production/services/crop-production.service';
 import { IrrigationSectorService } from '../services/irrigation-sector.service';
 import { SubstrateCurveAnalyzerComponent } from './components/substrate-curve-analyzer/substrate-curve-analyzer.component';
+import { CropProductionSpecsService, CropProductionSpecs } from '../crop-production-specs/services/crop-production-specs.service';
 
 @Component({
   selector: 'app-irrigation-engineering-design',
@@ -56,6 +57,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   showEntryModal = false;
   showModeModal = false;
   showHistoryDetailsModal = false;
+  showComparisonModal = false;
 
   // Edit Mode
   isEditMode = false;
@@ -122,26 +124,13 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     efficiency: 0
   };
 
-  // TODO: MOCKED - These should come from database/API
-  private mockMeasurementVariables: MeasurementVariable[] = [
-    { id: 1, measurementVariableStandardId: 19, name: 'Irrigation Volume' },
-    { id: 2, measurementVariableStandardId: 20, name: 'Drain Volume' },
-    { id: 3, measurementVariableStandardId: 21, name: 'Soil Moisture' },
-    { id: 4, measurementVariableStandardId: 22, name: 'Soil pH' },
-    { id: 5, measurementVariableStandardId: 23, name: 'Flow Rate' },
-    { id: 6, measurementVariableStandardId: 24, name: 'Pressure' }
-  ];
+  // Metric comparison
+  metricComparison: any = null;
+ 
 
-  // TODO: MOCKED - Crop production specifications (Container, spacing, area)
-  private mockCropProductionSpecs: CropProductionEntity = {
-    id: 1,
-    betweenRowDistance: 2.0,          // meters
-    betweenContainerDistance: 0.5,     // meters
-    betweenPlantDistance: 0.25,        // meters
-    area: 1000,                        // square meters
-    containerVolume: 10,               // liters
-    availableWaterPercentage: 50       // percentage
-  };
+  // Crop production specifications (Container, spacing, area)
+  cropProductionSpecs: CropProductionSpecs[] = [];
+  selectedCropProductionSpecs: CropProductionSpecs | null = null;
 
 
   constructor(
@@ -151,8 +140,9 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     private alertService: AlertService,
     private authService: AuthService,
     private irrigationCalculationsService: IrrigationCalculationsService,
-    private cropService: CropService,
+    private cropProductionService: CropProductionService,
     private irrigationSectorService: IrrigationSectorService,
+    private cropProductionSpecsService: CropProductionSpecsService,
     private router: Router
   ) { }
 
@@ -161,6 +151,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     this.initializeForms();
     this.loadAllData();
     this.loadCropProductions();
+    this.loadCropProductionSpecs();
     this.setDefaultDateRange();
   }
 
@@ -894,20 +885,45 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
    * Load crop productions for selection
    */
   private loadCropProductions(): void {
-    this.cropService.getAll().pipe(
+    this.cropProductionService.getAll().pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (crops) => {
-        this.cropProductions = crops;
+      next: (cropProductions) => {
+        this.cropProductions = cropProductions;
 
-        // TODO: MOCKED - Auto-select first crop production
-        if (crops.length > 0) {
-          this.selectedCropProductionId = crops[0].id;
+        if (cropProductions.length === 0) {
+          console.error('No crop productions found - user needs to create crop productions first');
+          this.alertService.showWarning('No hay producciones de cultivo disponibles. Por favor, cree una producción primero.');
         }
       },
       error: (error) => {
         console.error('Error loading crop productions:', error);
         this.alertService.showError('Error al cargar producciones de cultivo');
+      }
+    });
+  }
+
+  /**
+   * Load crop production specifications (spacing, area, container config)
+   */
+  private loadCropProductionSpecs(): void {
+    this.cropProductionSpecsService.getAll(false).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        if (response.success && response.result) {
+          this.cropProductionSpecs = response.result.cropProductionSpecs || [];
+
+          // Auto-select first active specs
+          if (this.cropProductionSpecs.length > 0) {
+            this.selectedCropProductionSpecs = this.cropProductionSpecs[0];
+            console.log('Loaded crop production specs:', this.selectedCropProductionSpecs);
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading crop production specs:', error);
+        this.alertService.showWarning('No se pudieron cargar las especificaciones de producción. Usando valores por defecto.');
       }
     });
   }
@@ -996,10 +1012,24 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       console.log(`Flow input readings: ${flowInputData.length}`);
       console.log(`Drain readings: ${drainDataFinal.length}`);
 
-      // TODO: MOCKED - Using mock crop production specs
-      const cropProduction = {
-        ...this.mockCropProductionSpecs,
-        id: this.selectedCropProductionId!
+      // Use real crop production specs or fallback to defaults
+      const cropProduction: CropProductionEntity = this.selectedCropProductionSpecs ? {
+        id: this.selectedCropProductionId!,
+        betweenRowDistance: this.selectedCropProductionSpecs.betweenRowDistance,
+        betweenContainerDistance: this.selectedCropProductionSpecs.betweenContainerDistance,
+        betweenPlantDistance: this.selectedCropProductionSpecs.betweenPlantDistance,
+        area: this.selectedCropProductionSpecs.area,
+        containerVolume: this.selectedCropProductionSpecs.containerVolume,
+        availableWaterPercentage: this.selectedCropProductionSpecs.availableWaterPercentage
+      } : {
+        // Fallback to default values if no specs loaded
+        id: this.selectedCropProductionId!,
+        betweenRowDistance: 2.0,
+        betweenContainerDistance: 0.5,
+        betweenPlantDistance: 0.25,
+        area: 1000,
+        containerVolume: 10,
+        availableWaterPercentage: 50
       };
 
       // Step 1: Detect irrigation events from pressure changes
@@ -1020,8 +1050,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       const eventsWithVolumes = this.irrigationCalculationsService.getIrrigationEventsVolumes(
         irrigationEvents,
         flowInputData,
-        drainDataFinal,
-        this.mockMeasurementVariables
+        drainDataFinal
       );
 
       // Step 3: Calculate metrics for each event
@@ -1038,8 +1067,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         try {
           const metric = this.irrigationCalculationsService.calculateIrrigationMetrics(
             inputs,
-            cropProduction,
-            this.mockMeasurementVariables
+            cropProduction
           );
 
           this.irrigationMetrics.push(metric);
@@ -1149,8 +1177,187 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
    * Compare metrics
    */
   compareMetrics(metric: IrrigationMetric): void {
-    // TODO: Implement metric comparison functionality
-    this.alertService.showInfo('Comparación de métricas - Funcionalidad en desarrollo');
+    if (!metric || this.irrigationMetrics.length === 0) {
+      this.alertService.showWarning('No hay suficientes métricas para comparar');
+      return;
+    }
+
+    // Calculate statistics from all metrics
+    const stats = this.calculateMetricsStatistics();
+
+    // Calculate deviations for the selected metric
+    const comparison = {
+      selectedMetric: metric,
+      statistics: stats,
+      deviations: this.calculateDeviations(metric, stats),
+      recommendations: this.generateRecommendations(metric, stats)
+    };
+
+    this.metricComparison = comparison;
+    this.showComparisonModal = true;
+  }
+
+  /**
+   * Calculate statistics from all metrics
+   */
+  private calculateMetricsStatistics(): any {
+    if (this.irrigationMetrics.length === 0) {
+      return null;
+    }
+
+    const metrics = this.irrigationMetrics;
+
+    // Extract values
+    const volumes = metrics.map(m => m.irrigationVolumenTotal.value);
+    const drainages = metrics.map(m => m.drainPercentage);
+    const durations = metrics.map(m => m.irrigationLength / (1000 * 60)); // Convert to minutes
+    const flows = metrics.map(m => m.irrigationFlow.value);
+    const precipitations = metrics.map(m => m.irrigationPrecipitation.value);
+
+    return {
+      volume: {
+        min: Math.min(...volumes),
+        max: Math.max(...volumes),
+        avg: volumes.reduce((a, b) => a + b, 0) / volumes.length,
+        median: this.calculateMedian(volumes)
+      },
+      drainage: {
+        min: Math.min(...drainages),
+        max: Math.max(...drainages),
+        avg: drainages.reduce((a, b) => a + b, 0) / drainages.length,
+        median: this.calculateMedian(drainages)
+      },
+      duration: {
+        min: Math.min(...durations),
+        max: Math.max(...durations),
+        avg: durations.reduce((a, b) => a + b, 0) / durations.length,
+        median: this.calculateMedian(durations)
+      },
+      flow: {
+        min: Math.min(...flows),
+        max: Math.max(...flows),
+        avg: flows.reduce((a, b) => a + b, 0) / flows.length,
+        median: this.calculateMedian(flows)
+      },
+      precipitation: {
+        min: Math.min(...precipitations),
+        max: Math.max(...precipitations),
+        avg: precipitations.reduce((a, b) => a + b, 0) / precipitations.length,
+        median: this.calculateMedian(precipitations)
+      }
+    };
+  }
+
+  /**
+   * Calculate median value
+   */
+  private calculateMedian(values: number[]): number {
+    if (values.length === 0) return 0;
+
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+
+    return sorted.length % 2 === 0
+      ? (sorted[mid - 1] + sorted[mid]) / 2
+      : sorted[mid];
+  }
+
+  /**
+   * Calculate deviations from statistics
+   */
+  private calculateDeviations(metric: IrrigationMetric, stats: any): any {
+    const volumeDeviation = ((metric.irrigationVolumenTotal.value - stats.volume.avg) / stats.volume.avg) * 100;
+    const drainageDeviation = ((metric.drainPercentage - stats.drainage.avg) / stats.drainage.avg) * 100;
+    const durationDeviation = (((metric.irrigationLength / (1000 * 60)) - stats.duration.avg) / stats.duration.avg) * 100;
+    const flowDeviation = ((metric.irrigationFlow.value - stats.flow.avg) / stats.flow.avg) * 100;
+
+    return {
+      volume: {
+        value: volumeDeviation,
+        status: this.getDeviationStatus(volumeDeviation)
+      },
+      drainage: {
+        value: drainageDeviation,
+        status: this.getDrainageDeviationStatus(metric.drainPercentage, drainageDeviation)
+      },
+      duration: {
+        value: durationDeviation,
+        status: this.getDeviationStatus(durationDeviation)
+      },
+      flow: {
+        value: flowDeviation,
+        status: this.getDeviationStatus(flowDeviation)
+      }
+    };
+  }
+
+  /**
+   * Get deviation status (normal, warning, critical)
+   */
+  private getDeviationStatus(deviation: number): string {
+    const absDeviation = Math.abs(deviation);
+    if (absDeviation < 10) return 'normal';
+    if (absDeviation < 25) return 'warning';
+    return 'critical';
+  }
+
+  /**
+   * Get drainage deviation status (considering optimal range 15-25%)
+   */
+  private getDrainageDeviationStatus(drainPercentage: number, _deviation: number): string {
+    // Optimal drainage is 15-25%
+    if (drainPercentage >= 15 && drainPercentage <= 25) {
+      return 'optimal';
+    } else if (drainPercentage < 10 || drainPercentage > 30) {
+      return 'critical';
+    }
+    return 'warning';
+  }
+
+  /**
+   * Generate recommendations based on deviations
+   */
+  private generateRecommendations(metric: IrrigationMetric, stats: any): string[] {
+    const recommendations: string[] = [];
+    const volumeDeviation = ((metric.irrigationVolumenTotal.value - stats.volume.avg) / stats.volume.avg) * 100;
+
+    // Volume recommendations
+    if (Math.abs(volumeDeviation) > 25) {
+      if (volumeDeviation > 0) {
+        recommendations.push('El volumen de riego es significativamente mayor al promedio. Considere reducir el tiempo de riego.');
+      } else {
+        recommendations.push('El volumen de riego es significativamente menor al promedio. Verifique si las plantas están recibiendo suficiente agua.');
+      }
+    }
+
+    // Drainage recommendations
+    if (metric.drainPercentage < 10) {
+      recommendations.push('Drenaje muy bajo (<10%). Aumente el volumen de riego para alcanzar 15-25% de drenaje óptimo.');
+    } else if (metric.drainPercentage > 30) {
+      recommendations.push('Drenaje muy alto (>30%). Reduzca el volumen de riego para evitar desperdicio de agua y nutrientes.');
+    } else if (metric.drainPercentage >= 15 && metric.drainPercentage <= 25) {
+      recommendations.push('Drenaje en rango óptimo (15-25%). Mantenga esta configuración.');
+    }
+
+    // Flow recommendations
+    const flowDeviation = ((metric.irrigationFlow.value - stats.flow.avg) / stats.flow.avg) * 100;
+    if (Math.abs(flowDeviation) > 20) {
+      recommendations.push('Flujo de riego irregular. Verifique goteros y presión del sistema.');
+    }
+
+    if (recommendations.length === 0) {
+      recommendations.push('Todos los parámetros están dentro de rangos normales.');
+    }
+
+    return recommendations;
+  }
+
+  /**
+   * Close comparison modal
+   */
+  closeComparisonModal(): void {
+    this.showComparisonModal = false;
+    this.metricComparison = null;
   }
 
   /**

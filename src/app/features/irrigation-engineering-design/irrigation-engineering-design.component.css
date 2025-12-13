@@ -519,6 +519,11 @@
   }
 }
 
+/* Wide panel for comparison modal */
+.form-panel-wide {
+  max-width: 1000px;
+}
+
 /* Form Header */
 .form-header {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);

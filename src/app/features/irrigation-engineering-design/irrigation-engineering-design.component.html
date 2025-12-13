@@ -989,3 +989,166 @@
     </div>
   </div>
 </div>
+
+<!-- ==================== METRIC COMPARISON MODAL ==================== -->
+<div class="form-overlay" *ngIf="showComparisonModal" (click)="closeComparisonModal()">
+  <div class="form-panel form-panel-wide" (click)="$event.stopPropagation()">
+    <div class="form-header">
+      <h5>
+        <i class="bi bi-bar-chart"></i>
+        Comparación de Métricas
+      </h5>
+      <button type="button" class="btn-close" (click)="closeComparisonModal()"></button>
+    </div>
+
+    <div class="form-body" *ngIf="metricComparison">
+      <!-- Selected Metric Info -->
+      <div class="alert alert-info">
+        <strong>Métrica Seleccionada:</strong> {{ metricComparison.selectedMetric.date | date:'dd/MM/yyyy HH:mm' }}
+      </div>
+
+      <!-- Statistics Comparison Table -->
+      <h6 class="mb-3">Estadísticas del Período</h6>
+      <div class="table-responsive mb-4">
+        <table class="table table-sm table-bordered">
+          <thead class="table-light">
+            <tr>
+              <th>Parámetro</th>
+              <th>Valor Actual</th>
+              <th>Promedio</th>
+              <th>Mínimo</th>
+              <th>Máximo</th>
+              <th>Mediana</th>
+              <th>Desviación</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Volume Row -->
+            <tr>
+              <td><strong>Volumen Total</strong></td>
+              <td>{{ metricComparison.selectedMetric.irrigationVolumenTotal.value | number:'1.2-2' }} {{ metricComparison.selectedMetric.irrigationVolumenTotal.unit }}</td>
+              <td>{{ metricComparison.statistics.volume.avg | number:'1.2-2' }} L</td>
+              <td>{{ metricComparison.statistics.volume.min | number:'1.2-2' }} L</td>
+              <td>{{ metricComparison.statistics.volume.max | number:'1.2-2' }} L</td>
+              <td>{{ metricComparison.statistics.volume.median | number:'1.2-2' }} L</td>
+              <td [class.text-success]="metricComparison.deviations.volume.status === 'normal'"
+                  [class.text-warning]="metricComparison.deviations.volume.status === 'warning'"
+                  [class.text-danger]="metricComparison.deviations.volume.status === 'critical'">
+                {{ metricComparison.deviations.volume.value | number:'1.1-1' }}%
+              </td>
+              <td>
+                <span class="badge"
+                      [class.bg-success]="metricComparison.deviations.volume.status === 'normal'"
+                      [class.bg-warning]="metricComparison.deviations.volume.status === 'warning'"
+                      [class.bg-danger]="metricComparison.deviations.volume.status === 'critical'">
+                  {{ metricComparison.deviations.volume.status === 'normal' ? 'Normal' :
+                     metricComparison.deviations.volume.status === 'warning' ? 'Advertencia' : 'Crítico' }}
+                </span>
+              </td>
+            </tr>
+
+            <!-- Drainage Row -->
+            <tr>
+              <td><strong>Drenaje</strong></td>
+              <td>{{ metricComparison.selectedMetric.drainPercentage | number:'1.1-1' }}%</td>
+              <td>{{ metricComparison.statistics.drainage.avg | number:'1.1-1' }}%</td>
+              <td>{{ metricComparison.statistics.drainage.min | number:'1.1-1' }}%</td>
+              <td>{{ metricComparison.statistics.drainage.max | number:'1.1-1' }}%</td>
+              <td>{{ metricComparison.statistics.drainage.median | number:'1.1-1' }}%</td>
+              <td [class.text-success]="metricComparison.deviations.drainage.status === 'optimal'"
+                  [class.text-warning]="metricComparison.deviations.drainage.status === 'warning'"
+                  [class.text-danger]="metricComparison.deviations.drainage.status === 'critical'">
+                {{ metricComparison.deviations.drainage.value | number:'1.1-1' }}%
+              </td>
+              <td>
+                <span class="badge"
+                      [class.bg-success]="metricComparison.deviations.drainage.status === 'optimal'"
+                      [class.bg-warning]="metricComparison.deviations.drainage.status === 'warning'"
+                      [class.bg-danger]="metricComparison.deviations.drainage.status === 'critical'">
+                  {{ metricComparison.deviations.drainage.status === 'optimal' ? 'Óptimo' :
+                     metricComparison.deviations.drainage.status === 'warning' ? 'Advertencia' : 'Crítico' }}
+                </span>
+              </td>
+            </tr>
+
+            <!-- Duration Row -->
+            <tr>
+              <td><strong>Duración</strong></td>
+              <td>{{ metricComparison.selectedMetric.irrigationLength / (1000 * 60) | number:'1.0-0' }} min</td>
+              <td>{{ metricComparison.statistics.duration.avg | number:'1.0-0' }} min</td>
+              <td>{{ metricComparison.statistics.duration.min | number:'1.0-0' }} min</td>
+              <td>{{ metricComparison.statistics.duration.max | number:'1.0-0' }} min</td>
+              <td>{{ metricComparison.statistics.duration.median | number:'1.0-0' }} min</td>
+              <td [class.text-success]="metricComparison.deviations.duration.status === 'normal'"
+                  [class.text-warning]="metricComparison.deviations.duration.status === 'warning'"
+                  [class.text-danger]="metricComparison.deviations.duration.status === 'critical'">
+                {{ metricComparison.deviations.duration.value | number:'1.1-1' }}%
+              </td>
+              <td>
+                <span class="badge"
+                      [class.bg-success]="metricComparison.deviations.duration.status === 'normal'"
+                      [class.bg-warning]="metricComparison.deviations.duration.status === 'warning'"
+                      [class.bg-danger]="metricComparison.deviations.duration.status === 'critical'">
+                  {{ metricComparison.deviations.duration.status === 'normal' ? 'Normal' :
+                     metricComparison.deviations.duration.status === 'warning' ? 'Advertencia' : 'Crítico' }}
+                </span>
+              </td>
+            </tr>
+
+            <!-- Flow Row -->
+            <tr>
+              <td><strong>Flujo</strong></td>
+              <td>{{ metricComparison.selectedMetric.irrigationFlow.value | number:'1.2-2' }} {{ metricComparison.selectedMetric.irrigationFlow.unit }}</td>
+              <td>{{ metricComparison.statistics.flow.avg | number:'1.2-2' }} L/h</td>
+              <td>{{ metricComparison.statistics.flow.min | number:'1.2-2' }} L/h</td>
+              <td>{{ metricComparison.statistics.flow.max | number:'1.2-2' }} L/h</td>
+              <td>{{ metricComparison.statistics.flow.median | number:'1.2-2' }} L/h</td>
+              <td [class.text-success]="metricComparison.deviations.flow.status === 'normal'"
+                  [class.text-warning]="metricComparison.deviations.flow.status === 'warning'"
+                  [class.text-danger]="metricComparison.deviations.flow.status === 'critical'">
+                {{ metricComparison.deviations.flow.value | number:'1.1-1' }}%
+              </td>
+              <td>
+                <span class="badge"
+                      [class.bg-success]="metricComparison.deviations.flow.status === 'normal'"
+                      [class.bg-warning]="metricComparison.deviations.flow.status === 'warning'"
+                      [class.bg-danger]="metricComparison.deviations.flow.status === 'critical'">
+                  {{ metricComparison.deviations.flow.status === 'normal' ? 'Normal' :
+                     metricComparison.deviations.flow.status === 'warning' ? 'Advertencia' : 'Crítico' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Recommendations -->
+      <h6 class="mb-3">Recomendaciones</h6>
+      <div class="alert alert-warning">
+        <ul class="mb-0">
+          <li *ngFor="let recommendation of metricComparison.recommendations">
+            {{ recommendation }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Legend -->
+      <div class="alert alert-light">
+        <h6>Leyenda:</h6>
+        <ul class="mb-0">
+          <li><span class="badge bg-success">Normal</span> - Desviación < 10%</li>
+          <li><span class="badge bg-warning">Advertencia</span> - Desviación entre 10% y 25%</li>
+          <li><span class="badge bg-danger">Crítico</span> - Desviación > 25%</li>
+          <li><span class="badge bg-success">Óptimo</span> - Drenaje entre 15% y 25%</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeComparisonModal()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>

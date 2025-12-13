@@ -71,18 +71,18 @@
       </div>
     </div>
 
-    
+    <!-- Flow Events Card -->
     <div class="col-xl-3 col-md-6 mb-4">
       <div class="stats-card card-primary">
         <div class="card-body">
           <div class="row align-items-center">
             <div class="col-8">
-              <h6 class="card-category text-uppercase text-muted mb-0">Eventos de Riego</h6>
-              <h2 class="card-title mb-0 counter">{{ stats.totalIrrigationEvents }}</h2>
+              <h6 class="card-category text-uppercase text-muted mb-0">Eventos Detectados</h6>
+              <h2 class="card-title mb-0 counter">{{ getTotalEventsDetected() }}</h2>
             </div>
             <div class="col-4 text-end">
               <div class="icon-shape bg-gradient-primary text-white rounded-circle">
-                <i class="bi bi-lightning fs-4"></i>
+                <i class="bi bi-droplet-fill fs-4"></i>
               </div>
             </div>
           </div>
@@ -168,6 +168,22 @@
                 <div class="quick-action-content">
                   <h6 class="quick-action-title">Fertilizantes</h6>
                   <p class="quick-action-description">Gestionar catálogo de fertilizantes</p>
+                </div>
+                <div class="quick-action-arrow">
+                  <i class="bi bi-arrow-right"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Crop Production Specs -->
+            <div class="col-md-3 col-6 mb-3">
+              <div class="quick-action-card" (click)="navigateToCropProductionSpecs()">
+                <div class="quick-action-icon">
+                  <i class="bi bi-rulers text-info"></i>
+                </div>
+                <div class="quick-action-content">
+                  <h6 class="quick-action-title">Especificaciones</h6>
+                  <p class="quick-action-description">Configurar espaciamiento y contenedores</p>
                 </div>
                 <div class="quick-action-arrow">
                   <i class="bi bi-arrow-right"></i>
@@ -441,7 +457,17 @@
     <button class="btn btn-success" (click)="loadMoreDeviceDataBulk()" [disabled]="isLoadingMore || !hasMoreData">
       <span *ngIf="!isLoadingMore">
         <i class="bi bi-arrow-down-circle me-1"></i>
-        Cargar Más Datos
+        Cargar Más Datos (+6 horas)
+      </span>
+      <span *ngIf="isLoadingMore">
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        Cargando...
+      </span>
+    </button>
+    <button class="btn btn-success" style="margin-left: 1vw;" (click)="loadMoreDeviceDataBulk24()" [disabled]="isLoadingMore || !hasMoreData">
+      <span *ngIf="!isLoadingMore">
+        <i class="bi bi-arrow-down-circle me-1"></i>
+        Cargar Más Datos (+24 horas)
       </span>
       <span *ngIf="isLoadingMore">
         <span class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -586,6 +612,130 @@
   </div>
 
 
+  <!-- Flow Events Detection Section -->
+  <div class="row mt-4" *ngIf="flowEvents.length > 0">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="bi bi-activity"></i> Eventos de Flujo Detectados
+            </h5>
+            <span class="badge bg-light text-primary">{{ getTotalEventsDetected() }} eventos</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Group events by device -->
+          <div *ngFor="let deviceEntry of getEventsByDevice() | keyvalue" class="mb-4">
+            <h6 class="text-primary border-bottom pb-2">
+              <i class="bi bi-router"></i> Dispositivo: {{ deviceEntry.key }}
+              <span class="badge bg-primary ms-2">{{ deviceEntry.value.length }} eventos</span>
+            </h6>
+
+            <div class="table-responsive">
+              <table class="table table-sm table-hover">
+                <thead>
+                  <tr>
+                    <th>Sensor</th>
+                    <th>Fecha/Hora</th>
+                    <th>Payload Anterior</th>
+                    <th>Payload Actual</th>
+                    <th>Cambio</th>
+                    <th>Volumen de Agua</th>
+                    <th>Tiempo Transcurrido</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let event of getFlowEventsPaginatedForDevice(deviceEntry.value)">
+                    <td>
+                      <span class="badge"
+                            [class.bg-info]="event.sensorType === 'Water_flow_value'"
+                            [class.bg-success]="event.sensorType === 'Total_pulse'">
+                        {{ event.sensorType }}
+                      </span>
+                    </td>
+                    <td>{{ event.changeDetectedAt | date:'short' }}</td>
+                    <td>{{ event.previousPayload | number:'1.2-2' }}</td>
+                    <td>{{ event.currentPayload | number:'1.2-2' }}</td>
+                    <td>
+                      <span class="badge"
+                            [class.bg-success]="event.currentPayload > event.previousPayload"
+                            [class.bg-danger]="event.currentPayload < event.previousPayload">
+                        {{ (event.currentPayload - event.previousPayload) | number:'1.2-2' }}
+                      </span>
+                    </td>
+                    <td>
+                      <strong *ngIf="event.sensorType === 'Water_flow_value'">
+                        {{ (event.currentPayload - event.previousPayload) | number:'1.2-2' }} L
+                      </strong>
+                      <span *ngIf="event.sensorType !== 'Water_flow_value'" class="text-muted">N/A</span>
+                    </td>
+                    <td>{{ formatTimeDifference(event.timeDifference) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Pagination controls -->
+              <div class="table-pagination">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="pagination-info">
+                    <small class="text-muted">
+                      Mostrando {{ (flowEventsPage - 1) * flowEventsPageSize + 1 }} -
+                      {{ ((flowEventsPage * flowEventsPageSize) < deviceEntry.value.length) ?
+                        (flowEventsPage * flowEventsPageSize) : deviceEntry.value.length }} de {{
+                        deviceEntry.value.length }} registros
+                    </small>
+                  </div>
+                  <nav aria-label="Paginación de tabla">
+                    <ul class="pagination pagination-sm mb-0">
+                      <li class="page-item" [class.disabled]="flowEventsPage === 1">
+                        <button class="page-link" (click)="goToFlowEventsPage(1)"
+                          [disabled]="flowEventsPage === 1">
+                          <i class="bi bi-chevron-bar-left"></i>
+                        </button>
+                      </li>
+                      <li class="page-item" [class.disabled]="flowEventsPage === 1">
+                        <button class="page-link" (click)="goToFlowEventsPage(flowEventsPage - 1)"
+                          [disabled]="flowEventsPage === 1">
+                          <i class="bi bi-chevron-left"></i>
+                        </button>
+                      </li>
+                      <li class="page-item"
+                        *ngFor="let page of getPageNumbers(flowEventsPage, getFlowEventsTotalPagesForDevice(deviceEntry.value))"
+                        [class.active]="page === flowEventsPage" [class.disabled]="page === '...'">
+                        <button class="page-link" *ngIf="page !== '...'" (click)="goToFlowEventsPage(page)">
+                          {{ page }}
+                        </button>
+                        <span class="page-link" *ngIf="page === '...'">...</span>
+                      </li>
+                      <li class="page-item" [class.disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
+                        <button class="page-link" (click)="goToFlowEventsPage(flowEventsPage + 1)"
+                          [disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
+                          <i class="bi bi-chevron-right"></i>
+                        </button>
+                      </li>
+                      <li class="page-item" [class.disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
+                        <button class="page-link" (click)="goToFlowEventsPage(getFlowEventsTotalPagesForDevice(deviceEntry.value))"
+                          [disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
+                          <i class="bi bi-chevron-bar-right"></i>
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="alert alert-info mt-3" *ngIf="getTotalEventsDetected() === 0">
+            <i class="bi bi-info-circle"></i>
+            <strong>Sin eventos detectados.</strong> No se detectaron cambios en los sensores Water_flow_value o Total_pulse en el período seleccionado.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Irrigation Metrics Section -->
   <div class="row mt-4" *ngIf="irrigationMetrics.length > 0">
     <div class="col-12">
@@ -637,7 +787,7 @@
               <div class="stat-box">
                 <i class="bi bi-calendar-event text-secondary"></i>
                 <h6>Eventos de Riego</h6>
-                <h3>{{ irrigationMetrics.length }}</h3>
+                <h3>{{ getTotalEventsDetected() }}</h3>
                 <small class="text-muted">Detectados</small>
               </div>
             </div>
@@ -661,6 +811,13 @@
                 </tr>
               </thead>
               <tbody>
+                <tr *ngIf="irrigationMetrics.length === 0">
+                  <td colspan="9" class="text-center text-muted py-4">
+                    <i class="bi bi-droplet-slash" style="font-size: 2rem;"></i>
+                    <p class="mt-2 mb-0">No se detectaron eventos de riego con flujo real</p>
+                    <small>El sensor de flujo muestra que no ha circulado agua en el período seleccionado</small>
+                  </td>
+                </tr>
                 <tr *ngFor="let metric of getIrrigationMetricsPaginated()">
                   <td>{{ metric.date | date:'short' }}</td>
                   <td>{{ metric.intervalHours | number:'1.1-1' }}</td>

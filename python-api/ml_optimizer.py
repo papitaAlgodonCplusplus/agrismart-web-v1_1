@@ -38,7 +38,7 @@ class CompatibilityUnpickler(pickle.Unpickler):
     
     def find_class(self, module, name):
         if name == 'EnhancedTrainingConfig' and module == '__main__':
-            # Create a mock class for EnhancedTrainingConfig
+            # Create a fallback class for EnhancedTrainingConfig
             @dataclass
             class EnhancedTrainingConfig:
                 target_mae_threshold: float = 10.0

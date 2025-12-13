@@ -3,13 +3,15 @@
 
 import { Injectable } from '@angular/core';
 import { Observable, forkJoin, of, throwError } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+import { map, catchError, tap, switchMap } from 'rxjs/operators';
 
 // Services
 import { IrrigationSectorService } from './irrigation-sector.service';
 import { CropProductionService } from '../crop-production/services/crop-production.service';
 import { KPIOrchestatorService, DailyKPIOutput } from './calculations/kpi-orchestrator.service';
 import { IrrigationCalculationsService, IrrigationMetric } from './irrigation-calculations.service';
+import { GrowingMediumService, GrowingMedium as GrowingMediumEntity } from '../growing-medium/services/growing-medium.service';
+import { ContainerService } from './container.service';
 
 // Models
 import {
@@ -95,7 +97,9 @@ export class IrrigationDecisionEngineService {
     private irrigationService: IrrigationSectorService,
     private cropProductionService: CropProductionService,
     private kpiOrchestrator: KPIOrchestatorService,
-    private irrigationCalc: IrrigationCalculationsService
+    private irrigationCalc: IrrigationCalculationsService,
+    private growingMediumService: GrowingMediumService,
+    private containerService: ContainerService
   ) { }
 
   // ============================================================================
@@ -166,8 +170,8 @@ export class IrrigationDecisionEngineService {
         );
 
         if (moistureReadings.length === 0) {
-          console.warn('No soil moisture data found');
-          return 30; // Default assumption: 30% volumetric
+          console.error('No soil moisture data found - water_SOIL, water_SOIL_original, or conduct_SOIL sensor required');
+          throw new Error('No soil moisture sensor data available');
         }
 
         // Get most recent reading
@@ -184,7 +188,7 @@ export class IrrigationDecisionEngineService {
       }),
       catchError(error => {
         console.error('Error fetching soil moisture:', error);
-        return of(30); // Default fallback
+        throw error;
       })
     );
   }
@@ -193,24 +197,41 @@ export class IrrigationDecisionEngineService {
    * Get substrate properties (container capacity, wilting point, etc.)
    */
   private getSubstrateProperties(cropProductionId: number): Observable<GrowingMedium> {
-    return this.cropProductionService.getById(cropProductionId).pipe(
-      map(cropProduction => {
-        // Get growing medium from crop production
-        // TODO: Need to fetch actual GrowingMedium entity
-        // For now, return default values
-        return {
-          id: 1,
-          catalogId: 1,
-          name: 'Default Growing Medium',
-          containerCapacityPercentage: 40,
-          permanentWiltingPoint: 15,
-          easelyAvailableWaterPercentage: 60,
-          reserveWaterPercentage: 25,
-          totalAvailableWaterPercentage: 85,
-          active: true,
-          dateCreated: new Date(),
-          createdBy: 1
-        } as GrowingMedium;
+    return this.growingMediumService.getAll(false).pipe(
+      map(response => {
+        // Extract growing medium array from response
+        let growingMedia = [];
+        if (Array.isArray(response)) {
+          growingMedia = response;
+        } else if (response && Array.isArray(response.growingMedia)) {
+          growingMedia = response.growingMedia;
+        } else if (response && response.result && Array.isArray(response.result.growingMedia)) {
+          growingMedia = response.result.growingMedia;
+        }
+
+        if (growingMedia.length === 0) {
+          console.error('No active growing medium found - GrowingMedium data is required');
+          throw new Error('No active GrowingMedium found');
+        }
+
+        const growingMedium = growingMedia[0];
+
+        // Validate required fields
+        if (!growingMedium.containerCapacityPercentage) {
+          console.error('GrowingMedium missing containerCapacityPercentage');
+          throw new Error('GrowingMedium containerCapacityPercentage is required');
+        }
+
+        if (!growingMedium.permanentWiltingPoint) {
+          console.error('GrowingMedium missing permanentWiltingPoint');
+          throw new Error('GrowingMedium permanentWiltingPoint is required');
+        }
+
+        return growingMedium as GrowingMedium;
+      }),
+      catchError(error => {
+        console.error('Error fetching growing medium properties:', error);
+        throw error;
       })
     );
   }
@@ -233,13 +254,24 @@ export class IrrigationDecisionEngineService {
           ['TEMP_SOIL', 'TempC_DS18B20', 'temp_SOIL'].includes(d.sensor)
         );
 
-        // TODO: UNMOCK - Get humidity readings from real sensors
-        // Currently mocked because humidity sensors not in sample data
-        const currentTemp = tempReadings.length > 0
-          ? parseFloat(tempReadings[tempReadings.length - 1].payload)
-          : 25;
+        if (tempReadings.length === 0) {
+          console.error('No temperature data found - TEMP_SOIL, TempC_DS18B20, or temp_SOIL sensor required');
+          throw new Error('No temperature sensor data available');
+        }
 
-        const currentHumidity = 65; // MOCKED
+        const currentTemp = parseFloat(tempReadings[tempReadings.length - 1].payload);
+
+        // Get humidity readings
+        const humidityReadings = rawData.filter((d: any) =>
+          ['HUM', 'Hum_SHT2x'].includes(d.sensor)
+        );
+
+        if (humidityReadings.length === 0) {
+          console.error('No humidity data found - HUM or Hum_SHT2x sensor required');
+          throw new Error('No humidity sensor data available');
+        }
+
+        const currentHumidity = parseFloat(humidityReadings[humidityReadings.length - 1].payload);
 
         // Calculate VPD
         const vpd = this.calculateVPD(currentTemp, currentHumidity);
@@ -253,27 +285,191 @@ export class IrrigationDecisionEngineService {
       }),
       catchError(error => {
         console.error('Error fetching climate data:', error);
-        return of({
-          temperature: 25,
-          humidity: 65,
-          vpd: 1.0,
-          timestamp: new Date()
-        });
+        throw error;
       })
     );
   }
 
   /**
-   * Get recent irrigation history
+   * Get recent irrigation history from Water_flow_value and Total_pulse sensors
    */
   private getRecentIrrigationHistory(cropProductionId: number): Observable<any> {
-    // TODO: Implement proper irrigation history fetching
-    // For now, return mock data
-    return of({
-      lastIrrigationTime: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-      recentDrainagePercentage: 20,
-      averageDailyVolume: 5.0 // L/plant/day
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    return this.irrigationService.getDeviceRawData(
+      undefined,
+      sevenDaysAgo.toISOString(),
+      now.toISOString()
+    ).pipe(
+      map(rawData => {
+        // Detect flow events using the same logic as dashboard
+        const flowEvents = this.detectFlowEvents(rawData);
+
+        if (flowEvents.length === 0) {
+          console.error('No irrigation flow events detected in the last 7 days - cannot determine irrigation history');
+          throw new Error('No irrigation flow events detected - Water_flow_value or Total_pulse sensor data required');
+        }
+
+        // Get the most recent flow event
+        const sortedEvents = flowEvents.sort((a, b) =>
+          b.changeDetectedAt.getTime() - a.changeDetectedAt.getTime()
+        );
+        const lastEvent = sortedEvents[0];
+
+        // Calculate average daily volume (total volume / days)
+        const totalVolume = flowEvents.reduce((sum, event) =>
+          sum + (event.volumeOfWater || 0), 0
+        );
+        const daysCovered = (now.getTime() - sevenDaysAgo.getTime()) / (1000 * 60 * 60 * 24);
+        const averageDailyVolume = totalVolume / daysCovered;
+
+        // Calculate drainage percentage from drain sensors
+        const drainReadings = rawData.filter((d: any) =>
+          d.sensor && typeof d.sensor === 'string' && d.sensor.toLowerCase().includes('drain')
+        );
+
+        let recentDrainagePercentage = 0; 
+
+        if (drainReadings.length > 0 && totalVolume > 0) {
+          // Sum up drain volumes
+          const totalDrainVolume = drainReadings.reduce((sum, reading) => {
+            const drainValue = typeof reading.payload === 'number'
+              ? reading.payload
+              : parseFloat(reading.payload);
+            return sum + (isNaN(drainValue) ? 0 : drainValue);
+          }, 0);
+
+          // Calculate drainage as percentage of irrigation volume
+          recentDrainagePercentage = (totalDrainVolume / totalVolume) * 100;
+
+          // Clamp to reasonable range (0-100%)
+          recentDrainagePercentage = Math.max(0, Math.min(100, recentDrainagePercentage));
+        }
+
+        return {
+          lastIrrigationTime: lastEvent.changeDetectedAt,
+          recentDrainagePercentage,
+          averageDailyVolume
+        };
+      }),
+      catchError(error => {
+        console.error('Error fetching irrigation history:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Detect flow events based on payload changes in Water_flow_value and Total_pulse sensors
+   * (Same logic as dashboard component)
+   */
+  private detectFlowEvents(rawDeviceData: any[]): any[] {
+    const flowEvents: any[] = [];
+
+    // Group data by deviceId and sensor
+    const deviceSensorMap = new Map<string, Map<string, any[]>>();
+
+    rawDeviceData.forEach((data: any) => {
+      const sensor = data.sensor;
+
+      // Only process Water_flow_value and Total_pulse sensors
+      if (sensor !== 'Water_flow_value' && sensor !== 'Total_pulse') {
+        return;
+      }
+
+      const deviceId = data.deviceId;
+
+      if (!deviceSensorMap.has(deviceId)) {
+        deviceSensorMap.set(deviceId, new Map());
+      }
+
+      const sensorMap = deviceSensorMap.get(deviceId)!;
+      if (!sensorMap.has(sensor)) {
+        sensorMap.set(sensor, []);
+      }
+
+      sensorMap.get(sensor)!.push(data);
     });
+
+    // Process each device separately
+    deviceSensorMap.forEach((sensorMap, deviceId) => {
+      // Sort readings by time for each sensor
+      sensorMap.forEach((readings, sensorType) => {
+        readings.sort((a, b) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime());
+      });
+
+      // Track which timestamps already have events to avoid duplicates
+      const eventTimestamps = new Set<string>();
+
+      // Detect changes in Water_flow_value
+      if (sensorMap.has('Water_flow_value')) {
+        const waterFlowReadings = sensorMap.get('Water_flow_value')!;
+
+        for (let i = 1; i < waterFlowReadings.length; i++) {
+          const current = waterFlowReadings[i];
+          const previous = waterFlowReadings[i - 1];
+
+          const currentPayload = parseFloat(current.payload);
+          const previousPayload = parseFloat(previous.payload);
+          const currentTime = new Date(current.recordDate);
+          const previousTime = new Date(previous.recordDate);
+
+          // Check if there was a change in payload
+          if (currentPayload !== previousPayload) {
+            const timeDiff = currentTime.getTime() - previousTime.getTime();
+            const timeKey = currentTime.toISOString();
+
+            // Only add if not already recorded at this timestamp
+            if (!eventTimestamps.has(timeKey)) {
+              flowEvents.push({
+                deviceId: deviceId,
+                sensorType: 'Water_flow_value',
+                changeDetectedAt: currentTime,
+                previousPayload: previousPayload,
+                currentPayload: currentPayload,
+                volumeOfWater: currentPayload,
+                timeDifference: timeDiff
+              });
+              eventTimestamps.add(timeKey);
+            }
+          }
+        }
+      }
+
+      // Detect changes in Total_pulse (only if not already counted)
+      if (sensorMap.has('Total_pulse')) {
+        const totalPulseReadings = sensorMap.get('Total_pulse')!;
+
+        for (let i = 1; i < totalPulseReadings.length; i++) {
+          const current = totalPulseReadings[i];
+          const previous = totalPulseReadings[i - 1];
+
+          const currentPayload = parseFloat(current.payload);
+          const previousPayload = parseFloat(previous.payload);
+          const currentTime = new Date(current.recordDate);
+          const previousTime = new Date(previous.recordDate);
+          const timeKey = currentTime.toISOString();
+
+          // Only add if there was a change AND it's not already recorded
+          if (currentPayload !== previousPayload && !eventTimestamps.has(timeKey)) {
+            const timeDiff = currentTime.getTime() - previousTime.getTime();
+
+            flowEvents.push({
+              deviceId: deviceId,
+              sensorType: 'Total_pulse',
+              changeDetectedAt: currentTime,
+              previousPayload: previousPayload,
+              currentPayload: currentPayload,
+              timeDifference: timeDiff
+            });
+            eventTimestamps.add(timeKey);
+          }
+        }
+      }
+    });
+
+    return flowEvents;
   }
 
   /**
@@ -281,25 +477,32 @@ export class IrrigationDecisionEngineService {
    */
   private getContainerInfo(cropProductionId: number): Observable<Container> {
     return this.cropProductionService.getById(cropProductionId).pipe(
-      map(cropProduction => {
-        // TODO: Get actual container from API
-        // For now, return default
-        return {
-          id: 1,
-          catalogId: 1,
-          containerTypeId: 1,
-          name: 'Default Container',
-          volume: 10, // liters
-          height: 200, // mm
-          width: 250, // mm
-          length: 250, // mm
-          upperDiameter: 250, // mm
-          lowerDiameter: 200, // mm
-          material: 'Plastic',
-          active: true,
-          dateCreated: new Date(),
-          createdBy: 1
-        } as Container;
+      switchMap(cropProduction => {
+        // Extract containerId from crop production
+        const containerId = (cropProduction as any).containerId;
+
+        if (!containerId) {
+          console.error('CropProduction missing containerId');
+          throw new Error('CropProduction must have a containerId for container information');
+        }
+
+        // Fetch the actual container from the API
+        return this.containerService.getById(containerId);
+      }),
+      map(response => {
+        // Extract container from response
+        if (response && response.result && response.result.container) {
+          return response.result.container;
+        } else if (response && response.container) {
+          return response.container;
+        } else if (response && response.id) {
+          return response;
+        }
+        throw new Error('Invalid container response format');
+      }),
+      catchError(error => {
+        console.error('Error fetching container info:', error);
+        throw error;
       })
     );
   }

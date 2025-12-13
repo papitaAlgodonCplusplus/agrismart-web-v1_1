@@ -594,7 +594,7 @@ export class NutrientFormulationComponent {
 **Data Status**: 
 - ✅ Calculation logic can be built
 - ❌ Soil data storage needs backend
-- ✅ Can test with mock soil data
+- ✅ Can test with soil data
 
 ---
 

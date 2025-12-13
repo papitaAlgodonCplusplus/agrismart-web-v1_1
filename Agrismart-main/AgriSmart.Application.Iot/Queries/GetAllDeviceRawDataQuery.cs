@@ -11,6 +11,6 @@ namespace AgriSmart.Application.Iot.Queries
         public DateTime? EndDate { get; set; }
         public string? Sensor { get; set; }
         public int PageNumber { get; set; } = 1;
-        public int PageSize { get; set; } = 100000;
+        public int PageSize { get; set; } = 1000; // Reduced from 100,000 to 1,000 for better performance
     }
 }

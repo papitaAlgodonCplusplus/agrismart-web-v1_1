@@ -9,6 +9,10 @@ import { IrrigationCalculationsService, IrrigationMetric } from '../../services/
 import { CropCalculationsService, CropProductionData, CropProductionKPIs, GrowingMediumData, GrowingMediumKPIs } from './crop-calculations.service';
 import { IrrigationSectorService } from '../../services/irrigation-sector.service';
 import { CropService } from '../../crops/services/crop.service';
+import { CropProductionSpecsService, CropProductionSpecs } from '../../crop-production-specs/services/crop-production-specs.service';
+import { GrowingMediumService, GrowingMedium } from '../../growing-medium/services/growing-medium.service';
+import { FarmService } from '../../farms/services/farm.service';
+import { Farm } from '../../../core/models/models';
 
 // ============================================================================
 // INTERFACES
@@ -57,7 +61,10 @@ export class KPIOrchestatorService {
     private irrigationCalc: IrrigationCalculationsService,
     private cropCalc: CropCalculationsService,
     private irrigationService: IrrigationSectorService,
-    private cropProductionService: CropService
+    private cropProductionService: CropService,
+    private cropProductionSpecsService: CropProductionSpecsService,
+    private growingMediumService: GrowingMediumService,
+    private farmService: FarmService
   ) { }
 
   // ============================================================================
@@ -70,19 +77,23 @@ export class KPIOrchestatorService {
   async calculateKPIs(input: KPICalculationInput): Promise<DailyKPIOutput[]> {
     try {
       // 1. Fetch all required data
-      const [rawData, cropProduction] = await Promise.all([
+      const [rawData, cropProduction, cropProductionSpecs, growingMedium, farm, crop] = await Promise.all([
         this.fetchRawSensorData(input),
-        this.fetchCropProductionData(input.cropProductionId)
+        this.fetchCropProductionData(input.cropProductionId),
+        this.fetchCropProductionSpecs(),
+        this.fetchGrowingMedium(),
+        this.fetchFarmData(input.cropProductionId),
+        this.fetchCropData(input.cropProductionId)
       ]);
 
       // 2. Transform raw data into structured format
       const transformedData = this.transformRawData(rawData);
 
       // 3. Calculate crop production KPIs (these are constant for the period)
-      const cropKPIs = this.calculateCropKPIs(cropProduction);
+      const cropKPIs = this.calculateCropKPIs(cropProduction, cropProductionSpecs);
 
       // 4. Calculate growing medium KPIs (these are constant for the period)
-      const growingMediumKPIs = this.calculateGrowingMediumKPIs(cropProduction);
+      const growingMediumKPIs = this.calculateGrowingMediumKPIs(cropProduction, growingMedium);
 
       // 5. Generate daily KPIs
       const dailyKPIs = this.generateDailyKPIs(
@@ -90,7 +101,9 @@ export class KPIOrchestatorService {
         transformedData,
         cropProduction,
         cropKPIs,
-        growingMediumKPIs
+        growingMediumKPIs,
+        farm,
+        crop
       );
 
       return dailyKPIs;
@@ -137,6 +150,128 @@ export class KPIOrchestatorService {
     return cropProduction;
   }
 
+  /**
+   * Fetch active crop production specs
+   */
+  private async fetchCropProductionSpecs(): Promise<CropProductionSpecs | null> {
+    const response = await this.cropProductionSpecsService
+      .getAll(false)
+      .toPromise();
+
+    // Extract crop production specs array from response
+    let specs = [];
+    if (Array.isArray(response)) {
+      specs = response;
+    } else if (response && Array.isArray(response.cropProductionSpecs)) {
+      specs = response.cropProductionSpecs;
+    } else if (response && response.result && Array.isArray(response.result.cropProductionSpecs)) {
+      specs = response.result.cropProductionSpecs;
+    }
+
+    // Return the first active spec if available
+    return specs.length > 0 ? specs[0] : null;
+  }
+
+  /**
+   * Fetch active growing medium data
+   */
+  private async fetchGrowingMedium(): Promise<GrowingMedium | null> {
+    const response = await this.growingMediumService
+      .getAll(false)
+      .toPromise();
+
+    // Extract growing medium array from response
+    let growingMedia = [];
+    if (Array.isArray(response)) {
+      growingMedia = response;
+    } else if (response && Array.isArray(response.growingMedia)) {
+      growingMedia = response.growingMedia;
+    } else if (response && response.result && Array.isArray(response.result.growingMedia)) {
+      growingMedia = response.result.growingMedia;
+    }
+
+    // Return the first active growing medium if available
+    return growingMedia.length > 0 ? growingMedia[0] : null;
+  }
+
+  /**
+   * Fetch farm data from crop production
+   */
+  private async fetchFarmData(cropProductionId: number): Promise<Farm> {
+    const cropProduction = await this.cropProductionService
+      .getById(cropProductionId)
+      .toPromise();
+
+    if (!cropProduction) {
+      console.error('CropProduction not found');
+      throw new Error('CropProduction not found for the given ID');
+    }
+
+    const farmId = (cropProduction as any).farmId;
+    if (!farmId) {
+      console.error('CropProduction missing farmId - cannot fetch farm data');
+      throw new Error('CropProduction farmId is required for location data');
+    }
+
+    const farm = await this.farmService
+      .getById(farmId)
+      .toPromise();
+
+    if (!farm) {
+      console.error('Farm not found');
+      throw new Error('Farm not found for the given farmId');
+    }
+
+    // Validate required fields
+    if (!farm.latitude) {
+      console.error('Farm missing latitude coordinate');
+      throw new Error('Farm latitude is required for KPI calculation');
+    }
+
+    if (!farm.longitude) {
+      console.error('Farm missing longitude coordinate');
+      throw new Error('Farm longitude is required for KPI calculation');
+    }
+
+    return farm;
+  }
+
+  /**
+   * Fetch crop data from crop production
+   */
+  private async fetchCropData(cropProductionId: number): Promise<any> {
+    const cropProduction = await this.cropProductionService
+      .getById(cropProductionId)
+      .toPromise();
+
+    if (!cropProduction) {
+      console.error('CropProduction not found');
+      throw new Error('CropProduction not found for the given ID');
+    }
+
+    const cropId = (cropProduction as any).cropId;
+    if (!cropId) {
+      console.error('CropProduction missing cropId - cannot fetch crop data');
+      throw new Error('CropProduction cropId is required for crop base temperature');
+    }
+
+    const crop = await this.cropProductionService
+      .getById(cropId)
+      .toPromise();
+
+    if (!crop) {
+      console.error('Crop not found');
+      throw new Error('Crop not found for the given cropId');
+    }
+
+    if (!crop.cropBaseTemperature && crop.cropBaseTemperature !== 0) {
+      console.error('Crop missing cropBaseTemperature');
+      throw new Error('Crop cropBaseTemperature is required for KPI calculation');
+    }
+
+    return crop;
+  }
+
   // ============================================================================
   // DATA TRANSFORMATION METHODS
   // ============================================================================
@@ -169,16 +304,34 @@ export class KPIOrchestatorService {
         .filter(d => ['TEMP_SOIL', 'TempC_DS18B20', 'temp_SOIL'].includes(d.sensor))
         .map(d => parseFloat(d.payload));
 
-      // TODO: MOCKED - Extract humidity data (not in sample data)
-      const humidityMax = 80; // MOCKED
-      const humidityMin = 50; // MOCKED
-      const humidityAvg = 65; // MOCKED
+      // Extract humidity data
+      const humidities = dayData
+        .filter(d => ['HUM', 'Hum_SHT2x'].includes(d.sensor))
+        .map(d => parseFloat(d.payload));
 
-      // TODO: MOCKED - Extract wind speed (not in sample data)
-      const windSpeed = 2.5; // MOCKED (m/s)
+      const humidityMax = humidities.length > 0 ? Math.max(...humidities) : 0;
+      const humidityMin = humidities.length > 0 ? Math.min(...humidities) : 0;
+      const humidityAvg = humidities.length > 0
+        ? humidities.reduce((a, b) => a + b, 0) / humidities.length
+        : 0;
 
-      // TODO: MOCKED - Solar radiation (not in sample data)
-      const solarRadiation = 20; // MOCKED (MJ/m²/day)
+      // Extract wind speed data
+      const windSpeeds = dayData
+        .filter(d => ['wind_speed', 'wind_speed_level'].includes(d.sensor))
+        .map(d => parseFloat(d.payload));
+
+      const windSpeed = windSpeeds.length > 0
+        ? windSpeeds.reduce((a, b) => a + b, 0) / windSpeeds.length
+        : 0; // Default fallback (m/s)
+
+      // Extract solar radiation data
+      const radiationReadings = dayData
+        .filter(d => ['illumination', 'PAR', 'TSR'].includes(d.sensor))
+        .map(d => parseFloat(d.payload));
+
+      const solarRadiation = radiationReadings.length > 0
+        ? radiationReadings.reduce((a, b) => a + b, 0) / radiationReadings.length
+        : 20; // Default fallback (MJ/m²/day)
 
       // Extract rainfall
       const rainfall = dayData
@@ -234,31 +387,68 @@ export class KPIOrchestatorService {
   // ============================================================================
 
   /**
-   * Calculate crop production KPIs
+   * Calculate crop production KPIs using real crop production specs data
    */
-  private calculateCropKPIs(cropProduction: any): CropProductionKPIs {
-    // TODO: MOCKED - These values should come from cropProduction API
+  private calculateCropKPIs(cropProduction: any, cropProductionSpecs: CropProductionSpecs | null): CropProductionKPIs {
+    // Validate crop production specs availability
+    if (!cropProductionSpecs) {
+      console.error('CropProductionSpecs not found - cannot calculate crop KPIs accurately');
+      throw new Error('CropProductionSpecs data is required for KPI calculation');
+    }
+
+    // Validate crop production data
+    if (!cropProduction.length || !cropProduction.width) {
+      console.error('CropProduction missing length or width - cannot calculate crop KPIs');
+      throw new Error('CropProduction length and width are required for KPI calculation');
+    }
+
+    if (!cropProduction.latitude) {
+      console.error('CropProduction missing latitude - cannot calculate crop KPIs');
+      throw new Error('CropProduction latitude is required for KPI calculation');
+    }
+
     const cropData: CropProductionData = {
-      length: cropProduction.length || 100, // MOCKED if not available
-      width: cropProduction.width || 50, // MOCKED if not available
-      betweenRowDistance: cropProduction.betweenRowDistance || 1.5, // MOCKED
-      betweenPlantDistance: cropProduction.betweenPlantDistance || 0.3, // MOCKED
-      betweenContainerDistance: cropProduction.betweenContainerDistance || 0.3, // MOCKED
-      latitude: cropProduction.latitude || 10.0, // MOCKED - Costa Rica ~10°N
+      length: cropProduction.length,
+      width: cropProduction.width,
+      betweenRowDistance: cropProductionSpecs.betweenRowDistance,
+      betweenPlantDistance: cropProductionSpecs.betweenPlantDistance,
+      betweenContainerDistance: cropProductionSpecs.betweenContainerDistance,
+      latitude: cropProduction.latitude,
     };
 
     return this.cropCalc.calculateCropProductionKPIs(cropData);
   }
 
   /**
-   * Calculate growing medium KPIs
+   * Calculate growing medium KPIs using real growing medium data
    */
-  private calculateGrowingMediumKPIs(cropProduction: any): GrowingMediumKPIs {
-    // TODO: MOCKED - These values should come from GrowingMedium entity
+  private calculateGrowingMediumKPIs(cropProduction: any, growingMedium: GrowingMedium | null): GrowingMediumKPIs {
+    // Validate growing medium availability
+    if (!growingMedium) {
+      console.error('GrowingMedium not found - cannot calculate growing medium KPIs accurately');
+      throw new Error('GrowingMedium data is required for KPI calculation');
+    }
+
+    // Validate required fields
+    if (!growingMedium.containerCapacityPercentage) {
+      console.error('GrowingMedium missing containerCapacityPercentage');
+      throw new Error('GrowingMedium containerCapacityPercentage is required for KPI calculation');
+    }
+
+    if (!growingMedium.permanentWiltingPoint) {
+      console.error('GrowingMedium missing permanentWiltingPoint');
+      throw new Error('GrowingMedium permanentWiltingPoint is required for KPI calculation');
+    }
+
+    if (!growingMedium.fiveKpaHumidity) {
+      console.error('GrowingMedium missing fiveKpaHumidity');
+      throw new Error('GrowingMedium fiveKpaHumidity is required for KPI calculation');
+    }
+
     const mediumData: GrowingMediumData = {
-      containerCapacityPercentage: 40, // MOCKED
-      permanentWiltingPoint: 15, // MOCKED
-      fiveKpaHumidity: 25 // MOCKED
+      containerCapacityPercentage: growingMedium.containerCapacityPercentage,
+      permanentWiltingPoint: growingMedium.permanentWiltingPoint,
+      fiveKpaHumidity: growingMedium.fiveKpaHumidity
     };
 
     return this.cropCalc.calculateGrowingMediumKPIs(mediumData);
@@ -272,25 +462,30 @@ export class KPIOrchestatorService {
     transformedData: TransformedSensorData,
     cropProduction: any,
     cropKPIs: CropProductionKPIs,
-    growingMediumKPIs: GrowingMediumKPIs
+    growingMediumKPIs: GrowingMediumKPIs,
+    farm: Farm,
+    crop: any
   ): DailyKPIOutput[] {
     const dailyKPIs: DailyKPIOutput[] = [];
 
-    // TODO: MOCKED - Location data should come from farm/crop production
+    // Convert farm coordinates to degrees and minutes format
+    const latitudeDegMin = this.decimalToDegreeMinutes(farm.latitude);
+
+    // Use real location data from farm
     const locationData: LocationData = {
-      latitude: cropProduction.latitude || 10.0, // MOCKED
-      latitudeGrades: cropKPIs.latitudeGrades,
-      latitudeMinutes: cropKPIs.latitudeMinutes,
-      altitude: cropProduction.altitude || 1000, // MOCKED - Costa Rica highlands
-      windSpeedMeasurementHeight: 2 // MOCKED - standard 2m height
+      latitude: farm.latitude,
+      latitudeGrades: latitudeDegMin.degrees,
+      latitudeMinutes: latitudeDegMin.minutes,
+      altitude: 1000, // TODO: Add altitude field to Farm entity
+      windSpeedMeasurementHeight: 2 // Standard measurement height
     };
 
     transformedData.climate.forEach(climateData => {
-      // Calculate climate KPIs
+      // Calculate climate KPIs using real crop base temperature
       const climateKPIs = this.climateCalc.calculate(
         climateData,
         locationData,
-        10 // MOCKED - crop base temperature (°C)
+        crop.cropBaseTemperature
       );
 
       // Calculate irrigation metrics for this day
@@ -328,5 +523,25 @@ export class KPIOrchestatorService {
     });
 
     return dailyKPIs;
+  }
+
+  // ============================================================================
+  // HELPER METHODS
+  // ============================================================================
+
+  /**
+   * Convert decimal degrees to degrees and minutes
+   * @param decimal - Decimal degrees (e.g., 10.123456)
+   * @returns Object with degrees and minutes
+   */
+  private decimalToDegreeMinutes(decimal: number): { degrees: number; minutes: number } {
+    const absoluteValue = Math.abs(decimal);
+    const degrees = Math.floor(absoluteValue);
+    const minutes = (absoluteValue - degrees) * 60;
+
+    return {
+      degrees: decimal < 0 ? -degrees : degrees,
+      minutes: minutes
+    };
   }
 }
