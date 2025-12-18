@@ -936,12 +936,9 @@ export class DashboardComponent implements OnInit {
    */
   private loadCropProductionLocations(): void {
     this.farmService.getAll(true).subscribe({
-      next: (response: any) => {
-        //
-
-        // Extract farms array from response
-        const farms = response.farms || response.result?.farms || [];
-
+      next: (farms: any) => {
+        console.log('Loaded farms for crop production locations:', farms);
+ 
         if (farms.length === 0) {
           console.error('No farms found - farm location data is required for climate calculations');
           this.cropProductionLocations = [];

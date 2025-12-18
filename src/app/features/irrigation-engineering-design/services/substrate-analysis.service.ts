@@ -277,13 +277,13 @@ export class SubstrateAnalysisService {
     return {
       growingMediumId: growingMedium.id,
       growingMediumName: growingMedium.name,
-      containerCapacityPercentage: growingMedium.containerCapacityPercentage || 75,
-      permanentWiltingPoint: growingMedium.permanentWiltingPoint || 20,
-      easelyAvailableWaterPercentage: growingMedium.easelyAvailableWaterPercentage || 25,
-      reserveWaterPercentage: growingMedium.reserveWaterPercentage || 10,
-      totalAvailableWaterPercentage: growingMedium.totalAvailableWaterPercentage || 35,
+      containerCapacityPercentage: growingMedium.containerCapacityPercentage || 0,
+      permanentWiltingPoint: growingMedium.permanentWiltingPoint || 0,
+      easelyAvailableWaterPercentage: growingMedium.easelyAvailableWaterPercentage || 0,
+      reserveWaterPercentage: growingMedium.reserveWaterPercentage || 0,
+      totalAvailableWaterPercentage: growingMedium.totalAvailableWaterPercentage || 0,
       containerId: container.id,
-      containerVolume: container.volume || 10
+      containerVolume: container.volume || 0
     };
   }
 

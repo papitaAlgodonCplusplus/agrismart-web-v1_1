@@ -454,20 +454,28 @@
                       <i class="bi bi-droplet-fill text-info"></i> Estadísticas de Volumen
                     </h6>
                     <div class="kpi-row highlight">
-                      <span class="kpi-label">Volumen Total:</span>
-                      <span class="kpi-value">{{ getTotalIrrigationVolume() | number:'1.0-0' }} L</span>
+                      <span class="kpi-label">Volumen Total del Período:</span>
+                      <span class="kpi-value">{{ getTotalIrrigationVolume() | number:'1.2-2' }} L</span>
                     </div>
                     <div class="kpi-row highlight">
-                      <span class="kpi-label">Volumen Promedio:</span>
+                      <span class="kpi-label">Volumen Promedio por Evento:</span>
                       <span class="kpi-value">{{ getAverageIrrigationVolume() | number:'1.2-2' }} L</span>
                     </div>
                     <div class="kpi-row highlight">
-                      <span class="kpi-label">Volumen Mínimo:</span>
+                      <span class="kpi-label">Volumen Mínimo por Evento:</span>
                       <span class="kpi-value">{{ getMinIrrigationVolume() | number:'1.2-2' }} L</span>
                     </div>
                     <div class="kpi-row highlight">
-                      <span class="kpi-label">Volumen Máximo:</span>
+                      <span class="kpi-label">Volumen Máximo por Evento:</span>
                       <span class="kpi-value">{{ getMaxIrrigationVolume() | number:'1.2-2' }} L</span>
+                    </div>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Total de Eventos:</span>
+                      <span class="kpi-value">{{ getTotalIrrigationEvents() }} eventos</span>
+                    </div>
+                    <div class="kpi-row highlight">
+                      <span class="kpi-label">Días con Riego:</span>
+                      <span class="kpi-value">{{ getDaysWithIrrigation() }} días</span>
                     </div>
                   </div>
                 </div>
@@ -529,20 +537,20 @@
             </div>
             <div class="card-body">
               <div class="kpi-row">
-                <span class="kpi-label">Volumen Total:</span>
-                <span class="kpi-value">{{ kpi.irrigation.totalVolume | number:'1.0-0' }} L</span>
+                <span class="kpi-label">Volumen Total del Día:</span>
+                <span class="kpi-value">{{ kpi.irrigation.totalVolume | number:'1.2-2' }} L</span>
               </div>
               <div class="kpi-row">
-                <span class="kpi-label">Duración:</span>
-                <span class="kpi-value">{{ kpi.irrigation.totalDuration | number:'1.0-0' }} min</span>
+                <span class="kpi-label">Duración Total:</span>
+                <span class="kpi-value">{{ (kpi.irrigation.totalDuration / (1000 * 60)) | number:'1.0-0' }} min</span>
               </div>
               <div class="kpi-row">
                 <span class="kpi-label">% Drenaje Promedio:</span>
                 <span class="kpi-value">{{ kpi.irrigation.averageDrainPercentage | number:'1.1-1' }}%</span>
               </div>
-              <div class="kpi-row">
+              <div class="kpi-row highlight">
                 <span class="kpi-label">Eventos de Riego:</span>
-                <span class="kpi-value">{{ kpi.irrigation.metrics.length }}</span>
+                <span class="kpi-value">{{ kpi.irrigation.metrics.length }} eventos</span>
               </div>
               <div *ngIf="kpi.cropEvapoTranspiration" class="kpi-row highlight">
                 <span class="kpi-label">ET Cultivo:</span>
@@ -1111,7 +1119,7 @@
                 <h6 class="detail-group-title">Duración</h6>
                 <div class="detail-item">
                   <span class="detail-label">Tiempo Total Riego:</span>
-                  <span class="detail-value">{{ selectedDayKPI.irrigation.totalDuration | number:'1.0-0' }}
+                  <span class="detail-value">{{ (selectedDayKPI.irrigation.totalDuration / (1000 * 60)) | number:'1.0-0' }}
                     minutos</span>
                 </div>
                 <div class="detail-item">

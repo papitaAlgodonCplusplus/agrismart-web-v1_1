@@ -100,6 +100,8 @@ export class ClimateCalculationsService {
     cropBaseTemperature: number = 10
   ): ClimateKPIs {
     
+    console.log('ZZZZ', climateData);
+
     // Vapor Pressure calculations
     const saturationVaporPressure = this.getSaturationVaporPressure(climateData.tempAvg);
     const realVaporPressure = this.getAvgRealVaporPressure(
@@ -445,15 +447,53 @@ export class ClimateCalculationsService {
     psychrometricConstant: number,
     latentHeat: number
   ): number {
-    const numerator = 
+    // Validate inputs
+    if (isNaN(netRadiation) || !isFinite(netRadiation)) {
+      console.error('Invalid netRadiation:', netRadiation);
+      return 0;
+    }
+
+    if (tempAvg < -10 || tempAvg > 50) {
+      console.error('Temperature out of range for ET calculation:', tempAvg);
+      return 0;
+    }
+
+    if (windSpeed < 0 || windSpeed > 20) {
+      console.warn('Wind speed out of range, clamping:', windSpeed);
+      windSpeed = Math.max(0, Math.min(20, windSpeed));
+    }
+
+    if (saturationVaporPressure < 0 || saturationVaporPressure > 10) {
+      console.error('Saturation vapor pressure out of range:', saturationVaporPressure);
+      return 0;
+    }
+
+    if (realVaporPressure < 0 || realVaporPressure > saturationVaporPressure) {
+      console.error('Real vapor pressure invalid:', realVaporPressure);
+      return 0;
+    }
+
+    const numerator =
       0.408 * slopeVaporPressureCurve * netRadiation +
       psychrometricConstant * (900 / (tempAvg + 273)) * windSpeed *
       (saturationVaporPressure - realVaporPressure);
 
-    const denominator = 
+    const denominator =
       slopeVaporPressureCurve + psychrometricConstant * (1 + 0.34 * windSpeed);
 
-    return numerator / denominator;
+    const result = numerator / denominator;
+
+    // Validate output
+    if (!isFinite(result) || result < 0 || result > 20) {
+      console.error('Invalid ET result:', result, {
+        netRadiation, tempAvg, windSpeed,
+        saturationVaporPressure, realVaporPressure,
+        slopeVaporPressureCurve, psychrometricConstant
+      });
+      return 0;
+    }
+
+    return result;
   }
 
   // ============================================================================
@@ -468,7 +508,34 @@ export class ClimateCalculationsService {
     tempMin: number,
     cropBaseTemperature: number
   ): number {
-    return (tempMax + tempMin) / 2 - cropBaseTemperature;
+    // Validate and correct crop base temperature
+    let correctedBaseTemp = cropBaseTemperature;
+
+    // If base temp is >35°C, it's likely in Fahrenheit (common error)
+    if (cropBaseTemperature > 35) {
+      // Assume it's Fahrenheit and convert to Celsius
+      correctedBaseTemp = (cropBaseTemperature - 32) * 5/9;
+      console.warn(`Crop base temperature ${cropBaseTemperature}°C seems unrealistic (>35°C). Assuming Fahrenheit and converting to ${correctedBaseTemp.toFixed(1)}°C`);
+    }
+
+    // Cap to reasonable range: typical crop base temps are 5-15°C
+    // Using capping approach similar to temperature validation system
+    const MAX_CROP_BASE_TEMP = 15; // °C - upper limit for most crops
+    const MIN_CROP_BASE_TEMP = 0;  // °C - lower limit
+
+    if (correctedBaseTemp > MAX_CROP_BASE_TEMP) {
+      console.warn(`Crop base temperature ${correctedBaseTemp.toFixed(1)}°C exceeds typical range - capping to ${MAX_CROP_BASE_TEMP}°C`);
+      correctedBaseTemp = MAX_CROP_BASE_TEMP;
+    } else if (correctedBaseTemp < MIN_CROP_BASE_TEMP) {
+      console.warn(`Crop base temperature ${correctedBaseTemp.toFixed(1)}°C below minimum - capping to ${MIN_CROP_BASE_TEMP}°C`);
+      correctedBaseTemp = MIN_CROP_BASE_TEMP;
+    }
+
+    const avgTemp = (tempMax + tempMin) / 2;
+    const degreesDay = avgTemp - correctedBaseTemp;
+
+    // Prevent negative degrees day (cap at 0)
+    return Math.max(0, degreesDay);
   }
 
   // ============================================================================

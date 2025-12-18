@@ -12,6 +12,8 @@ import {
   CalculatorConfig,
   IrrigationPreset
 } from '../../models/irrigation-calculator.models';
+import { CropProductionService } from '../../../crop-production/services/crop-production.service';
+import { CropProduction } from '../../../../core/models/models';
 
 @Component({
   selector: 'app-irrigation-volume-calculator',
@@ -41,18 +43,23 @@ export class IrrigationVolumeCalculatorComponent implements OnInit, OnChanges {
   config!: CalculatorConfig;
   presets!: IrrigationPreset[];
   calculationResult: IrrigationVolumeOutput | null = null;
+  cropProductions: CropProduction[] = [];
+  selectedCropProduction: CropProduction | null = null;
 
   // ===== UI STATE =====
   isCalculating = false;
   showAdvancedOptions = false;
   selectedPresetId: string | null = null;
+  useCropProductionData = false;
+  isLoadingCropProductions = false;
 
   // ===== REAL-TIME SLIDER VALUE =====
   currentDepletionValue: number = 30;
 
   constructor(
     private fb: FormBuilder,
-    private calculatorService: IrrigationVolumeCalculatorService
+    private calculatorService: IrrigationVolumeCalculatorService,
+    private cropProductionService: CropProductionService
   ) {
     this.config = this.calculatorService.getDefaultConfig();
     this.presets = this.calculatorService.getIrrigationPresets();
@@ -60,6 +67,7 @@ export class IrrigationVolumeCalculatorComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.initializeForm();
+    this.loadCropProductions();
 
     // Auto-calculate if substrate curve provided
     if (this.substrateCurve) {
@@ -246,5 +254,115 @@ export class IrrigationVolumeCalculatorComponent implements OnInit, OnChanges {
     const zones = this.calculationResult.zones;
     const depletion = this.currentDepletionValue;
     return depletion >= zones[zone].min && depletion < zones[zone].max;
+  }
+
+  // ==========================================================================
+  // CROP PRODUCTION DATA INTEGRATION
+  // ==========================================================================
+
+  loadCropProductions(): void {
+    this.isLoadingCropProductions = true;
+    this.cropProductionService.getAll({ onlyActive: true }).subscribe({
+      next: (response: any) => {
+        // Handle both array response and object with result property
+        if (Array.isArray(response)) {
+          this.cropProductions = response;
+        } else if (response && response.result && Array.isArray(response.result)) {
+          this.cropProductions = response.result;
+        } else if (response && Array.isArray(response.cropProductions)) {
+          this.cropProductions = response.cropProductions;
+        } else {
+          console.warn('Unexpected crop production response format:', response);
+          this.cropProductions = [];
+        }
+        this.isLoadingCropProductions = false;
+      },
+      error: (error) => {
+        console.error('Error loading crop productions:', error);
+        this.isLoadingCropProductions = false;
+        this.cropProductions = [];
+      }
+    });
+  }
+
+  onCropProductionSelected(event: Event): void {
+    const selectElement = event.target as HTMLSelectElement;
+    const cropProductionId = parseInt(selectElement.value);
+
+    if (!cropProductionId) {
+      this.selectedCropProduction = null;
+      this.useCropProductionData = false;
+      return;
+    }
+
+    this.selectedCropProduction = this.cropProductions.find(cp => cp.id === cropProductionId) || null;
+
+    if (this.selectedCropProduction) {
+      this.useCropProductionData = true;
+      this.populateFormFromCropProduction(this.selectedCropProduction);
+    }
+  }
+
+  populateFormFromCropProduction(cropProduction: any): void {
+    // Calculate derived values from CropProduction data
+    const totalArea = (cropProduction.width || 0) * (cropProduction.length || 0); // m²
+    const plantDensity = this.calculatePlantDensity(
+      cropProduction.betweenRowDistance || 1,
+      cropProduction.betweenPlantDistance || 1
+    ); // plants/m²
+    const numberOfContainers = this.calculateNumberOfContainers(
+      totalArea,
+      cropProduction.betweenRowDistance || 1,
+      cropProduction.betweenContainerDistance || 1
+    );
+    const containersPerPlant = cropProduction.plantsPerContainer ?
+      1 / cropProduction.plantsPerContainer : 1;
+
+    // Populate form with CropProduction data
+    this.calculatorForm.patchValue({
+      drainPercentage: cropProduction.drainThreshold || this.config.defaultDrainPercentage,
+      numberOfContainers: numberOfContainers,
+      containersPerPlant: containersPerPlant,
+      totalArea: totalArea,
+      plantDensity: plantDensity
+      // Note: systemFlowRate and numberOfValves are not in CropProduction,
+      // so they keep their current values
+    });
+
+    // Optionally update depletionPercentage if available
+    if (cropProduction.depletionPercentage) {
+      this.calculatorForm.patchValue({
+        depletionPercentage: cropProduction.depletionPercentage
+      });
+      this.currentDepletionValue = cropProduction.depletionPercentage;
+    }
+
+    // Recalculate with new values
+    this.calculate();
+  }
+
+  private calculatePlantDensity(betweenRowDistance: number, betweenPlantDistance: number): number {
+    // Density = 1 / (row spacing × plant spacing)
+    // Convert to plants per m²
+    return 1 / (betweenRowDistance * betweenPlantDistance);
+  }
+
+  private calculateNumberOfContainers(
+    totalArea: number,
+    betweenRowDistance: number,
+    betweenContainerDistance: number
+  ): number {
+    // Calculate number of containers based on area and spacing
+    const containerSpacing = betweenRowDistance * betweenContainerDistance;
+    return Math.floor(totalArea / containerSpacing);
+  }
+
+  toggleDataSource(): void {
+    this.useCropProductionData = !this.useCropProductionData;
+
+    if (!this.useCropProductionData) {
+      // Reset to manual input mode
+      this.selectedCropProduction = null;
+    }
   }
 }

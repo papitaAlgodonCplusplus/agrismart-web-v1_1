@@ -238,10 +238,24 @@ export class CropCalculationsService {
       data.permanentWiltingPoint
     );
 
-    const easelyAvailableWaterPercentage = this.getEaselyAvailableWaterPercentage(
+    let easelyAvailableWaterPercentage = this.getEaselyAvailableWaterPercentage(
       data.containerCapacityPercentage,
       data.fiveKpaHumidity
     );
+
+    // Validation: Easily available water cannot exceed total available water
+    if (easelyAvailableWaterPercentage > totalAvailableWaterPercentage) {
+      console.warn('WATER BALANCE ERROR: Easily available water exceeds total available water!', {
+        totalAvailableWater: totalAvailableWaterPercentage,
+        easilyAvailableWater: easelyAvailableWaterPercentage,
+        containerCapacity: data.containerCapacityPercentage,
+        fiveKpaHumidity: data.fiveKpaHumidity,
+        wiltingPoint: data.permanentWiltingPoint,
+        message: 'Capping EAW to TAW. Formula or data needs agronomic review.'
+      });
+      // Cap easily available water to total available water
+      easelyAvailableWaterPercentage = totalAvailableWaterPercentage;
+    }
 
     const reserveWaterPercentage = this.getReserveWaterPercentage(
       easelyAvailableWaterPercentage,
@@ -267,22 +281,56 @@ export class CropCalculationsService {
 
   /**
    * Calculate easily available water percentage
+   *
+   * NOTE: This formula needs agronomic review. The parameter 'fiveKpaHumidity'
+   * interpretation affects the calculation:
+   * - If it's water content AT 5kPa (field capacity), formula should be different
+   * - If it's water held BELOW 5kPa tension, current formula might be correct
+   *
+   * Validation added to prevent EAW > TAW (mathematically impossible)
    */
   getEaselyAvailableWaterPercentage(
     containerCapacityPercentage: number,
     fiveKpaHumidity: number
   ): number {
-    return containerCapacityPercentage - fiveKpaHumidity;
+    // TODO: Verify with agronomist - what does fiveKpaHumidity represent?
+    const result = containerCapacityPercentage - fiveKpaHumidity;
+
+    // Validation: Easily available water should be >= 0
+    if (result < 0) {
+      console.error('Invalid easily available water calculation:', {
+        containerCapacityPercentage,
+        fiveKpaHumidity,
+        result
+      });
+      return 0;
+    }
+
+    return result;
   }
 
   /**
    * Calculate reserve water percentage
+   *
+   * NOTE: This calculation depends on correct EAW formula above
    */
   getReserveWaterPercentage(
     easelyAvailableWaterPercentage: number,
     permanentWiltingPoint: number
   ): number {
-    return easelyAvailableWaterPercentage - permanentWiltingPoint;
+    const result = easelyAvailableWaterPercentage - permanentWiltingPoint;
+
+    // Validation: Reserve water should be >= 0
+    if (result < 0) {
+      console.error('Invalid reserve water calculation:', {
+        easelyAvailableWaterPercentage,
+        permanentWiltingPoint,
+        result
+      });
+      return 0;
+    }
+
+    return result;
   }
 
   // ============================================================================

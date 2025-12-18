@@ -35,10 +35,14 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
 
                 if (getResult != null)
                 {
-                    getResult.CatalogId = command.CatalogId;                    
+                    getResult.CatalogId = command.CatalogId;
                     getResult.Name = command.Name;
                     getResult.ContainerCapacityPercentage = command.ContainerCapacityPercentage;
                     getResult.PermanentWiltingPoint = command.PermanentWiltingPoint;
+                    getResult.FiveKpaHumidity = command.FiveKpaHumidity;
+                    getResult.EaselyAvailableWaterPercentage = command.EaselyAvailableWaterPercentage;
+                    getResult.ReserveWaterPercentage = command.ReserveWaterPercentage;
+                    getResult.TotalAvailableWaterPercentage = command.TotalAvailableWaterPercentage;
                     getResult.Active = command.Active;
                 }
 
@@ -53,6 +57,10 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                         Name = updateGrowingMediumResult.Name,
                         ContainerCapacityPercentage = updateGrowingMediumResult.ContainerCapacityPercentage,
                         PermanentWiltingPoint = updateGrowingMediumResult.PermanentWiltingPoint,
+                        FiveKpaHumidity = updateGrowingMediumResult.FiveKpaHumidity,
+                        EaselyAvailableWaterPercentage = updateGrowingMediumResult.EaselyAvailableWaterPercentage,
+                        ReserveWaterPercentage = updateGrowingMediumResult.ReserveWaterPercentage,
+                        TotalAvailableWaterPercentage = updateGrowingMediumResult.TotalAvailableWaterPercentage,
                         Active = updateGrowingMediumResult.Active
                     };
 

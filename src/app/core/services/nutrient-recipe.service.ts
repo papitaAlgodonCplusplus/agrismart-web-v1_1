@@ -21,9 +21,9 @@ export interface NutrientRecipe {
   targetPh: number;
   targetEc: number;
   volumeLiters: number;
-  targetNitrogen: number;
-  targetPhosphorus: number;
-  targetPotassium: number;
+  targetNitrogen?: number;
+  targetPhosphorus?: number;
+  targetPotassium?: number;
   targetCalcium?: number;
   targetMagnesium?: number;
   targetSulfur?: number;
@@ -75,6 +75,18 @@ export interface RecipeFertilizer {
   costPortion?: number;
   applicationOrder?: number;
   applicationNotes?: string;
+}
+
+export interface PrepInstruction {
+  step: number;
+  fertilizer: string;
+  amount: string;
+  concentration?: string;
+}
+
+export interface Warning {
+  type: string;
+  message: string;
 }
 
 export interface CreateRecipeRequest {

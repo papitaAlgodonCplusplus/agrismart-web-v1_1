@@ -82,9 +82,18 @@
       "Bash(Select-Object -First 30)",
       "Bash(npx tsc:*)",
       "Bash(Select-String -Pattern \"kpi-orchestrator.service.ts\")",
-      "Bash(Select-Object -First 10)"
+      "Bash(Select-Object -First 10)",
+      "Bash(Select-String -Pattern \"error TS\")",
+      "Bash(claude mcp add chrome-devtools npx chrome-devtools-mcp@latest)",
+      "Bash(claude mcp list:*)",
+      "Bash(npx:*)",
+      "Bash(node --version:*)",
+      "Bash(tasklist:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "chrome-devtools"
+  ]
 }

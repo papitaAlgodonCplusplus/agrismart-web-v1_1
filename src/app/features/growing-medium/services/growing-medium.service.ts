@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { ApiService } from '../../../core/services/api.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -50,9 +51,9 @@ export interface UpdateGrowingMediumCommand {
   providedIn: 'root'
 })
 export class GrowingMediumService {
-  private apiUrl = `${environment.agronomicApiUrl}/GrowingMedium`;
+  private apiUrl = `/GrowingMedium`;
 
-  constructor(private http: HttpClient) { }
+  constructor(private apiService: ApiService) { }
 
   /**
    * Get all growing media
@@ -63,14 +64,14 @@ export class GrowingMediumService {
     if (includeInactives) {
       params = params.set('IncludeInactives', includeInactives.toString());
     }
-    return this.http.get<any>(this.apiUrl, { params });
+    return this.apiService.get<any>(this.apiUrl,   params  );
   }
 
   /**
    * Get growing medium by ID
    */
   getById(id: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${id}`);
+    return this.apiService.get<any>(`${this.apiUrl}/${id}`);
   }
 
   /**
@@ -78,21 +79,21 @@ export class GrowingMediumService {
    */
   getByCatalogId(catalogId: number): Observable<any> {
     const params = new HttpParams().set('catalogId', catalogId.toString());
-    return this.http.get<any>(this.apiUrl, { params });
+    return this.apiService.get<any>(this.apiUrl, params );
   }
 
   /**
    * Create new growing medium
    */
   create(command: CreateGrowingMediumCommand): Observable<any> {
-    return this.http.post<any>(this.apiUrl, command);
+    return this.apiService.post<any>(this.apiUrl, command);
   }
 
   /**
    * Update existing growing medium
    */
   update(command: UpdateGrowingMediumCommand): Observable<any> {
-    return this.http.put<any>(this.apiUrl, command);
+    return this.apiService.put<any>(this.apiUrl, command);
   }
 
   /**
@@ -100,6 +101,6 @@ export class GrowingMediumService {
    */
   delete(id: number, deletedBy: number): Observable<any> {
     let params = new HttpParams().set('deletedBy', deletedBy.toString());
-    return this.http.delete<any>(`${this.apiUrl}/${id}`, { params });
+    return this.apiService.delete<any>(`${this.apiUrl}/${id}`);
   }
 }

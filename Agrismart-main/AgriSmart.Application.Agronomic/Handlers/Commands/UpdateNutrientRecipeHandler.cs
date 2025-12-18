@@ -74,6 +74,78 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                 recipe.Instructions = request.Instructions;
                 recipe.Warnings = request.Warnings;
                 recipe.Notes = request.Notes;
+                recipe.SoilAnalysisId = request.SoilAnalysisId;
+                recipe.FormulationMode = request.FormulationMode;
+                recipe.FertigationVolumePerApplication = request.FertigationVolumePerApplication;
+                recipe.FertigationApplicationsPerWeek = request.FertigationApplicationsPerWeek;
+                recipe.FertigationLeachingFraction = request.FertigationLeachingFraction;
+                recipe.FertigationRootDepth = request.FertigationRootDepth;
+                recipe.PercentageNitrogen = request.PercentageNitrogen;
+                recipe.PercentagePhosphorus = request.PercentagePhosphorus;
+                recipe.PercentagePotassium = request.PercentagePotassium;
+                recipe.PercentageCalcium = request.PercentageCalcium;
+                recipe.PercentageMagnesium = request.PercentageMagnesium;
+                recipe.StatusMessage = request.StatusMessage;
+                recipe.SummaryLine = request.SummaryLine;
+
+                // Advanced Calculator Fields
+                recipe.OptimizationMethod = request.OptimizationMethod;
+                recipe.OptimizationStatus = request.OptimizationStatus;
+                recipe.TotalDosageGramsPerLiter = request.TotalDosageGramsPerLiter;
+                recipe.SolverTimeSeconds = request.SolverTimeSeconds;
+                recipe.IonicBalanceError = request.IonicBalanceError;
+                recipe.AverageDeviationPercent = request.AverageDeviationPercent;
+                recipe.SuccessRatePercent = request.SuccessRatePercent;
+                recipe.CalculationResultsJson = request.CalculationResultsJson;
+
+                // Advanced Calculation Data JSON
+                recipe.CalculationDataUsedJson = request.CalculationDataUsedJson;
+                recipe.IntegrationMetadataJson = request.IntegrationMetadataJson;
+                recipe.OptimizationSummaryJson = request.OptimizationSummaryJson;
+                recipe.PerformanceMetricsJson = request.PerformanceMetricsJson;
+                recipe.CostAnalysisJson = request.CostAnalysisJson;
+                recipe.NutrientDiagnosticsJson = request.NutrientDiagnosticsJson;
+                recipe.LinearProgrammingAnalysisJson = request.LinearProgrammingAnalysisJson;
+                recipe.DataSourcesJson = request.DataSourcesJson;
+                recipe.FertilizerDosagesJson = request.FertilizerDosagesJson;
+                recipe.VerificationResultsJson = request.VerificationResultsJson;
+
+                // Quick Access Fields
+                recipe.LinearProgrammingEnabled = request.LinearProgrammingEnabled;
+                recipe.ActiveFertilizerCount = request.ActiveFertilizerCount;
+                recipe.CalculationTimestamp = request.CalculationTimestamp;
+                recipe.CatalogIdUsed = request.CatalogIdUsed;
+                recipe.PhaseIdUsed = request.PhaseIdUsed;
+                recipe.WaterIdUsed = request.WaterIdUsed;
+                recipe.UserIdUsed = request.UserIdUsed;
+                recipe.ApiPriceCoveragePercent = request.ApiPriceCoveragePercent;
+                recipe.CostPerM3Crc = request.CostPerM3Crc;
+                recipe.FertilizersAnalyzed = request.FertilizersAnalyzed;
+                recipe.SafetyCapsApplied = request.SafetyCapsApplied;
+                recipe.StrictCapsMode = request.StrictCapsMode;
+
+                // Additional Nutrients
+                recipe.TargetChloride = request.TargetChloride;
+                recipe.AchievedChloride = request.AchievedChloride;
+                recipe.TargetSodium = request.TargetSodium;
+                recipe.AchievedSodium = request.AchievedSodium;
+                recipe.TargetAmmonium = request.TargetAmmonium;
+                recipe.AchievedAmmonium = request.AchievedAmmonium;
+                recipe.TargetManganese = request.TargetManganese;
+                recipe.AchievedManganese = request.AchievedManganese;
+                recipe.TargetZinc = request.TargetZinc;
+                recipe.AchievedZinc = request.AchievedZinc;
+                recipe.TargetCopper = request.TargetCopper;
+                recipe.AchievedCopper = request.AchievedCopper;
+                recipe.TargetBoron = request.TargetBoron;
+                recipe.AchievedBoron = request.AchievedBoron;
+                recipe.TargetMolybdenum = request.TargetMolybdenum;
+                recipe.AchievedMolybdenum = request.AchievedMolybdenum;
+
+                // PDF Report
+                recipe.PdfReportFilename = request.PdfReportFilename;
+                recipe.PdfReportGenerated = request.PdfReportGenerated;
+
                 recipe.UpdatedBy = GetSessionUserId();
                 recipe.DateUpdated = DateTime.Now;
 

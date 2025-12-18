@@ -56,7 +56,74 @@ namespace AgriSmart.Core.Entities
         public string? Instructions { get; set; } // JSON array
         public string? Warnings { get; set; } // JSON array
         public string? Notes { get; set; }
-        
+
+        // Soil/Fertigation Specific Parameters
+        public int? SoilAnalysisId { get; set; }
+        public string? FormulationMode { get; set; } // "Hydroponics" or "Soil"
+        public double? FertigationVolumePerApplication { get; set; }
+        public int? FertigationApplicationsPerWeek { get; set; }
+        public double? FertigationLeachingFraction { get; set; }
+        public double? FertigationRootDepth { get; set; }
+
+        // Achievement Percentages
+        public double? PercentageNitrogen { get; set; }
+        public double? PercentagePhosphorus { get; set; }
+        public double? PercentagePotassium { get; set; }
+        public double? PercentageCalcium { get; set; }
+        public double? PercentageMagnesium { get; set; }
+
+        // Result Summary
+        public string? StatusMessage { get; set; }
+        public string? SummaryLine { get; set; }
+
+        // Advanced Calculator Specific Fields
+        public string? OptimizationMethod { get; set; } // "linear_programming", "sequential_least_squares", etc.
+        public string? OptimizationStatus { get; set; } // "Optimal", "Feasible", etc.
+        public double? TotalDosageGramsPerLiter { get; set; }
+        public double? SolverTimeSeconds { get; set; }
+        public double? IonicBalanceError { get; set; }
+        public double? AverageDeviationPercent { get; set; }
+        public double? SuccessRatePercent { get; set; }
+        public string? CalculationResultsJson { get; set; } // Full JSON for advanced calculator results
+
+        // Advanced Calculation Data - Nested JSON Storage
+        public string? CalculationDataUsedJson { get; set; } // Stores calculation_data_used with all nested objects
+        public string? IntegrationMetadataJson { get; set; } // Stores integration_metadata
+        public string? OptimizationSummaryJson { get; set; } // Stores optimization_summary
+        public string? PerformanceMetricsJson { get; set; } // Stores performance_metrics
+        public string? CostAnalysisJson { get; set; } // Stores cost_analysis with all nested objects
+        public string? NutrientDiagnosticsJson { get; set; } // Stores nutrient_diagnostics
+        public string? LinearProgrammingAnalysisJson { get; set; } // Stores linear_programming_analysis
+        public string? DataSourcesJson { get; set; } // Stores data_sources
+        public string? FertilizerDosagesJson { get; set; } // Stores fertilizer_dosages
+        public string? VerificationResultsJson { get; set; } // Stores verification_results array
+
+        // Quick Access Fields for Advanced Calculations
+        public bool? LinearProgrammingEnabled { get; set; }
+        public int? ActiveFertilizerCount { get; set; }
+        public DateTime? CalculationTimestamp { get; set; }
+        public int? CatalogIdUsed { get; set; }
+        public int? PhaseIdUsed { get; set; }
+        public int? WaterIdUsed { get; set; }
+        public int? UserIdUsed { get; set; }
+        public decimal? ApiPriceCoveragePercent { get; set; }
+        public decimal? CostPerM3Crc { get; set; }
+        public int? FertilizersAnalyzed { get; set; }
+        public bool? SafetyCapsApplied { get; set; }
+        public bool? StrictCapsMode { get; set; }
+
+        // Additional Nutrients
+        public double? TargetChloride { get; set; }
+        public double? AchievedChloride { get; set; }
+        public double? TargetSodium { get; set; }
+        public double? AchievedSodium { get; set; }
+        public double? TargetAmmonium { get; set; }
+        public double? AchievedAmmonium { get; set; }
+
+        // PDF Report
+        public string? PdfReportFilename { get; set; }
+        public bool? PdfReportGenerated { get; set; }
+
         // Navigation Properties
         [NotMapped]
         public virtual Crop? Crop { get; set; }

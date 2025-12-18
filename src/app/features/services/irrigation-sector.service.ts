@@ -192,6 +192,7 @@ export interface GrowingMedium {
   name: string;
   containerCapacityPercentage?: number;
   permanentWiltingPoint?: number;
+  fiveKpaHumidity?: number;
   easelyAvailableWaterPercentage?: number;
   reserveWaterPercentage?: number;
   totalAvailableWaterPercentage?: number;
@@ -527,6 +528,7 @@ export interface GrowingMedium {
   name: string;
   containerCapacityPercentage?: number;
   permanentWiltingPoint?: number;
+  fiveKpaHumidity?: number;
   easelyAvailableWaterPercentage?: number;
   reserveWaterPercentage?: number;
   totalAvailableWaterPercentage?: number;
@@ -927,7 +929,7 @@ export class IrrigationSectorService {
     return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Container/${id}`, {
       headers: this.getAuthHeaders()
     }).pipe(
-      map(response => response.success ? response.result : null),
+      map(response => response.success ? response.result.container : null),
       catchError(this.handleError)
     );
   }
@@ -945,7 +947,7 @@ export class IrrigationSectorService {
     return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/GrowingMedium/${id}`, {
       headers: this.getAuthHeaders()
     }).pipe(
-      map(response => response.success ? response.result : null),
+      map(response => response.success ? response.result.growingMedium : null),
       catchError(this.handleError)
     );
   }

@@ -8,10 +8,10 @@ namespace AgriSmart.Core.Entities
         public string? Name { get; set; }
         public double ContainerCapacityPercentage { get; set; }
         public double PermanentWiltingPoint { get; set; }
-
-        [NotMapped]
-        public double FiveKpaHumidity { get; set; } = 10; // Not stored in database
-
+        public double FiveKpaHumidity { get; set; }
+        public double EaselyAvailableWaterPercentage { get; set; }
+        public double ReserveWaterPercentage { get; set; }
+        public double TotalAvailableWaterPercentage { get; set; }
         public bool? Active { get; set; }
     }
 }

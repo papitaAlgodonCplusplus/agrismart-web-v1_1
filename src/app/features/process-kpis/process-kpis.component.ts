@@ -285,8 +285,11 @@ export class ProcessKPIsComponent implements OnInit, OnDestroy {
           : undefined
       };
 
-      this.kpiData = await this.kpiOrchestrator.calculateKPIs(input);
+      console.log('Calculating KPIs with input:', input);
 
+      this.kpiData = await this.kpiOrchestrator.calculateKPIs(input);
+      console.log('Calculated KPI Data:', this.kpiData);
+      
       if (this.kpiData.length === 0) {
         this.error = 'No se encontraron datos para el período seleccionado';
       } else {
@@ -404,70 +407,178 @@ export class ProcessKPIsComponent implements OnInit, OnDestroy {
   // BATCH 3: Irrigation Statistics Helper Methods
   // ============================================================================
 
+  /**
+   * Get total number of irrigation events across all days
+   */
+  getTotalIrrigationEvents(): number {
+    return this.kpiData.reduce((acc, kpi) => acc + kpi.irrigation.metrics.length, 0);
+  }
+
+  /**
+   * Get number of days with irrigation
+   */
+  getDaysWithIrrigation(): number {
+    return this.kpiData.filter(kpi => kpi.irrigation.metrics.length > 0).length;
+  }
+
+  /**
+   * Get average volume PER EVENT (not per day)
+   */
   getAverageIrrigationVolume(): number {
-    const volumes = this.kpiData.map(kpi => kpi.irrigation.totalVolume);
-    return this.getIrrigationVolumenAvg(volumes);
+    const totalEvents = this.getTotalIrrigationEvents();
+    if (totalEvents === 0) return 0;
+
+    const totalVolume = this.getTotalIrrigationVolume();
+    return totalVolume / totalEvents;
   }
 
+  /**
+   * Get minimum volume PER EVENT across all events
+   */
   getMinIrrigationVolume(): number {
-    const volumes = this.kpiData.map(kpi => kpi.irrigation.totalVolume);
-    return this.getIrrigationVolumenMin(volumes);
+    const allEventVolumes: number[] = [];
+    this.kpiData.forEach(kpi => {
+      kpi.irrigation.metrics.forEach(metric => {
+        allEventVolumes.push(metric.irrigationVolumenTotal.value);
+      });
+    });
+    return allEventVolumes.length > 0 ? Math.min(...allEventVolumes) : 0;
   }
 
+  /**
+   * Get maximum volume PER EVENT across all events
+   */
   getMaxIrrigationVolume(): number {
-    const volumes = this.kpiData.map(kpi => kpi.irrigation.totalVolume);
-    return this.getIrrigationVolumenMax(volumes);
+    const allEventVolumes: number[] = [];
+    this.kpiData.forEach(kpi => {
+      kpi.irrigation.metrics.forEach(metric => {
+        allEventVolumes.push(metric.irrigationVolumenTotal.value);
+      });
+    });
+    return allEventVolumes.length > 0 ? Math.max(...allEventVolumes) : 0;
   }
 
   getTotalDuration(): number {
-    return this.kpiData.reduce((sum, kpi) => sum + kpi.irrigation.totalDuration, 0);
+    const milliseconds = this.kpiData.reduce((sum, kpi) => sum + kpi.irrigation.totalDuration, 0);
+    return milliseconds / (1000 * 60); // Convert milliseconds to minutes
   }
 
   getAverageDuration(): number {
-    const durations = this.kpiData.map(kpi => kpi.irrigation.totalDuration);
-    const stats = this.getIrrigationLengthStats(durations);
+    // Get durations from ALL individual events, not days
+    const allEventDurations: number[] = [];
+    this.kpiData.forEach(kpi => {
+      kpi.irrigation.metrics.forEach(metric => {
+        const durationMinutes = metric.irrigationLength / (1000 * 60); // Convert ms to minutes
+        allEventDurations.push(durationMinutes);
+      });
+    });
+
+    if (allEventDurations.length === 0) return 0;
+    const stats = this.getIrrigationLengthStats(allEventDurations);
     return stats.avg;
   }
 
   getMinDuration(): number {
-    const durations = this.kpiData.map(kpi => kpi.irrigation.totalDuration);
-    const stats = this.getIrrigationLengthStats(durations);
+    // Get durations from ALL individual events, not days
+    const allEventDurations: number[] = [];
+    this.kpiData.forEach(kpi => {
+      kpi.irrigation.metrics.forEach(metric => {
+        const durationMinutes = metric.irrigationLength / (1000 * 60); // Convert ms to minutes
+        allEventDurations.push(durationMinutes);
+      });
+    });
+
+    if (allEventDurations.length === 0) return 0;
+    const stats = this.getIrrigationLengthStats(allEventDurations);
     return stats.min;
   }
 
   getMaxDuration(): number {
-    const durations = this.kpiData.map(kpi => kpi.irrigation.totalDuration);
-    const stats = this.getIrrigationLengthStats(durations);
+    // Get durations from ALL individual events, not days
+    const allEventDurations: number[] = [];
+    this.kpiData.forEach(kpi => {
+      kpi.irrigation.metrics.forEach(metric => {
+        const durationMinutes = metric.irrigationLength / (1000 * 60); // Convert ms to minutes
+        allEventDurations.push(durationMinutes);
+      });
+    });
+
+    if (allEventDurations.length === 0) return 0;
+    const stats = this.getIrrigationLengthStats(allEventDurations);
     return stats.max;
   }
 
   getAverageInterval(): number {
-    // Calculate intervals between irrigation events
+    // Calculate intervals between ALL individual irrigation events across all days
+    const allEvents: { date: Date; metrics: any[] }[] = [];
+
+    // Flatten all events from all days
+    this.kpiData.forEach(kpi => {
+      kpi.irrigation.metrics.forEach(metric => {
+        allEvents.push({ date: metric.date, metrics: kpi.irrigation.metrics });
+      });
+    });
+
+    // Sort events by date
+    allEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
+
     const intervals: number[] = [];
-    for (let i = 1; i < this.kpiData.length; i++) {
-      const timeDiff = this.kpiData[i].date.getTime() - this.kpiData[i - 1].date.getTime();
+    for (let i = 1; i < allEvents.length; i++) {
+      const timeDiff = allEvents[i].date.getTime() - allEvents[i - 1].date.getTime();
       intervals.push(timeDiff / (1000 * 60 * 60)); // Convert to hours
     }
+
+    if (intervals.length === 0) return 0;
     const stats = this.getIrrigationIntervalStats(intervals);
     return stats.avg;
   }
 
   getMinInterval(): number {
+    // Calculate intervals between ALL individual irrigation events across all days
+    const allEvents: { date: Date; metrics: any[] }[] = [];
+
+    // Flatten all events from all days
+    this.kpiData.forEach(kpi => {
+      kpi.irrigation.metrics.forEach(metric => {
+        allEvents.push({ date: metric.date, metrics: kpi.irrigation.metrics });
+      });
+    });
+
+    // Sort events by date
+    allEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
+
     const intervals: number[] = [];
-    for (let i = 1; i < this.kpiData.length; i++) {
-      const timeDiff = this.kpiData[i].date.getTime() - this.kpiData[i - 1].date.getTime();
-      intervals.push(timeDiff / (1000 * 60 * 60));
+    for (let i = 1; i < allEvents.length; i++) {
+      const timeDiff = allEvents[i].date.getTime() - allEvents[i - 1].date.getTime();
+      intervals.push(timeDiff / (1000 * 60 * 60)); // Convert to hours
     }
+
+    if (intervals.length === 0) return 0;
     const stats = this.getIrrigationIntervalStats(intervals);
     return stats.min;
   }
 
   getMaxInterval(): number {
+    // Calculate intervals between ALL individual irrigation events across all days
+    const allEvents: { date: Date; metrics: any[] }[] = [];
+
+    // Flatten all events from all days
+    this.kpiData.forEach(kpi => {
+      kpi.irrigation.metrics.forEach(metric => {
+        allEvents.push({ date: metric.date, metrics: kpi.irrigation.metrics });
+      });
+    });
+
+    // Sort events by date
+    allEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
+
     const intervals: number[] = [];
-    for (let i = 1; i < this.kpiData.length; i++) {
-      const timeDiff = this.kpiData[i].date.getTime() - this.kpiData[i - 1].date.getTime();
-      intervals.push(timeDiff / (1000 * 60 * 60));
+    for (let i = 1; i < allEvents.length; i++) {
+      const timeDiff = allEvents[i].date.getTime() - allEvents[i - 1].date.getTime();
+      intervals.push(timeDiff / (1000 * 60 * 60)); // Convert to hours
     }
+
+    if (intervals.length === 0) return 0;
     const stats = this.getIrrigationIntervalStats(intervals);
     return stats.max;
   }
