@@ -5,6 +5,7 @@ Real API calls, authentication, and data mapping
 """
 
 import aiohttp
+import ssl
 import logging
 import asyncio
 from typing import Dict, List, Optional, Any
@@ -13,16 +14,23 @@ from fertilizer_database import EnhancedFertilizerDatabase
 
 class SwaggerAPIClient:
     """Complete Swagger API client with real authentication and data fetching"""
-    
+
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip('/')
         self.auth_token = None
         self.headers = {'Content-Type': 'application/json'}
         self.fertilizer_db = EnhancedFertilizerDatabase()
         self.session = None
-        
+
     async def __aenter__(self):
-        self.session = aiohttp.ClientSession()
+        # Create SSL context that doesn't verify certificates for localhost development
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+
+        # Create connector with SSL context
+        connector = aiohttp.TCPConnector(ssl=ssl_context)
+        self.session = aiohttp.ClientSession(connector=connector)
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -247,44 +255,116 @@ class SwaggerAPIClient:
 
     async def get_water_chemistry(self, water_id: int, catalog_id: int) -> Optional[Dict[str, Any]]:
         """
-        Get water chemistry analysis
+        Get water chemistry analysis by ID
         """
         if not self.auth_token:
             raise Exception("Authentication required")
 
         print(f"[FETCH] Fetching water chemistry for water {water_id}...")
-        
-        url = f"{self.base_url}/WaterChemistry"
-        params = {
-            'WaterId': water_id
-            # ,'CatalogId': catalog_id
-        }
+
+        # First, let's see what water chemistries are available
+        list_url = f"{self.base_url}/WaterChemistry"
+        try:
+            async with self.session.get(list_url, headers=self.headers, timeout=10) as list_response:
+                if list_response.status == 200:
+                    list_data = await list_response.json()
+                    water_list = list_data.get('result', {}).get('waterChemistries', [])
+                    print(f"[DEBUG] Available water chemistry IDs: {[w.get('id') for w in water_list]}")
+        except Exception as e:
+            print(f"[DEBUG] Could not list water chemistries: {e}")
+
+        # Use the GET by ID endpoint: /WaterChemistry/{Id}
+        url = f"{self.base_url}/WaterChemistry/{water_id}"
+
+        try:
+            async with self.session.get(url, headers=self.headers, timeout=15) as response:
+                if response.status == 200:
+                    data = await response.json()
+
+                    if data.get('success') and data.get('result'):
+                        water_data = data['result'].get('waterChemistry')
+                        if water_data:
+                            print(f"[SUCCESS] Found water analysis (ID: {water_data.get('id')})")
+                            # Log some key parameters
+                            for key in ['ca', 'k', 'mg', 'nO3', 'sO4']:
+                                if key in water_data:
+                                    print(f"  {key}: {water_data[key]} mg/L")
+                            return water_data
+
+                    print(f"[WARNING] No water analysis found for water {water_id}")
+                    return None
+
+                else:
+                    error_text = await response.text()
+                    print(f"[WARNING] Water analysis fetch failed: HTTP {response.status}")
+                    return None
+
+        except aiohttp.ClientError as e:
+            print(f"[ERROR] Network error fetching water analysis: {e}")
+            return None
+
+    async def get_soil_analysis(self, crop_production_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Get soil analysis for a crop production
+        Endpoint: GET /CropProduction/{cropProductionId}/SoilAnalysis
+        Response: { success, exception, result: { soilAnalyses: [...] } }
+        """
+        if not self.auth_token:
+            raise Exception("Authentication required")
+
+        print(f"[FETCH] Fetching soil analysis for crop production {crop_production_id}...")
+
+        # Use the SoilAnalysis endpoint
+        url = f"{self.base_url}/CropProduction/{crop_production_id}/SoilAnalysis"
+        params = {'includeInactive': 'false'}  # Get only active soil analyses
 
         try:
             async with self.session.get(url, params=params, headers=self.headers, timeout=15) as response:
+                print(f"[DEBUG] Soil analysis endpoint response status: {response.status}")
+
                 if response.status == 200:
                     data = await response.json()
-                    water_list = data.get('result', {}).get('waterChemistries', [])
-                    
-                    if water_list:
-                        water_data = water_list[0]
-                        print(f"[SUCCESS] Found water analysis")
-                        # Log some key parameters
-                        for key in ['ca', 'k', 'mg', 'nO3', 'sO4']:
-                            if key in water_data:
-                                print(f"  {key}: {water_data[key]} mg/L")
-                        return water_data
-                    else:
-                        print(f"[WARNING]  No water analysis found for water {water_id}")
-                        return None
-                        
+                    print(f"[DEBUG] Response success: {data.get('success')}, has result: {'result' in data}")
+
+                    if data.get('success') and data.get('result'):
+                        # Response structure: result.soilAnalyses (array)
+                        soil_analyses = data['result'].get('soilAnalyses', [])
+                        print(f"[DEBUG] Found {len(soil_analyses)} soil analyses")
+
+                        if soil_analyses and len(soil_analyses) > 0:
+                            # Get the first (most recent) soil analysis
+                            soil_analysis = soil_analyses[0]
+                            print(f"[SUCCESS] Found soil analysis (ID: {soil_analysis.get('id')}, Sample Date: {soil_analysis.get('sampleDate')})")
+                            # Log some key parameters
+                            for key in ['phSoil', 'totalNitrogen', 'phosphorus', 'potassium', 'calcium', 'magnesium']:
+                                if key in soil_analysis and soil_analysis[key] is not None:
+                                    value = soil_analysis[key]
+                                    unit = "pH" if key == 'phSoil' else "ppm"
+                                    print(f"  {key}: {value} {unit}")
+                            return soil_analysis
+                        else:
+                            print(f"[INFO] No soil analyses found for crop production {crop_production_id}")
+                            return None
+
+                    print(f"[WARNING] Invalid response structure from soil analysis endpoint")
+                    print(f"[DEBUG] Full response: {data}")
+                    return None
+
+                elif response.status == 404:
+                    print(f"[INFO] No soil analysis available for crop production {crop_production_id}")
+                    return None
+
                 else:
                     error_text = await response.text()
-                    print(f"[WARNING]  Water analysis fetch failed: HTTP {response.status}")
+                    print(f"[WARNING] Soil analysis fetch failed: HTTP {response.status}")
+                    print(f"[DEBUG] Error response: {error_text[:200]}")
                     return None
-                    
+
+        except asyncio.TimeoutError:
+            print(f"[ERROR] Timeout fetching soil analysis - backend endpoint may be slow or broken")
+            return None
         except aiohttp.ClientError as e:
-            print(f"[ERROR] Network error fetching water analysis: {e}")
+            print(f"[ERROR] Network error fetching soil analysis: {e}")
             return None
 
     def map_swagger_fertilizer_to_model(self, swagger_fert: Dict[str, Any], chemistry: Optional[Dict[str, Any]] = None) -> Fertilizer:

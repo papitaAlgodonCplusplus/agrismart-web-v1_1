@@ -41,6 +41,7 @@ interface CalculationResponse {
     calculation_data_used?: CalculationDataUsed;
     linear_programming_analysis: LinearProgrammingAnalysis;
     data_sources: DataSources;
+    soil_analysis?: any;
 }
 
 interface CalculationDataUsed {
@@ -509,6 +510,7 @@ export class NutrientFormulationComponent implements OnInit {
     crops: Crop[] = [];
     cropPhases: CropPhase[] = [];
     cropPhaseSolutionRequirements: CropPhaseSolutionRequirement[] = [];
+    cropProductions: any[] = []; // For soil analysis selection
     currentRecipe: any | null = null;
     formulationResults: any[] = [];
     savedRecipes: any[] = [];
@@ -523,6 +525,7 @@ export class NutrientFormulationComponent implements OnInit {
     fertilizerUsageData: any[] = [];
     enhancedCostAnalysis: EnhancedCostAnalysis | null = null;
     waterAnalysisDisplay: WaterAnalysisDisplay | null = null;
+    soilAnalysisData: any | null = null;
     performanceMetricsDisplay: any | null = null;
     optimizationSummaryDisplay: any | null = null;
     nutrientDiagnostics: NutrientDiagnostics = {};
@@ -595,6 +598,7 @@ export class NutrientFormulationComponent implements OnInit {
             catalogId: [null],
             cropPhaseId: [null, Validators.required],
             waterSourceId: [null, Validators.required],
+            cropProductionId: [null], // Optional: for soil analysis
             targetPh: [6.5],
             volume_liters: [1000, [Validators.required, Validators.min(1), Validators.max(100000)]],
             use_ml: [true],
@@ -2379,12 +2383,13 @@ export class NutrientFormulationComponent implements OnInit {
         forkJoin({
             catalogs: this.loadCatalogs(),
             waterSources: this.loadWaterSources(),
-            cropPhases: this.loadCropPhases()
+            cropPhases: this.loadCropPhases(),
+            cropProductions: this.loadCropProductions()
         }).pipe(
             catchError(error => {
                 console.error('Error loading form data:', error);
                 this.errorMessage = 'Error al cargar los datos del formulario';
-                return of({ catalogs: [], waterSources: [], cropPhases: [] });
+                return of({ catalogs: [], waterSources: [], cropPhases: [], cropProductions: [] });
             })
         ).subscribe({
             next: (data: any) => {
@@ -2392,6 +2397,7 @@ export class NutrientFormulationComponent implements OnInit {
                 this.catalogs = data.catalogs.catalogs;
                 this.waterSources = data.waterSources.waterChemistries;
                 this.cropPhases = data.cropPhases.cropPhases;
+                this.cropProductions = data.cropProductions || [];
                 this.isLoading = false;
             },
             error: (error) => {
@@ -2436,6 +2442,24 @@ export class NutrientFormulationComponent implements OnInit {
         return this.apiService.get<CropPhase[]>('/CropPhase') || of([
             { id: 1, cropId: 1, catalogId: 1, name: 'Fase de Crecimiento', active: true }
         ]);
+    }
+
+    public loadCropProductions(): Observable<any[]> {
+        return this.cropProductionService.getAll().pipe(
+            map((response: any) => {
+                // Handle different response formats
+                if (response && response.cropProductions) {
+                    return response.cropProductions;
+                } else if (Array.isArray(response)) {
+                    return response;
+                }
+                return [];
+            }),
+            catchError(error => {
+                console.error('Error loading crop productions:', error);
+                return of([]);
+            })
+        );
     }
 
     public processResults(): void {
@@ -2485,6 +2509,10 @@ export class NutrientFormulationComponent implements OnInit {
         // NEW: Process water analysis display
         this.processWaterAnalysis();
         console.log("finished processWaterAnalysis")
+
+        // NEW: Process soil analysis display
+        this.processSoilAnalysis();
+        console.log("finished processSoilAnalysis")
 
         // NEW: Process performance metrics (rounded to 2 decimals)
         this.processPerformanceMetrics();
@@ -2591,6 +2619,28 @@ export class NutrientFormulationComponent implements OnInit {
             B: waterAnalysis.B || 0,
             Mo: waterAnalysis.Mo || 0
         };
+    }
+
+    /**
+     * Process soil analysis for display
+     */
+    private processSoilAnalysis(): void {
+        if (!this.calculationResults?.soil_analysis) {
+            this.soilAnalysisData = null;
+            return;
+        }
+
+        this.soilAnalysisData = this.calculationResults.soil_analysis;
+    }
+
+    /**
+     * Get soil adjustment nutrient keys for display
+     */
+    getSoilAdjustmentKeys(): string[] {
+        if (!this.soilAnalysisData?.adjustments) {
+            return [];
+        }
+        return Object.keys(this.soilAnalysisData.adjustments);
     }
 
     /**
@@ -3620,6 +3670,12 @@ export class NutrientFormulationComponent implements OnInit {
             .set('use_ml', formData.use_ml.toString())
             .set('apply_safety_caps', formData.apply_safety_caps.toString())
             .set('strict_caps', formData.strict_caps.toString());
+
+        // Add crop production ID if selected (for soil analysis)
+        if (formData.cropProductionId) {
+            params = params.set('crop_production_id', formData.cropProductionId.toString());
+            console.log('Including soil analysis for crop production:', formData.cropProductionId);
+        }
 
         console.log('calling API URL: ', apiUrl + '?' + params.toString());
 

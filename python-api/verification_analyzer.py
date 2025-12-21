@@ -484,12 +484,18 @@ class SolutionVerifier:
             achieved = achieved_concentrations.get(nutrient, 0)
             water_contribution = water_analysis.get(nutrient, 0)
             fertilizer_contribution = achieved - water_contribution
-            
+
             if fertilizer_contribution > 0:
                 # This would need cost data to complete - placeholder for now
+                target_value = target_concentrations.get(nutrient, 0)
+                if target_value > 0:
+                    efficiency_score = min(100, (fertilizer_contribution / target_value) * 100)
+                else:
+                    efficiency_score = 100 if fertilizer_contribution > 0 else 0
+
                 cost_efficiency['cost_per_nutrient_mg'][nutrient] = {
                     'fertilizer_contribution_mg_l': fertilizer_contribution,
-                    'efficiency_score': min(100, (fertilizer_contribution / target_concentrations[nutrient]) * 100)
+                    'efficiency_score': efficiency_score
                 }
         
         # 7. Solution quality score

@@ -688,6 +688,8 @@ async def swagger_integrated_calculation_with_linear_programming(
     linear_programming: bool = Query(default=True),
     apply_safety_caps: bool = Query(default=True),     # Safety caps
     strict_caps: bool = Query(default=True),             # Strict safety mode
+    # NEW PARAMETER: Soil analysis support
+    crop_production_id: int = Query(default=None, description="Crop production ID for soil analysis (optional)"),
     # NEW PARAMETER: Return PDF content in response
     include_pdf_data: bool = Query(
         default=False, description="Include PDF file as base64 in response")
@@ -742,7 +744,8 @@ async def swagger_integrated_calculation_with_linear_programming(
         calculation_results = {}
 
         # Initialize Swagger client and authenticate
-        async with SwaggerAPIClient("http://163.178.171.144:80/") as swagger_client:
+        # Use https://localhost:7029 for development (npm run dev)
+        async with SwaggerAPIClient("https://localhost:7029/") as swagger_client:
             # Authentication
             print(f"\n[INFO] Authenticating with Swagger API...")
             login_result = await swagger_client.login("csolano@iapcr.com", "123")
@@ -766,6 +769,12 @@ async def swagger_integrated_calculation_with_linear_programming(
             requirements_data = await swagger_client.get_crop_phase_requirements(phase_id)
             water_data = await swagger_client.get_water_chemistry(water_id, catalog_id)
 
+            # 🆕 NEW: Fetch soil analysis if crop_production_id is provided
+            soil_data = None
+            if crop_production_id is not None:
+                soil_data = await swagger_client.get_soil_analysis(crop_production_id)
+                print(f"[SOIL] Fetched soil analysis: {'Available' if soil_data else 'Not found'}")
+
             print(f"[INFO] Fetched: {len(fertilizers_data)} fertilizers")
             # 🆕 NEW
             print(
@@ -774,6 +783,8 @@ async def swagger_integrated_calculation_with_linear_programming(
                 f"[TARGET] Fetched: {len(requirements_data) if requirements_data else 0} requirements: {requirements_data}")
             print(
                 f"[WATER] Fetched: {len(water_data) if water_data else 0} water parameters")
+            if soil_data:
+                print(f"[SOIL] Soil pH: {soil_data.get('phSoil', 'N/A')}, Available nutrients found")
 
             # Create intelligent price mapping from FertilizerInput data
             exact_price_mapping, keyword_price_mapping = create_intelligent_price_mapping(
@@ -900,6 +911,82 @@ async def swagger_integrated_calculation_with_linear_programming(
                     'Ca': 20, 'K': 5, 'N': 2, 'P': 1, 'Mg': 8, 'S': 5,
                     'Fe': 0.1, 'Mn': 0.05, 'Zn': 0.02, 'Cu': 0.01, 'B': 0.1, 'Mo': 0.001
                 }
+
+            # 🆕 NEW: Adjust target concentrations based on soil analysis
+            soil_contributions = {}
+            availability_factors = {}
+
+            if soil_data:
+                print(f"\n{'='*80}")
+                print(f"[SOIL] ADJUSTING TARGET CONCENTRATIONS BASED ON SOIL ANALYSIS")
+                print(f"{'='*80}")
+
+                # Get soil pH for availability factor calculation
+                soil_ph = soil_data.get('phSoil', 6.5)
+                print(f"[SOIL] Soil pH: {soil_ph}")
+
+                # Nutrient availability factors based on pH
+                # Source: Agronomy research on nutrient availability at different pH levels
+                availability_factors = {}
+                if soil_ph < 5.5:
+                    availability_factors = {'N': 0.5, 'P': 0.3, 'K': 0.7, 'Ca': 0.6, 'Mg': 0.6, 'S': 0.6}
+                elif soil_ph < 6.0:
+                    availability_factors = {'N': 0.6, 'P': 0.5, 'K': 0.8, 'Ca': 0.7, 'Mg': 0.7, 'S': 0.7}
+                elif soil_ph < 7.0:
+                    availability_factors = {'N': 0.8, 'P': 0.9, 'K': 0.9, 'Ca': 0.9, 'Mg': 0.9, 'S': 0.9}
+                elif soil_ph < 7.5:
+                    availability_factors = {'N': 0.7, 'P': 0.8, 'K': 0.9, 'Ca': 0.95, 'Mg': 0.95, 'S': 0.85}
+                else:  # pH >= 7.5
+                    availability_factors = {'N': 0.6, 'P': 0.5, 'K': 0.9, 'Ca': 0.95, 'Mg': 0.95, 'S': 0.75}
+
+                # Map soil analysis fields to our nutrient names
+                soil_nutrient_mapping = {
+                    'N': 'totalNitrogen',
+                    'P': 'phosphorus',
+                    'K': 'potassium',
+                    'Ca': 'calcium',
+                    'Mg': 'magnesium',
+                    'S': 'sulfur',
+                    'Fe': 'iron',
+                    'Mn': 'manganese',
+                    'Zn': 'zinc',
+                    'Cu': 'copper',
+                    'B': 'boron',
+                    'Mo': 'molybdenum'
+                }
+
+                # Calculate available nutrients from soil and adjust targets
+                soil_contributions = {}
+                adjusted_targets = {}
+                for nutrient, soil_field in soil_nutrient_mapping.items():
+                    soil_value = soil_data.get(soil_field, 0)
+                    if soil_value and soil_value > 0:
+                        # Apply availability factor
+                        availability_factor = availability_factors.get(nutrient, 0.7)  # default 70% if not specified
+                        available_amount = soil_value * availability_factor
+
+                        # Store soil contribution
+                        soil_contributions[nutrient] = {
+                            'soil_test_value': soil_value,
+                            'availability_factor': availability_factor,
+                            'available_amount': available_amount
+                        }
+
+                        # Adjust target (subtract available amount, but never go below 0)
+                        original_target = target_concentrations.get(nutrient, 0)
+                        adjusted_target = max(0, original_target - available_amount)
+                        adjusted_targets[nutrient] = adjusted_target
+
+                        print(f"[SOIL] {nutrient}: Soil={soil_value:.1f} ppm, Available={available_amount:.1f} ppm ({availability_factor*100:.0f}%), Target: {original_target:.1f} → {adjusted_target:.1f} mg/L")
+                    else:
+                        # No soil data for this nutrient, keep original target
+                        adjusted_targets[nutrient] = target_concentrations.get(nutrient, 0)
+
+                # Update target_concentrations with adjusted values
+                for nutrient, adjusted_value in adjusted_targets.items():
+                    target_concentrations[nutrient] = adjusted_value
+
+                print(f"[SOIL] Target concentrations adjusted based on available soil nutrients")
 
             print(
                 f"[TARGET] Target concentrations: {len(target_concentrations)} parameters")
@@ -1542,6 +1629,26 @@ async def swagger_integrated_calculation_with_linear_programming(
                 "micronutrient_supplementation": "Local Database Auto-Addition",
                 "optimization_engine": "Advanced Linear Programming (PuLP/SciPy)" if linear_programming else "Deterministic Chemistry",
                 "safety_system": "Integrated Nutrient Caps"
+            },
+            "soil_analysis": {
+                "used": soil_data is not None,
+                "crop_production_id": crop_production_id,
+                "soil_data": {
+                    "id": soil_data.get('id') if soil_data else None,
+                    "ph": soil_data.get('phSoil') if soil_data else None,
+                    "sample_date": soil_data.get('sampleDate') if soil_data else None,
+                    "nutrients": {
+                        nutrient: soil_data.get(soil_field)
+                        for nutrient, soil_field in {
+                            'N': 'totalNitrogen', 'P': 'phosphorus', 'K': 'potassium',
+                            'Ca': 'calcium', 'Mg': 'magnesium', 'S': 'sulfur',
+                            'Fe': 'iron', 'Mn': 'manganese', 'Zn': 'zinc',
+                            'Cu': 'copper', 'B': 'boron', 'Mo': 'molybdenum'
+                        }.items()
+                    } if soil_data else {}
+                },
+                "adjustments": soil_contributions,
+                "availability_factors": availability_factors
             },
 
             # NEW: PDF DATA SECTION - Only included if include_pdf_data=True
