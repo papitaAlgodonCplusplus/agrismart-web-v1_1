@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { ApiService } from '../../core/services/api.service';
 
 export interface Dropper {
   id: number;
@@ -35,9 +35,9 @@ export interface UpdateDropperCommand {
   providedIn: 'root'
 })
 export class DropperService {
-  private apiUrl = `${environment.agronomicApiUrl}/Dropper`;
+  private apiUrl = '/Dropper';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: ApiService) { }
 
   /**
    * Get all droppers
@@ -48,7 +48,7 @@ export class DropperService {
     if (includeInactives) {
       params = params.set('IncludeInactives', includeInactives.toString());
     }
-    return this.http.get<any>(this.apiUrl, { params });
+    return this.http.get<any>(this.apiUrl, params);
   }
 
   /**
@@ -63,7 +63,7 @@ export class DropperService {
    */
   getByCatalogId(catalogId: number): Observable<any> {
     const params = new HttpParams().set('catalogId', catalogId.toString());
-    return this.http.get<any>(this.apiUrl, { params });
+    return this.http.get<any>(this.apiUrl, params);
   }
 
   /**
@@ -84,7 +84,6 @@ export class DropperService {
    * Delete dropper
    */
   delete(id: number, deletedBy: number): Observable<any> {
-    let params = new HttpParams().set('deletedBy', deletedBy.toString());
-    return this.http.delete<any>(`${this.apiUrl}/${id}`, { params });
+    return this.http.delete<any>(`${this.apiUrl}/${id}`);
   }
 }

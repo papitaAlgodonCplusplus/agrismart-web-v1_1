@@ -320,6 +320,7 @@ export class CropProductionService {
    */
   update(id: number, data: CropProductionUpdateRequest): Observable<CropProduction> {
     const payload = {
+      id,
       ...data,
       ...(data.startDate && {
         startDate: typeof data.startDate === 'string'
@@ -338,7 +339,7 @@ export class CropProductionService {
       })
     };
 
-    return this.apiService.put<CropProduction>(`${this.baseUrl}/${id}`, payload);
+    return this.apiService.put<CropProduction>(this.baseUrl, payload);
   }
 
   /**

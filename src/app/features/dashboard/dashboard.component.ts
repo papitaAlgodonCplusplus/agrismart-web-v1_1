@@ -930,6 +930,10 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/production-units']);
   }
 
+  navigateToDroppers(): void {
+    this.router.navigate(['/droppers']);
+  }
+
 
   /**
    * Load crop production locations with lat/lon/altitude

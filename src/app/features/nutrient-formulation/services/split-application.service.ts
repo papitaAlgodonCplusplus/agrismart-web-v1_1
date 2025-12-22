@@ -17,86 +17,6 @@ import {
 })
 export class SplitApplicationService {
 
-  // Preset split strategies
-  private readonly STRATEGY_PRESETS: SplitStrategyPreset[] = [
-    {
-      id: 'two-split',
-      name: '2 Aplicaciones (Simple)',
-      description: 'División básica en dos aplicaciones: establecimiento y crecimiento activo',
-      numberOfSplits: 2,
-      distributionPattern: [40, 60],
-      suitableCrops: ['Maíz', 'Frijol', 'Arroz'],
-      suitableScales: ['small', 'medium', 'large'],
-      advantages: [
-        'Fácil de implementar',
-        'Bajo costo de mano de obra',
-        'Adecuado para cultivos de ciclo corto'
-      ],
-      disadvantages: [
-        'Menor eficiencia en cultivos de ciclo largo',
-        'Mayor riesgo de lixiviación',
-        'No se ajusta finamente a demanda del cultivo'
-      ]
-    },
-    {
-      id: 'three-split',
-      name: '3 Aplicaciones (Balanceado)',
-      description: 'Tres aplicaciones: establecimiento, desarrollo vegetativo, y producción',
-      numberOfSplits: 3,
-      distributionPattern: [30, 40, 30],
-      suitableCrops: ['Tomate', 'Pepino', 'Pimiento', 'Melón'],
-      suitableScales: ['small', 'medium'],
-      advantages: [
-        'Balance entre eficiencia y simplicidad',
-        'Mejor ajuste a demanda del cultivo',
-        'Menor riesgo de lixiviación que 2 splits'
-      ],
-      disadvantages: [
-        'Requiere más mano de obra que 2 splits',
-        'Mayor complejidad logística'
-      ]
-    },
-    {
-      id: 'four-split',
-      name: '4 Aplicaciones (Óptimo)',
-      description: 'Cuatro aplicaciones distribuidas según fases fenológicas críticas',
-      numberOfSplits: 4,
-      distributionPattern: [25, 30, 30, 15],
-      suitableCrops: ['Tomate', 'Pimiento', 'Berenjena', 'Sandía'],
-      suitableScales: ['medium', 'large'],
-      advantages: [
-        'Excelente eficiencia de uso de nutrientes',
-        'Minimiza lixiviación',
-        'Se ajusta bien a demanda del cultivo',
-        'Ideal para cultivos de alto valor'
-      ],
-      disadvantages: [
-        'Mayor costo de mano de obra',
-        'Requiere planificación detallada'
-      ]
-    },
-    {
-      id: 'weekly-fertigation',
-      name: 'Fertirriego Semanal (6-12 aplicaciones)',
-      description: 'Aplicaciones frecuentes mediante fertirriego, ideal para hidroponía y cultivos intensivos',
-      numberOfSplits: 10,
-      distributionPattern: [8, 10, 12, 12, 12, 12, 10, 10, 8, 6],
-      suitableCrops: ['Tomate hidropónico', 'Pimiento hidropónico', 'Lechuga', 'Fresa'],
-      suitableScales: ['small', 'medium'],
-      advantages: [
-        'Máxima eficiencia de nutrientes',
-        'Control preciso de nutrición',
-        'Mínimo riesgo de lixiviación',
-        'Ideal para fertirriego automatizado'
-      ],
-      disadvantages: [
-        'Requiere sistema de fertirriego',
-        'Alta demanda de monitoreo',
-        'No viable para aplicaciones manuales'
-      ]
-    }
-  ];
-
   constructor() { }
 
   // ==========================================================================
@@ -189,18 +109,21 @@ export class SplitApplicationService {
   }
 
   /**
-   * Get preset strategies
+   * Get preset strategies from API
+   * TODO: Replace with actual API endpoint when available
    */
   getStrategyPresets(): Observable<SplitStrategyPreset[]> {
-    return of(this.STRATEGY_PRESETS);
+    console.warn('Strategy presets API not configured - returning empty array');
+    return of([]);
   }
 
   /**
-   * Get strategy preset by ID
+   * Get strategy preset by ID from API
+   * TODO: Replace with actual API endpoint when available
    */
   getStrategyPreset(id: string): Observable<SplitStrategyPreset | undefined> {
-    const preset = this.STRATEGY_PRESETS.find(p => p.id === id);
-    return of(preset);
+    console.warn(`Strategy preset ${id} API not configured - returning undefined`);
+    return of(undefined);
   }
 
   /**

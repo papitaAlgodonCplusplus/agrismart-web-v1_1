@@ -107,8 +107,8 @@ export class SplitApplicationCalculatorComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error loading data from API:', error);
           this.isLoadingData = false;
-          // Still allow use with generic stages if API fails
-          this.growthStages = this.createGenericGrowthStages();
+          this.growthStages = [];
+          this.errorMessage = 'Failed to load data from API. Please check your connection and try again.';
         }
       });
   }
@@ -208,8 +208,9 @@ export class SplitApplicationCalculatorComponent implements OnInit, OnDestroy {
     const crop = this.crops.find(c => c.name === cropName || c.scientificName === cropName);
 
     if (!crop) {
-      console.log(`Crop "${cropName}" not found in API data, using generic growth stages`);
-      this.growthStages = this.createGenericGrowthStages();
+      console.warn(`Crop "${cropName}" not found in API data - no growth stages available`);
+      this.growthStages = [];
+      this.errorMessage = `Crop "${cropName}" not found. Please configure crop data in the system.`;
       return;
     }
 
@@ -217,8 +218,9 @@ export class SplitApplicationCalculatorComponent implements OnInit, OnDestroy {
     const phases = this.cropPhases.filter(p => p.cropId === crop.id);
 
     if (phases.length === 0) {
-      console.log(`No phases found for crop "${cropName}", using generic growth stages`);
-      this.growthStages = this.createGenericGrowthStages();
+      console.warn(`No phases found for crop "${cropName}" - no growth stages available`);
+      this.growthStages = [];
+      this.errorMessage = `No growth phases configured for "${cropName}". Please add crop phases in the system.`;
       return;
     }
 
@@ -278,72 +280,6 @@ export class SplitApplicationCalculatorComponent implements OnInit, OnDestroy {
     console.log(`Loaded ${this.growthStages.length} growth stages from API for "${cropName}"`);
   }
 
-  private createGenericGrowthStages(): GrowthStage[] {
-    const cycleDays = this.splitForm.get('cycleDays')?.value || 100;
-
-    return [
-      {
-        id: 1,
-        name: 'Establecimiento',
-        startDay: 0,
-        endDay: Math.floor(cycleDays * 0.15),
-        durationDays: Math.floor(cycleDays * 0.15),
-        description: 'Fase inicial de establecimiento',
-        nitrogenDemand: 0.4,
-        phosphorusDemand: 0.6,
-        potassiumDemand: 0.4,
-        calciumDemand: 0.5,
-        magnesiumDemand: 0.4,
-        growthRate: 'slow',
-        criticalPeriod: true
-      },
-      {
-        id: 2,
-        name: 'Crecimiento Vegetativo',
-        startDay: Math.floor(cycleDays * 0.15) + 1,
-        endDay: Math.floor(cycleDays * 0.5),
-        durationDays: Math.floor(cycleDays * 0.35),
-        description: 'Desarrollo vegetativo rápido',
-        nitrogenDemand: 0.9,
-        phosphorusDemand: 0.7,
-        potassiumDemand: 0.8,
-        calciumDemand: 0.7,
-        magnesiumDemand: 0.6,
-        growthRate: 'rapid',
-        criticalPeriod: true
-      },
-      {
-        id: 3,
-        name: 'Reproducción',
-        startDay: Math.floor(cycleDays * 0.5) + 1,
-        endDay: Math.floor(cycleDays * 0.85),
-        durationDays: Math.floor(cycleDays * 0.35),
-        description: 'Floración y fructificación',
-        nitrogenDemand: 0.6,
-        phosphorusDemand: 0.6,
-        potassiumDemand: 1.0,
-        calciumDemand: 0.9,
-        magnesiumDemand: 0.7,
-        growthRate: 'moderate',
-        criticalPeriod: true
-      },
-      {
-        id: 4,
-        name: 'Maduración',
-        startDay: Math.floor(cycleDays * 0.85) + 1,
-        endDay: cycleDays,
-        durationDays: Math.floor(cycleDays * 0.15),
-        description: 'Maduración y cosecha',
-        nitrogenDemand: 0.4,
-        phosphorusDemand: 0.4,
-        potassiumDemand: 0.8,
-        calciumDemand: 0.6,
-        magnesiumDemand: 0.5,
-        growthRate: 'slow',
-        criticalPeriod: false
-      }
-    ];
-  }
 
   private updateHarvestDate(): void {
     const plantingDate = new Date(this.splitForm.get('plantingDate')?.value);

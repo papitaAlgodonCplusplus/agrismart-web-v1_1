@@ -140,7 +140,7 @@ export class IrrigationDecisionEngineService {
       }),
       catchError(error => {
         console.error('Error getting irrigation recommendation:', error);
-        return of(this.getEmergencyRecommendation(error));
+        return throwError(() => error);
       })
     );
   }
@@ -199,15 +199,11 @@ export class IrrigationDecisionEngineService {
   private getSubstrateProperties(cropProductionId: number): Observable<GrowingMedium> {
     return this.growingMediumService.getAll(false).pipe(
       map(response => {
+        console.log('Growing medium response:', response);
         // Extract growing medium array from response
         let growingMedia = [];
-        if (Array.isArray(response)) {
-          growingMedia = response;
-        } else if (response && Array.isArray(response.growingMedia)) {
-          growingMedia = response.growingMedia;
-        } else if (response && response.result && Array.isArray(response.result.growingMedia)) {
-          growingMedia = response.result.growingMedia;
-        }
+        growingMedia = response.growingMediums;
+
 
         if (growingMedia.length === 0) {
           console.error('No active growing medium found - GrowingMedium data is required');
@@ -329,7 +325,7 @@ export class IrrigationDecisionEngineService {
           d.sensor && typeof d.sensor === 'string' && d.sensor.toLowerCase().includes('drain')
         );
 
-        let recentDrainagePercentage = 0; 
+        let recentDrainagePercentage = 0;
 
         if (drainReadings.length > 0 && totalVolume > 0) {
           // Sum up drain volumes
@@ -477,19 +473,35 @@ export class IrrigationDecisionEngineService {
    */
   private getContainerInfo(cropProductionId: number): Observable<Container> {
     return this.cropProductionService.getById(cropProductionId).pipe(
-      switchMap(cropProduction => {
-        // Extract containerId from crop production
-        const containerId = (cropProduction as any).containerId;
+      switchMap((cropProduction: any) => {
+        console.log('Crop production for container info:', cropProduction);
 
-        if (!containerId) {
-          console.error('CropProduction missing containerId');
-          throw new Error('CropProduction must have a containerId for container information');
+        // Try different paths to extract containerId
+        let containerId: number | undefined;
+
+        if (cropProduction?.cropProduction?.containerId) {
+          containerId = cropProduction.cropProduction.containerId;
+        } else if (cropProduction?.containerId) {
+          containerId = cropProduction.containerId;
+        } else if (cropProduction?.result?.cropProduction?.containerId) {
+          containerId = cropProduction.result.cropProduction.containerId;
+        } else if (cropProduction?.result?.containerId) {
+          containerId = cropProduction.result.containerId;
         }
+
+        // Validate containerId
+        if (!containerId || typeof containerId !== 'number' || containerId <= 0) {
+          console.error('CropProduction missing valid containerId. CropProduction:', cropProduction);
+          throw new Error(`CropProduction (ID: ${cropProductionId}) must have a valid containerId for container information`);
+        }
+
+        console.log('Using containerId:', containerId);
 
         // Fetch the actual container from the API
         return this.containerService.getById(containerId);
       }),
       map(response => {
+        console.log('Container response:', response);
         // Extract container from response
         if (response && response.result && response.result.container) {
           return response.result.container;
@@ -576,14 +588,14 @@ export class IrrigationDecisionEngineService {
 
     if (!shouldIrrigate) {
       return {
-        shouldIrrigate: false,
-        recommendedVolume: 0,
-        recommendedDuration: 0,
-        totalVolume: 0,
-        confidence: 85,
-        reasoning: ['Soil moisture levels are adequate', 'No urgent conditions detected'],
-        urgency: 'low',
-        nextRecommendedCheck: new Date(Date.now() + 2 * 60 * 60 * 1000) // Check again in 2 hours
+      shouldIrrigate: false,
+      recommendedVolume: 0,
+      recommendedDuration: 0,
+      totalVolume: 0,
+      confidence: 85,
+      reasoning: ['Los niveles de humedad del suelo son adecuados', 'No se detectaron condiciones urgentes'],
+      urgency: 'low',
+      nextRecommendedCheck: new Date(Date.now() + 2 * 60 * 60 * 1000) // Check again in 2 hours
       };
     }
 
@@ -994,23 +1006,4 @@ export class IrrigationDecisionEngineService {
     return Math.round(avgConfidence * dataQualityFactor);
   }
 
-  /**
-   * Get emergency recommendation when errors occur
-   */
-  private getEmergencyRecommendation(error: any): IrrigationRecommendation {
-    return {
-      shouldIrrigate: false,
-      recommendedVolume: 0,
-      recommendedDuration: 0,
-      totalVolume: 0,
-      confidence: 30,
-      reasoning: [
-        'Unable to gather sufficient data for recommendation',
-        'Manual inspection recommended',
-        `Error: ${error.message || 'Unknown error'}`
-      ],
-      urgency: 'low',
-      nextRecommendedCheck: new Date(Date.now() + 30 * 60 * 1000) // Check again in 30 minutes
-    };
-  }
 }

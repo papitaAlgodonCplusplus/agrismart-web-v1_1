@@ -1,20 +1,92 @@
 import { Injectable } from '@angular/core';
-import { GrowthStage, DEFAULT_GROWTH_STAGES } from '../models/aggregation.models';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { GrowthStage } from '../models/aggregation.models';
+import { CropPhaseService, CropPhase } from '../../crop-phases/services/crop-phase.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GrowthStageCalculatorService {
 
-  constructor() { }
+  constructor(private cropPhaseService: CropPhaseService) { }
 
   /**
-   * Get all growth stages (can be customized per crop in future)
+   * Convert CropPhase array to GrowthStage array
    */
-  getGrowthStages(cropId?: number): GrowthStage[] {
-    // TODO: In future, load crop-specific stages from API
-    // For now, return default stages
-    return DEFAULT_GROWTH_STAGES;
+  private convertCropPhasesToGrowthStages(cropPhases: CropPhase[]): GrowthStage[] {
+    // Default colors and icons for different stage types
+    const stageColors = ['#8B4513', '#28a745', '#ffc107', '#dc3545', '#6c757d', '#17a2b8', '#6610f2'];
+    const stageIcons = ['bi-seed', 'bi-tree', 'bi-flower1', 'bi-apple', 'bi-basket', 'bi-sun', 'bi-stars'];
+
+    // Sort by sequence or starting week
+    const sortedPhases = cropPhases
+      .filter(phase => phase.active)
+      .sort((a, b) => {
+        if (a.sequence !== undefined && b.sequence !== undefined) {
+          return a.sequence - b.sequence;
+        }
+        return (a.startingWeek || 0) - (b.startingWeek || 0);
+      });
+
+    return sortedPhases.map((phase, index) => {
+      // Convert weeks to days (assuming 7 days per week)
+      const startDay = (phase.startingWeek || 0) * 7;
+      const endDay = (phase.endingWeek || phase.startingWeek || 0) * 7 + 6;
+
+      return {
+        id: phase.id,
+        name: phase.name,
+        startDay: startDay,
+        endDay: endDay,
+        color: stageColors[index % stageColors.length],
+        icon: stageIcons[index % stageIcons.length],
+        description: phase.description || ''
+      };
+    });
+  }
+
+  /**
+   * Get all growth stages from API by crop ID
+   */
+  getGrowthStages(cropId?: number): Observable<GrowthStage[]> {
+    if (!cropId) {
+      console.warn('No cropId provided, returning empty growth stages array');
+      return of([]);
+    }
+
+    return this.cropPhaseService.getByCropId(cropId, false).pipe(
+      map(cropPhases => {
+        if (cropPhases && cropPhases.length > 0) {
+          return this.convertCropPhasesToGrowthStages(cropPhases);
+        }
+        console.warn(`No crop phases found for cropId ${cropId}`);
+        return [];
+      }),
+      catchError(error => {
+        console.error('Error fetching crop phases:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Get all growth stages from API (all crops)
+   */
+  getAllGrowthStages(): Observable<GrowthStage[]> {
+    return this.cropPhaseService.getAll().pipe(
+      map(cropPhases => {
+        if (cropPhases && cropPhases.length > 0) {
+          return this.convertCropPhasesToGrowthStages(cropPhases);
+        }
+        console.warn('No crop phases found');
+        return [];
+      }),
+      catchError(error => {
+        console.error('Error fetching all crop phases:', error);
+        throw error;
+      })
+    );
   }
 
   /**
@@ -23,8 +95,13 @@ export class GrowthStageCalculatorService {
   getGrowthStageForDate(
     date: Date,
     plantingDate: Date,
-    stages: GrowthStage[] = DEFAULT_GROWTH_STAGES
-  ): GrowthStage {
+    stages: GrowthStage[]
+  ): GrowthStage | undefined {
+    if (!stages || stages.length === 0) {
+      console.warn('No growth stages provided');
+      return undefined;
+    }
+
     const daysAfterPlanting = this.getDaysAfterPlanting(date, plantingDate);
 
     // Find the stage that contains this day
@@ -32,8 +109,8 @@ export class GrowthStageCalculatorService {
       daysAfterPlanting >= s.startDay && daysAfterPlanting <= s.endDay
     );
 
-    // If not found, return last stage (shouldn't happen with proper stage config)
-    return stage || stages[stages.length - 1];
+    // Return the stage or undefined if not found
+    return stage;
   }
 
   /**

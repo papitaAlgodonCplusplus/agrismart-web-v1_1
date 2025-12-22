@@ -393,11 +393,28 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
         };
       }
 
-      const numericValue = this.extractNumericValue(item.payload);
+      let numericValue = this.extractNumericValue(item.payload);
 
-      // Always store the latest reading for each sensor
-      if (!deviceGroups[item.deviceId].readings[item.sensor] ||
-        new Date(item.recordDate) > new Date(deviceGroups[item.deviceId].readings[item.sensor].timestamp)) {
+      // Apply sensor-specific validations and conversions
+      if (numericValue !== null) {
+        // Temperature sensors: divide by 10
+        if (item.sensor.includes('temp') || item.sensor.includes('TEM')) {
+          numericValue = this.validateTemperature(numericValue, item.sensor, item.payload, item.deviceId);
+        }
+        // Conductivity sensors: validate and convert units
+        else if (item.sensor.includes('conduct') || item.sensor.includes('EC')) {
+          numericValue = this.validateConductivity(numericValue, 'mS/cm', item.payload, item.deviceId);
+        }
+        // pH sensors: validate range
+        else if (item.sensor.includes('PH') || item.sensor.includes('ph')) {
+          const isValid = this.validateSensorData(numericValue, 'pH', item.payload, item.deviceId);
+          if (!isValid) numericValue = null;
+        }
+      }
+
+      // Always store the latest reading for each sensor (only if valid)
+      if (numericValue !== null && (!deviceGroups[item.deviceId].readings[item.sensor] ||
+        new Date(item.recordDate) > new Date(deviceGroups[item.deviceId].readings[item.sensor].timestamp))) {
         deviceGroups[item.deviceId].readings[item.sensor] = {
           value: numericValue,
           rawValue: item.payload,
@@ -1248,9 +1265,16 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
           const [deviceId, sensorType] = key.split('_').slice(0, 2);
           const fullSensorType = key.split('_').slice(1).join('_');
 
-          // Extract valid temperature values
+          // Extract valid temperature values with /10 conversion
+          // CRITICAL: Temperature sensors return value × 10, must divide by 10
           const temps = readings
-            .map(r => this.extractNumericValue(r.payload))
+            .map(r => {
+              const rawValue = this.extractNumericValue(r.payload);
+              if (rawValue === null) return null;
+
+              // Apply /10 conversion and validate
+              return this.validateTemperature(rawValue, fullSensorType, r.payload, r.deviceId);
+            })
             .filter(v => v !== null && v > -50 && v < 100) as number[];
 
           if (temps.length === 0) return;
@@ -1491,10 +1515,14 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
       const value = this.extractNumericValue(item.payload);
       if (value !== null && value >= 0) { // Only valid positive values
-        if (!timeGroups.has(hourKey)) {
-          timeGroups.set(hourKey, { values: [], deviceId: item.deviceId });
+        // Validate solar radiation (expected range 0-1200 W/m²)
+        const validatedValue = this.validatePAR(value, item.payload, item.deviceId);
+        if (validatedValue !== null) {
+          if (!timeGroups.has(hourKey)) {
+            timeGroups.set(hourKey, { values: [], deviceId: item.deviceId });
+          }
+          timeGroups.get(hourKey)!.values.push(validatedValue);
         }
-        timeGroups.get(hourKey)!.values.push(value);
       }
     });
 
@@ -1716,22 +1744,20 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   preparePARData(): void {
     console.log("=== PAR DATA PREPARATION START ===");
 
-    // PAR sensor types to track
+    // IMPORTANT: According to working dashboard, we should use TSR sensors, NOT PAR
+    // PAR sensors may have different units or be incorrect
+    // TSR = Total Solar Radiation in W/m²
     const parSensors = [
-      'PAR',
-      'PhotosyntheticallyActiveRadiation',
-      'PARAvg',
-      'PARMin',
-      'PARMax',
-      'par',
-      'illumination' // Some systems use illumination for PAR
+      'TSR',  // ✅ Use TSR instead of PAR (matches working dashboard)
+      'TotalSolarRadiation',
+      'solar_radiation'
+      // ❌ Removed: 'PAR', 'PhotosyntheticallyActiveRadiation' - wrong sensor type
     ];
 
-    // Filter PAR data from rawData - from climate/meteorological devices
+    // Filter TSR data from rawData - from climate/meteorological devices
     const parRawData = this.rawData.filter(item =>
       parSensors.some(sensor =>
-        item.sensor.includes(sensor) ||
-        item.sensor.toLowerCase().includes('par')
+        item.sensor.includes(sensor)
       )
     );
 
@@ -1754,10 +1780,14 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
       const value = this.extractNumericValue(item.payload);
       if (value !== null && value >= 0) { // Only valid positive values
-        if (!timeGroups.has(hourKey)) {
-          timeGroups.set(hourKey, { values: [], deviceId: item.deviceId });
+        // Validate solar radiation (expected range 0-1200 W/m²)
+        const validatedValue = this.validatePAR(value, item.payload, item.deviceId);
+        if (validatedValue !== null) {
+          if (!timeGroups.has(hourKey)) {
+            timeGroups.set(hourKey, { values: [], deviceId: item.deviceId });
+          }
+          timeGroups.get(hourKey)!.values.push(validatedValue);
         }
-        timeGroups.get(hourKey)!.values.push(value);
       }
     });
 
@@ -2062,6 +2092,395 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   toggleClimateDevices(): void {
     this.isClimateDevicesCollapsed = !this.isClimateDevicesCollapsed;
+  }
+
+  // ============================================================================
+  // HELPER METHODS - Copied from dashboard.component.ts for data validation
+  // ============================================================================
+
+  /**
+   * Extract sensor values by sensor name (uses partial match with .includes())
+   * Copied from dashboard.component.ts:1514-1519
+   */
+  private extractSensorValues(sensors: any[], sensorName: string): number[] {
+    return sensors
+      .filter(s => s.sensor.includes(sensorName))  // ⚠️ Uses .includes() not ===
+      .map(s => typeof s.payload === 'number' ? s.payload : parseFloat(s.payload))
+      .filter(v => !isNaN(v));
+  }
+
+  /**
+   * Calculate min/max/avg statistics from array of values
+   * Copied from dashboard.component.ts:1521-1531
+   * Returns {0, 0, 0} if no data - this is why VPD can be 0!
+   */
+  private calculateStatsValues(values: number[]): { min: number; max: number; avg: number } {
+    if (values.length === 0) {
+      return { min: 0, max: 0, avg: 0 };
+    }
+
+    return {
+      min: Math.min(...values),
+      max: Math.max(...values),
+      avg: values.reduce((sum, v) => sum + v, 0) / values.length
+    };
+  }
+
+  /**
+   * Group raw device data by hour
+   * Copied from dashboard.component.ts:1498-1512
+   */
+  private groupRawDataByHour(): Map<number, any[]> {
+    const grouped = new Map<number, any[]>();
+
+    this.rawData.forEach((point: any) => {
+      const date = new Date(point.recordDate);
+      const hourKey = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        date.getHours()
+      ).getTime();
+
+      if (!grouped.has(hourKey)) {
+        grouped.set(hourKey, []);
+      }
+      grouped.get(hourKey)!.push(point);
+    });
+
+    return grouped;
+  }
+
+  /**
+   * Calculate saturation vapor pressure (kPa) from temperature
+   * Copied from dashboard.component.ts:1533-1535
+   */
+  private getSaturationVaporPressure(temp: number): number {
+    return 0.6108 * Math.exp((17.27 * temp) / (temp + 237.3));
+  }
+
+  // ============================================================================
+  // DATA VALIDATION METHODS - With console logging of raw payload
+  // ============================================================================
+
+  /**
+   * Validate sensor data and log out-of-range values with raw payload
+   * @param value - Processed sensor value
+   * @param sensorType - Type of sensor for range checking
+   * @param rawPayload - Original raw payload from sensor
+   * @param deviceId - Device ID for logging
+   * @returns Whether value is within valid range
+   */
+  private validateSensorData(
+    value: number,
+    sensorType: string,
+    rawPayload: any,
+    deviceId: string
+  ): boolean {
+    const ranges: Record<string, {min: number, max: number}> = {
+      'temperature': { min: -10, max: 60 },
+      'soilTemperature': { min: 0, max: 50 },
+      'humidity': { min: 0, max: 100 },
+      'windSpeed': { min: 0, max: 50 },
+      'solarRadiation': { min: 0, max: 1200 },  // W/m²
+      'PAR': { min: 0, max: 3000 },  // μmol/m²/s
+      'conductivity': { min: 0, max: 5 },  // mS/cm
+      'pH': { min: 3, max: 10 },
+      'pressure': { min: 800, max: 1100 },  // hPa
+      'waterPressure': { min: 0, max: 1.0 }  // MPa
+    };
+
+    const range = ranges[sensorType];
+    if (!range) return true;  // Unknown sensor, allow
+
+    if (value < range.min || value > range.max) {
+      console.error(`❌ ${sensorType} OUT OF RANGE:`, {
+        deviceId,
+        sensorType,
+        processedValue: value,
+        rawPayload: rawPayload,
+        expectedRange: `${range.min} - ${range.max}`,
+        timestamp: new Date().toISOString()
+      });
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Validate and convert temperature with sensor-specific conversion
+   * @param rawValue - Raw temperature value from sensor
+   * @param sensorType - Type of temperature sensor
+   * @param rawPayload - Original payload for logging
+   * @param deviceId - Device ID for logging
+   * @returns Validated temperature in °C or null if invalid
+   */
+  private validateTemperature(
+    rawValue: number,
+    sensorType: string,
+    rawPayload: any,
+    deviceId: string
+  ): number | null {
+    // CRITICAL: Different sensors have different formats!
+    // DS18B20 sensors: return value × 10 (need /10 conversion)
+    // TEMP_SOIL sensors: return value already in °C (no conversion)
+
+    let temperature: number;
+
+    if (sensorType.includes('DS18B20')) {
+      // DS18B20 digital sensors need /10 conversion
+      temperature = rawValue / 10;
+      console.log(`🌡️ DS18B20 conversion: ${rawValue} → ${temperature}°C (${deviceId})`);
+    } else if (sensorType === 'TEMP_SOIL' || sensorType === 'temp_SOIL') {
+      // TEMP_SOIL sensors are already in °C
+      temperature = rawValue;
+      console.log(`🌡️ TEMP_SOIL direct: ${rawValue}°C (${deviceId})`);
+    } else {
+      // Other temperature sensors - assume need /10 (default behavior)
+      temperature = rawValue / 10;
+      console.log(`🌡️ Generic temp sensor /10: ${rawValue} → ${temperature}°C (${deviceId})`);
+    }
+
+    const isValid = this.validateSensorData(
+      temperature,
+      sensorType === 'temp_SOIL' || sensorType === 'TEMP_SOIL' ? 'soilTemperature' : 'temperature',
+      rawPayload,
+      deviceId
+    );
+
+    if (!isValid) {
+      console.warn(`⚠️ Temperature validation failed:`, {
+        rawValue,
+        processedTemperature: temperature,
+        sensorType,
+        deviceId,
+        conversion: sensorType.includes('DS18B20') ? '/10 applied' :
+                    (sensorType.includes('TEMP_SOIL') || sensorType.includes('temp_SOIL')) ? 'no conversion' : '/10 applied (default)'
+      });
+      return null;
+    }
+
+    return temperature;
+  }
+
+  /**
+   * Validate conductivity and convert units if needed
+   * @param rawValue - Raw conductivity value
+   * @param unit - Expected unit ('mS/cm' or 'μS/cm')
+   * @param rawPayload - Original payload for logging
+   * @param deviceId - Device ID for logging
+   * @returns Validated conductivity in mS/cm or null if invalid
+   */
+  private validateConductivity(
+    rawValue: number,
+    unit: 'mS/cm' | 'μS/cm',
+    rawPayload: any,
+    deviceId: string
+  ): number | null {
+    // Convert μS/cm to mS/cm if needed
+    let normalizedValue = rawValue;
+    if (unit === 'μS/cm') {
+      normalizedValue = rawValue / 1000;
+    }
+
+    // Auto-detect if value suggests wrong unit
+    if (rawValue > 10 && unit === 'mS/cm') {
+      console.warn(`⚠️ Conductivity unit conversion:`, {
+        deviceId,
+        rawValue,
+        assumedUnit: unit,
+        convertedTo_mS_cm: rawValue / 1000,
+        rawPayload,
+        suggestion: 'Value seems to be in μS/cm, not mS/cm'
+      });
+      normalizedValue = rawValue / 1000;
+    }
+
+    const isValid = this.validateSensorData(normalizedValue, 'conductivity', rawPayload, deviceId);
+    return isValid ? normalizedValue : null;
+  }
+
+  /**
+   * Validate PAR (Photosynthetically Active Radiation)
+   * @param rawValue - Raw PAR value
+   * @param rawPayload - Original payload for logging
+   * @param deviceId - Device ID for logging
+   * @returns Validated PAR in μmol/m²/s or null if invalid
+   */
+  private validatePAR(
+    rawValue: number,
+    rawPayload: any,
+    deviceId: string
+  ): number | null {
+    const isValid = this.validateSensorData(rawValue, 'PAR', rawPayload, deviceId);
+
+    if (!isValid && rawValue > 3000) {
+      console.warn(`⚠️ PAR validation:`, {
+        deviceId,
+        rawValue,
+        rawPayload,
+        possibleIssue: 'May be cumulative instead of instantaneous, or wrong sensor type'
+      });
+    }
+
+    return isValid ? rawValue : null;
+  }
+
+  /**
+   * Validate VPD calculation
+   * Based on dashboard.component.ts:1156-1160
+   */
+  private validateVPD(
+    vpd: number,
+    temp: number,
+    humidity: number,
+    deviceId?: string
+  ): number {
+    // VPD cannot be 0 unless RH = 100%
+    if (vpd === 0 && humidity < 99) {
+      console.error('❌ VPD calculation error:', {
+        deviceId: deviceId || 'unknown',
+        vpd: 0,
+        temperature: temp,
+        humidity: humidity,
+        issue: 'VPD = 0 but humidity < 100%',
+        possibleCauses: [
+          'Humidity data not being extracted from sensors',
+          'Wrong sensor names (should be HUM or Hum_SHT2x)',
+          'Humidity payload parsing error'
+        ]
+      });
+
+      // Recalculate from scratch
+      const es = this.getSaturationVaporPressure(temp);
+      const ea = (humidity / 100) * es;
+      const correctedVPD = Math.max(0.01, es - ea);
+
+      console.warn(`⚠️ VPD corrected from 0.00 to ${correctedVPD.toFixed(2)} kPa`);
+      return correctedVPD;
+    }
+
+    // Validate reasonable range
+    if (vpd < 0) {
+      console.error('❌ Negative VPD detected:', { vpd, temp, humidity, deviceId });
+      return 0;
+    }
+
+    if (vpd > 4) {
+      console.warn('⚠️ VPD unusually high:', {
+        vpd: vpd.toFixed(2),
+        temp,
+        humidity,
+        deviceId,
+        note: 'Check humidity sensor - may be reading too low'
+      });
+    }
+
+    return vpd;
+  }
+
+  /**
+   * Calculate Climate KPIs from raw sensor data
+   * This method extracts climate data using correct sensor names and calculates VPD, ET, etc.
+   */
+  calculateClimateKPIs(): any {
+    console.log('=== CALCULATING CLIMATE KPIs ===');
+
+    // Filter climate station data
+    const climateSensors = this.rawData.filter(item =>
+      item.deviceId.includes('estacion-metereologica')
+    );
+
+    if (climateSensors.length === 0) {
+      console.warn('No climate sensor data found');
+      return null;
+    }
+
+    // Extract temperature using correct sensor names
+    // TEM sensors (air temperature from climate station) typically need /10
+    const temps = this.extractSensorValues(climateSensors, 'TEM')
+      .map(v => v / 10);  // TEM sensors return value × 10
+
+    console.log(`Climate TEM temps extracted: ${temps.length} values, sample: ${temps.slice(0, 3).join(', ')}°C`);
+
+    // Extract humidity using correct sensor names (HUM, Hum_SHT2x)
+    const humidities = [
+      ...this.extractSensorValues(climateSensors, 'HUM'),
+      ...this.extractSensorValues(climateSensors, 'Hum_SHT2x')
+    ];
+
+    // Extract wind speed using wind_speed_level (not wind_speed)
+    const windSpeeds = this.extractSensorValues(climateSensors, 'wind_speed_level');
+
+    // Extract solar radiation using TSR (not PAR)
+    const solarRadiation = this.extractSensorValues(climateSensors, 'TSR');
+
+    // Calculate statistics
+    const tempStats = this.calculateStatsValues(temps);
+    const humidityStats = this.calculateStatsValues(humidities);
+    const windStats = this.calculateStatsValues(windSpeeds);
+    const solarStats = this.calculateStatsValues(solarRadiation);
+
+    console.log('Climate sensor stats:', {
+      temps: { count: temps.length, ...tempStats },
+      humidity: { count: humidities.length, ...humidityStats },
+      wind: { count: windSpeeds.length, ...windStats },
+      solar: { count: solarRadiation.length, ...solarStats }
+    });
+
+    // Calculate VPD
+    const saturationVaporPressure = this.getSaturationVaporPressure(tempStats.avg);
+    const actualVaporPressure = humidityStats.avg > 0
+      ? (humidityStats.avg / 100) * saturationVaporPressure
+      : 0;
+    const vaporPressureDeficit = saturationVaporPressure - actualVaporPressure;
+
+    // Validate VPD
+    const validatedVPD = this.validateVPD(
+      vaporPressureDeficit,
+      tempStats.avg,
+      humidityStats.avg,
+      'climate-kpi'
+    );
+
+    // Note: ET calculation requires location data (latitude, altitude)
+    // For now, return the basic KPIs
+    const kpis = {
+      temperature: {
+        current: tempStats.avg,
+        min: tempStats.min,
+        max: tempStats.max,
+        unit: '°C'
+      },
+      humidity: {
+        current: humidityStats.avg,
+        min: humidityStats.min,
+        max: humidityStats.max,
+        unit: '%'
+      },
+      wind: {
+        current: windStats.avg,
+        min: windStats.min,
+        max: windStats.max,
+        unit: 'm/s'
+      },
+      solarRadiation: {
+        current: solarStats.avg,
+        min: solarStats.min,
+        max: solarStats.max,
+        unit: 'W/m²'
+      },
+      vpd: {
+        current: validatedVPD,
+        saturationVP: saturationVaporPressure,
+        actualVP: actualVaporPressure,
+        unit: 'kPa'
+      }
+    };
+
+    console.log('Climate KPIs calculated:', kpis);
+    return kpis;
   }
 
 }

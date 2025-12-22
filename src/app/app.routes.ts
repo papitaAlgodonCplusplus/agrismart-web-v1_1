@@ -49,6 +49,9 @@ import { FertilizerInputListComponent } from './features/fertilizer-inputs/ferti
 import { WaterChemistryComponent } from './features/water/water-chemistry.component'
 import { IrrigationEngineeringDesignComponent } from './features/irrigation-engineering-design/irrigation-engineering-design.component';
 
+// Droppers Management
+import { DropperListComponent } from './features/droppers/dropper-list/dropper-list.component';
+
 // Users & Administration
 import { ProfileComponent } from './features/profile/profile.component';
 
@@ -243,6 +246,13 @@ export const routes: Routes = [
         path: 'fertilizer-inputs',
         component: FertilizerInputListComponent,
         data: { title: 'Aportes de Fertilizante' }
+      },
+
+      // Droppers Management
+      {
+        path: 'droppers',
+        component: DropperListComponent,
+        data: { title: 'Goteros' }
       },
 
       // User Profile

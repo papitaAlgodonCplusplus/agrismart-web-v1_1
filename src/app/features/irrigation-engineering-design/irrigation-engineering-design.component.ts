@@ -888,10 +888,10 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     this.cropProductionService.getAll().pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (cropProductions) => {
-        this.cropProductions = cropProductions;
+      next: (cropProductions: any) => {
+        this.cropProductions = cropProductions.cropProductions;
 
-        if (cropProductions.length === 0) {
+        if (cropProductions.cropProductions.length === 0) {
           console.error('No crop productions found - user needs to create crop productions first');
           this.alertService.showWarning('No hay producciones de cultivo disponibles. Por favor, cree una producción primero.');
         }

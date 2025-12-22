@@ -261,13 +261,13 @@
 }
 
 .execution-form-modal {
-  background: var(--card-bg);
+  background: #ffffff;
   border-radius: 16px;
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
   animation: slideUp 0.3s ease;
 }
 
@@ -284,17 +284,18 @@
 
 .modal-header {
   padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: #ffffff;
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #1e293b;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -318,14 +319,16 @@
 
 .modal-body {
   padding: 1.5rem;
+  background: #ffffff;
 }
 
 .modal-footer {
   padding: 1.5rem;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
+  background: #ffffff;
 }
 
 /* ========================================
@@ -778,13 +781,13 @@ textarea.form-control {
 }
 
 .details-modal {
-  background: var(--card-bg);
+  background: #ffffff;
   border-radius: 16px;
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
   animation: slideUp 0.3s ease;
 }
 
@@ -1137,18 +1140,19 @@ textarea.form-control {
   display: flex;
   align-items: center;
   gap: 1rem;
-  color: var(--text-color);
+  color: #1e293b;
 }
 
 .recommendation-title i {
   font-size: 1.5rem;
+  color: #1e293b;
 }
 
 .recommendation-title h3 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text-color);
+  color: #1e293b;
 }
 
 .urgency-badge {
@@ -1160,30 +1164,48 @@ textarea.form-control {
   letter-spacing: 0.5px;
 }
 
-.urgency-critical {
+/* Urgency classes should only style the badge, not the card */
+.urgency-badge.urgency-critical {
   background: #ef4444;
   color: white;
 }
 
-.urgency-high {
+.urgency-badge.urgency-high {
   background: #f59e0b;
   color: white;
 }
 
-.urgency-medium {
+.urgency-badge.urgency-medium {
   background: #3b82f6;
   color: white;
 }
 
-.urgency-low {
+.urgency-badge.urgency-low {
   background: #10b981;
   color: white;
+}
+
+/* Card urgency styling - only affects header background */
+.recommendation-card.urgency-critical .recommendation-header {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+
+.recommendation-card.urgency-high .recommendation-header {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.recommendation-card.urgency-medium .recommendation-header {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.recommendation-card.urgency-low .recommendation-header {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
 }
 
 .btn-close-recommendation {
   background: none;
   border: none;
-  color: var(--text-color);
+  color: #1e293b;
   font-size: 1.25rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -1197,7 +1219,7 @@ textarea.form-control {
 
 .recommendation-body {
   padding: 1.5rem;
-  color: var(--text-color);
+  color: #1e293b;
 }
 
 .recommendation-decision {
@@ -1242,12 +1264,12 @@ textarea.form-control {
   margin: 0 0 0.5rem 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text-color);
+  color: #1e293b !important;
 }
 
 .decision-text p {
   margin: 0;
-  color: var(--muted-text);
+  color: #64748b !important;
   font-size: 0.95rem;
 }
 
@@ -1319,7 +1341,7 @@ textarea.form-control {
   margin: 0 0 1rem 0;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--text-color);
+  color: #1e293b !important;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1332,7 +1354,7 @@ textarea.form-control {
 
 .recommendation-reasoning li {
   margin-bottom: 0.5rem;
-  color: var(--text-color);
+  color: #1e293b !important;
 }
 
 .recommendation-actions {

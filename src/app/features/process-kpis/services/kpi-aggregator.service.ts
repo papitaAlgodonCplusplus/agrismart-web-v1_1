@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { DailyKPIOutput } from '../../services/calculations/kpi-orchestrator.service';
 import {
   AggregatedPeriodKPIs,
@@ -56,33 +58,38 @@ export class KpiAggregatorService {
     dailyKPIs: DailyKPIOutput[],
     plantingDate: Date,
     cropId?: number
-  ): AggregationDataset {
+  ): Observable<AggregationDataset> {
 
     if (dailyKPIs.length === 0) {
-      return this.createEmptyDataset('stage');
+      return new Observable(observer => {
+        observer.next(this.createEmptyDataset('stage'));
+        observer.complete();
+      });
     }
 
-    const stages = this.growthStageService.getGrowthStages(cropId);
+    return this.growthStageService.getGrowthStages(cropId).pipe(
+      map(stages => {
+        // Group KPIs by growth stage
+        const stageGroups = this.groupByGrowthStage(dailyKPIs, plantingDate, stages);
 
-    // Group KPIs by growth stage
-    const stageGroups = this.groupByGrowthStage(dailyKPIs, plantingDate, stages);
+        // Aggregate each stage
+        const periods: AggregatedPeriodKPIs[] = [];
+        stageGroups.forEach((kpis, stage) => {
+          if (kpis.length > 0) { // Only include stages with data
+            const aggregated = this.aggregatePeriodWithStage(kpis, stage, plantingDate);
+            periods.push(aggregated);
+          }
+        });
 
-    // Aggregate each stage
-    const periods: AggregatedPeriodKPIs[] = [];
-    stageGroups.forEach((kpis, stage) => {
-      if (kpis.length > 0) { // Only include stages with data
-        const aggregated = this.aggregatePeriodWithStage(kpis, stage, plantingDate);
-        periods.push(aggregated);
-      }
-    });
+        // Sort by stage start day
+        periods.sort((a, b) => {
+          if (!a.growthStage || !b.growthStage) return 0;
+          return a.growthStage.startDay - b.growthStage.startDay;
+        });
 
-    // Sort by stage start day
-    periods.sort((a, b) => {
-      if (!a.growthStage || !b.growthStage) return 0;
-      return a.growthStage.startDay - b.growthStage.startDay;
-    });
-
-    return this.createDataset(periods, 'stage', dailyKPIs, plantingDate);
+        return this.createDataset(periods, 'stage', dailyKPIs, plantingDate);
+      })
+    );
   }
 
   /**
@@ -142,7 +149,11 @@ export class KpiAggregatorService {
         plantingDate,
         stages
       );
-      stageMap.get(stage)?.push(kpi);
+
+      // Only add KPI if a matching stage was found
+      if (stage) {
+        stageMap.get(stage)?.push(kpi);
+      }
     });
 
     return stageMap;

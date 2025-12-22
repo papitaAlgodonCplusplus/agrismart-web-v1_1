@@ -1852,17 +1852,37 @@ export class ProcessKPIsComponent implements OnInit, OnDestroy {
       this.plantingDate
     );
 
-    // Calculate growth stage aggregation
-    this.stageAggregation = this.kpiAggregator.aggregateByGrowthStage(
+    // Get cropId from the first KPI if available
+    const cropId = this.kpiData.length > 0 ? this.kpiData[0].cropProductionId : undefined;
+
+    // Calculate growth stage aggregation (now returns Observable)
+    this.kpiAggregator.aggregateByGrowthStage(
       this.kpiData,
-      this.plantingDate
-    );
+      this.plantingDate,
+      cropId
+    ).pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (stageAggregation) => {
+          this.stageAggregation = stageAggregation;
 
-    console.log('Weekly aggregation:', this.weeklyAggregation);
-    console.log('Stage aggregation:', this.stageAggregation);
+          if (!stageAggregation || stageAggregation.periods.length === 0) {
+            console.warn('No growth stage data available - crop phases may not be configured for this crop');
+          }
 
-    // Render charts
-    this.renderAggregationCharts();
+          console.log('Weekly aggregation:', this.weeklyAggregation);
+          console.log('Stage aggregation:', this.stageAggregation);
+
+          // Render charts after stage aggregation is loaded
+          this.renderAggregationCharts();
+        },
+        error: (error) => {
+          console.error('Error calculating stage aggregation:', error);
+          this.stageAggregation = null;
+          this.error = 'Error loading growth stages. Please ensure crop phases are configured for this crop.';
+          // Still render weekly chart even if stage aggregation fails
+          this.renderAggregationCharts();
+        }
+      });
   }
 
   /**

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ApiService } from '../../core/services/api.service';
 
 export interface Container {
   id: number;
@@ -50,9 +51,9 @@ export interface UpdateContainerCommand {
   providedIn: 'root'
 })
 export class ContainerService {
-  private apiUrl = `${environment.agronomicApiUrl}/Container`;
+  private apiUrl = '/Container';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: ApiService) { }
 
   /**
    * Get all containers
@@ -63,7 +64,7 @@ export class ContainerService {
     if (includeInactives) {
       params = params.set('IncludeInactives', includeInactives.toString());
     }
-    return this.http.get<any>(this.apiUrl, { params });
+    return this.http.get<any>(this.apiUrl, params );
   }
 
   /**
@@ -78,7 +79,7 @@ export class ContainerService {
    */
   getByCatalogId(catalogId: number): Observable<any> {
     const params = new HttpParams().set('catalogId', catalogId.toString());
-    return this.http.get<any>(this.apiUrl, { params });
+    return this.http.get<any>(this.apiUrl, params );
   }
 
   /**
@@ -100,6 +101,6 @@ export class ContainerService {
    */
   delete(id: number, deletedBy: number): Observable<any> {
     let params = new HttpParams().set('deletedBy', deletedBy.toString());
-    return this.http.delete<any>(`${this.apiUrl}/${id}`, { params });
+    return this.http.delete<any>(`${this.apiUrl}/${id}`);
   }
 }

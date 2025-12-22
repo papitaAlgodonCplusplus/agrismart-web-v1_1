@@ -184,9 +184,9 @@ export class CropProductionListComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (units: any) => {
           console.log('Raw production units response:', units);
-          this.productionUnits = units.productionUnits;
+          this.productionUnits = units.productionUnits || units || [];
           this.isLoadingUnits = false;
-          console.log(`Loaded ${units.length} production units`);
+          console.log(`Loaded ${this.productionUnits.length} production units`);
         },
         error: (error) => {
           this.isLoadingUnits = false;
@@ -223,14 +223,7 @@ export class CropProductionListComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          // Extract growing medium array from response
-          if (Array.isArray(response)) {
-            this.growingMediums = response;
-          } else if (response && Array.isArray(response.growingMedia)) {
-            this.growingMediums = response.growingMedia;
-          } else if (response && response.result && Array.isArray(response.result.growingMedia)) {
-            this.growingMediums = response.result.growingMedia;
-          }
+          this.growingMediums = response.growingMediums || [];
           console.log(`Loaded ${this.growingMediums.length} growing mediums`);
         },
         error: (error) => {
@@ -245,14 +238,7 @@ export class CropProductionListComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          // Extract droppers array from response
-          if (Array.isArray(response)) {
-            this.droppers = response;
-          } else if (response && Array.isArray(response.droppers)) {
-            this.droppers = response.droppers;
-          } else if (response && response.result && Array.isArray(response.result.droppers)) {
-            this.droppers = response.result.droppers;
-          }
+          this.droppers = response.droppers || [];
           console.log(`Loaded ${this.droppers.length} droppers`);
         },
         error: (error) => {
@@ -527,5 +513,73 @@ export class CropProductionListComponent implements OnInit, OnDestroy {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  getCropName(production: any): string {
+    if (production.crop?.name) return production.crop.name;
+    if (production.cropId) {
+      const crop = this.crops.find(c => c.id === production.cropId);
+      return crop?.name || 'Sin cultivo';
+    }
+    return 'Sin cultivo';
+  }
+
+  getProductionUnitName(production: any): string {
+    if (production.productionUnit?.name) return production.productionUnit.name;
+    if (production.productionUnitId) {
+      const unit = this.productionUnits.find(u => u.id === production.productionUnitId);
+      return unit?.name || 'Sin unidad';
+    }
+    return 'Sin unidad';
+  }
+
+  getStartDate(production: any): Date | string | null {
+    return (production as any).startDate || production.plantingDate || null;
+  }
+
+  getEndDate(production: any): Date | string | null {
+    return (production as any).endDate || production.estimatedHarvestDate || null;
+  }
+
+  getFieldValue(production: any, fieldName: string): string {
+    const value = (production as any)[fieldName];
+    if (value === null || value === undefined) return 'N/A';
+    return value.toString();
+  }
+
+  calculateArea(production: any): string {
+    const width = (production as any).width;
+    const length = (production as any).length;
+    if (width && length) {
+      return (width * length).toFixed(2);
+    }
+    return 'N/A';
+  }
+
+  getContainerName(production: any): string {
+    if (production.container?.name) return production.container.name;
+    if ((production as any).containerId) {
+      const container = this.containers.find(c => c.id === (production as any).containerId);
+      return container?.name || 'No especificado';
+    }
+    return 'No especificado';
+  }
+
+  getGrowingMediumName(production: any): string {
+    if (production.growingMedium?.name) return production.growingMedium.name;
+    if ((production as any).growingMediumId) {
+      const medium = this.growingMediums.find(m => m.id === (production as any).growingMediumId);
+      return medium?.name || 'No especificado';
+    }
+    return 'No especificado';
+  }
+
+  getDropperName(production: any): string {
+    if (production.dropper?.name) return production.dropper.name;
+    if ((production as any).dropperId) {
+      const dropper = this.droppers.find(d => d.id === (production as any).dropperId);
+      return dropper?.name || 'No especificado';
+    }
+    return 'No especificado';
   }
 }

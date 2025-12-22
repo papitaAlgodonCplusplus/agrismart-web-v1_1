@@ -1,0 +1,338 @@
+<div class="dropper-list-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2>
+        <i class="bi bi-droplet-fill"></i>
+        Gestión de Goteros
+      </h2>
+      <p class="text-muted">Administre los goteros del sistema de riego</p>
+    </div>
+    <button class="btn btn-primary" (click)="createNew()">
+      <i class="bi bi-plus-circle"></i>
+      Nuevo Gotero
+    </button>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show">
+    <i class="bi bi-check-circle-fill"></i>
+    {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Buscar por nombre, caudal o ID..."
+        [(ngModel)]="searchTerm"
+      />
+      <button *ngIf="searchTerm" class="btn-clear" (click)="clearSearch()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+
+    <div class="filter-actions">
+      <button
+        class="btn btn-outline-secondary"
+        [class.active]="includeInactives"
+        (click)="toggleActiveFilter()"
+      >
+        <i class="bi bi-eye" [class.bi-eye-slash]="!includeInactives"></i>
+        {{ includeInactives ? 'Ver solo activos' : 'Ver inactivos' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p>Cargando goteros...</p>
+  </div>
+
+  <!-- Droppers Table -->
+  <div *ngIf="!isLoading" class="table-container">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Catálogo</th>
+          <th>Caudal (L/h)</th>
+          <th>Estado</th>
+          <th>Fecha Creación</th>
+          <th class="text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let dropper of filteredDroppers$ | async; trackBy: trackByFn">
+          <td class="fw-bold">#{{ dropper.id }}</td>
+          <td>
+            <i class="bi bi-droplet-fill text-primary me-2"></i>
+            {{ dropper.name }}
+          </td>
+          <td>
+            <span class="badge bg-info">{{ getCatalogName(dropper.catalogId) }}</span>
+          </td>
+          <td>
+            <span class="flow-rate">{{ dropper.flowRate | number:'1.2-2' }} L/h</span>
+          </td>
+          <td>
+            <span
+              class="badge"
+              [class.bg-success]="dropper.active"
+              [class.bg-secondary]="!dropper.active"
+            >
+              <i class="bi" [class.bi-check-circle]="dropper.active" [class.bi-x-circle]="!dropper.active"></i>
+              {{ dropper.active ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td>{{ formatDate(dropper.dateCreated) }}</td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              <button
+                class="btn btn-outline-primary"
+                (click)="view(dropper)"
+                title="Ver detalles"
+              >
+                <i class="bi bi-eye"></i>
+              </button>
+              <button
+                class="btn btn-outline-warning"
+                (click)="edit(dropper)"
+                title="Editar"
+              >
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button
+                class="btn btn-outline-danger"
+                (click)="delete(dropper)"
+                title="Eliminar"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty State -->
+    <div *ngIf="(filteredDroppers$ | async)?.length === 0" class="empty-state">
+      <i class="bi bi-droplet"></i>
+      <h4>{{ getEmptyStateMessage() }}</h4>
+      <p *ngIf="!searchTerm && includeInactives" class="text-muted">
+        Comience creando un nuevo gotero usando el botón "Nuevo Gotero"
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal" [class.show]="showCreateModal || showEditModal" *ngIf="showCreateModal || showEditModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-droplet-fill"></i>
+          {{ showCreateModal ? 'Nuevo Gotero' : 'Editar Gotero' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+
+      <form [formGroup]="dropperForm" (ngSubmit)="saveDropper()">
+        <div class="modal-body">
+          <div *ngIf="formErrorMessage" class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            {{ formErrorMessage }}
+          </div>
+
+          <div class="mb-3">
+            <label for="catalogId" class="form-label">
+              Catálogo <span class="text-danger">*</span>
+            </label>
+            <select
+              id="catalogId"
+              class="form-select"
+              formControlName="catalogId"
+              [class.is-invalid]="dropperForm.get('catalogId')?.invalid && dropperForm.get('catalogId')?.touched"
+            >
+              <option [value]="null">Seleccione un catálogo</option>
+              <option *ngFor="let catalog of catalogs" [value]="catalog.id">
+                {{ catalog.name }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="dropperForm.get('catalogId')?.invalid && dropperForm.get('catalogId')?.touched">
+              El catálogo es requerido
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="name" class="form-label">
+              Nombre <span class="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              class="form-control"
+              formControlName="name"
+              placeholder="Ej: Gotero Autocompensante 2 L/h"
+              [class.is-invalid]="dropperForm.get('name')?.invalid && dropperForm.get('name')?.touched"
+            />
+            <div class="invalid-feedback" *ngIf="dropperForm.get('name')?.invalid && dropperForm.get('name')?.touched">
+              El nombre debe tener al menos 2 caracteres
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="flowRate" class="form-label">
+              Caudal (L/h) <span class="text-danger">*</span>
+            </label>
+            <input
+              type="number"
+              id="flowRate"
+              class="form-control"
+              formControlName="flowRate"
+              placeholder="Ej: 2.5"
+              step="0.1"
+              min="0"
+              [class.is-invalid]="dropperForm.get('flowRate')?.invalid && dropperForm.get('flowRate')?.touched"
+            />
+            <div class="invalid-feedback" *ngIf="dropperForm.get('flowRate')?.invalid && dropperForm.get('flowRate')?.touched">
+              El caudal debe ser mayor o igual a 0
+            </div>
+            <small class="form-text text-muted">
+              Ingrese el caudal nominal del gotero en litros por hora
+            </small>
+          </div>
+
+          <div class="mb-3" *ngIf="showEditModal">
+            <div class="form-check form-switch">
+              <input
+                type="checkbox"
+                id="active"
+                class="form-check-input"
+                formControlName="active"
+              />
+              <label class="form-check-label" for="active">
+                Estado: {{ dropperForm.get('active')?.value ? 'Activo' : 'Inactivo' }}
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting || dropperForm.invalid">
+            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!isSubmitting" class="bi bi-save me-2"></i>
+            {{ isSubmitting ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal" [class.show]="showViewModal" *ngIf="showViewModal && selectedDropper">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-info-circle-fill"></i>
+          Detalles del Gotero
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-section">
+          <div class="detail-row">
+            <span class="detail-label">ID:</span>
+            <span class="detail-value">#{{ selectedDropper.id }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Nombre:</span>
+            <span class="detail-value">{{ selectedDropper.name }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Catálogo:</span>
+            <span class="detail-value">
+              <span class="badge bg-info">{{ getCatalogName(selectedDropper.catalogId) }}</span>
+            </span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Caudal:</span>
+            <span class="detail-value fw-bold text-primary">
+              {{ selectedDropper.flowRate | number:'1.2-2' }} L/h
+            </span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Estado:</span>
+            <span class="detail-value">
+              <span
+                class="badge"
+                [class.bg-success]="selectedDropper.active"
+                [class.bg-secondary]="!selectedDropper.active"
+              >
+                {{ selectedDropper.active ? 'Activo' : 'Inactivo' }}
+              </span>
+            </span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Fecha Creación:</span>
+            <span class="detail-value">{{ formatDate(selectedDropper.dateCreated) }}</span>
+          </div>
+
+          <div class="detail-row" *ngIf="selectedDropper.dateUpdated">
+            <span class="detail-label">Última Actualización:</span>
+            <span class="detail-value">{{ formatDate(selectedDropper.dateUpdated) }}</span>
+          </div>
+
+          <div class="detail-row" *ngIf="selectedDropper.createdBy">
+            <span class="detail-label">Creado Por:</span>
+            <span class="detail-value">Usuario #{{ selectedDropper.createdBy }}</span>
+          </div>
+
+          <div class="detail-row" *ngIf="selectedDropper.updatedBy">
+            <span class="detail-label">Actualizado Por:</span>
+            <span class="detail-value">Usuario #{{ selectedDropper.updatedBy }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">
+          Cerrar
+        </button>
+        <button type="button" class="btn btn-warning" (click)="edit(selectedDropper); showViewModal = false;">
+          <i class="bi bi-pencil"></i>
+          Editar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop" [class.show]="showCreateModal || showEditModal || showViewModal" *ngIf="showCreateModal || showEditModal || showViewModal"></div>

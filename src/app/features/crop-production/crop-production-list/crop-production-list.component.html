@@ -130,18 +130,13 @@
                     <div class="d-flex align-items-center">
                       <i class="bi bi-flower1 me-2 text-success"></i>
                       <div>
-                        <strong>{{ production.crop?.name || 'Sin cultivo' }}</strong>
-                        <div class="text-muted small">{{ production.crop?.variety || '' }}</div>
+                        <strong>{{ getCropName(production) }}</strong>
                       </div>
                     </div>
                   </td>
                   <td>
                     <i class="bi bi-grid-3x3-gap me-1"></i>
-                    {{ production.productionUnit?.name || 'Sin unidad' }}
-                    <div class="text-muted small">
-                      <i class="bi bi-geo-alt"></i>
-                      {{ production.productionUnit?.farm?.name || '' }}
-                    </div>
+                    {{ getProductionUnitName(production) }}
                   </td>
                   <td>
                     <span class="badge" [ngClass]="getStatusClass(production.status)">
@@ -151,14 +146,14 @@
                   </td>
                   <td>
                     <i class="bi bi-calendar-date me-1"></i>
-                    {{ production.plantingDate | date:'shortDate' }}
+                    {{ getStartDate(production) | date:'shortDate' }}
                   </td>
                   <td>
                     <i class="bi bi-calendar-check me-1"></i>
-                    {{ production.estimatedHarvestDate | date:'shortDate' }}
-                    <div class="text-muted small" *ngIf="production.estimatedHarvestDate && getDaysToHarvest(production.estimatedHarvestDate) !== null">
-                      {{ getDaysToHarvest(production.estimatedHarvestDate)! > 0 ?
-                         getDaysToHarvest(production.estimatedHarvestDate)! + ' días restantes' :
+                    {{ getEndDate(production) | date:'shortDate' }}
+                    <div class="text-muted small" *ngIf="getEndDate(production) && getDaysToHarvest(getEndDate(production)) !== null">
+                      {{ getDaysToHarvest(getEndDate(production))! > 0 ?
+                         getDaysToHarvest(getEndDate(production))! + ' días restantes' :
                          'Listo para cosecha' }}
                     </div>
                   </td>
@@ -337,76 +332,150 @@
               <label class="text-muted small">Cultivo</label>
               <p class="fw-bold">
                 <i class="bi bi-flower1 text-success me-1"></i>
-                {{ selectedProduction.crop?.name || 'No especificado' }}
+                {{ getCropName(selectedProduction) }}
               </p>
-              <small class="text-muted" *ngIf="selectedProduction.crop?.variety">
-                Variedad: {{ selectedProduction.crop?.variety }}
-              </small>
             </div>
             <div class="col-md-6 mb-3">
               <label class="text-muted small">Unidad de Producción</label>
               <p class="fw-bold">
                 <i class="bi bi-grid-3x3-gap text-info me-1"></i>
-                {{ selectedProduction.productionUnit?.name || 'No especificado' }}
+                {{ getProductionUnitName(selectedProduction) }}
               </p>
-              <small class="text-muted" *ngIf="selectedProduction.productionUnit?.farm?.name">
-                Finca: {{ selectedProduction.productionUnit?.farm?.name }}
-              </small>
             </div>
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="text-muted small">Fecha de Siembra</label>
+              <label class="text-muted small">Fecha de Inicio</label>
               <p>
                 <i class="bi bi-calendar-date me-1"></i>
-                {{ selectedProduction.plantingDate | date:'fullDate' }}
+                {{ getStartDate(selectedProduction) | date:'fullDate' }}
               </p>
             </div>
             <div class="col-md-6 mb-3">
-              <label class="text-muted small">Fecha Estimada de Cosecha</label>
+              <label class="text-muted small">Fecha de Fin</label>
               <p>
                 <i class="bi bi-calendar-check me-1"></i>
-                {{ selectedProduction.estimatedHarvestDate | date:'fullDate' }}
+                {{ getEndDate(selectedProduction) | date:'fullDate' }}
               </p>
-              <small class="text-muted" *ngIf="getDaysToHarvest(selectedProduction.estimatedHarvestDate)">
-                {{ getDaysToHarvest(selectedProduction.estimatedHarvestDate)! > 0 ?
-                   getDaysToHarvest(selectedProduction.estimatedHarvestDate)! + ' días restantes' :
+              <small class="text-muted" *ngIf="getEndDate(selectedProduction) && getDaysToHarvest(getEndDate(selectedProduction))">
+                {{ getDaysToHarvest(getEndDate(selectedProduction))! > 0 ?
+                   getDaysToHarvest(getEndDate(selectedProduction))! + ' días restantes' :
                    'Listo para cosecha' }}
               </small>
             </div>
           </div>
 
+          <!-- Dimensions and Area -->
+          <h6 class="text-primary mb-3 mt-3">Dimensiones y Área</h6>
           <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="text-muted small">Área Plantada</label>
-              <p>{{ selectedProduction.plantedArea || 'No especificado' }} m²</p>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Ancho</label>
+              <p class="fw-bold">{{ getFieldValue(selectedProduction, 'width') }} m</p>
             </div>
-            <div class="col-md-6 mb-3">
-              <label class="text-muted small">Rendimiento Esperado</label>
-              <p>{{ selectedProduction.expectedYield || 'No especificado' }} kg</p>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Largo</label>
+              <p class="fw-bold">{{ getFieldValue(selectedProduction, 'length') }} m</p>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Área Total</label>
+              <p class="fw-bold text-success">{{ calculateArea(selectedProduction) }} m²</p>
             </div>
           </div>
 
+          <!-- Spacing Configuration -->
+          <h6 class="text-primary mb-3 mt-3">Configuración de Espaciamiento</h6>
           <div class="row">
-            <div class="col-12 mb-3">
-              <label class="text-muted small">Progreso</label>
-              <div class="progress" style="height: 25px;">
-                <div
-                  class="progress-bar"
-                  [class.bg-success]="(selectedProduction.progress ?? 0) >= 100"
-                  [class.bg-info]="(selectedProduction.progress ?? 0) < 100"
-                  [style.width.%]="selectedProduction.progress ?? 0">
-                  {{ selectedProduction.progress ?? 0 }}%
-                </div>
-              </div>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Dist. Entre Filas</label>
+              <p>{{ getFieldValue(selectedProduction, 'betweenRowDistance') }} m</p>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Dist. Entre Contenedores</label>
+              <p>{{ getFieldValue(selectedProduction, 'betweenContainerDistance') }} m</p>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Dist. Entre Plantas</label>
+              <p>{{ getFieldValue(selectedProduction, 'betweenPlantDistance') }} m</p>
             </div>
           </div>
 
-          <div class="row" *ngIf="selectedProduction.description">
-            <div class="col-12 mb-3">
-              <label class="text-muted small">Descripción</label>
-              <p>{{ selectedProduction.description }}</p>
+          <!-- Container and Plant Information -->
+          <h6 class="text-primary mb-3 mt-3">Información de Contenedores y Plantas</h6>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Contenedor</label>
+              <p class="fw-bold">
+                <i class="bi bi-box text-info me-1"></i>
+                {{ getContainerName(selectedProduction) }}
+              </p>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Medio de Cultivo</label>
+              <p class="fw-bold">
+                <i class="bi bi-layers text-warning me-1"></i>
+                {{ getGrowingMediumName(selectedProduction) }}
+              </p>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Plantas por Contenedor</label>
+              <p class="fw-bold text-primary">{{ getFieldValue(selectedProduction, 'plantsPerContainer') }}</p>
+            </div>
+          </div>
+
+          <!-- Irrigation Information -->
+          <h6 class="text-primary mb-3 mt-3">Información de Riego</h6>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Gotero</label>
+              <p class="fw-bold">
+                <i class="bi bi-droplet-fill text-primary me-1"></i>
+                {{ getDropperName(selectedProduction) }}
+              </p>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Goteros por Contenedor</label>
+              <p>{{ getFieldValue(selectedProduction, 'numberOfDroppersPerContainer') }}</p>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Umbral de Drenaje</label>
+              <p>{{ getFieldValue(selectedProduction, 'drainThreshold') }}%</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="text-muted small">% Agotamiento</label>
+              <p>{{ getFieldValue(selectedProduction, 'depletionPercentage') }}%</p>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="text-muted small">Altura Medición Viento</label>
+              <p>{{ getFieldValue(selectedProduction, 'windSpeedMeasurementHeight') }} m</p>
+            </div>
+          </div>
+
+          <!-- Location Information -->
+          <h6 class="text-primary mb-3 mt-3">Información de Ubicación</h6>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Altitud</label>
+              <p>
+                <i class="bi bi-arrow-up me-1"></i>
+                {{ getFieldValue(selectedProduction, 'altitude') }} msnm
+              </p>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Latitud</label>
+              <p>
+                <i class="bi bi-geo-alt me-1"></i>
+                {{ getFieldValue(selectedProduction, 'latitude') }}°
+              </p>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="text-muted small">Longitud</label>
+              <p>
+                <i class="bi bi-geo-alt me-1"></i>
+                {{ getFieldValue(selectedProduction, 'longitude') }}°
+              </p>
             </div>
           </div>
         </div>
