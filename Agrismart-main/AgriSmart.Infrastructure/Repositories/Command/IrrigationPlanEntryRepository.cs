@@ -38,6 +38,25 @@ namespace AgriSmart.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task<List<IrrigationPlanEntry>> GetBySectorCompanyCropAsync(int? sectorId, int? companyId, int? cropId)
+        {
+            var query = _context.IrrigationPlanEntries
+                .Include(x => x.IrrigationPlan)
+                .Include(x => x.IrrigationMode)
+                .AsQueryable();
+
+            if (sectorId.HasValue)
+                query = query.Where(x => x.SectorID == sectorId.Value);
+
+            if (companyId.HasValue)
+                query = query.Where(x => x.CompanyID == companyId.Value);
+
+            if (cropId.HasValue)
+                query = query.Where(x => x.CropID == cropId.Value);
+
+            return await query.ToListAsync();
+        }
+
         public int GetSessionUserId()
         {
             return 1;
@@ -70,6 +89,25 @@ namespace AgriSmart.Infrastructure.Repositories
                 .Include(x => x.IrrigationPlan)
                 .Include(x => x.IrrigationMode)
                 .FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<List<IrrigationPlanEntry>> GetBySectorCompanyCropAsync(int? sectorId, int? companyId, int? cropId)
+        {
+            var query = _context.IrrigationPlanEntries
+                .Include(x => x.IrrigationPlan)
+                .Include(x => x.IrrigationMode)
+                .AsQueryable();
+
+            if (sectorId.HasValue)
+                query = query.Where(x => x.SectorID == sectorId.Value);
+
+            if (companyId.HasValue)
+                query = query.Where(x => x.CompanyID == companyId.Value);
+
+            if (cropId.HasValue)
+                query = query.Where(x => x.CropID == cropId.Value);
+
+            return await query.ToListAsync();
         }
 
         public async Task<List<IrrigationPlanEntry>> GetByIrrigationPlanIdAsync(int irrigationPlanId)

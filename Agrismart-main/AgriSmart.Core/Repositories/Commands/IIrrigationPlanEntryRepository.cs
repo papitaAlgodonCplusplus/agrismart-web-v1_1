@@ -8,6 +8,7 @@ namespace AgriSmart.Core.Repositories.Commands
     {
         Task<IrrigationPlanEntry> AddAsync(IrrigationPlanEntry irrigationPlanEntry);
         Task<IrrigationPlanEntry> UpdateAsync(IrrigationPlanEntry irrigationPlanEntry);
+        Task<List<IrrigationPlanEntry>> GetBySectorCompanyCropAsync(int? sectorId, int? companyId, int? cropId);
         Task DeleteAsync(IrrigationPlanEntry irrigationPlanEntry);
         int GetSessionUserId();
     }
@@ -21,5 +22,6 @@ namespace AgriSmart.Core.Repositories.Queries
         Task<IrrigationPlanEntry> GetByIdAsync(int id);
         Task<List<IrrigationPlanEntry>> GetByIrrigationPlanIdAsync(int irrigationPlanId);
         Task<List<IrrigationPlanEntry>> GetByIrrigationModeIdAsync(int irrigationModeId);
+        Task<List<IrrigationPlanEntry>> GetBySectorCompanyCropAsync(int? sectorId, int? companyId, int? cropId);
     }
 }

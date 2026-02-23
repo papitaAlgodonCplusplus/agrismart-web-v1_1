@@ -47,6 +47,33 @@ namespace AgriSmart.API.Agronomic.Controllers
         }
 
         /// <summary>
+        /// Get irrigation plan entries filtered by SectorID, CompanyID, and/or CropID
+        /// </summary>
+        [HttpGet("by-sector-company-crop")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<Response<GetIrrigationPlanEntriesBySectorCompanyCropResponse>>> GetBySectorCompanyCrop(
+            [FromQuery] int? sectorId,
+            [FromQuery] int? companyId,
+            [FromQuery] int? cropId)
+        {
+            var query = new GetIrrigationPlanEntriesBySectorCompanyCropQuery
+            {
+                SectorId = sectorId,
+                CompanyId = companyId,
+                CropId = cropId
+            };
+
+            var response = await _mediator.Send(query);
+
+            if (response.Success)
+                return Ok(response);
+
+            return BadRequest(response);
+        }
+        
+        /// <summary>
         /// Get irrigation plan entry by ID
         /// </summary>
         [HttpGet("{id:int}")]

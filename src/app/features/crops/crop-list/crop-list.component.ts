@@ -122,9 +122,9 @@ export class CropListComponent implements OnInit {
   private loadCatalogs(): void {
     this.isLoadingCatalogs = true;
     this.catalogService.getAll().subscribe({
-      next: (catalogs) => {
+      next: (catalogs: any) => {
         console.log('Catalogs loaded:', catalogs);
-        this.availableCatalogs = catalogs.filter(c => c.isActive);
+        this.availableCatalogs = catalogs.catalogs.filter((c: { isActive: any; }) => c.isActive);
         if (this.availableCatalogs.length > 0) {
           this.selectedCatalogId = this.availableCatalogs[0].id;
         }

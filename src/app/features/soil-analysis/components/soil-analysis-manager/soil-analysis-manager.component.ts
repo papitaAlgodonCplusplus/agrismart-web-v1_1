@@ -108,7 +108,7 @@ export class SoilAnalysisManagerComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (analyses: any) => {
-          console.log('Soil analyses loaded:', analyses.soilAnalyses);
+          console.log('Soil analyses loaded:', analyses);
           this.soilAnalyses = analyses.soilAnalyses || [];
           this.isLoading = false;
         },

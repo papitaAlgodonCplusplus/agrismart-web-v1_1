@@ -745,7 +745,7 @@ async def swagger_integrated_calculation_with_linear_programming(
 
         # Initialize Swagger client and authenticate
         # Use https://localhost:7029 for development (npm run dev)
-        async with SwaggerAPIClient("https://localhost:7029/") as swagger_client:
+        async with SwaggerAPIClient("http://163.178.171.144:80/") as swagger_client:
             # Authentication
             print(f"\n[INFO] Authenticating with Swagger API...")
             login_result = await swagger_client.login("csolano@iapcr.com", "123")

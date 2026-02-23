@@ -48,6 +48,10 @@ namespace AgriSmart.Core.Entities
 
         public bool Active { get; set; } = true;
 
+        public int? SectorID { get; set; }
+        public int? CompanyID { get; set; }
+        public int? CropID { get; set; }
+        public DateTime? ExecutionDate { get; set; }
         public DateTime DateCreated { get; set; } = DateTime.UtcNow;
 
         public DateTime? DateUpdated { get; set; }
