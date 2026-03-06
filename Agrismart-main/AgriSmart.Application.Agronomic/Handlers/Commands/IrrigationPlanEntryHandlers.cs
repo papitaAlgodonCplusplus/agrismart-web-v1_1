@@ -31,7 +31,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                 {
                     IrrigationPlanId = command.IrrigationPlanId,
                     IrrigationModeId = command.IrrigationModeId,
-                    StartTime = command.StartTime,
+                    ExecutionDate = command.ExecutionDate,
                     Duration = command.Duration,
                     WStart = command.WStart,
                     WEnd = command.WEnd,
@@ -39,7 +39,13 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                     Sequence = command.Sequence,
                     Active = command.Active,
                     CreatedBy = command.CreatedBy,
-                    DateCreated = DateTime.UtcNow
+                    DateCreated = DateTime.UtcNow,
+                    Status = command.Status,
+                    StopDate = command.StopDate,
+                    RetrieveDate = command.RetrieveDate,
+                    SectorID = command.SectorID,
+                    CompanyID = command.CompanyID,
+                    CropID = command.CropID
                 };
 
                 var result = await _commandRepository.AddAsync(entry);
@@ -81,7 +87,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
 
                 entry.IrrigationPlanId = command.IrrigationPlanId;
                 entry.IrrigationModeId = command.IrrigationModeId;
-                entry.StartTime = command.StartTime;
+                entry.ExecutionDate = command.ExecutionDate;
                 entry.Duration = command.Duration;
                 entry.WStart = command.WStart;
                 entry.WEnd = command.WEnd;
@@ -90,6 +96,12 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                 entry.Active = command.Active;
                 entry.UpdatedBy = command.UpdatedBy;
                 entry.DateUpdated = DateTime.UtcNow;
+                entry.Status = command.Status;
+                entry.StopDate = command.StopDate;
+                entry.RetrieveDate = command.RetrieveDate;
+                entry.SectorID = command.SectorID;
+                entry.CompanyID = command.CompanyID;
+                entry.CropID = command.CropID;
 
                 var result = await _commandRepository.UpdateAsync(entry);
 
@@ -111,13 +123,16 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
     {
         private readonly IIrrigationPlanEntryCommandRepository _commandRepository;
         private readonly IIrrigationPlanEntryQueryRepository _queryRepository;
+        private readonly IIrrigationPlanEntryHistoryCommandRepository _historyCommandRepository;
 
         public DeleteIrrigationPlanEntryHandler(
             IIrrigationPlanEntryCommandRepository commandRepository,
-            IIrrigationPlanEntryQueryRepository queryRepository)
+            IIrrigationPlanEntryQueryRepository queryRepository,
+            IIrrigationPlanEntryHistoryCommandRepository historyCommandRepository)
         {
             _commandRepository = commandRepository;
             _queryRepository = queryRepository;
+            _historyCommandRepository = historyCommandRepository;
         }
 
         public async Task<Response<DeleteIrrigationPlanEntryResponse>> Handle(DeleteIrrigationPlanEntryCommand command, CancellationToken cancellationToken)
@@ -128,6 +143,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                 if (entry == null)
                     return new Response<DeleteIrrigationPlanEntryResponse>(new Exception("IrrigationPlanEntry not found"));
 
+                await _historyCommandRepository.DeleteByIrrigationPlanEntryIdAsync(command.Id);
                 await _commandRepository.DeleteAsync(entry);
 
                 return new Response<DeleteIrrigationPlanEntryResponse>(new DeleteIrrigationPlanEntryResponse { Id = command.Id });
@@ -170,7 +186,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Queries
                         IrrigationPlanName = x.IrrigationPlan?.Name ?? "",
                         IrrigationModeId = x.IrrigationModeId,
                         IrrigationModeName = x.IrrigationMode?.Name ?? "",
-                        StartTime = x.StartTime,
+                        ExecutionDate = x.ExecutionDate,
                         Duration = x.Duration,
                         WStart = x.WStart,
                         WEnd = x.WEnd,
@@ -180,7 +196,13 @@ namespace AgriSmart.Application.Agronomic.Handlers.Queries
                         DateCreated = x.DateCreated,
                         DateUpdated = x.DateUpdated,
                         CreatedBy = x.CreatedBy,
-                        UpdatedBy = x.UpdatedBy
+                        UpdatedBy = x.UpdatedBy,
+                        Status = x.Status,
+                        StopDate = x.StopDate,
+                        RetrieveDate = x.RetrieveDate,
+                        SectorID = x.SectorID,
+                        CompanyID = x.CompanyID,
+                        CropID = x.CropID
                     }).ToList()
                 });
             }
@@ -217,7 +239,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Queries
                         IrrigationPlanName = entry.IrrigationPlan?.Name ?? "",
                         IrrigationModeId = entry.IrrigationModeId,
                         IrrigationModeName = entry.IrrigationMode?.Name ?? "",
-                        StartTime = entry.StartTime,
+                        ExecutionDate = entry.ExecutionDate,
                         Duration = entry.Duration,
                         WStart = entry.WStart,
                         WEnd = entry.WEnd,
@@ -227,7 +249,13 @@ namespace AgriSmart.Application.Agronomic.Handlers.Queries
                         DateCreated = entry.DateCreated,
                         DateUpdated = entry.DateUpdated,
                         CreatedBy = entry.CreatedBy,
-                        UpdatedBy = entry.UpdatedBy
+                        UpdatedBy = entry.UpdatedBy,
+                        Status = entry.Status,
+                        StopDate = entry.StopDate,
+                        RetrieveDate = entry.RetrieveDate,
+                        SectorID = entry.SectorID,
+                        CompanyID = entry.CompanyID,
+                        CropID = entry.CropID
                     }
                 });
             }

@@ -11,7 +11,7 @@ namespace AgriSmart.Application.Agronomic.Commands
     {
         public int IrrigationPlanId { get; set; }
         public int IrrigationModeId { get; set; }
-        public TimeSpan StartTime { get; set; }
+        public DateTime? ExecutionDate { get; set; }
         public int Duration { get; set; }
         public int? WStart { get; set; }
         public int? WEnd { get; set; }
@@ -19,6 +19,12 @@ namespace AgriSmart.Application.Agronomic.Commands
         public int Sequence { get; set; } = 1;
         public bool Active { get; set; } = true;
         public int CreatedBy { get; set; }
+        public string? Status { get; set; }
+        public DateTime? StopDate { get; set; }
+        public DateTime? RetrieveDate { get; set; }
+        public int? SectorID { get; set; }
+        public int? CompanyID { get; set; }
+        public int? CropID { get; set; }
     }
 
     // Update Command
@@ -27,7 +33,7 @@ namespace AgriSmart.Application.Agronomic.Commands
         public int Id { get; set; }
         public int IrrigationPlanId { get; set; }
         public int IrrigationModeId { get; set; }
-        public TimeSpan StartTime { get; set; }
+        public DateTime? ExecutionDate { get; set; }
         public int Duration { get; set; }
         public int? WStart { get; set; }
         public int? WEnd { get; set; }
@@ -35,6 +41,12 @@ namespace AgriSmart.Application.Agronomic.Commands
         public int Sequence { get; set; }
         public bool Active { get; set; }
         public int UpdatedBy { get; set; }
+        public string? Status { get; set; }
+        public DateTime? StopDate { get; set; }
+        public DateTime? RetrieveDate { get; set; }
+        public int? SectorID { get; set; }
+        public int? CompanyID { get; set; }
+        public int? CropID { get; set; }
     }
 
     // Delete Command
@@ -75,8 +87,11 @@ namespace AgriSmart.Application.Agronomic.Responses.Commands
         public int Id { get; set; }
         public int IrrigationPlanId { get; set; }
         public int IrrigationModeId { get; set; }
-        public TimeSpan StartTime { get; set; }
+        public DateTime? ExecutionDate { get; set; }
         public int Duration { get; set; }
+        public string? Status { get; set; }
+        public DateTime? StopDate { get; set; }
+        public DateTime? RetrieveDate { get; set; }
     }
 
     public class UpdateIrrigationPlanEntryResponse
@@ -84,8 +99,11 @@ namespace AgriSmart.Application.Agronomic.Responses.Commands
         public int Id { get; set; }
         public int IrrigationPlanId { get; set; }
         public int IrrigationModeId { get; set; }
-        public TimeSpan StartTime { get; set; }
+        public DateTime? ExecutionDate { get; set; }
         public int Duration { get; set; }
+        public string? Status { get; set; }
+        public DateTime? StopDate { get; set; }
+        public DateTime? RetrieveDate { get; set; }
     }
 
     public class DeleteIrrigationPlanEntryResponse
@@ -120,7 +138,7 @@ namespace AgriSmart.Application.Agronomic.Responses.Queries
         public string IrrigationPlanName { get; set; } = string.Empty;
         public int IrrigationModeId { get; set; }
         public string IrrigationModeName { get; set; } = string.Empty;
-        public TimeSpan StartTime { get; set; }
+        public DateTime? ExecutionDate { get; set; }
         public int Duration { get; set; }
         public int? WStart { get; set; }
         public int? WEnd { get; set; }
@@ -131,5 +149,11 @@ namespace AgriSmart.Application.Agronomic.Responses.Queries
         public DateTime? DateUpdated { get; set; }
         public int CreatedBy { get; set; }
         public int? UpdatedBy { get; set; }
+        public string? Status { get; set; }
+        public DateTime? StopDate { get; set; }
+        public DateTime? RetrieveDate { get; set; }
+        public int? SectorID { get; set; }
+        public int? CompanyID { get; set; }
+        public int? CropID { get; set; }
     }
 }

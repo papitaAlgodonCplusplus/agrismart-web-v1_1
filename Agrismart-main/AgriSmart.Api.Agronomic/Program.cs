@@ -41,6 +41,12 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        // Ensure DateTime and DateTime? are always serialized with 'Z' (UTC).
+        // SQL Server / EF Core returns DateTime with Kind=Unspecified; without this
+        // converter System.Text.Json omits the 'Z', causing browser clients to
+        // misinterpret the value as local time.
+        options.JsonSerializerOptions.Converters.Add(new AgriSmart.Api.Agronomic.UtcDateTimeJsonConverter());
+        options.JsonSerializerOptions.Converters.Add(new AgriSmart.Api.Agronomic.UtcNullableDateTimeJsonConverter());
     });
 
 builder.Services.Configure<AgriSmartDbConfiguration>(builder.Configuration.GetSection("AgriSmartDbConfiguration"));

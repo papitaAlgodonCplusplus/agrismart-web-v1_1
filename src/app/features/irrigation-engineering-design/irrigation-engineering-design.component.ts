@@ -17,10 +17,8 @@ import {
   CreateIrrigationPlanEntryCommand,
   UpdateIrrigationPlanEntryCommand
 } from '../services/irrigation-scheduling.service';
-import {
-  IrrigationPlanEntryHistoryService,
-  IrrigationPlanEntryHistory
-} from '../services/irrigation-plan-entry-history.service';
+import { CompanyService } from '../companies/services/company.service';
+import { CropService } from '../crops/services/crop.service';
 import { AlertService } from '../../core/services/alert.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { IrrigationCalculationsService, IrrigationMetric, IrrigationMonitorResponse, IrrigationEventEntity, CropProductionEntity, MeasurementVariable, DeviceRawDataPoint } from '../services/irrigation-calculations.service';
@@ -46,7 +44,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   private currentUserId!: number;
 
   // ==================== UI STATE ====================
-  activeTab: 'plans' | 'entries' | 'modes' | 'history' | 'metrics' | 'substrate' = 'plans';
+  activeTab: 'plans' | 'entries' | 'modes' | 'history' | 'metrics' | 'substrate' | 'sectors' = 'plans';
   isLoading = false;
   isSaving = false;
 
@@ -56,6 +54,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   showPlanModal = false;
   showEntryModal = false;
   showModeModal = false;
+  showSectorModal = false;
   showHistoryDetailsModal = false;
   showComparisonModal = false;
 
@@ -68,18 +67,34 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   irrigationModes: IrrigationMode[] = [];
   irrigationEntries: IrrigationPlanEntry[] = []; // These are the TEMPLATES/SCHEDULES
 
-  // Execution History
-  executionHistory: IrrigationPlanEntryHistory[] = []; // These are the ACTUAL EXECUTIONS
+  // Execution History (derived from IrrigationPlanEntry)
+  executionHistory: IrrigationPlanEntry[] = [];
 
   // Filtered Data
   filteredEntries: IrrigationPlanEntry[] = [];
-  filteredHistory: IrrigationPlanEntryHistory[] = [];
+  filteredHistory: IrrigationPlanEntry[] = [];
+
+  // Lookup data for valve identification
+  sectors: any[] = [];
+  companies: any[] = [];
+  crops: any[] = [];
+
+  // ==================== SECTOR / VALVE MANAGEMENT ====================
+  irrigationSectors: any[] = [];
+  relayModules: any[] = [];
+  selectedSector: any | null = null;
+  selectedRelayModule: any | null = null;
+  sectorForm!: FormGroup;
+  relayModuleForm!: FormGroup;
+  isLoadingSectors = false;
+  isLoadingRelays = false;
+  showRelayModuleModal = false;
 
   // ==================== SELECTED ITEMS ====================
   selectedPlan: IrrigationPlan | null = null;
   selectedEntry: IrrigationPlanEntry | null = null;
   selectedMode: IrrigationMode | null = null;
-  selectedHistoryRecord: IrrigationPlanEntryHistory | null = null;
+  selectedHistoryRecord: IrrigationPlanEntry | null = null;
 
   // ==================== FORMS ====================
   planForm!: FormGroup;
@@ -136,7 +151,8 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private irrigationSchedulingService: IrrigationSchedulingService,
-    private irrigationHistoryService: IrrigationPlanEntryHistoryService,
+    private companyService: CompanyService,
+    private cropService: CropService,
     private alertService: AlertService,
     private authService: AuthService,
     private irrigationCalculationsService: IrrigationCalculationsService,
@@ -175,17 +191,34 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     this.entryForm = this.fb.group({
       irrigationPlanId: [null, Validators.required],
       irrigationModeId: [null, Validators.required],
-      startTime: ['08:00', [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
+      executionDate: [null, Validators.required],
       duration: [30, [Validators.required, Validators.min(1)]],
       wStart: [null, [Validators.min(1), Validators.max(52)]],
       wEnd: [null, [Validators.min(1), Validators.max(52)]],
       frequency: [null, Validators.min(1)],
       sequence: [1, [Validators.required, Validators.min(1)]],
-      active: [true]
+      active: [true],
+      companyID: [null],
+      sectorID: [null],
+      cropID: [null]
     });
 
     this.modeForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
+      active: [true]
+    });
+
+    this.sectorForm = this.fb.group({
+      cropProductionId: [null, Validators.required],
+      name: ['', [Validators.required, Validators.maxLength(200)]],
+      polygon: [null],
+      pumpRelayId: [null],
+      valveRelayId: [null],
+      active: [true]
+    });
+
+    this.relayModuleForm = this.fb.group({
+      name: ['', [Validators.required, Validators.maxLength(32)]],
       active: [true]
     });
   }
@@ -195,7 +228,10 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     forkJoin({
       plansAndEntries: this.irrigationSchedulingService.getAllIrrigationPlansWithEntries(),
       modes: this.irrigationSchedulingService.getAllIrrigationModes(),
-      history: this.irrigationHistoryService.getAll()
+      companies: this.companyService.getAll(),
+      crops: this.cropService.getAll(),
+      sectors: this.irrigationSectorService.getAllCropProductionIrrigationSectors(),
+      relayModules: this.irrigationSectorService.getAllRelayModules()
     })
       .pipe(
         takeUntil(this.destroy$),
@@ -206,14 +242,18 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
           this.irrigationPlans = data.plansAndEntries.irrigationPlans || [];
           this.irrigationEntries = data.plansAndEntries.irrigationPlanEntries || [];
           this.irrigationModes = data.modes.irrigationModes || [];
-          this.executionHistory = data.history || [];
+          this.companies = data.companies || [];
+          this.crops = data.crops || [];
+          this.sectors = data.sectors || [];
+          this.irrigationSectors = data.sectors || [];
+          this.relayModules = data.relayModules || [];
 
           this.filteredEntries = [...this.irrigationEntries];
+          this.executionHistory = this.irrigationEntries.filter(e => !!e.executionDate && e.status !== 'Pendiente');
           this.filteredHistory = [...this.executionHistory];
         },
         error: (error) => {
           console.error('Error loading data:', error);
-
         }
       });
   }
@@ -334,25 +374,29 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     this.selectedEntry = entry || null;
 
     if (entry) {
-      const timeString = entry.startTime.substring(0, 5); // "HH:mm:ss" -> "HH:mm"
-
       this.entryForm.patchValue({
         irrigationPlanId: entry.irrigationPlanId,
         irrigationModeId: entry.irrigationModeId,
-        startTime: timeString,
+        executionDate: entry.executionDate ? String(entry.executionDate).substring(0, 16) : null,
         duration: entry.duration,
         wStart: entry.wStart,
         wEnd: entry.wEnd,
         frequency: entry.frequency,
         sequence: entry.sequence,
-        active: entry.active
+        active: entry.active,
+        companyID: entry.companyID ?? null,
+        sectorID: entry.sectorID ?? null,
+        cropID: entry.cropID ?? null
       });
     } else {
       this.entryForm.reset({
-        startTime: '08:00',
+        executionDate: null,
         duration: 30,
         sequence: 1,
-        active: true
+        active: true,
+        companyID: null,
+        sectorID: null,
+        cropID: null
       });
     }
 
@@ -363,7 +407,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     this.showEntryModal = false;
     this.selectedEntry = null;
     this.entryForm.reset({
-      startTime: '08:00',
+      executionDate: null,
       duration: 30,
       sequence: 1,
       active: true
@@ -378,21 +422,28 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
     const formValue = this.entryForm.value;
-    const startTimeString = `${formValue.startTime}:00`;
+    // datetime-local gives a naive string (no timezone). Convert to UTC ISO so
+    // the server always receives an unambiguous timestamp.
+    const executionDateUtc = formValue.executionDate
+      ? new Date(formValue.executionDate).toISOString()
+      : null;
 
     if (this.isEditMode && this.selectedEntry) {
       const updateCommand: UpdateIrrigationPlanEntryCommand = {
         id: this.selectedEntry.id,
         irrigationPlanId: formValue.irrigationPlanId,
         irrigationModeId: formValue.irrigationModeId,
-        startTime: startTimeString,
+        executionDate: executionDateUtc ?? undefined,
         duration: formValue.duration,
         wStart: formValue.wStart,
         wEnd: formValue.wEnd,
         frequency: formValue.frequency,
         sequence: formValue.sequence,
         active: formValue.active,
-        updatedBy: this.currentUserId
+        updatedBy: this.currentUserId,
+        sectorID: formValue.sectorID ?? undefined,
+        companyID: formValue.companyID ?? undefined,
+        cropID: formValue.cropID ?? undefined
       };
 
       this.irrigationSchedulingService.updateIrrigationPlanEntry(updateCommand)
@@ -415,14 +466,17 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       const createCommand: CreateIrrigationPlanEntryCommand = {
         irrigationPlanId: formValue.irrigationPlanId,
         irrigationModeId: formValue.irrigationModeId,
-        startTime: startTimeString,
+        executionDate: executionDateUtc ?? undefined,
         duration: formValue.duration,
         wStart: formValue.wStart,
         wEnd: formValue.wEnd,
         frequency: formValue.frequency,
         sequence: formValue.sequence,
         active: formValue.active,
-        createdBy: this.currentUserId
+        createdBy: this.currentUserId,
+        sectorID: formValue.sectorID ?? undefined,
+        companyID: formValue.companyID ?? undefined,
+        cropID: formValue.cropID ?? undefined
       };
 
       this.irrigationSchedulingService.createIrrigationPlanEntry(createCommand)
@@ -572,29 +626,226 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
     //   });
   }
 
+  // ==================== SECTOR / VALVE OPERATIONS ====================
+
+  loadSectors(): void {
+    this.isLoadingSectors = true;
+    this.irrigationSectorService.getAllCropProductionIrrigationSectors()
+      .pipe(takeUntil(this.destroy$), finalize(() => this.isLoadingSectors = false))
+      .subscribe({
+        next: (sectors) => { this.irrigationSectors = sectors; },
+        error: (error) => { console.error('Error loading sectors:', error); }
+      });
+  }
+
+  openSectorModal(sector?: any): void {
+    this.isEditMode = !!sector;
+    this.selectedSector = sector || null;
+
+    if (sector) {
+      this.sectorForm.patchValue({
+        cropProductionId: sector.cropProductionId,
+        name: sector.name,
+        polygon: sector.polygon ?? null,
+        pumpRelayId: sector.pumpRelayId ?? null,
+        valveRelayId: sector.valveRelayId ?? null,
+        active: sector.active ?? true
+      });
+    } else {
+      this.sectorForm.reset({ active: true });
+    }
+
+    this.showSectorModal = true;
+  }
+
+  closeSectorModal(): void {
+    this.showSectorModal = false;
+    this.selectedSector = null;
+    this.sectorForm.reset({ active: true });
+  }
+
+  saveSector(): void {
+    if (this.sectorForm.invalid) {
+      this.sectorForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSaving = true;
+    const fv = this.sectorForm.value;
+
+    if (this.isEditMode && this.selectedSector) {
+      this.irrigationSectorService.updateCropProductionIrrigationSector({
+        id: this.selectedSector.id,
+        cropProductionId: fv.cropProductionId,
+        name: fv.name,
+        polygon: fv.polygon ?? undefined,
+        pumpRelayId: fv.pumpRelayId ?? undefined,
+        valveRelayId: fv.valveRelayId ?? undefined,
+        active: fv.active
+      }).pipe(takeUntil(this.destroy$), finalize(() => this.isSaving = false))
+        .subscribe({
+          next: () => { this.closeSectorModal(); this.loadSectors(); },
+          error: (error) => { console.error('Error updating sector:', error); }
+        });
+    } else {
+      this.irrigationSectorService.createCropProductionIrrigationSector({
+        cropProductionId: fv.cropProductionId,
+        name: fv.name,
+        polygon: fv.polygon ?? undefined,
+        pumpRelayId: fv.pumpRelayId ?? undefined,
+        valveRelayId: fv.valveRelayId ?? undefined
+      }).pipe(takeUntil(this.destroy$), finalize(() => this.isSaving = false))
+        .subscribe({
+          next: () => { this.closeSectorModal(); this.loadSectors(); },
+          error: (error) => { console.error('Error creating sector:', error); }
+        });
+    }
+  }
+
+  deleteSector(sector: any): void {
+    if (!confirm(`¿Está seguro de eliminar el sector "${sector.name}"?`)) return;
+
+    this.isLoadingSectors = true;
+    this.irrigationSectorService.deleteCropProductionIrrigationSector(sector.id)
+      .pipe(takeUntil(this.destroy$), finalize(() => this.isLoadingSectors = false))
+      .subscribe({
+        next: () => { this.loadSectors(); },
+        error: (error) => { console.error('Error deleting sector:', error); }
+      });
+  }
+
+  getRelayName(relayId: number | null | undefined): string {
+    if (!relayId) return '—';
+    const relay = this.relayModules.find(r => r.id === relayId);
+    return relay ? relay.name : `Relay #${relayId}`;
+  }
+
+  // ==================== RELAY MODULE OPERATIONS ====================
+
+  loadRelayModules(): void {
+    this.isLoadingRelays = true;
+    this.irrigationSectorService.getAllRelayModules(true)
+      .pipe(takeUntil(this.destroy$), finalize(() => this.isLoadingRelays = false))
+      .subscribe({
+        next: (relays) => { this.relayModules = relays; },
+        error: (error) => { console.error('Error loading relay modules:', error); }
+      });
+  }
+
+  openRelayModuleModal(relay?: any): void {
+    this.isEditMode = !!relay;
+    this.selectedRelayModule = relay || null;
+
+    if (relay) {
+      this.relayModuleForm.patchValue({ name: relay.name, active: relay.active ?? true });
+    } else {
+      this.relayModuleForm.reset({ active: true });
+    }
+
+    this.showRelayModuleModal = true;
+  }
+
+  closeRelayModuleModal(): void {
+    this.showRelayModuleModal = false;
+    this.selectedRelayModule = null;
+    this.relayModuleForm.reset({ active: true });
+  }
+
+  saveRelayModule(): void {
+    if (this.relayModuleForm.invalid) {
+      this.relayModuleForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSaving = true;
+    const fv = this.relayModuleForm.value;
+
+    if (this.isEditMode && this.selectedRelayModule) {
+      this.irrigationSectorService.updateRelayModule({ id: this.selectedRelayModule.id, name: fv.name, active: fv.active })
+        .pipe(takeUntil(this.destroy$), finalize(() => this.isSaving = false))
+        .subscribe({
+          next: () => { this.closeRelayModuleModal(); this.loadRelayModules(); },
+          error: (error) => { console.error('Error updating relay module:', error); }
+        });
+    } else {
+      this.irrigationSectorService.createRelayModule({ name: fv.name })
+        .pipe(takeUntil(this.destroy$), finalize(() => this.isSaving = false))
+        .subscribe({
+          next: (res: any) => { console.log('Relay module created:', res); this.closeRelayModuleModal(); this.loadRelayModules(); },
+          error: (error) => { console.error('Error creating relay module:', error); }
+        });
+    }
+  }
+
+  deleteRelayModule(relay: any): void {
+    if (!confirm(`¿Está seguro de eliminar el módulo relay "${relay.name}"?`)) return;
+
+    this.isLoadingRelays = true;
+    this.irrigationSectorService.deleteRelayModule(relay.id)
+      .pipe(takeUntil(this.destroy$), finalize(() => this.isLoadingRelays = false))
+      .subscribe({
+        next: () => { this.loadRelayModules(); },
+        error: (error) => { console.error('Error deleting relay module:', error); }
+      });
+  }
+
+  getSectorCountForRelay(relayId: number): number {
+    return this.irrigationSectors.filter(
+      s => s.pumpRelayId === relayId || s.valveRelayId === relayId
+    ).length;
+  }
+
   // ==================== EXECUTION HISTORY OPERATIONS ====================
   loadExecutionHistory(): void {
     this.isLoading = true;
-    this.irrigationHistoryService.getAll()
+    this.irrigationSchedulingService.getAllIrrigationPlanEntries()
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => this.isLoading = false)
       )
       .subscribe({
-        next: (history) => {
-          this.executionHistory = history || [];
+        next: (res: any) => {
+          const entries: IrrigationPlanEntry[] = res?.irrigationPlanEntries || res || [];
+          this.irrigationEntries = entries;
+          this.executionHistory = entries.filter(e => !!e.executionDate && e.status !== 'Pendiente');
           this.applyHistoryFilters();
         },
         error: (error) => {
           console.error('Error loading execution history:', error);
-
         }
       });
   }
 
-  viewHistoryDetails(historyRecord: IrrigationPlanEntryHistory): void {
-    this.selectedHistoryRecord = historyRecord;
+  viewHistoryDetails(record: IrrigationPlanEntry): void {
+    this.selectedHistoryRecord = record;
     this.showHistoryDetailsModal = true;
+  }
+
+  getSectorName(id?: number): string {
+    if (!id) return 'N/A';
+    const s = this.sectors.find(x => x.id === id);
+    return s?.name ?? `Sector ${id}`;
+  }
+
+  getCompanyName(id?: number): string {
+    if (!id) return 'N/A';
+    const c = this.companies.find(x => x.id === id);
+    return c?.name ?? `Empresa ${id}`;
+  }
+
+  getCropName(id?: number): string {
+    if (!id) return 'N/A';
+    const c = this.crops.find(x => x.id === id);
+    return c?.name ?? `Cultivo ${id}`;
+  }
+
+  getValveName(entry: IrrigationPlanEntry): string {
+    const parts = [
+      this.getCompanyName(entry.companyID),
+      this.getSectorName(entry.sectorID),
+      this.getCropName(entry.cropID)
+    ].filter(p => p !== 'N/A');
+    return parts.length ? parts.join(' / ') : 'N/A';
   }
 
   closeHistoryDetailsModal(): void {
@@ -627,22 +878,18 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         matches = matches && record.irrigationPlanId === this.filterPlanId;
       }
 
-      if (this.filterModeId) {
-        matches = matches && record.irrigationModeId === this.filterModeId;
-      }
-
       if (this.filterStatus) {
-        matches = matches && record.executionStatus === this.filterStatus;
+        matches = matches && record.status === this.filterStatus;
       }
 
       if (this.filterDateFrom) {
-        const recordDate = new Date(record.executionStartTime);
+        const recordDate = new Date(record.executionDate as string);
         const filterDate = new Date(this.filterDateFrom);
         matches = matches && recordDate >= filterDate;
       }
 
       if (this.filterDateTo) {
-        const recordDate = new Date(record.executionStartTime);
+        const recordDate = new Date(record.executionDate as string);
         const filterDate = new Date(this.filterDateTo);
         filterDate.setHours(23, 59, 59, 999);
         matches = matches && recordDate <= filterDate;
@@ -762,7 +1009,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
         entry.id,
         this.getPlanName(entry.irrigationPlanId),
         this.getModeName(entry.irrigationModeId),
-        this.formatTime(entry.startTime),
+        this.formatDateTime(entry.executionDate || ''),
         entry.duration,
         entry.sequence,
         entry.active ? 'Sí' : 'No'
@@ -778,17 +1025,15 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       ]);
       filename = 'modos-riego.csv';
     } else if (this.activeTab === 'history') {
-      headers = ['ID', 'Plan', 'Modo', 'Inicio Ejecución', 'Fin Ejecución', 'Duración Planificada', 'Duración Real', 'Estado', 'Manual'];
+      headers = ['ID', 'Válvula', 'Fecha Ejecución', 'Fecha Recuperación', 'Fecha Stop', 'Estado', 'Duración (min)'];
       data = this.filteredHistory.map(record => [
         record.id,
-        this.getPlanName(record.irrigationPlanId),
-        this.getModeName(record.irrigationModeId),
-        this.formatDateTime(record.executionStartTime),
-        record.executionEndTime ? this.formatDateTime(record.executionEndTime) : 'N/A',
-        record.plannedDuration,
-        record.actualDuration || 'N/A',
-        this.getStatusLabel(record.executionStatus),
-        record.isManualExecution ? 'Sí' : 'No'
+        this.getValveName(record),
+        record.executionDate ? this.formatDateTime(record.executionDate as string) : 'N/A',
+        record.retrieveDate ? this.formatDateTime(record.retrieveDate) : 'N/A',
+        record.stopDate ? this.formatDateTime(record.stopDate) : 'N/A',
+        record.status || 'N/A',
+        record.duration
       ]);
       filename = 'historial-ejecuciones.csv';
     }
@@ -1363,7 +1608,7 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
   /**
    * Update existing setActiveTab to include 'metrics' and 'substrate'
    */
-  setActiveTab(tab: 'plans' | 'entries' | 'modes' | 'history' | 'metrics' | 'substrate'): void {
+  setActiveTab(tab: 'plans' | 'entries' | 'modes' | 'history' | 'metrics' | 'substrate' | 'sectors'): void {
     this.activeTab = tab as any;
     this.sortField = '';
     this.sortDirection = 'asc';
@@ -1374,6 +1619,9 @@ export class IrrigationEngineeringDesignComponent implements OnInit, OnDestroy {
       if (this.selectedCropProductionId) {
         this.loadMetrics();
       }
+    } else if (tab === 'sectors') {
+      this.loadSectors();
+      this.loadRelayModules();
     }
   }
 }

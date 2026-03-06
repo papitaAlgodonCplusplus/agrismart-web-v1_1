@@ -42,13 +42,15 @@ namespace AgriSmart.Application.Agronomic.Queries
                             Id = x.Id,
                             IrrigationPlanId = x.IrrigationPlanId,
                             IrrigationModeId = x.IrrigationModeId,
-                            StartTime = x.StartTime,
                             ExecutionDate = x.ExecutionDate,
                             Duration = x.Duration,
                             WStart = x.WStart,
                             WEnd = x.WEnd,
                             Frequency = x.Frequency,
-                            Sequence = x.Sequence
+                            Sequence = x.Sequence,
+                            Status = x.Status,
+                            StopDate = x.StopDate,
+                            RetrieveDate = x.RetrieveDate,
                         }).ToList()
                     });
             }

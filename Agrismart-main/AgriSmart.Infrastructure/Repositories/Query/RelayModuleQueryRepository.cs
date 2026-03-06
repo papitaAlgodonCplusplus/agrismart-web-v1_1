@@ -26,12 +26,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             try
             {
                 return await (from c in _context.RelayModule
-                              where (
-                                        (c.Id == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (c.Id == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
-                                        (GetSessionProfileId() == (int)Profiles.SuperUser)
-                                    )
-                                    && (((c.Active == true) && !includeInactives) || includeInactives)
+                              where ((c.Active == true) && !includeInactives) || includeInactives
                               select c).ToListAsync();
             }
             catch (Exception ex)
@@ -45,13 +40,8 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             try
             {
                 return await (from c in _context.RelayModule
-                              where (
-                                        (c.Id == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (c.Id == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
-                                        (GetSessionProfileId() == (int)Profiles.SuperUser)
-                                    )
-                                     && (c.Id == id)
-                              select c).FirstOrDefaultAsync();                                 
+                              where c.Id == id
+                              select c).FirstOrDefaultAsync();
             }
             catch (Exception ex)
             {

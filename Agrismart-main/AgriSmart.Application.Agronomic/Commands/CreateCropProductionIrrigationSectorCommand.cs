@@ -1,7 +1,6 @@
 ﻿using AgriSmart.Application.Agronomic.Responses.Commands;
 using AgriSmart.Core.Responses;
 using MediatR;
-using Microsoft.SqlServer.Types;
 
 namespace AgriSmart.Application.Agronomic.Commands
 {
@@ -10,5 +9,7 @@ namespace AgriSmart.Application.Agronomic.Commands
         public int CropProductionId { get; set; }
         public string? Name { get; set; }
         public string? Polygon { get; set; }
+        public int? PumpRelayId { get; set; }
+        public int? ValveRelayId { get; set; }
     }
 }

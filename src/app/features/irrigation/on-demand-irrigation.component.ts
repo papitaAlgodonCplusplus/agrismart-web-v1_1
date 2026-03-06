@@ -342,13 +342,12 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         }
 
         const now = new Date();
-        const startTime = this.schedulingService.toTimeSpan(now.getHours(), now.getMinutes());
         const userId = 1; // Placeholder
 
         const command: CreateIrrigationPlanEntryCommand = {
             irrigationPlanId: planId,
             irrigationModeId: this.onDemandMode.id,
-            startTime: startTime,
+            executionDate: now.toISOString(),
             duration: durationMinutes,
             sequence: 1,
             active: true,
@@ -544,6 +543,70 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         return Array.from(new Set(durations)).sort((a, b) => a - b);
     }
 
+    // ==================== ANALYSIS DISPLAY HELPERS ====================
+
+    getRuleIcon(rule: any): string {
+        if (rule.shouldTrigger) {
+            if (rule.urgency === 'critical') return 'bi-exclamation-triangle-fill';
+            return 'bi-exclamation-circle-fill';
+        }
+        if (rule.volumeAdjustment && rule.volumeAdjustment !== 1.0) return 'bi-sliders';
+        return 'bi-check-circle-fill';
+    }
+
+    getRuleStatusClass(rule: any): string {
+        if (rule.shouldTrigger) {
+            if (rule.urgency === 'critical') return 'rule-critical';
+            if (rule.urgency === 'high') return 'rule-high';
+            return 'rule-triggered';
+        }
+        if (rule.volumeAdjustment && rule.volumeAdjustment !== 1.0) return 'rule-adjust';
+        return 'rule-ok';
+    }
+
+    getMoistureStatusClass(depletion: number): string {
+        if (depletion >= 60) return 'sensor-critical';
+        if (depletion >= 40) return 'sensor-warning';
+        if (depletion >= 25) return 'sensor-caution';
+        return 'sensor-ok';
+    }
+
+    getVPDStatusClass(vpd: number): string {
+        if (vpd > 1.2) return 'sensor-warning';
+        if (vpd < 0.4) return 'sensor-caution';
+        return 'sensor-ok';
+    }
+
+    getDrainageStatusClass(drain: number): string {
+        if (drain > 25) return 'sensor-warning';
+        if (drain < 15) return 'sensor-caution';
+        return 'sensor-ok';
+    }
+
+    formatHoursSince(hours: number): string {
+        if (hours < 1) return `${Math.round(hours * 60)} min`;
+        if (hours < 24) return `${hours.toFixed(1)} h`;
+        return `${(hours / 24).toFixed(1)} d`;
+    }
+
+    getTriggeredRulesCount(rules: any[]): number {
+        return rules.filter(r => r.shouldTrigger).length;
+    }
+
+    translateUrgency(urgency: string): string {
+        const map: Record<string, string> = {
+            critical: 'CRÍTICO',
+            high: 'ALTO',
+            medium: 'MEDIO',
+            low: 'BAJO'
+        };
+        return map[urgency] ?? urgency.toUpperCase();
+    }
+
+    getSensorFailedClass(value: any): string {
+        return (value === null || value === undefined) ? 'sensor-failed' : '';
+    }
+
     // ==================== MESSAGE HELPERS ====================
 
     showError(message: string): void {
@@ -678,7 +741,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         const entryCommand: CreateIrrigationPlanEntryCommand = {
             irrigationPlanId: plan.id,
             irrigationModeId: this.onDemandMode!.id,
-            startTime: this.schedulingService.toTimeSpan(now.getHours(), now.getMinutes()),
+            executionDate: now.toISOString(),
             duration: recommendation.recommendedDuration,
             sequence: 1,
             active: true,

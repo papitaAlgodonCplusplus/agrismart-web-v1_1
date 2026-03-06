@@ -39,6 +39,8 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                     getResult.CropProductionId = command.CropProductionId;
                     getResult.Name = command.Name;
                     getResult.Polygon = command.Polygon;
+                    getResult.PumpRelayId = command.PumpRelayId;
+                    getResult.ValveRelayId = command.ValveRelayId;
                     getResult.Active = command.Active;
                     getResult.UpdatedBy = _cropProductionIrrigationSectorCommandRepository.GetSessionUserId();
                 }

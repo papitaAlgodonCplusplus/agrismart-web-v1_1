@@ -10,6 +10,7 @@ namespace AgriSmart.Core.Repositories.Commands
         Task<IrrigationPlanEntryHistory> AddAsync(IrrigationPlanEntryHistory history);
         Task<IrrigationPlanEntryHistory> UpdateAsync(IrrigationPlanEntryHistory history);
         Task DeleteAsync(IrrigationPlanEntryHistory history);
+        Task DeleteByIrrigationPlanEntryIdAsync(int irrigationPlanEntryId);
         int GetSessionUserId();
     }
 }

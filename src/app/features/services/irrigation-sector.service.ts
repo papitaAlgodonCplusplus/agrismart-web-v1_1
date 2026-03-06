@@ -892,6 +892,98 @@ export class IrrigationSectorService {
   // EXISTING METHODS (Keep for compatibility)
   // ============================================================================
 
+  getAllCropProductionIrrigationSectors(companyId?: number, cropProductionId?: number, includeInactives = false): Observable<any[]> {
+    let params = new HttpParams().set('IncludeInactives', includeInactives.toString());
+    if (companyId) params = params.set('CompanyId', companyId.toString());
+    if (cropProductionId) params = params.set('CropProductionId', cropProductionId.toString());
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/CropProductionIrrigationSector`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => response.success ? response.result?.cropProductionIrrigationSectors || [] : []),
+      catchError(this.handleError)
+    );
+  }
+
+  createCropProductionIrrigationSector(command: {
+    cropProductionId: number;
+    name: string;
+    polygon?: string;
+    pumpRelayId?: number;
+    valveRelayId?: number;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/CropProductionIrrigationSector`, command, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => { if (response.success) return response.result; throw new Error(response.exception); }),
+      catchError(this.handleError)
+    );
+  }
+
+  updateCropProductionIrrigationSector(command: {
+    id: number;
+    cropProductionId: number;
+    name: string;
+    polygon?: string;
+    pumpRelayId?: number;
+    valveRelayId?: number;
+    active: boolean;
+  }): Observable<any> {
+    return this.http.put<any>(`${this.apiConfig.agronomicApiUrl}/CropProductionIrrigationSector`, command, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => { if (response.success) return response.result; throw new Error(response.exception); }),
+      catchError(this.handleError)
+    );
+  }
+
+  deleteCropProductionIrrigationSector(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiConfig.agronomicApiUrl}/CropProductionIrrigationSector/${id}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => { if (response.success) return response.result; throw new Error(response.exception); }),
+      catchError(this.handleError)
+    );
+  }
+
+  getAllRelayModules(includeInactives = false): Observable<any[]> {
+    const params = new HttpParams().set('IncludeInactives', includeInactives.toString());
+    return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/RelayModule`, {
+      params,
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => response.success ? response.result?.relayModules || [] : []),
+      catchError(this.handleError)
+    );
+  }
+
+  createRelayModule(command: { name: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiConfig.agronomicApiUrl}/RelayModule`, command, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => { if (response.success) return response.result; throw new Error(response.exception); }),
+      catchError(this.handleError)
+    );
+  }
+
+  updateRelayModule(command: { id: number; name: string; active: boolean }): Observable<any> {
+    return this.http.put<any>(`${this.apiConfig.agronomicApiUrl}/RelayModule`, command, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => { if (response.success) return response.result; throw new Error(response.exception); }),
+      catchError(this.handleError)
+    );
+  }
+
+  deleteRelayModule(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiConfig.agronomicApiUrl}/RelayModule/${id}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => { if (response.success) return response.result; throw new Error(response.exception); }),
+      catchError(this.handleError)
+    );
+  }
+
   getAllContainers(includeInactives: boolean = false): Observable<Container[]> {
     const params = new HttpParams().set('IncludeInactives', includeInactives.toString());
     return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Container`, {

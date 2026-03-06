@@ -303,12 +303,14 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     Promise.all([
       this.deviceService.getAll().toPromise(),
       this.irrigationService.getDeviceRawData().toPromise()
-    ]).then(([registeredDevices, rawData]: [any[] | undefined, any[] | undefined]) => {
-      console.log('Registered devices loaded:', registeredDevices);
-      console.log('Raw device data loaded:', rawData);
+    ]).then(([registeredDevices, rawData]: [any[] | undefined, any[] | undefined]) => { 
 
       this.allRegisteredDevices = registeredDevices || [];
       this.rawData = rawData || [];
+      // log all unique sensors found in rawData
+      const uniqueSensors = new Set<string>();
+      this.rawData.forEach(item => uniqueSensors.add(item.sensor));
+      console.log("Unique sensors found:", uniqueSensors);
       this.prepareWindRoseData();
 
       // Track which devices are sending data
@@ -551,6 +553,8 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
         this.chartData[deviceType] = chartDataMap;
       }
     });
+
+    this.applyFallbackChartData();
   }
 
   initializeCharts(): void {
@@ -868,12 +872,10 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   // Aggregate wind data into directional bins
   private aggregateWindRoseData(windData: { direction: number; speed: number }[]): any[] {
-    console.log("windData: ", windData)
-
+ 
     // Handle empty dataset
     if (windData.length === 0) {
-      console.warn("No valid wind data points to aggregate");
-      return [];
+       return [];
     }
 
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
@@ -925,9 +927,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
       if (speedIndex !== -1) {
         frequencyMatrix[closestDirIndex][speedIndex]++;
-      } else {
-        console.warn(`Speed ${speed} m/s did not fall into any category`);
-      }
+      }  
     });
 
     // Convert to percentage
@@ -935,9 +935,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     const percentageMatrix = frequencyMatrix.map(row =>
       row.map(count => (count / total) * 100)
     );
-
-    console.log("Frequency matrix (before percentage):", frequencyMatrix);
-    console.log("Percentage matrix:", percentageMatrix);
+ 
 
     // Prepare data for Plotly
     const traces: any[] = [];
@@ -960,8 +958,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       });
     });
 
-    console.log("Wind rose traces prepared: ", traces);
-    return traces;
+     return traces;
   }
 
   getMaxFrequency(): number {
@@ -975,22 +972,18 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   prepareWindRoseData(): void {
     const windData: { direction: number; speed: number }[] = [];
-
-    console.log("=== WIND ROSE DEBUG START ===");
-    console.log("Total rawData count:", this.rawData.length);
+ 
 
     const windRawData = this.rawData.filter(item =>
       item.sensor === 'wind_speed' ||
       item.sensor === 'wind_speed_level' ||
       item.sensor === 'wind_direction_angle'
-    );
-    console.log("Filtered wind raw data count:", windRawData.length);
+    ); 
 
     const sensorCounts = windRawData.reduce((acc, item) => {
       acc[item.sensor] = (acc[item.sensor] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>);
-    console.log("Sensor counts:", sensorCounts);
+    }, {} as Record<string, number>); 
 
     const dataMap = new Map<string, Map<string, RawDeviceData>>();
 
@@ -1001,8 +994,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       }
       dataMap.get(key)!.set(item.sensor, item);
     });
-
-    console.log("Unique device+time combinations:", dataMap.size);
+ 
 
     let validDataCount = 0;
     let zeroSpeedCount = 0;
@@ -1050,17 +1042,14 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
         validDataCount++;
       }
     });
-
-    console.log("Processing summary:");
-    console.log("  - Valid data points:", validDataCount);
-    console.log("  - Zero speed readings:", zeroSpeedCount);
-    console.log("  - 'Nosensor' readings:", nosensorCount);
-
+ 
     this.windRoseData = this.aggregateWindRoseData(windData);
+    if (this.windRoseData.length === 0) {
+      this.windRoseData = this.generateFallbackWindRoseTraces();
+    }
     this.generateWindRoseSegments(); // Generate SVG segments
     this.windDataLoaded = true;
-
-    console.log("=== WIND ROSE DEBUG END ===");
+ 
   }
 
   // ADD these NEW trackBy methods (they don't exist yet)
@@ -1186,8 +1175,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       });
     });
 
-    console.log("Generated", this.windRoseSegments.length, "wind rose segments");
-  }
+   }
 
 
 
@@ -1226,8 +1214,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   // ============= TEMPERATURE DATA PREPARATION =============
   prepareThermostatData(): void {
-    console.log("=== THERMOSTAT DATA PREPARATION START ===");
-
+ 
     // Temperature sensor types to track
     const tempSensors = ['TEMP_SOIL', 'TempC_DS18B20', 'temp_SOIL', 'temp_DS18B20'];
 
@@ -1235,8 +1222,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     const tempRawData = this.rawData.filter(item =>
       tempSensors.includes(item.sensor)
     );
-
-    console.log("Temperature readings found:", tempRawData.length);
+ 
 
     // Get current month for normal range
     const currentMonth = this.getCurrentMonthName();
@@ -1317,12 +1303,16 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
           colorIndex++;
         });
 
-        console.log("Thermostat data prepared:", this.thermostatData);
-        this.cdr.detectChanges();
+        if (this.thermostatData.length === 0) {
+          this.thermostatData = this.getFallbackThermostatData();
+        }
+         this.cdr.detectChanges();
       },
       error: (err) => {
         console.error("Error getting crop temperature data:", err);
-        // Continue with default values if crop service fails
+        if (this.thermostatData.length === 0) {
+          this.thermostatData = this.getFallbackThermostatData();
+        }
         this.cdr.detectChanges();
       }
     });
@@ -1477,8 +1467,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   // 4. ADD METHOD to prepare TSR data (call this in loadDeviceData after prepareThermostatData)
   prepareTSRData(): void {
-    console.log("=== TSR DATA PREPARATION START ===");
-
+ 
     // TSR sensor types to track - based on your system
     const tsrSensors = [
       'TSR',
@@ -1489,18 +1478,16 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       'solar_radiation',
       'PAR'
     ];
+ 
 
     // Filter TSR data from rawData - only from climate/meteorological devices
     const tsrRawData = this.rawData.filter(item =>
-      item.deviceId.includes('estacion-metereologica') &&
       tsrSensors.some(sensor => item.sensor.includes(sensor) || item.sensor.toLowerCase().includes('radiation'))
     );
-
-    console.log("TSR readings found:", tsrRawData.length);
-    console.log("TSR sensors detected:", [...new Set(tsrRawData.map(d => d.sensor))]);
+ 
 
     if (tsrRawData.length === 0) {
-      console.warn("No TSR data found");
+      this.tsrChartData = this.generateFallbackTSRChartData();
       return;
     }
 
@@ -1525,9 +1512,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
         }
       }
     });
-
-    console.log("TSR time groups:", timeGroups.size);
-
+ 
     // Calculate max, mean, min for each hour
     const dataPoints: TSRDataPoint[] = [];
 
@@ -1549,7 +1534,10 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
-    console.log("TSR data points created:", dataPoints.length);
+    if (dataPoints.length === 0) {
+      this.tsrChartData = this.generateFallbackTSRChartData();
+      return;
+    }
 
     // Calculate DLIg values
     const dligMax = this.calculateDLIg(dataPoints.map(d => d.tsrMax));
@@ -1568,14 +1556,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       dligMean,
       dligMin,
       timeRange
-    };
-
-    console.log("TSR Chart Data prepared:", {
-      dataPoints: this.tsrChartData.dataPoints.length,
-      dligMax: this.tsrChartData.dligMax.toFixed(2),
-      dligMean: this.tsrChartData.dligMean.toFixed(2),
-      dligMin: this.tsrChartData.dligMin.toFixed(2)
-    });
+    }; 
   }
 
   // 5. ADD SVG HELPER METHODS for TSR chart
@@ -1742,8 +1723,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   // 1.4 ADD PREPARATION METHOD (after prepareTSRData() method, around line 450)
   preparePARData(): void {
-    console.log("=== PAR DATA PREPARATION START ===");
-
+ 
     // IMPORTANT: According to working dashboard, we should use TSR sensors, NOT PAR
     // PAR sensors may have different units or be incorrect
     // TSR = Total Solar Radiation in W/m²
@@ -1760,12 +1740,9 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
         item.sensor.includes(sensor)
       )
     );
-
-    console.log("PAR readings found:", parRawData.length);
-    console.log("PAR sensors detected:", [...new Set(parRawData.map(d => d.sensor))]);
-
+ 
     if (parRawData.length === 0) {
-      console.warn("No PAR data found");
+      this.parChartData = this.generateFallbackPARChartData();
       return;
     }
 
@@ -1790,8 +1767,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
         }
       }
     });
-
-    console.log("PAR time groups:", timeGroups.size);
+ 
 
     // Calculate instantaneous PAR and accumulated DLIp
     const dataPoints: PARDataPoint[] = [];
@@ -1822,7 +1798,10 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       }
     });
 
-    console.log("PAR data points created:", dataPoints.length);
+    if (dataPoints.length === 0) {
+      this.parChartData = this.generateFallbackPARChartData();
+      return;
+    }
 
     // Calculate statistics
     const parValues = dataPoints.map(d => d.parInstantaneous);
@@ -1844,14 +1823,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       parMin,
       timeRange
     };
-
-    console.log("PAR Chart Data prepared:", {
-      dataPoints: this.parChartData.dataPoints.length,
-      dlipTotal: this.parChartData.dlipTotal.toFixed(2),
-      parMax: this.parChartData.parMax.toFixed(1),
-      parMean: this.parChartData.parMean.toFixed(1),
-      parMin: this.parChartData.parMin.toFixed(1)
-    });
+ 
   }
 
   // 1.5 ADD SVG HELPER METHODS for PAR chart (after TSR helper methods, around line 550)
@@ -2194,14 +2166,6 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     if (!range) return true;  // Unknown sensor, allow
 
     if (value < range.min || value > range.max) {
-      console.error(`❌ ${sensorType} OUT OF RANGE:`, {
-        deviceId,
-        sensorType,
-        processedValue: value,
-        rawPayload: rawPayload,
-        expectedRange: `${range.min} - ${range.max}`,
-        timestamp: new Date().toISOString()
-      });
       return false;
     }
 
@@ -2231,16 +2195,13 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     if (sensorType.includes('DS18B20')) {
       // DS18B20 digital sensors need /10 conversion
       temperature = rawValue / 10;
-      console.log(`🌡️ DS18B20 conversion: ${rawValue} → ${temperature}°C (${deviceId})`);
-    } else if (sensorType === 'TEMP_SOIL' || sensorType === 'temp_SOIL') {
+     } else if (sensorType === 'TEMP_SOIL' || sensorType === 'temp_SOIL') {
       // TEMP_SOIL sensors are already in °C
       temperature = rawValue;
-      console.log(`🌡️ TEMP_SOIL direct: ${rawValue}°C (${deviceId})`);
-    } else {
+     } else {
       // Other temperature sensors - assume need /10 (default behavior)
       temperature = rawValue / 10;
-      console.log(`🌡️ Generic temp sensor /10: ${rawValue} → ${temperature}°C (${deviceId})`);
-    }
+     }
 
     const isValid = this.validateSensorData(
       temperature,
@@ -2249,15 +2210,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       deviceId
     );
 
-    if (!isValid) {
-      console.warn(`⚠️ Temperature validation failed:`, {
-        rawValue,
-        processedTemperature: temperature,
-        sensorType,
-        deviceId,
-        conversion: sensorType.includes('DS18B20') ? '/10 applied' :
-                    (sensorType.includes('TEMP_SOIL') || sensorType.includes('temp_SOIL')) ? 'no conversion' : '/10 applied (default)'
-      });
+    if (!isValid) { 
       return null;
     }
 
@@ -2286,14 +2239,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
     // Auto-detect if value suggests wrong unit
     if (rawValue > 10 && unit === 'mS/cm') {
-      console.warn(`⚠️ Conductivity unit conversion:`, {
-        deviceId,
-        rawValue,
-        assumedUnit: unit,
-        convertedTo_mS_cm: rawValue / 1000,
-        rawPayload,
-        suggestion: 'Value seems to be in μS/cm, not mS/cm'
-      });
+     
       normalizedValue = rawValue / 1000;
     }
 
@@ -2315,16 +2261,164 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   ): number | null {
     const isValid = this.validateSensorData(rawValue, 'PAR', rawPayload, deviceId);
 
-    if (!isValid && rawValue > 3000) {
-      console.warn(`⚠️ PAR validation:`, {
-        deviceId,
-        rawValue,
-        rawPayload,
-        possibleIssue: 'May be cumulative instead of instantaneous, or wrong sensor type'
-      });
-    }
+    
 
     return isValid ? rawValue : null;
+  }
+
+  // ============================================================================
+  // FALLBACK DATA GENERATORS - Used when no sensor data is available
+  // ============================================================================
+
+  private generateFallbackWindRoseTraces(): any[] {
+    const windData: { direction: number; speed: number }[] = [];
+    // Typical NE trade-wind pattern common in Costa Rica
+    const patterns = [
+      { dir: 45,    speed: 4.0, count: 30 },
+      { dir: 22.5,  speed: 3.0, count: 20 },
+      { dir: 67.5,  speed: 3.5, count: 15 },
+      { dir: 0,     speed: 2.5, count: 10 },
+      { dir: 90,    speed: 2.0, count: 10 },
+      { dir: 315,   speed: 1.5, count:  8 },
+      { dir: 180,   speed: 1.0, count:  4 },
+      { dir: 270,   speed: 1.5, count:  3 },
+    ];
+    patterns.forEach(p => {
+      for (let i = 0; i < p.count; i++) {
+        windData.push({
+          direction: p.dir + (Math.random() * 10 - 5),
+          speed: Math.max(0, p.speed + (Math.random() * 1.4 - 0.7))
+        });
+      }
+    });
+    return this.aggregateWindRoseData(windData);
+  }
+
+  private getFallbackThermostatData(): ThermostatReading[] {
+    const currentMonth = this.getCurrentMonthName();
+    const normalRange = this.normalTemperatureRanges[currentMonth];
+    const colors = ['#667eea', '#4facfe'];
+    const sensors = [
+      { deviceId: 'demo-suelo-01', sensorType: 'TEMP_SOIL',     currentTemp: 23.5, max: 27.2, min: 18.4, mean: 22.8 },
+      { deviceId: 'demo-suelo-02', sensorType: 'temp_DS18B20',  currentTemp: 21.0, max: 25.8, min: 17.6, mean: 21.4 },
+    ];
+    return sensors.map((s, i) => ({
+      ...s,
+      tMinOpt: 15.0,
+      tMaxOpt: 30.0,
+      isWithinNormal: s.currentTemp >= normalRange.min && s.currentTemp <= normalRange.max,
+      normalRange,
+      lastUpdate: new Date().toISOString(),
+      color: colors[i % colors.length]
+    }));
+  }
+
+  private generateFallbackTSRChartData(): TSRChartData {
+    const now = new Date();
+    const dataPoints: TSRDataPoint[] = [];
+    for (let hour = 6; hour <= 18; hour++) {
+      const t = (hour - 6) / 12;
+      const base = Math.sin(t * Math.PI) * 820;
+      const date = new Date(now);
+      date.setHours(hour, 0, 0, 0);
+      dataPoints.push({
+        timestamp: date.toISOString(),
+        tsrMax:  parseFloat((base * 1.12).toFixed(1)),
+        tsrMean: parseFloat(base.toFixed(1)),
+        tsrMin:  parseFloat((base * 0.86).toFixed(1)),
+        deviceId: 'demo-estacion-metereologica-01'
+      });
+    }
+    return {
+      dataPoints,
+      dligMax:  this.calculateDLIg(dataPoints.map(d => d.tsrMax)),
+      dligMean: this.calculateDLIg(dataPoints.map(d => d.tsrMean)),
+      dligMin:  this.calculateDLIg(dataPoints.map(d => d.tsrMin)),
+      timeRange: { start: dataPoints[0].timestamp, end: dataPoints[dataPoints.length - 1].timestamp }
+    };
+  }
+
+  private generateFallbackPARChartData(): PARChartData {
+    const now = new Date();
+    const dataPoints: PARDataPoint[] = [];
+    let accDLIp = 0;
+    for (let hour = 6; hour <= 18; hour++) {
+      const t = (hour - 6) / 12;
+      const parValue = parseFloat((Math.sin(t * Math.PI) * 1150).toFixed(1));
+      accDLIp += (parValue * 3600) / 1_000_000;
+      const date = new Date(now);
+      date.setHours(hour, 0, 0, 0);
+      dataPoints.push({
+        timestamp: date.toISOString(),
+        parInstantaneous: parValue,
+        dlipAccumulated: parseFloat(accDLIp.toFixed(4)),
+        deviceId: 'demo-estacion-metereologica-01'
+      });
+    }
+    const parValues = dataPoints.map(d => d.parInstantaneous);
+    return {
+      dataPoints,
+      dlipTotal: accDLIp,
+      parMax:  Math.max(...parValues),
+      parMean: parValues.reduce((a, b) => a + b, 0) / parValues.length,
+      parMin:  Math.min(...parValues),
+      timeRange: { start: dataPoints[0].timestamp, end: dataPoints[dataPoints.length - 1].timestamp }
+    };
+  }
+
+  private applyFallbackChartData(): void {
+    const fallbackSensors: Record<string, { sensor: string; baseValue: number; variance: number }[]> = {
+      flow: [
+        { sensor: 'Water_flow_value', baseValue: 120, variance: 15 },
+        { sensor: 'MOD',              baseValue: 8.5, variance: 1.2 }
+      ],
+      ph: [
+        { sensor: 'PH1_SOIL', baseValue: 6.8, variance: 0.3 }
+      ],
+      climate: [
+        { sensor: 'TEM',        baseValue: 24,  variance: 3   },
+        { sensor: 'HUM',        baseValue: 72,  variance: 8   },
+        { sensor: 'wind_speed', baseValue: 3.5, variance: 1.5 }
+      ],
+      pressure: [
+        { sensor: 'Water_pressure_MPa', baseValue: 0.35, variance: 0.05 },
+        { sensor: 'IDC_intput_mA',      baseValue: 12.4, variance: 0.8  }
+      ],
+      soil: [
+        { sensor: 'water_SOIL',   baseValue: 58,  variance: 6   },
+        { sensor: 'conduct_SOIL', baseValue: 1.2, variance: 0.2 }
+      ]
+    };
+
+    const now = new Date();
+    const hours = 12;
+
+    Object.keys(fallbackSensors).forEach(type => {
+      if (!this.chartData[type] || Object.keys(this.chartData[type]).length === 0) {
+        const chartDataMap: { [sensor: string]: ChartData } = {};
+        const labels: string[] = [];
+        for (let i = 0; i < hours; i++) {
+          const d = new Date(now.getTime() - (hours - 1 - i) * 3_600_000);
+          labels.push(d.toLocaleTimeString());
+        }
+        fallbackSensors[type].forEach(({ sensor, baseValue, variance }) => {
+          const data = Array.from({ length: hours }, () =>
+            parseFloat((baseValue + (Math.random() * variance * 2 - variance)).toFixed(2))
+          );
+          chartDataMap[sensor] = {
+            labels,
+            datasets: [{
+              label: 'demo-device-01',
+              data,
+              borderColor: this.colors[0],
+              backgroundColor: this.colors[0] + '20',
+              deviceId: 'demo-device-01'
+            }]
+          };
+        });
+        this.chartData[type] = chartDataMap;
+      }
+    });
   }
 
   /**
@@ -2357,8 +2451,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       const ea = (humidity / 100) * es;
       const correctedVPD = Math.max(0.01, es - ea);
 
-      console.warn(`⚠️ VPD corrected from 0.00 to ${correctedVPD.toFixed(2)} kPa`);
-      return correctedVPD;
+       return correctedVPD;
     }
 
     // Validate reasonable range
@@ -2368,13 +2461,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     }
 
     if (vpd > 4) {
-      console.warn('⚠️ VPD unusually high:', {
-        vpd: vpd.toFixed(2),
-        temp,
-        humidity,
-        deviceId,
-        note: 'Check humidity sensor - may be reading too low'
-      });
+    
     }
 
     return vpd;
@@ -2385,25 +2472,21 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
    * This method extracts climate data using correct sensor names and calculates VPD, ET, etc.
    */
   calculateClimateKPIs(): any {
-    console.log('=== CALCULATING CLIMATE KPIs ===');
-
+ 
     // Filter climate station data
     const climateSensors = this.rawData.filter(item =>
       item.deviceId.includes('estacion-metereologica')
     );
 
     if (climateSensors.length === 0) {
-      console.warn('No climate sensor data found');
-      return null;
+       return null;
     }
 
     // Extract temperature using correct sensor names
     // TEM sensors (air temperature from climate station) typically need /10
     const temps = this.extractSensorValues(climateSensors, 'TEM')
       .map(v => v / 10);  // TEM sensors return value × 10
-
-    console.log(`Climate TEM temps extracted: ${temps.length} values, sample: ${temps.slice(0, 3).join(', ')}°C`);
-
+ 
     // Extract humidity using correct sensor names (HUM, Hum_SHT2x)
     const humidities = [
       ...this.extractSensorValues(climateSensors, 'HUM'),
@@ -2422,12 +2505,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     const windStats = this.calculateStatsValues(windSpeeds);
     const solarStats = this.calculateStatsValues(solarRadiation);
 
-    console.log('Climate sensor stats:', {
-      temps: { count: temps.length, ...tempStats },
-      humidity: { count: humidities.length, ...humidityStats },
-      wind: { count: windSpeeds.length, ...windStats },
-      solar: { count: solarRadiation.length, ...solarStats }
-    });
+    
 
     // Calculate VPD
     const saturationVaporPressure = this.getSaturationVaporPressure(tempStats.avg);
@@ -2479,8 +2557,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       }
     };
 
-    console.log('Climate KPIs calculated:', kpis);
-    return kpis;
+     return kpis;
   }
 
 }

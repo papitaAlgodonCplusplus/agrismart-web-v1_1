@@ -148,14 +148,19 @@
         </div>
       </div>
 
-      <!-- Current Recommendation Card -->
-      <div *ngIf="currentRecommendation && autoModeEnabled" class="recommendation-card" [class]="getUrgencyClass(currentRecommendation.urgency)">
-        <div class="recommendation-header">
-          <div class="recommendation-title">
-            <i class="bi" [class]="getUrgencyIcon(currentRecommendation.urgency)"></i>
-            <h3>Recomendación de Riego</h3>
+      <!-- Analysis Dashboard -->
+      <div *ngIf="currentRecommendation && autoModeEnabled" class="analysis-dashboard" [class]="'analysis-' + currentRecommendation.urgency">
+
+        <!-- Dashboard Header -->
+        <div class="dashboard-header" [class]="'analysis-' + currentRecommendation.urgency">
+          <div class="dashboard-title-row">
+            <i class="bi bi-bar-chart-line-fill dashboard-title-icon"></i>
+            <div>
+              <h3>Análisis de Decisión de Riego</h3>
+              <small *ngIf="lastRecommendationTime">Calculado: {{ formatDateTime(lastRecommendationTime) }}</small>
+            </div>
             <span class="urgency-badge" [class]="getUrgencyClass(currentRecommendation.urgency)">
-              {{ currentRecommendation.urgency | uppercase }}
+              {{ translateUrgency(currentRecommendation.urgency) }}
             </span>
           </div>
           <button class="btn-close-recommendation" (click)="dismissRecommendation()">
@@ -163,71 +168,235 @@
           </button>
         </div>
 
-        <div class="recommendation-body">
-          <div class="recommendation-decision">
-            <div class="decision-icon" [class.should-irrigate]="currentRecommendation.shouldIrrigate">
-              <i class="bi" [class.bi-droplet-fill]="currentRecommendation.shouldIrrigate" [class.bi-droplet]="!currentRecommendation.shouldIrrigate"></i>
+        <!-- SECTION 1: Sensor Readings -->
+        <div class="analysis-section" *ngIf="currentRecommendation.decisionFactors">
+          <h4 class="analysis-section-title">
+            <i class="bi bi-broadcast"></i>
+            Lecturas de Sensores
+          </h4>
+          <div class="sensor-cards-row">
+
+            <!-- Humedad del Suelo -->
+            <div class="sensor-card"
+                 [class]="currentRecommendation.decisionFactors.hasSoilMoistureData
+                   ? getMoistureStatusClass(currentRecommendation.decisionFactors.depletionPercentage)
+                   : 'sensor-failed'">
+              <i class="bi bi-droplet-fill sensor-card-icon"></i>
+              <ng-container *ngIf="currentRecommendation.decisionFactors.hasSoilMoistureData; else noMoisture">
+                <div class="sensor-card-value">{{ currentRecommendation.decisionFactors.currentMoisture.toFixed(1) }}%</div>
+                <div class="sensor-card-label">Humedad Suelo</div>
+                <div class="sensor-card-sub">Depleción: {{ currentRecommendation.decisionFactors.depletionPercentage.toFixed(1) }}%</div>
+                <div class="sensor-mini-bar">
+                  <div class="sensor-mini-fill" [style.width.%]="100 - currentRecommendation.decisionFactors.depletionPercentage"></div>
+                </div>
+              </ng-container>
+              <ng-template #noMoisture>
+                <div class="sensor-card-value sensor-na">S/D</div>
+                <div class="sensor-card-label">Humedad Suelo</div>
+                <div class="sensor-card-sub sensor-fail-msg">Sin sensor</div>
+              </ng-template>
             </div>
-            <div class="decision-text">
-              <h4>{{ currentRecommendation.shouldIrrigate ? '¡Se recomienda regar!' : 'No se requiere riego' }}</h4>
-              <p *ngIf="currentRecommendation.shouldIrrigate">
-                El sistema recomienda ejecutar riego basado en las condiciones actuales
-              </p>
-              <p *ngIf="!currentRecommendation.shouldIrrigate">
-                Las condiciones actuales no requieren riego en este momento
-              </p>
+
+            <!-- VPD -->
+            <div class="sensor-card"
+                 [class]="currentRecommendation.decisionFactors.currentVPD != null
+                   ? getVPDStatusClass(currentRecommendation.decisionFactors.currentVPD)
+                   : 'sensor-failed'">
+              <i class="bi bi-wind sensor-card-icon"></i>
+              <ng-container *ngIf="currentRecommendation.decisionFactors.currentVPD != null; else noVPD">
+                <div class="sensor-card-value">{{ currentRecommendation.decisionFactors.currentVPD.toFixed(2) }} kPa</div>
+                <div class="sensor-card-label">VPD</div>
+                <div class="sensor-card-sub">
+                  {{ currentRecommendation.decisionFactors.currentVPD > 1.2 ? 'Alto ↑' : currentRecommendation.decisionFactors.currentVPD < 0.4 ? 'Bajo ↓' : 'Normal' }}
+                </div>
+              </ng-container>
+              <ng-template #noVPD>
+                <div class="sensor-card-value sensor-na">S/D</div>
+                <div class="sensor-card-label">VPD</div>
+                <div class="sensor-card-sub sensor-fail-msg">Sin sensor</div>
+              </ng-template>
+            </div>
+
+            <!-- Temperatura -->
+            <div class="sensor-card"
+                 [class]="currentRecommendation.decisionFactors.currentTemperature != null ? 'sensor-neutral' : 'sensor-failed'">
+              <i class="bi bi-thermometer-half sensor-card-icon"></i>
+              <ng-container *ngIf="currentRecommendation.decisionFactors.currentTemperature != null; else noTemp">
+                <div class="sensor-card-value">{{ currentRecommendation.decisionFactors.currentTemperature.toFixed(1) }} °C</div>
+                <div class="sensor-card-label">Temperatura</div>
+              </ng-container>
+              <ng-template #noTemp>
+                <div class="sensor-card-value sensor-na">S/D</div>
+                <div class="sensor-card-label">Temperatura</div>
+                <div class="sensor-card-sub sensor-fail-msg">Sin sensor</div>
+              </ng-template>
+            </div>
+
+            <!-- Humedad Relativa -->
+            <div class="sensor-card"
+                 [class]="currentRecommendation.decisionFactors.currentHumidity != null ? 'sensor-neutral' : 'sensor-failed'">
+              <i class="bi bi-moisture sensor-card-icon"></i>
+              <ng-container *ngIf="currentRecommendation.decisionFactors.currentHumidity != null; else noHum">
+                <div class="sensor-card-value">{{ currentRecommendation.decisionFactors.currentHumidity.toFixed(0) }}%</div>
+                <div class="sensor-card-label">Humedad Rel.</div>
+              </ng-container>
+              <ng-template #noHum>
+                <div class="sensor-card-value sensor-na">S/D</div>
+                <div class="sensor-card-label">Humedad Rel.</div>
+                <div class="sensor-card-sub sensor-fail-msg">Sin sensor</div>
+              </ng-template>
+            </div>
+
+            <!-- Drenaje -->
+            <div class="sensor-card"
+                 [class]="currentRecommendation.decisionFactors.recentDrainagePercentage != null
+                   ? getDrainageStatusClass(currentRecommendation.decisionFactors.recentDrainagePercentage)
+                   : 'sensor-failed'">
+              <i class="bi bi-arrow-down-circle-fill sensor-card-icon"></i>
+              <ng-container *ngIf="currentRecommendation.decisionFactors.recentDrainagePercentage != null; else noDrain">
+                <div class="sensor-card-value">{{ currentRecommendation.decisionFactors.recentDrainagePercentage.toFixed(1) }}%</div>
+                <div class="sensor-card-label">Drenaje</div>
+                <div class="sensor-card-sub">Óptimo: 15–25%</div>
+              </ng-container>
+              <ng-template #noDrain>
+                <div class="sensor-card-value sensor-na">S/D</div>
+                <div class="sensor-card-label">Drenaje</div>
+                <div class="sensor-card-sub sensor-fail-msg">Sin sensor</div>
+              </ng-template>
+            </div>
+
+            <!-- Último Riego -->
+            <div class="sensor-card"
+                 [class]="currentRecommendation.decisionFactors.hoursSinceLastIrrigation != null ? 'sensor-neutral' : 'sensor-failed'">
+              <i class="bi bi-clock-history sensor-card-icon"></i>
+              <ng-container *ngIf="currentRecommendation.decisionFactors.hoursSinceLastIrrigation != null; else noHist">
+                <div class="sensor-card-value">{{ formatHoursSince(currentRecommendation.decisionFactors.hoursSinceLastIrrigation) }}</div>
+                <div class="sensor-card-label">Último Riego</div>
+              </ng-container>
+              <ng-template #noHist>
+                <div class="sensor-card-value sensor-na">S/D</div>
+                <div class="sensor-card-label">Último Riego</div>
+                <div class="sensor-card-sub sensor-fail-msg">Sin historial</div>
+              </ng-template>
+            </div>
+
+            <!-- Hora Actual -->
+            <div class="sensor-card" [class]="currentRecommendation.decisionFactors.isOptimalTime ? 'sensor-ok' : 'sensor-caution'">
+              <i class="bi bi-clock-fill sensor-card-icon"></i>
+              <div class="sensor-card-value">{{ currentRecommendation.decisionFactors.currentHour }}:00 h</div>
+              <div class="sensor-card-label">Hora Actual</div>
+              <div class="sensor-card-sub">{{ currentRecommendation.decisionFactors.isOptimalTime ? 'Óptima' : 'No óptima' }}</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION 2: Rule Evaluations -->
+        <div class="analysis-section" *ngIf="currentRecommendation.ruleEvaluations?.length">
+          <h4 class="analysis-section-title">
+            <i class="bi bi-list-check"></i>
+            Evaluación de Reglas
+            <span class="rules-summary">
+              <span class="rules-triggered">{{ getTriggeredRulesCount(currentRecommendation.ruleEvaluations!) }} activas</span>
+              de {{ currentRecommendation.ruleEvaluations!.length }}
+            </span>
+          </h4>
+          <div class="rules-list">
+            <div *ngFor="let rule of currentRecommendation.ruleEvaluations"
+                 class="rule-row" [class]="getRuleStatusClass(rule)">
+              <div class="rule-indicator">
+                <i class="bi" [class]="getRuleIcon(rule)"></i>
+              </div>
+              <div class="rule-body">
+                <div class="rule-top-row">
+                  <span class="rule-name">{{ rule.ruleName }}</span>
+                  <div class="rule-tags">
+                    <span class="rule-tag tag-triggered" *ngIf="rule.shouldTrigger">ACTIVA</span>
+                    <span class="rule-tag tag-no-data" *ngIf="rule.confidence === 0 && !rule.shouldTrigger">SIN DATOS</span>
+                    <span class="rule-tag tag-adjust" *ngIf="rule.volumeAdjustment && rule.volumeAdjustment !== 1.0">
+                      Volumen {{ rule.volumeAdjustment > 1 ? '+' : '' }}{{ ((rule.volumeAdjustment - 1) * 100).toFixed(0) }}%
+                    </span>
+                    <span class="rule-tag tag-conf" *ngIf="rule.confidence > 0">{{ rule.confidence }}% conf.</span>
+                  </div>
+                </div>
+                <p class="rule-reason-text">{{ rule.reason }}</p>
+                <div class="rule-conf-track">
+                  <div class="rule-conf-fill" [style.width.%]="rule.confidence" [class]="getRuleStatusClass(rule)"></div>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div class="recommendation-details" *ngIf="currentRecommendation.shouldIrrigate">
-            <div class="detail-item">
-              <label>Volumen Recomendado:</label>
-              <span class="value-highlight">{{ currentRecommendation.recommendedVolume }} L</span>
+        <!-- SECTION 3: Final Decision -->
+        <div class="analysis-section">
+          <h4 class="analysis-section-title">
+            <i class="bi bi-check2-square"></i>
+            Decisión Final
+          </h4>
+          <div class="final-decision-card" [class.irrigate]="currentRecommendation.shouldIrrigate">
+            <div class="fd-icon">
+              <i class="bi" [class.bi-droplet-fill]="currentRecommendation.shouldIrrigate" [class.bi-shield-check]="!currentRecommendation.shouldIrrigate"></i>
             </div>
-            <div class="detail-item">
-              <label>Duración Recomendada:</label>
-              <span class="value-highlight">{{ formatDuration(currentRecommendation.recommendedDuration) }}</span>
+            <div class="fd-text">
+              <h3>{{ currentRecommendation.shouldIrrigate ? '¡SE RECOMIENDA REGAR!' : 'NO SE REQUIERE RIEGO' }}</h3>
+              <p *ngIf="!currentRecommendation.shouldIrrigate">
+                Los niveles de humedad son adecuados en este momento.
+                <span *ngIf="currentRecommendation.nextRecommendedCheck">
+                  Próximo chequeo: <strong>{{ formatDateTime(currentRecommendation.nextRecommendedCheck) }}</strong>
+                </span>
+              </p>
+              <p *ngIf="currentRecommendation.shouldIrrigate && currentRecommendation.bestTimeToExecute">
+                Momento óptimo sugerido: <strong>{{ formatDateTime(currentRecommendation.bestTimeToExecute) }}</strong>
+              </p>
             </div>
-            <div class="detail-item">
-              <label>Confianza:</label>
+            <div class="fd-metrics" *ngIf="currentRecommendation.shouldIrrigate">
+              <div class="fd-metric">
+                <span class="fd-metric-value">{{ currentRecommendation.recommendedVolume.toFixed(1) }} L</span>
+                <span class="fd-metric-label">Por contenedor</span>
+              </div>
+              <div class="fd-divider"></div>
+              <div class="fd-metric">
+                <span class="fd-metric-value">{{ formatDuration(currentRecommendation.recommendedDuration) }}</span>
+                <span class="fd-metric-label">Duración</span>
+              </div>
+              <div class="fd-divider"></div>
+              <div class="fd-metric">
+                <span class="fd-metric-value">{{ currentRecommendation.totalVolume.toFixed(0) }} L</span>
+                <span class="fd-metric-label">Volumen total</span>
+              </div>
+              <div class="fd-divider"></div>
+              <div class="fd-metric">
+                <span class="fd-metric-value">{{ currentRecommendation.confidence }}%</span>
+                <span class="fd-metric-label">Confianza</span>
+              </div>
+            </div>
+            <div class="fd-confidence-only" *ngIf="!currentRecommendation.shouldIrrigate">
+              <span class="fd-conf-label">Confianza del análisis:</span>
               <div class="confidence-bar">
                 <div class="confidence-fill" [style.width.%]="currentRecommendation.confidence"></div>
                 <span class="confidence-text">{{ currentRecommendation.confidence }}%</span>
               </div>
             </div>
-            <div class="detail-item" *ngIf="currentRecommendation.bestTimeToExecute">
-              <label>Mejor momento para ejecutar:</label>
-              <span>{{ formatDateTime(currentRecommendation.bestTimeToExecute) }}</span>
-            </div>
-          </div>
-
-          <div class="recommendation-reasoning">
-            <h5><i class="bi bi-lightbulb"></i> Razones:</h5>
-            <ul>
-              <li *ngFor="let reason of currentRecommendation.reasoning">{{ reason }}</li>
-            </ul>
-          </div>
-
-          <div class="recommendation-actions" *ngIf="currentRecommendation.shouldIrrigate">
-            <button
-              class="btn btn-secondary"
-              (click)="dismissRecommendation()">
-              <i class="bi bi-x-circle"></i>
-              Ignorar
-            </button>
-            <button
-              class="btn btn-primary"
-              (click)="manualExecuteRecommendation()"
-              [disabled]="isExecuting">
-              <i class="bi bi-play-fill"></i>
-              Ejecutar Ahora
-            </button>
           </div>
 
           <div class="auto-execution-notice" *ngIf="currentRecommendation.urgency === 'critical'">
-            <i class="bi bi-info-circle"></i>
-            <span>Las recomendaciones de urgencia CRÍTICA se ejecutan automáticamente</span>
+            <i class="bi bi-lightning-fill"></i>
+            <span>Urgencia CRÍTICA — El riego se ejecutará automáticamente</span>
           </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="recommendation-actions" *ngIf="currentRecommendation.shouldIrrigate">
+          <button class="btn btn-secondary" (click)="dismissRecommendation()">
+            <i class="bi bi-x-circle"></i>
+            Ignorar
+          </button>
+          <button class="btn btn-primary" (click)="manualExecuteRecommendation()" [disabled]="isExecuting">
+            <span *ngIf="isExecuting" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!isExecuting" class="bi bi-play-fill"></i>
+            Ejecutar Ahora
+          </button>
         </div>
       </div>
 

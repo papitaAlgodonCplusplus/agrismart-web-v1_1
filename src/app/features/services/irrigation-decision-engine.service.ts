@@ -2,8 +2,8 @@
 // TODO: UNMOCK - Weather forecast integration needed for production use
 
 import { Injectable } from '@angular/core';
-import { Observable, forkJoin, of, throwError } from 'rxjs';
-import { map, catchError, tap, switchMap } from 'rxjs/operators';
+import { Observable, forkJoin, throwError } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 
 // Services
 import { IrrigationSectorService } from './irrigation-sector.service';
@@ -19,6 +19,7 @@ import {
   IrrigationDecisionFactors,
   IrrigationRule,
   RuleEvaluation,
+  RuleEvaluationDisplay,
   GrowthStageConfig,
   WeatherForecast
 } from './models/irrigation-decision.models';
@@ -156,38 +157,37 @@ export class IrrigationDecisionEngineService {
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    // TODO: Get device IDs associated with this crop production
-    // For now, get all recent data and filter
     return this.irrigationService.getDeviceRawData(
       undefined,
       yesterday.toISOString(),
       now.toISOString()
     ).pipe(
       map(rawData => {
-        // Filter for soil moisture sensors
         const moistureReadings = rawData.filter((d: any) =>
           ['water_SOIL', 'water_SOIL_original', 'conduct_SOIL'].includes(d.sensor)
         );
 
         if (moistureReadings.length === 0) {
-          console.error('No soil moisture data found - water_SOIL, water_SOIL_original, or conduct_SOIL sensor required');
-          throw new Error('No soil moisture sensor data available');
+          console.error('Sin datos de sensor de humedad de suelo (water_SOIL, water_SOIL_original, conduct_SOIL)');
+          throw new Error('Sin datos de sensor de humedad de suelo');
         }
 
-        // Get most recent reading
-        const sortedReadings = moistureReadings.sort((a: any, b: any) =>
+        const sorted = moistureReadings.sort((a: any, b: any) =>
           new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
         );
+        const moisture = typeof sorted[0].payload === 'number'
+          ? sorted[0].payload
+          : parseFloat(sorted[0].payload);
 
-        const latestReading = sortedReadings[0];
-        const moisture = typeof latestReading.payload === 'number'
-          ? latestReading.payload
-          : parseFloat(latestReading.payload);
+        if (isNaN(moisture)) {
+          console.error('Valor de humedad de suelo inválido:', sorted[0].payload);
+          throw new Error('Valor de humedad de suelo inválido');
+        }
 
         return moisture;
       }),
       catchError(error => {
-        console.error('Error fetching soil moisture:', error);
+        console.error('Error al obtener humedad de suelo:', error);
         throw error;
       })
     );
@@ -199,34 +199,29 @@ export class IrrigationDecisionEngineService {
   private getSubstrateProperties(cropProductionId: number): Observable<GrowingMedium> {
     return this.growingMediumService.getAll(false).pipe(
       map(response => {
-        console.log('Growing medium response:', response);
-        // Extract growing medium array from response
-        let growingMedia = [];
-        growingMedia = response.growingMediums;
-
+        const growingMedia = response.growingMediums ?? [];
 
         if (growingMedia.length === 0) {
-          console.error('No active growing medium found - GrowingMedium data is required');
-          throw new Error('No active GrowingMedium found');
+          console.error('No se encontró ningún medio de cultivo activo');
+          throw new Error('No se encontró ningún medio de cultivo activo');
         }
 
         const growingMedium = growingMedia[0];
 
-        // Validate required fields
         if (!growingMedium.containerCapacityPercentage) {
-          console.error('GrowingMedium missing containerCapacityPercentage');
-          throw new Error('GrowingMedium containerCapacityPercentage is required');
+          console.error('Medio de cultivo sin containerCapacityPercentage');
+          throw new Error('Medio de cultivo sin containerCapacityPercentage');
         }
 
         if (!growingMedium.permanentWiltingPoint) {
-          console.error('GrowingMedium missing permanentWiltingPoint');
-          throw new Error('GrowingMedium permanentWiltingPoint is required');
+          console.error('Medio de cultivo sin permanentWiltingPoint');
+          throw new Error('Medio de cultivo sin permanentWiltingPoint');
         }
 
         return growingMedium as GrowingMedium;
       }),
       catchError(error => {
-        console.error('Error fetching growing medium properties:', error);
+        console.error('Error al obtener propiedades del sustrato:', error);
         throw error;
       })
     );
@@ -245,42 +240,41 @@ export class IrrigationDecisionEngineService {
       now.toISOString()
     ).pipe(
       map(rawData => {
-        // Get temperature readings
+        // print unique sensor types for debugging
+        const sensorTypes = [...new Set(rawData.map((d: any) => d.sensor))];
+        console.log('Unique sensor types:', sensorTypes);
+
         const tempReadings = rawData.filter((d: any) =>
-          ['TEMP_SOIL', 'TempC_DS18B20', 'temp_SOIL'].includes(d.sensor)
+          ['temp_SOIL', 'temp_DS18B20', 'TEMP_SOIL', 'TempC_DS18B20'].includes(d.sensor)
         );
-
-        if (tempReadings.length === 0) {
-          console.error('No temperature data found - TEMP_SOIL, TempC_DS18B20, or temp_SOIL sensor required');
-          throw new Error('No temperature sensor data available');
-        }
-
-        const currentTemp = parseFloat(tempReadings[tempReadings.length - 1].payload);
-
-        // Get humidity readings
         const humidityReadings = rawData.filter((d: any) =>
           ['HUM', 'Hum_SHT2x'].includes(d.sensor)
         );
 
-        if (humidityReadings.length === 0) {
-          console.error('No humidity data found - HUM or Hum_SHT2x sensor required');
-          throw new Error('No humidity sensor data available');
+        if (tempReadings.length === 0) {
+          console.error('Sin datos de sensor de temperatura (temp_SOIL, temp_DS18B20)');
+          throw new Error('Sin datos de sensor de temperatura');
         }
 
-        const currentHumidity = parseFloat(humidityReadings[humidityReadings.length - 1].payload);
+        const currentTemp = parseFloat(tempReadings[tempReadings.length - 1].payload);
 
-        // Calculate VPD
-        const vpd = this.calculateVPD(currentTemp, currentHumidity);
+        // Humidity sensor is optional — hardware may not include one
+        const currentHumidity = humidityReadings.length > 0
+          ? parseFloat(humidityReadings[humidityReadings.length - 1].payload)
+          : null;
 
-        return {
-          temperature: currentTemp,
-          humidity: currentHumidity,
-          vpd: vpd,
-          timestamp: new Date()
-        };
+        const vpd = currentHumidity !== null
+          ? this.calculateVPD(currentTemp, currentHumidity)
+          : null;
+
+        if (currentHumidity === null) {
+          console.warn('Sin sensor de humedad relativa (HUM, Hum_SHT2x) — VPD no disponible');
+        }
+
+        return { temperature: currentTemp, humidity: currentHumidity, vpd, timestamp: new Date() };
       }),
       catchError(error => {
-        console.error('Error fetching climate data:', error);
+        console.error('Error al obtener datos climáticos:', error);
         throw error;
       })
     );
@@ -303,8 +297,8 @@ export class IrrigationDecisionEngineService {
         const flowEvents = this.detectFlowEvents(rawData);
 
         if (flowEvents.length === 0) {
-          console.error('No irrigation flow events detected in the last 7 days - cannot determine irrigation history');
-          throw new Error('No irrigation flow events detected - Water_flow_value or Total_pulse sensor data required');
+          console.error('Sin eventos de flujo de riego en los últimos 7 días (Water_flow_value, Total_pulse)');
+          throw new Error('Sin historial de eventos de riego');
         }
 
         // Get the most recent flow event
@@ -322,8 +316,8 @@ export class IrrigationDecisionEngineService {
 
         // Calculate drainage percentage from drain sensors
         const drainReadings = rawData.filter((d: any) =>
-          d.sensor && typeof d.sensor === 'string' && d.sensor.toLowerCase().includes('drain')
-        );
+          d.sensor && typeof d.sensor === 'string' && d.sensor.toLowerCase().includes('gauge')
+        ); // 11218691
 
         let recentDrainagePercentage = 0;
 
@@ -335,6 +329,8 @@ export class IrrigationDecisionEngineService {
               : parseFloat(reading.payload);
             return sum + (isNaN(drainValue) ? 0 : drainValue);
           }, 0);
+
+          console.log(`Total irrigation volume in last 7 days: ${totalVolume.toFixed(2)} L, Total drainage volume: ${totalDrainVolume.toFixed(2)} L`);
 
           // Calculate drainage as percentage of irrigation volume
           recentDrainagePercentage = (totalDrainVolume / totalVolume) * 100;
@@ -350,7 +346,7 @@ export class IrrigationDecisionEngineService {
         };
       }),
       catchError(error => {
-        console.error('Error fetching irrigation history:', error);
+        console.error('Error al obtener historial de riego:', error);
         throw error;
       })
     );
@@ -513,7 +509,7 @@ export class IrrigationDecisionEngineService {
         throw new Error('Invalid container response format');
       }),
       catchError(error => {
-        console.error('Error fetching container info:', error);
+        console.error('Error al obtener información del contenedor:', error);
         throw error;
       })
     );
@@ -527,39 +523,40 @@ export class IrrigationDecisionEngineService {
    * Build decision factors from collected data
    */
   private buildDecisionFactors(data: any): IrrigationDecisionFactors {
-    const currentMoisture = data.soilMoisture;
-    const containerCapacity = data.substrate.containerCapacityPercentage || 40;
-    const depletionPercentage = ((containerCapacity - currentMoisture) / containerCapacity) * 100;
+    console.log('Building decision factors with data:', data);
+    const containerCapacity = data.substrate.containerCapacityPercentage;
+    const currentMoisture = data.soilMoisture as number;
+    const depletionPercentage = Math.max(0, ((containerCapacity - currentMoisture) / containerCapacity) * 100);
 
     const now = new Date();
     const hoursSinceLastIrrigation = data.history.lastIrrigationTime
       ? (now.getTime() - new Date(data.history.lastIrrigationTime).getTime()) / (1000 * 60 * 60)
-      : 24;
+      : undefined;
 
     const currentHour = now.getHours();
-    const isOptimalTime = this.isOptimalTimeToIrrigate(currentHour);
 
     return {
       currentMoisture,
       containerCapacity,
       depletionPercentage,
+      hasSoilMoistureData: true,
       currentVPD: data.climate.vpd,
       currentTemperature: data.climate.temperature,
       currentHumidity: data.climate.humidity,
-      recentDrainagePercentage: data.history.recentDrainagePercentage,
-      lastIrrigationTime: data.history.lastIrrigationTime,
+      recentDrainagePercentage: data.history.recentDrainagePercentage ?? undefined,
+      lastIrrigationTime: data.history.lastIrrigationTime ?? undefined,
       hoursSinceLastIrrigation,
       currentHour,
-      isOptimalTime,
+      isOptimalTime: this.isOptimalTimeToIrrigate(currentHour),
       growthStage: this.determineGrowthStage(data.cropProduction),
-      cropWaterStress: Math.max(0, depletionPercentage - 30) // Stress starts after 30% depletion
+      cropWaterStress: Math.max(0, depletionPercentage - 30)
     };
   }
 
   /**
    * Evaluate all irrigation rules
    */
-  private evaluateRules(factors: IrrigationDecisionFactors): RuleEvaluation[] {
+  private evaluateRules(factors: IrrigationDecisionFactors): RuleEvaluationDisplay[] {
     const rules: IrrigationRule[] = [
       this.moistureDepletionRule(),
       this.highVPDRule(),
@@ -569,7 +566,11 @@ export class IrrigationDecisionEngineService {
       this.weatherForecastRule()
     ];
 
-    return rules.map(rule => rule.evaluate(factors));
+    return rules.map(rule => ({
+      ...rule.evaluate(factors),
+      ruleName: rule.name,
+      rulePriority: rule.priority
+    }));
   }
 
   /**
@@ -577,7 +578,7 @@ export class IrrigationDecisionEngineService {
    */
   private generateRecommendation(
     factors: IrrigationDecisionFactors,
-    ruleResults: RuleEvaluation[],
+    ruleResults: RuleEvaluationDisplay[],
     cropProduction: any,
     substrate: GrowingMedium,
     container: Container
@@ -588,14 +589,16 @@ export class IrrigationDecisionEngineService {
 
     if (!shouldIrrigate) {
       return {
-      shouldIrrigate: false,
-      recommendedVolume: 0,
-      recommendedDuration: 0,
-      totalVolume: 0,
-      confidence: 85,
-      reasoning: ['Los niveles de humedad del suelo son adecuados', 'No se detectaron condiciones urgentes'],
-      urgency: 'low',
-      nextRecommendedCheck: new Date(Date.now() + 2 * 60 * 60 * 1000) // Check again in 2 hours
+        shouldIrrigate: false,
+        recommendedVolume: 0,
+        recommendedDuration: 0,
+        totalVolume: 0,
+        confidence: 85,
+        reasoning: ['Los niveles de humedad del suelo son adecuados', 'No se detectaron condiciones urgentes'],
+        urgency: 'low',
+        nextRecommendedCheck: new Date(Date.now() + 2 * 60 * 60 * 1000),
+        decisionFactors: factors,
+        ruleEvaluations: ruleResults
       };
     }
 
@@ -651,7 +654,9 @@ export class IrrigationDecisionEngineService {
       reasoning,
       urgency,
       bestTimeToExecute,
-      nextRecommendedCheck: new Date(Date.now() + 4 * 60 * 60 * 1000) // Check again in 4 hours
+      nextRecommendedCheck: new Date(Date.now() + 4 * 60 * 60 * 1000),
+      decisionFactors: factors,
+      ruleEvaluations: ruleResults
     };
   }
 
@@ -664,9 +669,17 @@ export class IrrigationDecisionEngineService {
    */
   private moistureDepletionRule(): IrrigationRule {
     return {
-      name: 'Moisture Depletion',
-      priority: 10, // Highest priority
+      name: 'Depleción de Humedad',
+      priority: 10,
       evaluate: (factors: IrrigationDecisionFactors): RuleEvaluation => {
+        if (!factors.hasSoilMoistureData) {
+          return {
+            shouldTrigger: false,
+            confidence: 0,
+            reason: 'Sin datos del sensor de humedad de suelo — regla no evaluada'
+          };
+        }
+
         const depletionThreshold = factors.growthStage
           ? GROWTH_STAGE_CONFIGS[factors.growthStage]?.depletionThreshold || DEFAULT_DEPLETION_THRESHOLD
           : DEFAULT_DEPLETION_THRESHOLD;
@@ -675,9 +688,9 @@ export class IrrigationDecisionEngineService {
           return {
             shouldTrigger: true,
             confidence: 95,
-            reason: `CRITICAL: Soil moisture depletion at ${factors.depletionPercentage.toFixed(1)}% (threshold: ${CRITICAL_DEPLETION_THRESHOLD}%)`,
+            reason: `CRÍTICO: Depleción de humedad al ${factors.depletionPercentage.toFixed(1)}% (umbral crítico: ${CRITICAL_DEPLETION_THRESHOLD}%)`,
             urgency: 'critical',
-            volumeAdjustment: 1.1 // 10% more volume for recovery
+            volumeAdjustment: 1.1
           };
         }
 
@@ -685,7 +698,7 @@ export class IrrigationDecisionEngineService {
           return {
             shouldTrigger: true,
             confidence: 85,
-            reason: `Soil moisture depletion at ${factors.depletionPercentage.toFixed(1)}% exceeds threshold (${depletionThreshold}%)`,
+            reason: `Depleción de humedad al ${factors.depletionPercentage.toFixed(1)}% supera el umbral (${depletionThreshold}%)`,
             urgency: 'high'
           };
         }
@@ -693,7 +706,7 @@ export class IrrigationDecisionEngineService {
         return {
           shouldTrigger: false,
           confidence: 90,
-          reason: `Soil moisture adequate (depletion: ${factors.depletionPercentage.toFixed(1)}%)`
+          reason: `Humedad del suelo adecuada (depleción: ${factors.depletionPercentage.toFixed(1)}%)`
         };
       }
     };
@@ -704,20 +717,20 @@ export class IrrigationDecisionEngineService {
    */
   private highVPDRule(): IrrigationRule {
     return {
-      name: 'High VPD',
+      name: 'VPD Elevado',
       priority: 7,
       evaluate: (factors: IrrigationDecisionFactors): RuleEvaluation => {
-        if (!factors.currentVPD) {
-          return { shouldTrigger: false, confidence: 50, reason: 'VPD data not available' };
+        if (factors.currentVPD == null) {
+          return { shouldTrigger: false, confidence: 0, reason: 'Sin datos de VPD (sensor de temperatura o humedad ausente)' };
         }
 
         if (factors.currentVPD > HIGH_VPD_THRESHOLD) {
           return {
             shouldTrigger: true,
             confidence: 75,
-            reason: `High VPD detected (${factors.currentVPD.toFixed(2)} kPa) - increased transpiration demand`,
+            reason: `VPD elevado detectado (${factors.currentVPD.toFixed(2)} kPa) — alta demanda de transpiración`,
             urgency: 'medium',
-            volumeAdjustment: 1.15 // 15% more volume to compensate
+            volumeAdjustment: 1.15
           };
         }
 
@@ -725,15 +738,15 @@ export class IrrigationDecisionEngineService {
           return {
             shouldTrigger: false,
             confidence: 70,
-            reason: `Low VPD (${factors.currentVPD.toFixed(2)} kPa) - reduced transpiration`,
-            volumeAdjustment: 0.9 // 10% less volume
+            reason: `VPD bajo (${factors.currentVPD.toFixed(2)} kPa) — transpiración reducida`,
+            volumeAdjustment: 0.9
           };
         }
 
         return {
           shouldTrigger: false,
           confidence: 60,
-          reason: `VPD in normal range (${factors.currentVPD.toFixed(2)} kPa)`
+          reason: `VPD en rango normal (${factors.currentVPD.toFixed(2)} kPa)`
         };
       }
     };
@@ -744,11 +757,11 @@ export class IrrigationDecisionEngineService {
    */
   private drainageFeedbackRule(): IrrigationRule {
     return {
-      name: 'Drainage Feedback',
+      name: 'Retroalimentación de Drenaje',
       priority: 6,
       evaluate: (factors: IrrigationDecisionFactors): RuleEvaluation => {
-        if (!factors.recentDrainagePercentage) {
-          return { shouldTrigger: false, confidence: 50, reason: 'Drainage data not available' };
+        if (factors.recentDrainagePercentage == null) {
+          return { shouldTrigger: false, confidence: 0, reason: 'Sin datos de drenaje (sensor de drenaje ausente)' };
         }
 
         const drain = factors.recentDrainagePercentage;
@@ -757,8 +770,8 @@ export class IrrigationDecisionEngineService {
           return {
             shouldTrigger: false,
             confidence: 70,
-            reason: `Recent drainage high (${drain.toFixed(1)}%) - reduce irrigation volume`,
-            volumeAdjustment: 0.85 // 15% less volume
+            reason: `Drenaje reciente alto (${drain.toFixed(1)}%) — se recomienda reducir volumen`,
+            volumeAdjustment: 0.85
           };
         }
 
@@ -766,15 +779,15 @@ export class IrrigationDecisionEngineService {
           return {
             shouldTrigger: false,
             confidence: 65,
-            reason: `Recent drainage low (${drain.toFixed(1)}%) - increase irrigation volume`,
-            volumeAdjustment: 1.15 // 15% more volume
+            reason: `Drenaje reciente bajo (${drain.toFixed(1)}%) — se recomienda aumentar volumen`,
+            volumeAdjustment: 1.15
           };
         }
 
         return {
           shouldTrigger: false,
           confidence: 80,
-          reason: `Drainage in optimal range (${drain.toFixed(1)}%)`
+          reason: `Drenaje en rango óptimo (${drain.toFixed(1)}%)`
         };
       }
     };
@@ -785,34 +798,32 @@ export class IrrigationDecisionEngineService {
    */
   private timeOfDayRule(): IrrigationRule {
     return {
-      name: 'Time of Day',
+      name: 'Hora del Día',
       priority: 5,
       evaluate: (factors: IrrigationDecisionFactors): RuleEvaluation => {
         const hour = factors.currentHour;
 
-        // Check if midday (avoid)
         if (hour >= AVOID_IRRIGATION_HOURS.start && hour <= AVOID_IRRIGATION_HOURS.end) {
           return {
             shouldTrigger: false,
             confidence: 70,
-            reason: `Midday hours (${hour}:00) - not optimal for irrigation`,
+            reason: `Horario de mediodía (${hour}:00 h) — no óptimo para riego`,
             urgency: 'low'
           };
         }
 
-        // Check if optimal time
         if (factors.isOptimalTime) {
           return {
-            shouldTrigger: false, // Doesn't trigger on its own, but supports others
+            shouldTrigger: false,
             confidence: 85,
-            reason: `Optimal time for irrigation (${hour}:00)`
+            reason: `Horario óptimo para riego (${hour}:00 h)`
           };
         }
 
         return {
           shouldTrigger: false,
           confidence: 60,
-          reason: `Acceptable time for irrigation (${hour}:00)`
+          reason: `Horario aceptable para riego (${hour}:00 h)`
         };
       }
     };
@@ -822,21 +833,30 @@ export class IrrigationDecisionEngineService {
    * Rule 5: Growth stage considerations
    */
   private growthStageRule(): IrrigationRule {
+    const stageNames: Record<string, string> = {
+      germination: 'Germinación',
+      vegetative: 'Vegetativo',
+      flowering: 'Floración',
+      fruiting: 'Fructificación',
+      harvest: 'Cosecha'
+    };
+
     return {
-      name: 'Growth Stage',
+      name: 'Etapa de Crecimiento',
       priority: 8,
       evaluate: (factors: IrrigationDecisionFactors): RuleEvaluation => {
         if (!factors.growthStage) {
-          return { shouldTrigger: false, confidence: 50, reason: 'Growth stage not determined' };
+          return { shouldTrigger: false, confidence: 50, reason: 'Etapa de crecimiento no determinada' };
         }
 
         const stageConfig = GROWTH_STAGE_CONFIGS[factors.growthStage];
+        const stageName = stageNames[factors.growthStage] || factors.growthStage;
 
         if (stageConfig.waterStressSensitivity === 'high' && factors.cropWaterStress && factors.cropWaterStress > 20) {
           return {
             shouldTrigger: true,
             confidence: 80,
-            reason: `${stageConfig.stage} stage is highly sensitive to water stress (current stress: ${factors.cropWaterStress.toFixed(1)}%)`,
+            reason: `Etapa de ${stageName} es muy sensible al estrés hídrico (estrés actual: ${factors.cropWaterStress.toFixed(1)}%)`,
             urgency: 'high'
           };
         }
@@ -844,7 +864,7 @@ export class IrrigationDecisionEngineService {
         return {
           shouldTrigger: false,
           confidence: 70,
-          reason: `Growth stage (${stageConfig.stage}) water requirements considered`
+          reason: `Requerimientos hídricos de la etapa ${stageName} considerados`
         };
       }
     };
@@ -855,26 +875,25 @@ export class IrrigationDecisionEngineService {
    */
   private weatherForecastRule(): IrrigationRule {
     return {
-      name: 'Weather Forecast',
+      name: 'Pronóstico del Tiempo',
       priority: 4,
       evaluate: (factors: IrrigationDecisionFactors): RuleEvaluation => {
-        // TODO: UNMOCK - Integrate real weather API
-        // For now, assume no rain forecasted
+        // TODO: UNMOCK - Integrar API de clima real
         const forecastedRainfall = factors.forecastedRainfall || 0;
 
-        if (forecastedRainfall > 5) { // mm
+        if (forecastedRainfall > 5) {
           return {
             shouldTrigger: false,
             confidence: 65,
-            reason: `Rain forecasted (${forecastedRainfall}mm) - delay irrigation`,
-            volumeAdjustment: 0.7 // Reduce volume if must irrigate
+            reason: `Lluvia pronosticada (${forecastedRainfall} mm) — se recomienda postergar el riego`,
+            volumeAdjustment: 0.7
           };
         }
 
         return {
           shouldTrigger: false,
           confidence: 50,
-          reason: 'No significant rainfall forecasted (weather data mocked)'
+          reason: 'Sin lluvia significativa pronosticada (integración de clima pendiente)'
         };
       }
     };

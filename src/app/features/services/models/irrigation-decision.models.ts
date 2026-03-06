@@ -4,6 +4,11 @@
 // IRRIGATION RECOMMENDATION INTERFACES
 // ============================================================================
 
+export interface RuleEvaluationDisplay extends RuleEvaluation {
+  ruleName: string;
+  rulePriority: number;
+}
+
 export interface IrrigationRecommendation {
   shouldIrrigate: boolean;
   recommendedVolume: number; // liters per container
@@ -14,6 +19,8 @@ export interface IrrigationRecommendation {
   urgency: 'low' | 'medium' | 'high' | 'critical';
   bestTimeToExecute?: Date; // if not now
   nextRecommendedCheck?: Date; // when to check again
+  decisionFactors?: IrrigationDecisionFactors;
+  ruleEvaluations?: RuleEvaluationDisplay[];
 }
 
 export interface IrrigationDecisionFactors {
@@ -35,6 +42,9 @@ export interface IrrigationDecisionFactors {
   // Crop Requirements
   growthStage?: string;
   cropWaterStress?: number; // 0-100%
+
+  // Data availability flags
+  hasSoilMoistureData: boolean;
 
   // Time of Day
   currentHour: number;

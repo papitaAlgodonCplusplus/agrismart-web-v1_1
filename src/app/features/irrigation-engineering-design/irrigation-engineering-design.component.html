@@ -49,6 +49,12 @@
       </a>
     </li>
     <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'sectors'" (click)="setActiveTab('sectors')">
+        <i class="bi bi-diagram-3"></i>
+        Sectores y Válvulas
+      </a>
+    </li>
+    <li class="nav-item">
       <a class="nav-link" [class.active]="activeTab === 'metrics'" (click)="setActiveTab('metrics')">
         <i class="bi bi-graph-up"></i>
         Métricas de Riego
@@ -103,11 +109,6 @@
                   <i class="bi bi-arrow-down-short" *ngIf="sortField === 'dayMask' && sortDirection === 'asc'"></i>
                   <i class="bi bi-arrow-up-short" *ngIf="sortField === 'dayMask' && sortDirection === 'desc'"></i>
                 </th>
-                <th (click)="sortByField('active')" class="sortable">
-                  Estado
-                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
-                </th>
                 <th (click)="sortByField('dateCreated')" class="sortable">
                   Fecha Creación
                   <i class="bi bi-arrow-down-short" *ngIf="sortField === 'dateCreated' && sortDirection === 'asc'"></i>
@@ -121,11 +122,6 @@
                 <td>{{ plan.id }}</td>
                 <td><strong>{{ plan.name }}</strong></td>
                 <td>{{ getDaysFromMask(plan.dayMask) }}</td>
-                <td>
-                  <span class="badge" [class.bg-success]="plan.active" [class.bg-secondary]="!plan.active">
-                    {{ plan.active ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
                 <td>{{ formatDate(plan.dateCreated) }}</td>
                 <td>
                   <div class="btn-group btn-group-sm">
@@ -217,10 +213,10 @@
                   <i class="bi bi-arrow-up-short"
                     *ngIf="sortField === 'irrigationModeId' && sortDirection === 'desc'"></i>
                 </th>
-                <th (click)="sortByField('startTime')" class="sortable">
-                  Hora Inicio
-                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'startTime' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'startTime' && sortDirection === 'desc'"></i>
+                <th (click)="sortByField('executionDate')" class="sortable">
+                  Fecha Ejecución
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'executionDate' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'executionDate' && sortDirection === 'desc'"></i>
                 </th>
                 <th (click)="sortByField('duration')" class="sortable">
                   Duración (min)
@@ -247,11 +243,6 @@
                   <i class="bi bi-arrow-down-short" *ngIf="sortField === 'sequence' && sortDirection === 'asc'"></i>
                   <i class="bi bi-arrow-up-short" *ngIf="sortField === 'sequence' && sortDirection === 'desc'"></i>
                 </th>
-                <th (click)="sortByField('active')" class="sortable">
-                  Estado
-                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
-                </th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -262,17 +253,12 @@
                 <td>
                   <span class="badge bg-primary">{{ getModeName(entry.irrigationModeId) }}</span>
                 </td>
-                <td>{{ formatTime(entry.startTime) }}</td>
+                <td>{{ formatDateTime(entry.executionDate || '') }}</td>
                 <td>{{ entry.duration }}</td>
                 <td>{{ entry.wStart || 'N/A' }}</td>
                 <td>{{ entry.wEnd || 'N/A' }}</td>
                 <td>{{ entry.frequency || 'N/A' }}</td>
                 <td>{{ entry.sequence }}</td>
-                <td>
-                  <span class="badge" [class.bg-success]="entry.active" [class.bg-secondary]="!entry.active">
-                    {{ entry.active ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
                 <td>
                   <div class="btn-group btn-group-sm">
                     <button class="btn btn-outline-primary" (click)="openEntryModal(entry)" title="Editar">
@@ -325,11 +311,6 @@
                   <i class="bi bi-arrow-down-short" *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
                   <i class="bi bi-arrow-up-short" *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
                 </th>
-                <th (click)="sortByField('active')" class="sortable">
-                  Estado
-                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'active' && sortDirection === 'desc'"></i>
-                </th>
                 <th (click)="sortByField('dateCreated')" class="sortable">
                   Fecha Creación
                   <i class="bi bi-arrow-down-short" *ngIf="sortField === 'dateCreated' && sortDirection === 'asc'"></i>
@@ -342,11 +323,6 @@
               <tr *ngFor="let mode of irrigationModes">
                 <td>{{ mode.id }}</td>
                 <td><strong>{{ mode.name }}</strong></td>
-                <td>
-                  <span class="badge" [class.bg-success]="mode.active" [class.bg-secondary]="!mode.active">
-                    {{ mode.active ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
                 <td>{{ formatDate(mode.dateCreated) }}</td>
                 <td>
                   <div class="btn-group btn-group-sm">
@@ -396,93 +372,52 @@
                   <i class="bi bi-arrow-down-short" *ngIf="sortField === 'id' && sortDirection === 'asc'"></i>
                   <i class="bi bi-arrow-up-short" *ngIf="sortField === 'id' && sortDirection === 'desc'"></i>
                 </th>
-                <th (click)="sortByField('irrigationPlanId')" class="sortable">
-                  Plan
-                  <i class="bi bi-arrow-down-short"
-                    *ngIf="sortField === 'irrigationPlanId' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short"
-                    *ngIf="sortField === 'irrigationPlanId' && sortDirection === 'desc'"></i>
+                <th>Válvula</th>
+                <th (click)="sortByField('executionDate')" class="sortable">
+                  Fecha Ejecución
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'executionDate' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'executionDate' && sortDirection === 'desc'"></i>
                 </th>
-                <th (click)="sortByField('irrigationModeId')" class="sortable">
-                  Modo
-                  <i class="bi bi-arrow-down-short"
-                    *ngIf="sortField === 'irrigationModeId' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short"
-                    *ngIf="sortField === 'irrigationModeId' && sortDirection === 'desc'"></i>
+                <th (click)="sortByField('retrieveDate')" class="sortable">
+                  Fecha Recuperación
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'retrieveDate' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'retrieveDate' && sortDirection === 'desc'"></i>
                 </th>
-                <th (click)="sortByField('executionStartTime')" class="sortable">
-                  Inicio Ejecución
-                  <i class="bi bi-arrow-down-short"
-                    *ngIf="sortField === 'executionStartTime' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short"
-                    *ngIf="sortField === 'executionStartTime' && sortDirection === 'desc'"></i>
+                <th (click)="sortByField('stopDate')" class="sortable">
+                  Fecha Stop
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'stopDate' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'stopDate' && sortDirection === 'desc'"></i>
                 </th>
-                <th (click)="sortByField('executionEndTime')" class="sortable">
-                  Fin Ejecución
-                  <i class="bi bi-arrow-down-short"
-                    *ngIf="sortField === 'executionEndTime' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short"
-                    *ngIf="sortField === 'executionEndTime' && sortDirection === 'desc'"></i>
-                </th>
-                <th (click)="sortByField('plannedDuration')" class="sortable">
-                  Dur. Plan.
-                  <i class="bi bi-arrow-down-short"
-                    *ngIf="sortField === 'plannedDuration' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short"
-                    *ngIf="sortField === 'plannedDuration' && sortDirection === 'desc'"></i>
-                </th>
-                <th (click)="sortByField('actualDuration')" class="sortable">
-                  Dur. Real
-                  <i class="bi bi-arrow-down-short"
-                    *ngIf="sortField === 'actualDuration' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short"
-                    *ngIf="sortField === 'actualDuration' && sortDirection === 'desc'"></i>
-                </th>
-                <th (click)="sortByField('executionStatus')" class="sortable">
+                <th (click)="sortByField('status')" class="sortable">
                   Estado
-                  <i class="bi bi-arrow-down-short"
-                    *ngIf="sortField === 'executionStatus' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short"
-                    *ngIf="sortField === 'executionStatus' && sortDirection === 'desc'"></i>
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'status' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'status' && sortDirection === 'desc'"></i>
                 </th>
-                <th (click)="sortByField('isManualExecution')" class="sortable">
-                  Tipo
-                  <i class="bi bi-arrow-down-short"
-                    *ngIf="sortField === 'isManualExecution' && sortDirection === 'asc'"></i>
-                  <i class="bi bi-arrow-up-short"
-                    *ngIf="sortField === 'isManualExecution' && sortDirection === 'desc'"></i>
+                <th (click)="sortByField('duration')" class="sortable">
+                  Duración (min)
+                  <i class="bi bi-arrow-down-short" *ngIf="sortField === 'duration' && sortDirection === 'asc'"></i>
+                  <i class="bi bi-arrow-up-short" *ngIf="sortField === 'duration' && sortDirection === 'desc'"></i>
                 </th>
-                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let record of filteredHistory">
                 <td>{{ record.id }}</td>
-                <td><strong>{{ getPlanName(record.irrigationPlanId) }}</strong></td>
                 <td>
-                  <span class="badge bg-primary">{{ getModeName(record.irrigationModeId) }}</span>
+                  <span class="badge bg-secondary">{{ getValveName(record) }}</span>
                 </td>
-                <td>{{ formatDateTime(record.executionStartTime) }}</td>
-                <td>{{ record.executionEndTime ? formatDateTime(record.executionEndTime) : 'N/A' }}</td>
-                <td>{{ record.plannedDuration }} min</td>
-                <td>{{ record.actualDuration ? (record.actualDuration + ' min') : 'N/A' }}</td>
+                <td>{{ record.executionDate ? formatDateTime(record.executionDate || '') : 'N/A' }}</td>
+                <td>{{ record.retrieveDate ? formatDateTime(record.retrieveDate) : 'N/A' }}</td>
+                <td>{{ record.stopDate ? formatDateTime(record.stopDate) : 'N/A' }}</td>
                 <td>
-                  <span class="badge" [ngClass]="getStatusClass(record.executionStatus)">
-                    {{ getStatusLabel(record.executionStatus) }}
+                  <span class="badge"
+                    [class.bg-warning]="record.status === 'executing'"
+                    [class.bg-success]="record.status === 'finished'"
+                    [class.bg-secondary]="!record.status">
+                    {{ record.status || 'Pendiente' }}
                   </span>
                 </td>
-                <td>
-                  <span class="badge" [class.bg-warning]="record.isManualExecution"
-                    [class.bg-info]="!record.isManualExecution">
-                    {{ record.isManualExecution ? 'Manual' : 'Automático' }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-outline-primary" (click)="viewHistoryDetails(record)"
-                    title="Ver Detalles">
-                    <i class="bi bi-eye"></i>
-                  </button>
-                </td>
+                <td>{{ record.duration }} min</td>
               </tr>
             </tbody>
           </table>
@@ -690,6 +625,174 @@
     <app-substrate-curve-analyzer></app-substrate-curve-analyzer>
   </div>
 
+  <!-- ==================== SECTORS & VALVES TAB ==================== -->
+  <div *ngIf="activeTab === 'sectors' && !isLoading">
+
+    <!-- ---- SECTORS TABLE ---- -->
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="bi bi-diagram-3"></i>
+          Sectores de Riego
+        </h5>
+        <button class="btn btn-primary btn-sm" (click)="openSectorModal()">
+          <i class="bi bi-plus-lg"></i>
+          Nuevo Sector
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <div *ngIf="isLoadingSectors" class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+          <span class="ms-2 text-muted">Cargando sectores...</span>
+        </div>
+        <div *ngIf="!isLoadingSectors && irrigationSectors.length === 0" class="text-center py-5 text-muted">
+          <i class="bi bi-diagram-3 fs-1 d-block mb-2 opacity-25"></i>
+          <p class="mb-0">No hay sectores registrados</p>
+        </div>
+        <div *ngIf="!isLoadingSectors && irrigationSectors.length > 0" class="table-responsive">
+          <table class="table table-hover table-sm mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Nombre del Sector</th>
+                <th>CropProduction</th>
+                <th>
+                  <i class="bi bi-lightning-charge text-info"></i>
+                  Relay Bomba
+                </th>
+                <th>
+                  <i class="bi bi-toggles text-secondary"></i>
+                  Relay Válvula
+                </th>
+                <th>Estado</th>
+                <th>Creado</th>
+                <th>Actualizado</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let sector of irrigationSectors">
+                <td class="text-muted small fw-semibold">{{ sector.id }}</td>
+                <td><strong>{{ sector.name }}</strong></td>
+                <td class="small text-muted">{{ sector.cropProductionId }}</td>
+                <td>
+                  <span *ngIf="sector.pumpRelayId" class="badge bg-info text-dark">
+                    <i class="bi bi-lightning-charge me-1"></i>{{ getRelayName(sector.pumpRelayId) }}
+                  </span>
+                  <span *ngIf="!sector.pumpRelayId" class="text-muted small">—</span>
+                </td>
+                <td>
+                  <span *ngIf="sector.valveRelayId" class="badge bg-secondary">
+                    <i class="bi bi-toggles me-1"></i>{{ getRelayName(sector.valveRelayId) }}
+                  </span>
+                  <span *ngIf="!sector.valveRelayId" class="text-muted small">—</span>
+                </td>
+                <td>
+                  <span class="badge" [class.bg-success]="sector.active" [class.bg-danger]="!sector.active">
+                    {{ sector.active ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="small text-muted">{{ sector.dateCreated | date:'dd/MM/yy HH:mm' }}</td>
+                <td class="small text-muted">{{ (sector.dateUpdated | date:'dd/MM/yy HH:mm') || '—' }}</td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-primary me-1" (click)="openSectorModal(sector)" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteSector(sector)" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- RELAY MODULES TABLE ---- -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="bi bi-cpu"></i>
+          Módulos de Relay
+          <span class="fs-6 fw-normal text-muted ms-2">
+            (usados como relays de bomba y válvula en los sectores)
+          </span>
+        </h5>
+        <button class="btn btn-primary btn-sm" (click)="openRelayModuleModal()">
+          <i class="bi bi-plus-lg"></i>
+          Nuevo Relay
+        </button>
+      </div>
+      <div class="card-body p-0">
+        <div *ngIf="isLoadingRelays" class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+          <span class="ms-2 text-muted">Cargando módulos...</span>
+        </div>
+        <div *ngIf="!isLoadingRelays && relayModules.length === 0" class="text-center py-5 text-muted">
+          <i class="bi bi-cpu fs-1 d-block mb-2 opacity-25"></i>
+          <p class="mb-0">No hay módulos de relay registrados</p>
+        </div>
+        <div *ngIf="!isLoadingRelays && relayModules.length > 0" class="table-responsive">
+          <table class="table table-hover table-sm mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Nombre del Relay</th>
+                <th>Sectores Asignados</th>
+                <th>Rol en Sectores</th>
+                <th>Estado</th>
+                <th>Creado</th>
+                <th>Actualizado</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let relay of relayModules">
+                <td class="text-muted small fw-semibold">{{ relay.id }}</td>
+                <td><strong>{{ relay.name }}</strong></td>
+                <td>
+                  <span class="badge bg-light text-dark border">
+                    {{ getSectorCountForRelay(relay.id) }} sector(es)
+                  </span>
+                </td>
+                <td>
+                  <ng-container *ngFor="let sector of irrigationSectors">
+                    <span *ngIf="sector.pumpRelayId === relay.id" class="badge bg-info text-dark me-1 mb-1">
+                      <i class="bi bi-lightning-charge me-1"></i>Bomba: {{ sector.name }}
+                    </span>
+                    <span *ngIf="sector.valveRelayId === relay.id" class="badge bg-secondary me-1 mb-1">
+                      <i class="bi bi-toggles me-1"></i>Válvula: {{ sector.name }}
+                    </span>
+                  </ng-container>
+                  <span *ngIf="getSectorCountForRelay(relay.id) === 0" class="text-muted small">Sin asignar</span>
+                </td>
+                <td>
+                  <span class="badge" [class.bg-success]="relay.active" [class.bg-danger]="!relay.active">
+                    {{ relay.active ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td class="small text-muted">{{ relay.dateCreated | date:'dd/MM/yy HH:mm' }}</td>
+                <td class="small text-muted">{{ (relay.dateUpdated | date:'dd/MM/yy HH:mm') || '—' }}</td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-primary me-1" (click)="openRelayModuleModal(relay)" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteRelayModule(relay)" title="Eliminar"
+                    [disabled]="getSectorCountForRelay(relay.id) > 0"
+                    [title]="getSectorCountForRelay(relay.id) > 0 ? 'No se puede eliminar: está asignado a sectores' : 'Eliminar'">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
 <!-- ==================== PLAN MODAL ==================== -->
@@ -794,11 +897,41 @@
           </div>
 
           <div class="col-md-6 mb-3">
-            <label class="form-label">Hora de Inicio *</label>
-            <input type="time" class="form-control" formControlName="startTime">
+            <label class="form-label">Empresa</label>
+            <select class="form-select" formControlName="companyID">
+              <option [ngValue]="null">Seleccione una empresa</option>
+              <option *ngFor="let company of companies" [ngValue]="company.id">
+                {{ company.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Sector</label>
+            <select class="form-select" formControlName="sectorID">
+              <option [ngValue]="null">Seleccione un sector</option>
+              <option *ngFor="let sector of sectors" [ngValue]="sector.id">
+                {{ sector.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Cultivo</label>
+            <select class="form-select" formControlName="cropID">
+              <option [ngValue]="null">Seleccione un cultivo</option>
+              <option *ngFor="let crop of crops" [ngValue]="crop.id">
+                {{ crop.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Fecha de Ejecución *</label>
+            <input type="datetime-local" class="form-control" formControlName="executionDate">
             <div class="invalid-feedback"
-              *ngIf="entryForm.get('startTime')?.invalid && entryForm.get('startTime')?.touched">
-              La hora de inicio es requerida
+              *ngIf="entryForm.get('executionDate')?.invalid && entryForm.get('executionDate')?.touched">
+              La fecha de ejecución es requerida
             </div>
           </div>
 
@@ -906,6 +1039,165 @@
   </div>
 </div>
 
+<!-- ==================== SECTOR MODAL ==================== -->
+<div class="form-overlay" *ngIf="showSectorModal" (click)="closeSectorModal()">
+  <div class="form-panel" (click)="$event.stopPropagation()">
+    <div class="form-header">
+      <h5>
+        <i class="bi bi-diagram-3"></i>
+        {{ isEditMode ? 'Editar Sector de Riego' : 'Nuevo Sector de Riego' }}
+      </h5>
+      <button type="button" class="btn-close" (click)="closeSectorModal()"></button>
+    </div>
+
+    <form [formGroup]="sectorForm" (ngSubmit)="saveSector()">
+      <div class="form-body">
+        <div class="row">
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Producción de Cultivo *</label>
+            <select class="form-select" formControlName="cropProductionId">
+              <option [ngValue]="null">Seleccione producción</option>
+              <option *ngFor="let cp of cropProductions" [ngValue]="cp.id">
+                {{ cp.name || cp.id }}
+              </option>
+            </select>
+            <div class="invalid-feedback"
+              *ngIf="sectorForm.get('cropProductionId')?.invalid && sectorForm.get('cropProductionId')?.touched">
+              La producción de cultivo es requerida
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Nombre del Sector *</label>
+            <input type="text" class="form-control" formControlName="name" placeholder="Ej: Sector Norte A1">
+            <div class="invalid-feedback"
+              *ngIf="sectorForm.get('name')?.invalid && sectorForm.get('name')?.touched">
+              El nombre es requerido
+            </div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">
+              <i class="bi bi-lightning-charge text-info"></i>
+              Relay de Bomba
+            </label>
+            <select class="form-select" formControlName="pumpRelayId">
+              <option [ngValue]="null">Sin relay de bomba</option>
+              <option *ngFor="let relay of relayModules" [ngValue]="relay.id">
+                #{{ relay.id }} — {{ relay.name }}
+              </option>
+            </select>
+            <div class="form-text text-muted">Relay que activa la bomba de agua para este sector</div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">
+              <i class="bi bi-toggles text-secondary"></i>
+              Relay de Válvula
+            </label>
+            <select class="form-select" formControlName="valveRelayId">
+              <option [ngValue]="null">Sin relay de válvula</option>
+              <option *ngFor="let relay of relayModules" [ngValue]="relay.id">
+                #{{ relay.id }} — {{ relay.name }}
+              </option>
+            </select>
+            <div class="form-text text-muted">Relay que controla la válvula de apertura para este sector</div>
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label">Polígono (WKT / GeoJSON)</label>
+            <textarea class="form-control" formControlName="polygon" rows="3"
+              placeholder="Opcional — coordenadas del sector en formato WKT o GeoJSON"></textarea>
+          </div>
+
+          <div class="col-12 mb-3" *ngIf="isEditMode">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" formControlName="active" id="sectorActive">
+              <label class="form-check-label" for="sectorActive">Sector Activo</label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeSectorModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving || sectorForm.invalid">
+          <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isSaving ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Guardar') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== RELAY MODULE MODAL ==================== -->
+<div class="form-overlay" *ngIf="showRelayModuleModal" (click)="closeRelayModuleModal()">
+  <div class="form-panel" (click)="$event.stopPropagation()">
+    <div class="form-header">
+      <h5>
+        <i class="bi bi-cpu"></i>
+        {{ isEditMode ? 'Editar Módulo de Relay' : 'Nuevo Módulo de Relay' }}
+      </h5>
+      <button type="button" class="btn-close" (click)="closeRelayModuleModal()"></button>
+    </div>
+
+    <form [formGroup]="relayModuleForm" (ngSubmit)="saveRelayModule()">
+      <div class="form-body">
+        <div class="row">
+
+          <div class="col-12 mb-3">
+            <label class="form-label">Nombre del Relay *</label>
+            <input type="text" class="form-control" formControlName="name"
+              placeholder="Ej: Relay-Bomba-01, Relay-Valvula-02">
+            <div class="form-text text-muted">
+              Máximo 32 caracteres. Se recomienda un nombre descriptivo del hardware (p.ej. canal en el módulo).
+            </div>
+            <div class="invalid-feedback"
+              *ngIf="relayModuleForm.get('name')?.invalid && relayModuleForm.get('name')?.touched">
+              El nombre es requerido (máx. 32 caracteres)
+            </div>
+          </div>
+
+          <div class="col-12 mb-3" *ngIf="isEditMode">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" formControlName="active" id="relayActive">
+              <label class="form-check-label" for="relayActive">Relay Activo</label>
+            </div>
+          </div>
+
+          <div class="col-12" *ngIf="selectedRelayModule">
+            <div class="alert alert-light border small mb-0">
+              <strong>Sectores que usan este relay:</strong>
+              <ng-container *ngFor="let sector of irrigationSectors">
+                <span *ngIf="sector.pumpRelayId === selectedRelayModule.id" class="badge bg-info text-dark ms-1">
+                  <i class="bi bi-lightning-charge me-1"></i>Bomba: {{ sector.name }}
+                </span>
+                <span *ngIf="sector.valveRelayId === selectedRelayModule.id" class="badge bg-secondary ms-1">
+                  <i class="bi bi-toggles me-1"></i>Válvula: {{ sector.name }}
+                </span>
+              </ng-container>
+              <span *ngIf="getSectorCountForRelay(selectedRelayModule?.id) === 0" class="text-muted ms-1">
+                Sin asignar a ningún sector
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeRelayModuleModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving || relayModuleForm.invalid">
+          <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isSaving ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Guardar') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ==================== HISTORY DETAILS MODAL ==================== -->
 <div class="form-overlay" *ngIf="showHistoryDetailsModal" (click)="closeHistoryDetailsModal()">
   <div class="form-panel" (click)="$event.stopPropagation()">
@@ -925,59 +1217,45 @@
         </div>
 
         <div class="col-md-6 mb-3">
+          <label class="form-label fw-bold">Válvula</label>
+          <p><span class="badge bg-secondary">{{ getValveName(selectedHistoryRecord) }}</span></p>
+        </div>
+
+        <div class="col-md-6 mb-3">
           <label class="form-label fw-bold">Plan de Riego</label>
           <p>{{ getPlanName(selectedHistoryRecord.irrigationPlanId) }}</p>
         </div>
 
         <div class="col-md-6 mb-3">
-          <label class="form-label fw-bold">Modo de Riego</label>
-          <p>{{ getModeName(selectedHistoryRecord.irrigationModeId) }}</p>
-        </div>
-
-        <div class="col-md-6 mb-3">
           <label class="form-label fw-bold">Estado</label>
           <p>
-            <span class="badge" [ngClass]="getStatusClass(selectedHistoryRecord.executionStatus)">
-              {{ getStatusLabel(selectedHistoryRecord.executionStatus) }}
+            <span class="badge"
+              [class.bg-warning]="selectedHistoryRecord.status === 'executing'"
+              [class.bg-success]="selectedHistoryRecord.status === 'finished'"
+              [class.bg-secondary]="!selectedHistoryRecord.status">
+              {{ selectedHistoryRecord.status || 'Pendiente' }}
             </span>
           </p>
         </div>
 
         <div class="col-md-6 mb-3">
-          <label class="form-label fw-bold">Tipo de Ejecución</label>
-          <p>
-            <span class="badge" [class.bg-warning]="selectedHistoryRecord.isManualExecution"
-              [class.bg-info]="!selectedHistoryRecord.isManualExecution">
-              {{ selectedHistoryRecord.isManualExecution ? 'Manual' : 'Automático' }}
-            </span>
-          </p>
+          <label class="form-label fw-bold">Fecha Ejecución</label>
+          <p>{{ selectedHistoryRecord.executionDate ? formatDateTime(selectedHistoryRecord.executionDate || '') : 'N/A' }}</p>
         </div>
 
         <div class="col-md-6 mb-3">
-          <label class="form-label fw-bold">Duración Planificada</label>
-          <p>{{ selectedHistoryRecord.plannedDuration }} minutos</p>
+          <label class="form-label fw-bold">Fecha Recuperación</label>
+          <p>{{ selectedHistoryRecord.retrieveDate ? formatDateTime(selectedHistoryRecord.retrieveDate) : 'N/A' }}</p>
         </div>
 
         <div class="col-md-6 mb-3">
-          <label class="form-label fw-bold">Duración Real</label>
-          <p>{{ selectedHistoryRecord.actualDuration ? (selectedHistoryRecord.actualDuration + ' minutos') : 'N/A' }}
-          </p>
+          <label class="form-label fw-bold">Fecha Stop</label>
+          <p>{{ selectedHistoryRecord.stopDate ? formatDateTime(selectedHistoryRecord.stopDate) : 'N/A' }}</p>
         </div>
 
         <div class="col-md-6 mb-3">
-          <label class="form-label fw-bold">Inicio de Ejecución</label>
-          <p>{{ formatDateTime(selectedHistoryRecord.executionStartTime) }}</p>
-        </div>
-
-        <div class="col-md-6 mb-3">
-          <label class="form-label fw-bold">Fin de Ejecución</label>
-          <p>{{ selectedHistoryRecord.executionEndTime ? formatDateTime(selectedHistoryRecord.executionEndTime) : 'N/A'
-            }}</p>
-        </div>
-
-        <div class="col-12 mb-3" *ngIf="selectedHistoryRecord.notes">
-          <label class="form-label fw-bold">Notas</label>
-          <p>{{ selectedHistoryRecord.notes }}</p>
+          <label class="form-label fw-bold">Duración (min)</label>
+          <p>{{ selectedHistoryRecord.duration }}</p>
         </div>
       </div>
     </div>

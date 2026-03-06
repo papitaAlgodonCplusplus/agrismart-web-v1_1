@@ -12,7 +12,11 @@ namespace AgriSmart.Core.Entities
 
         [Required]
         public int IrrigationPlanId { get; set; }
-
+        public string? Status { get; set; }
+        [Column("StopTime")]
+        public DateTime? StopDate { get; set; }
+        [Column("RetrieveTime")]
+        public DateTime? RetrieveDate { get; set; }
         [Required]
         public int IrrigationModeId { get; set; }
 

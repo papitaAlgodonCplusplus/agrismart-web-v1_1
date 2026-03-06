@@ -30,7 +30,7 @@ export interface IrrigationPlanEntry {
   irrigationPlanName: string;
   irrigationModeId: number;
   irrigationModeName: string;
-  startTime: string; // TimeSpan as string "HH:mm:ss"
+  executionDate?: string | Date; // DateTime as ISO string
   duration: number; // minutes
   wStart?: number; // Week start (1-52)
   wEnd?: number; // Week end (1-52)
@@ -41,6 +41,12 @@ export interface IrrigationPlanEntry {
   dateUpdated?: string;
   createdBy: number;
   updatedBy?: number;
+  status?: string;
+  stopDate?: string;
+  retrieveDate?: string;
+  sectorID?: number;
+  companyID?: number;
+  cropID?: number;
 }
 
 export interface CreateIrrigationPlanCommand {
@@ -61,7 +67,7 @@ export interface UpdateIrrigationPlanCommand {
 export interface CreateIrrigationPlanEntryCommand {
   irrigationPlanId: number;
   irrigationModeId: number;
-  startTime: string;
+  executionDate?: string;
   duration: number;
   wStart?: number;
   wEnd?: number;
@@ -69,13 +75,16 @@ export interface CreateIrrigationPlanEntryCommand {
   sequence: number;
   active: boolean;
   createdBy: number;
+  sectorID?: number;
+  companyID?: number;
+  cropID?: number;
 }
 
 export interface UpdateIrrigationPlanEntryCommand {
   id: number;
   irrigationPlanId: number;
   irrigationModeId: number;
-  startTime: string;
+  executionDate?: string;
   duration: number;
   wStart?: number;
   wEnd?: number;
@@ -83,6 +92,9 @@ export interface UpdateIrrigationPlanEntryCommand {
   sequence: number;
   active: boolean;
   updatedBy: number;
+  sectorID?: number;
+  companyID?: number;
+  cropID?: number;
 }
 
 @Injectable({
