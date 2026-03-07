@@ -616,7 +616,7 @@ namespace AgriSmart.OnDemandIrrigation.Services
                         client.BaseAddress = new Uri(_agrismartApiConfiguration.BaseAddress);
                         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
 
-                        var response = await client.GetAsync(_agrismartApiConfiguration.GetContainerUrl + dropperId.ToString());
+                        var response = await client.GetAsync(_agrismartApiConfiguration.GetDropperUrl + "/" + dropperId.ToString());
 
                         if (response.IsSuccessStatusCode)
                         {

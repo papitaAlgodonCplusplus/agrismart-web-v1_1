@@ -8,6 +8,8 @@
         public string? Name { get; set; }
         public int ContainerId { get; set; }
         public int GrowingMediumId { get; set; }
+        public int DropperId { get; set; }
+        public int NumberOfDroppersPerContainer { get; set; }
         public double Width { get; set; }
         public double Length { get; set; }
         public double BetweenRowDistance { get; set; }
@@ -20,8 +22,8 @@
         public int Altitude { get; set; }
         public double LatitudeGrades { get; set; }
         public double LatitudeMinutes { get; set; }
-        public double IrrigationThreshold { get; set; }//not in database
-        public double DrainThreshold { get; set; }//not in database
+        public double DepletionPercentage { get; set; }
+        public double DrainThreshold { get; set; }
         public bool Active { get; set; }
 
     }

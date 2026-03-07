@@ -11,6 +11,7 @@
         public string? GetCropProductionsUrl { get; set; }
         public string? GetCropsUrl { get; set; }
         public string? GetContainerUrl { get; set; }
+        public string? GetDropperUrl { get; set; }
         public string? GetCropUrl { get; set; }
         public string? GetDevicesUrl { get; set; }
         public string? GetGrowingMediumUrl { get; set; }

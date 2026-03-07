@@ -794,15 +794,15 @@ export class CropProductionService {
 
   sortByPlantingDate(productions: CropProduction[], ascending: boolean = false): CropProduction[] {
     return [...productions].sort((a, b) => {
-      const dateA = new Date(a.plantingDate).getTime();
-      const dateB = new Date(b.plantingDate).getTime();
+      const dateA = new Date(a.plantingDate!).getTime();
+      const dateB = new Date(b.plantingDate!).getTime();
       return ascending ? dateA - dateB : dateB - dateA;
     });
   }
 
   filterByDateRange(productions: CropProduction[], startDate: Date, endDate: Date): CropProduction[] {
     return productions.filter(production => {
-      const plantingDate = new Date(production.plantingDate);
+      const plantingDate = new Date(production.plantingDate!);
       return plantingDate >= startDate && plantingDate <= endDate;
     });
   }

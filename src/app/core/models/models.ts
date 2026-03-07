@@ -2264,31 +2264,36 @@ export interface ProductionUnit {
 
 // src/app/core/models/crop-production.model.ts
 export interface CropProduction {
-  containerId?: any;
-  startDate: Date;
-  dropperId: any;
-  growingMediumId: any;
-  numberOfDroppersPerContainer: number;
-  area: number;
   id: number;
-  code?: string | undefined;
+  dateCreated?: Date;
+  dateUpdated?: Date;
+  createdBy?: number;
+  updatedBy?: number;
   cropId: number;
   crop?: Crop;
   productionUnitId: number;
   productionUnit?: ProductionUnit;
-  plantingDate: Date;
+  name?: string;
+  code?: string;
+  description?: string;
+  containerId?: number;
+  growingMediumId?: number;
+  dropperId?: number;
+  width?: number;
+  length?: number;
+  area?: number;
+  betweenRowDistance?: number;
+  betweenContainerDistance?: number;
+  betweenPlantDistance?: number;
+  plantsPerContainer?: number;
+  numberOfDroppersPerContainer?: number;
+  windSpeedMeasurementHeight?: number;
+  startDate?: Date;
+  endDate?: Date;
+  plantingDate?: Date;
   estimatedHarvestDate?: Date;
-  actualHarvestDate?: Date;
-  status: string | undefined; // 'Preparacion', 'Siembra', 'Crecimiento', 'Floracion', 'Fructificacion', 'Cosecha', 'Finalizada'
-  progress?: number; // percentage 0-100
-  plantedArea?: number;
-  expectedYield?: number;
-  actualYield?: number;
-  description?: string | undefined;
-  isActive: boolean;
-  createdAt: Date;
-  name: string | undefined; // computed: crop.name + ' - ' + productionUnit.name
-  updatedAt?: Date;
+  progress?: number;
+  status?: string;
 }
 
 // src/app/core/models/irrigation-sector.model.ts

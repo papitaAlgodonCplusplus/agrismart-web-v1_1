@@ -2,7 +2,7 @@
 // TODO: UNMOCK - Weather forecast integration needed for production use
 
 import { Injectable } from '@angular/core';
-import { Observable, forkJoin, throwError } from 'rxjs';
+import { Observable, forkJoin, throwError, of } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 
 // Services
@@ -12,6 +12,7 @@ import { KPIOrchestatorService, DailyKPIOutput } from './calculations/kpi-orches
 import { IrrigationCalculationsService, IrrigationMetric } from './irrigation-calculations.service';
 import { GrowingMediumService, GrowingMedium as GrowingMediumEntity } from '../growing-medium/services/growing-medium.service';
 import { ContainerService } from './container.service';
+import { CropPhaseService, CropPhase } from '../crop-phases/services/crop-phase.service';
 
 // Models
 import {
@@ -35,6 +36,8 @@ const LOW_VPD_THRESHOLD = 0.4; // kPa - low transpiration demand
 const OPTIMAL_DRAIN_PERCENTAGE_MIN = 15; // %
 const OPTIMAL_DRAIN_PERCENTAGE_MAX = 25; // %
 const CRITICAL_DEPLETION_THRESHOLD = 60; // % - urgent irrigation needed
+const MIN_DEPLETION_FOR_VPD_TRIGGER = 15; // % - VPD alone cannot trigger below this depletion
+const MAX_REASONABLE_CONTAINER_VOLUME = 500; // L - above this likely indicates a data entry error
 
 // Time of day preferences (24-hour format)
 const OPTIMAL_IRRIGATION_HOURS = {
@@ -100,7 +103,8 @@ export class IrrigationDecisionEngineService {
     private kpiOrchestrator: KPIOrchestatorService,
     private irrigationCalc: IrrigationCalculationsService,
     private growingMediumService: GrowingMediumService,
-    private containerService: ContainerService
+    private containerService: ContainerService,
+    private cropPhaseService: CropPhaseService
   ) { }
 
   // ============================================================================
@@ -113,31 +117,63 @@ export class IrrigationDecisionEngineService {
    * @returns Observable<IrrigationRecommendation>
    */
   getRecommendation(cropProductionId: number): Observable<IrrigationRecommendation> {
-    return forkJoin({
-      cropProduction: this.cropProductionService.getById(cropProductionId),
-      soilMoisture: this.getSoilMoisture(cropProductionId),
-      substrate: this.getSubstrateProperties(cropProductionId),
-      climate: this.getCurrentClimate(cropProductionId),
-      history: this.getRecentIrrigationHistory(cropProductionId),
-      container: this.getContainerInfo(cropProductionId)
-    }).pipe(
-      map(data => {
-        // Build decision factors
-        const factors = this.buildDecisionFactors(data);
+    return this.cropProductionService.getById(cropProductionId).pipe(
+      switchMap((cropProductionResponse: any) => {
+        const cropProduction = cropProductionResponse?.cropProduction ?? cropProductionResponse;
+        console.log('Crop production data:', cropProduction);
 
-        // Evaluate all rules
-        const ruleResults = this.evaluateRules(factors);
+        // Calculate area from length and width if area is not directly available
+        if (!cropProduction.area && cropProduction.length && cropProduction.width) {
+          cropProduction.area = cropProduction.length * cropProduction.width;
+          console.log(`Calculated area from length (${cropProduction.length}) * width (${cropProduction.width}) = ${cropProduction.area} m²`);
+        }
 
-        // Generate recommendation
-        const recommendation = this.generateRecommendation(
-          factors,
-          ruleResults,
-          data.cropProduction,
-          data.substrate,
-          data.container
+        const containerId: number | undefined =
+          cropProduction?.containerId ??
+          cropProductionResponse?.result?.cropProduction?.containerId ??
+          cropProductionResponse?.result?.containerId;
+
+        const container$: Observable<Container> = containerId
+          ? this.containerService.getById(containerId).pipe(
+            map((res: any) => res?.result?.container ?? res?.container ?? res)
+          )
+          : throwError(() => new Error(`CropProduction (ID: ${cropProductionId}) has no containerId`));
+
+        const cropPhase$: Observable<CropPhase | null> = cropProduction.cropId
+          ? this.cropPhaseService.getAll({ cropId: cropProduction.cropId }).pipe(
+            map(phases => this.resolveCurrentPhase(phases, cropProduction)),
+            catchError(() => of(null))
+          )
+          : of(null);
+
+        const dropperId: number | undefined = cropProduction?.dropperId;
+        const dropper$ = dropperId && dropperId > 0
+          ? this.irrigationService.getDropperById(dropperId).pipe(
+            catchError(() => of(null))
+          )
+          : of(null);
+        return forkJoin({
+          soilMoisture: this.getSoilMoisture(cropProductionId),
+          substrate: this.getSubstrateProperties(cropProductionId),
+          climate: this.getCurrentClimate(cropProductionId),
+          history: this.getRecentIrrigationHistory(cropProductionId),
+          container: container$,
+          cropPhase: cropPhase$,
+          dropper: dropper$
+        }).pipe(
+          map(data => {
+            const factors = this.buildDecisionFactors({ ...data, cropProduction });
+            const ruleResults = this.evaluateRules(factors);
+            return this.generateRecommendation(
+              factors,
+              ruleResults,
+              cropProduction,
+              data.substrate,
+              data.container,
+              data.dropper
+            );
+          })
         );
-
-        return recommendation;
       }),
       catchError(error => {
         console.error('Error getting irrigation recommendation:', error);
@@ -164,12 +200,14 @@ export class IrrigationDecisionEngineService {
     ).pipe(
       map(rawData => {
         const moistureReadings = rawData.filter((d: any) =>
-          ['water_SOIL', 'water_SOIL_original', 'conduct_SOIL'].includes(d.sensor)
+          ['water_SOIL'].includes(d.sensor)
         );
 
         if (moistureReadings.length === 0) {
           console.error('Sin datos de sensor de humedad de suelo (water_SOIL, water_SOIL_original, conduct_SOIL)');
           throw new Error('Sin datos de sensor de humedad de suelo');
+        } else {
+          console.log('Últimos datos de humedad de suelo:', moistureReadings.slice(5));
         }
 
         const sorted = moistureReadings.sort((a: any, b: any) =>
@@ -240,6 +278,9 @@ export class IrrigationDecisionEngineService {
       now.toISOString()
     ).pipe(
       map(rawData => {
+        // rawData comes asc, sort desc to get latest readings first
+        rawData.sort((a: any, b: any) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime());
+
         // print unique sensor types for debugging
         const sensorTypes = [...new Set(rawData.map((d: any) => d.sensor))];
         console.log('Unique sensor types:', sensorTypes);
@@ -254,6 +295,12 @@ export class IrrigationDecisionEngineService {
         if (tempReadings.length === 0) {
           console.error('Sin datos de sensor de temperatura (temp_SOIL, temp_DS18B20)');
           throw new Error('Sin datos de sensor de temperatura');
+        }
+
+        if (humidityReadings.length === 0) {
+          console.warn('Sin datos de sensor de humedad relativa (HUM, Hum_SHT2x) — VPD no disponible');
+        } else {
+          console.log('Últimos datos de humedad relativa:', humidityReadings.slice(5));
         }
 
         const currentTemp = parseFloat(tempReadings[tempReadings.length - 1].payload);
@@ -280,16 +327,25 @@ export class IrrigationDecisionEngineService {
     );
   }
 
+  private areLast30PayloadsAllEqual(readings: any[]): boolean {
+    if (readings.length < 30) {
+      return false; // Not enough data to determine
+    }
+    const last30 = readings.slice(-30);
+    const firstPayload = last30[0].payload;
+    return last30.every((r: any) => r.payload === firstPayload);
+  }
+
   /**
    * Get recent irrigation history from Water_flow_value and Total_pulse sensors
    */
   private getRecentIrrigationHistory(cropProductionId: number): Observable<any> {
     const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneDayAgo = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
 
     return this.irrigationService.getDeviceRawData(
       undefined,
-      sevenDaysAgo.toISOString(),
+      oneDayAgo.toISOString(),
       now.toISOString()
     ).pipe(
       map(rawData => {
@@ -297,7 +353,7 @@ export class IrrigationDecisionEngineService {
         const flowEvents = this.detectFlowEvents(rawData);
 
         if (flowEvents.length === 0) {
-          console.error('Sin eventos de flujo de riego en los últimos 7 días (Water_flow_value, Total_pulse)');
+          console.error('Sin eventos de flujo de riego en los últimos 1 día (Water_flow_value, Total_pulse)');
           throw new Error('Sin historial de eventos de riego');
         }
 
@@ -308,10 +364,13 @@ export class IrrigationDecisionEngineService {
         const lastEvent = sortedEvents[0];
 
         // Calculate average daily volume (total volume / days)
-        const totalVolume = flowEvents.reduce((sum, event) =>
+        var totalVolume = flowEvents.reduce((sum, event) =>
           sum + (event.volumeOfWater || 0), 0
         );
-        const daysCovered = (now.getTime() - sevenDaysAgo.getTime()) / (1000 * 60 * 60 * 24);
+        // ml to L
+        totalVolume = totalVolume / 1000;
+
+        const daysCovered = (now.getTime() - oneDayAgo.getTime()) / (1000 * 60 * 60 * 24);
         const averageDailyVolume = totalVolume / daysCovered;
 
         // Calculate drainage percentage from drain sensors
@@ -323,17 +382,23 @@ export class IrrigationDecisionEngineService {
 
         if (drainReadings.length > 0 && totalVolume > 0) {
           // Sum up drain volumes
-          const totalDrainVolume = drainReadings.reduce((sum, reading) => {
-            const drainValue = typeof reading.payload === 'number'
-              ? reading.payload
-              : parseFloat(reading.payload);
-            return sum + (isNaN(drainValue) ? 0 : drainValue);
-          }, 0);
+          var totalDrainVolume = 0;
+          console.log('Drainage sensor readings found:', drainReadings);
+          if (!this.areLast30PayloadsAllEqual(drainReadings)) {
+            // abs(current payload - last distinct payload)
+            const currentPayload = parseFloat(drainReadings[drainReadings.length - 1].payload);
+            const lastDistinctPayload = parseFloat(drainReadings[drainReadings.length - 30].payload);
+            totalDrainVolume = Math.abs(currentPayload - lastDistinctPayload);
+          }
+
+          totalDrainVolume = totalDrainVolume / 1000; // ml to L
+          const daysCovered = (now.getTime() - oneDayAgo.getTime()) / (1000 * 60 * 60 * 24);
+          const averageDailyDrain = totalDrainVolume / daysCovered;
 
           console.log(`Total irrigation volume in last 7 days: ${totalVolume.toFixed(2)} L, Total drainage volume: ${totalDrainVolume.toFixed(2)} L`);
 
           // Calculate drainage as percentage of irrigation volume
-          recentDrainagePercentage = (totalDrainVolume / totalVolume) * 100;
+          recentDrainagePercentage = (averageDailyDrain / averageDailyVolume) * 100;
 
           // Clamp to reasonable range (0-100%)
           recentDrainagePercentage = Math.max(0, Math.min(100, recentDrainagePercentage));
@@ -464,56 +529,6 @@ export class IrrigationDecisionEngineService {
     return flowEvents;
   }
 
-  /**
-   * Get container information
-   */
-  private getContainerInfo(cropProductionId: number): Observable<Container> {
-    return this.cropProductionService.getById(cropProductionId).pipe(
-      switchMap((cropProduction: any) => {
-        console.log('Crop production for container info:', cropProduction);
-
-        // Try different paths to extract containerId
-        let containerId: number | undefined;
-
-        if (cropProduction?.cropProduction?.containerId) {
-          containerId = cropProduction.cropProduction.containerId;
-        } else if (cropProduction?.containerId) {
-          containerId = cropProduction.containerId;
-        } else if (cropProduction?.result?.cropProduction?.containerId) {
-          containerId = cropProduction.result.cropProduction.containerId;
-        } else if (cropProduction?.result?.containerId) {
-          containerId = cropProduction.result.containerId;
-        }
-
-        // Validate containerId
-        if (!containerId || typeof containerId !== 'number' || containerId <= 0) {
-          console.error('CropProduction missing valid containerId. CropProduction:', cropProduction);
-          throw new Error(`CropProduction (ID: ${cropProductionId}) must have a valid containerId for container information`);
-        }
-
-        console.log('Using containerId:', containerId);
-
-        // Fetch the actual container from the API
-        return this.containerService.getById(containerId);
-      }),
-      map(response => {
-        console.log('Container response:', response);
-        // Extract container from response
-        if (response && response.result && response.result.container) {
-          return response.result.container;
-        } else if (response && response.container) {
-          return response.container;
-        } else if (response && response.id) {
-          return response;
-        }
-        throw new Error('Invalid container response format');
-      }),
-      catchError(error => {
-        console.error('Error al obtener información del contenedor:', error);
-        throw error;
-      })
-    );
-  }
 
   // ============================================================================
   // DECISION LOGIC METHODS
@@ -526,6 +541,8 @@ export class IrrigationDecisionEngineService {
     console.log('Building decision factors with data:', data);
     const containerCapacity = data.substrate.containerCapacityPercentage;
     const currentMoisture = data.soilMoisture as number;
+    console.log(`Current soil moisture: ${currentMoisture}, Container capacity: ${containerCapacity}`);
+
     const depletionPercentage = Math.max(0, ((containerCapacity - currentMoisture) / containerCapacity) * 100);
 
     const now = new Date();
@@ -548,7 +565,7 @@ export class IrrigationDecisionEngineService {
       hoursSinceLastIrrigation,
       currentHour,
       isOptimalTime: this.isOptimalTimeToIrrigate(currentHour),
-      growthStage: this.determineGrowthStage(data.cropProduction),
+      growthStage: this.normalizePhaseToStage(data.cropPhase),
       cropWaterStress: Math.max(0, depletionPercentage - 30)
     };
   }
@@ -581,18 +598,27 @@ export class IrrigationDecisionEngineService {
     ruleResults: RuleEvaluationDisplay[],
     cropProduction: any,
     substrate: GrowingMedium,
-    container: Container
+    container: Container,
+    dropper: any | null = null
   ): IrrigationRecommendation {
     // Determine if we should irrigate
     const triggeringRules = ruleResults.filter(r => r.shouldTrigger);
     const shouldIrrigate = triggeringRules.length > 0;
+    // dropper
+    console.log('Dropper data:', dropper);
+    console.log("container:", container);
+    // if container volume is unreasonably high, then it is in ml, convert to L and log a warning
+    if (container.volume && container.volume > MAX_REASONABLE_CONTAINER_VOLUME) {
+      container.volume = container.volume / 1000;
+      console.warn(`Volumen del contenedor (${container.volume} L) parecía incorrecto, se ha convertido de ml a L. Verificar datos en la base de datos para containerId ${container.id}`);
+    }
 
     if (!shouldIrrigate) {
       return {
         shouldIrrigate: false,
-        recommendedVolume: 0,
-        recommendedDuration: 0,
-        totalVolume: 0,
+        recommendedVolume: null,
+        recommendedDuration: null,
+        totalVolume: null,
         confidence: 85,
         reasoning: ['Los niveles de humedad del suelo son adecuados', 'No se detectaron condiciones urgentes'],
         urgency: 'low',
@@ -602,30 +628,58 @@ export class IrrigationDecisionEngineService {
       };
     }
 
-    // Calculate recommended volume
-    const baseVolume = this.calculateIrrigationVolume(factors, substrate, container);
+    // Collect missing configuration data — shown as HTML errors in the UI
+    const missingData: string[] = [];
+    const validContainerVolume = container.volume && container.volume <= MAX_REASONABLE_CONTAINER_VOLUME;
+    if (!container.volume) {
+      missingData.push('Volumen del contenedor no configurado');
+    } else if (container.volume > MAX_REASONABLE_CONTAINER_VOLUME) {
+      missingData.push(`Volumen del contenedor (${container.volume} L) parece incorrecto — verificar datos en la base de datos`);
+    }
+    if (!substrate.totalAvailableWaterPercentage) missingData.push('Agua total disponible del sustrato (TAW%) no configurada');
+    if (!dropper) missingData.push('Gotero (dropperId) no asignado a esta producción de cultivo — necesario para calcular duración');
+    else if (!dropper.flowRate) missingData.push('Caudal del gotero no configurado');
+    if (!cropProduction.numberOfDroppersPerContainer) missingData.push('Número de goteros por contenedor no configurado — necesario para calcular duración');
+    if (!cropProduction.area) missingData.push('Área de la producción no configurada — necesario para calcular volumen total');
+    if (!cropProduction.betweenRowDistance) missingData.push('Distancia entre filas (betweenRowDistance) no configurada — necesario para calcular volumen total');
+    if (!cropProduction.betweenContainerDistance) missingData.push('Distancia entre contenedores (betweenContainerDistance) no configurada — necesario para calcular volumen total');
 
-    // Apply volume adjustments from rules
-    let volumeMultiplier = 1.0;
-    ruleResults.forEach(result => {
-      if (result.volumeAdjustment) {
-        volumeMultiplier *= result.volumeAdjustment;
+    // Volume per container: requires valid container volume + TAW
+    const canCalculateVolume = !!(validContainerVolume && substrate.totalAvailableWaterPercentage);
+    // Duration: additionally requires dropper flow rate + count per container
+    const canCalculateDuration = !!(canCalculateVolume && dropper?.flowRate && cropProduction.numberOfDroppersPerContainer);
+    // Total field volume: additionally requires area + row/container spacing
+    const canCalculateTotal = !!(cropProduction.area && cropProduction.betweenRowDistance && cropProduction.betweenContainerDistance);
+
+    let recommendedVolume: number | null = null;
+    let recommendedDuration: number | null = null;
+    let totalVolume: number | null = null;
+
+    if (canCalculateVolume) {
+      const baseVolume = this.calculateIrrigationVolume(factors, substrate, container);
+
+      // Apply volume adjustments only from triggered rules
+      let volumeMultiplier = 1.0;
+      ruleResults.forEach(result => {
+        if (result.shouldTrigger && result.volumeAdjustment) {
+          volumeMultiplier *= result.volumeAdjustment;
+        }
+      });
+
+      recommendedVolume = baseVolume * volumeMultiplier;
+
+      if (canCalculateDuration) {
+        // flowRate (L/h per dropper) × count / 60 = L/min for the container
+        const flowRate = (dropper!.flowRate * cropProduction.numberOfDroppersPerContainer) / 60;
+        recommendedDuration = Math.ceil(recommendedVolume / flowRate);
       }
-    });
 
-    const recommendedVolume = baseVolume * volumeMultiplier;
-
-    // Calculate duration (assuming 2 L/min flow rate)
-    const flowRate = 2.0; // L/min - TODO: Get from system configuration
-    const recommendedDuration = Math.ceil(recommendedVolume / flowRate);
-
-    // Calculate total volume (for all containers)
-    const containersPerM2 = 1 / (
-      (cropProduction.betweenRowDistance || 1.5) *
-      (cropProduction.betweenContainerDistance || 0.3)
-    );
-    const totalContainers = Math.ceil((cropProduction.area || 100) * containersPerM2);
-    const totalVolume = recommendedVolume * totalContainers;
+      if (canCalculateTotal) {
+        const containersPerM2 = 1 / (cropProduction.betweenRowDistance * cropProduction.betweenContainerDistance);
+        const totalContainers = Math.ceil(cropProduction.area * containersPerM2);
+        totalVolume = recommendedVolume * totalContainers;
+      }
+    }
 
     // Determine urgency
     const urgency = this.determineUrgency(factors, ruleResults);
@@ -656,7 +710,8 @@ export class IrrigationDecisionEngineService {
       bestTimeToExecute,
       nextRecommendedCheck: new Date(Date.now() + 4 * 60 * 60 * 1000),
       decisionFactors: factors,
-      ruleEvaluations: ruleResults
+      ruleEvaluations: ruleResults,
+      missingData: missingData.length > 0 ? missingData : undefined
     };
   }
 
@@ -725,6 +780,14 @@ export class IrrigationDecisionEngineService {
         }
 
         if (factors.currentVPD > HIGH_VPD_THRESHOLD) {
+          if (factors.depletionPercentage < MIN_DEPLETION_FOR_VPD_TRIGGER) {
+            return {
+              shouldTrigger: false,
+              confidence: 75,
+              reason: `VPD elevado (${factors.currentVPD.toFixed(2)} kPa) pero sustrato bien hidratado (depleción: ${factors.depletionPercentage.toFixed(1)}%) — sin necesidad de riego`,
+              volumeAdjustment: 1.05 // ligero ajuste para el próximo riego si se activa por depleción
+            };
+          }
           return {
             shouldTrigger: true,
             confidence: 75,
@@ -907,6 +970,7 @@ export class IrrigationDecisionEngineService {
    * Calculate VPD from temperature and humidity
    */
   private calculateVPD(tempC: number, relativeHumidity: number): number {
+    console.log(`Calculando VPD con temperatura ${tempC}°C y humedad relativa ${relativeHumidity}%`);
     // Saturation vapor pressure (kPa)
     const svp = 0.6108 * Math.exp((17.27 * tempC) / (tempC + 237.3));
 
@@ -953,11 +1017,74 @@ export class IrrigationDecisionEngineService {
   }
 
   /**
-   * Determine growth stage from crop production data
+   * Find the currently active CropPhase for a crop production based on
+   * weeks elapsed since plantingDate. Returns null if undetermined.
    */
-  private determineGrowthStage(cropProduction: any): string {
-    // TODO: Calculate from planting date
-    // For now, return default
+  private resolveCurrentPhase(phases: CropPhase[], cropProduction: any): CropPhase | null {
+    if (!phases || phases.length === 0) {
+      console.warn('Sin fases de cultivo definidas — etapa de crecimiento no determinada');
+      return null;
+    }
+
+    const plantingDate = cropProduction.plantingDate ? new Date(cropProduction.plantingDate) : null;
+    if (!plantingDate || isNaN(plantingDate.getTime())) {
+      console.warn('plantingDate no configurada — no se puede determinar la etapa de cultivo');
+      return null;
+    }
+
+    const now = new Date();
+    const weeksSincePlanting = Math.floor(
+      (now.getTime() - plantingDate.getTime()) / (1000 * 60 * 60 * 24 * 7)
+    );
+
+    const activePhases = phases.filter(p => p.active);
+
+    // Find the phase whose week range contains the current week
+    const currentPhase = activePhases.find(p =>
+      p.startingWeek != null &&
+      p.endingWeek != null &&
+      weeksSincePlanting >= p.startingWeek &&
+      weeksSincePlanting <= p.endingWeek
+    );
+
+    if (currentPhase) {
+      console.log(`Etapa de cultivo resuelta: "${currentPhase.name}" (semana ${weeksSincePlanting} desde siembra)`);
+      return currentPhase;
+    }
+
+    // If no exact match, use the last phase whose startingWeek has been passed
+    const pastPhases = activePhases
+      .filter(p => p.startingWeek != null && weeksSincePlanting >= p.startingWeek)
+      .sort((a, b) => (b.startingWeek ?? 0) - (a.startingWeek ?? 0));
+
+    if (pastPhases.length > 0) {
+      console.log(`Etapa de cultivo aproximada: "${pastPhases[0].name}" (semana ${weeksSincePlanting} desde siembra)`);
+      return pastPhases[0];
+    }
+
+    console.warn(`Semana ${weeksSincePlanting} no coincide con ninguna fase de cultivo definida`);
+    return null;
+  }
+
+  /**
+   * Map a CropPhase name to a GROWTH_STAGE_CONFIGS key using fuzzy matching.
+   * Falls back to 'vegetative' if no match is found.
+   */
+  private normalizePhaseToStage(phase: CropPhase | null): string {
+    if (!phase) return 'vegetative';
+
+    const name = phase.name.toLowerCase();
+
+    if (/germin/.test(name)) return 'germination';
+    if (/vegetat|crecimiento|vegeta/.test(name)) return 'vegetative';
+    if (/flor/.test(name)) return 'flowering';
+    if (/frut|fruit/.test(name)) return 'fruiting';
+    if (/cosech|harvest|madur/.test(name)) return 'harvest';
+
+    // If the name directly matches a known key, use it
+    if (GROWTH_STAGE_CONFIGS[name]) return name;
+
+    console.warn(`Fase "${phase.name}" no coincide con ninguna etapa conocida — usando vegetativo`);
     return 'vegetative';
   }
 
@@ -969,8 +1096,8 @@ export class IrrigationDecisionEngineService {
     substrate: GrowingMedium,
     container: Container
   ): number {
-    const containerVolume = container.volume || 10; // liters
-    const availableWater = (substrate.totalAvailableWaterPercentage || 85) / 100;
+    const containerVolume = container.volume!;
+    const availableWater = substrate.totalAvailableWaterPercentage! / 100;
     const depletionFraction = factors.depletionPercentage / 100;
 
     // Volume needed to restore to optimal moisture

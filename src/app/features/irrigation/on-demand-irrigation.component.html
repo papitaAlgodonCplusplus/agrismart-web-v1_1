@@ -105,15 +105,15 @@
         </div>
         <div class="auto-mode-controls">
           <div class="crop-selector">
-            <label for="autoModeCropProduction">Producción de Cultivo:</label>
+            <label for="autoModeValve">Válvula:</label>
             <select
-              id="autoModeCropProduction"
+              id="autoModeValve"
               class="form-control"
-              [(ngModel)]="selectedCropProductionId"
-              (change)="onCropProductionChange($any($event.target).value)">
-              <option [value]="null">Seleccione una producción</option>
-              <option *ngFor="let production of cropProductions" [value]="production.id">
-                {{ production.name }}
+              [(ngModel)]="selectedSectorId"
+              (change)="onSectorChange($any($event.target).value)">
+              <option [value]="null">Seleccione una válvula</option>
+              <option *ngFor="let sector of sectors" [value]="sector.id">
+                {{ sector.name }}
               </option>
             </select>
           </div>
@@ -121,10 +121,29 @@
             class="btn btn-toggle"
             [class.active]="autoModeEnabled"
             (click)="toggleAutoMode()"
-            [disabled]="!selectedCropProductionId">
+            [disabled]="!selectedSectorId">
             <i class="bi" [class.bi-toggle-off]="!autoModeEnabled" [class.bi-toggle-on]="autoModeEnabled"></i>
             {{ autoModeEnabled ? 'Desactivar' : 'Activar' }}
           </button>
+        </div>
+      </div>
+
+      <!-- Selected Valve Info -->
+      <div *ngIf="selectedSector" class="valve-info-panel">
+        <div class="valve-info-item">
+          <i class="bi bi-toggles"></i>
+          <span class="valve-info-label">Válvula:</span>
+          <span class="valve-info-value">{{ selectedSector.name }}</span>
+        </div>
+        <div class="valve-info-item">
+          <i class="bi bi-diagram-3"></i>
+          <span class="valve-info-label">Sector:</span>
+          <span class="valve-info-value">{{ selectedSector.name }}</span>
+        </div>
+        <div class="valve-info-item">
+          <i class="bi bi-flower1"></i>
+          <span class="valve-info-label">Producción de Cultivo:</span>
+          <span class="valve-info-value">{{ getSelectedCropProductionName() }}</span>
         </div>
       </div>
 
@@ -146,6 +165,23 @@
           <span class="spinner-border spinner-border-sm me-2"></span>
           <span>Cargando recomendación...</span>
         </div>
+      </div>
+
+      <!-- Recommendation Error Panel -->
+      <div *ngIf="recommendationError && autoModeEnabled && !isLoadingRecommendation" class="recommendation-error-panel">
+        <div class="error-panel-header">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <div>
+            <h4>{{ recommendationError.title }}</h4>
+            <small>No se puede calcular la recomendación de riego</small>
+          </div>
+        </div>
+        <ul class="error-panel-details">
+          <li *ngFor="let detail of recommendationError.details">{{ detail }}</li>
+        </ul>
+        <button class="btn btn-sm btn-outline-danger mt-2" (click)="loadRecommendation()">
+          <i class="bi bi-arrow-clockwise me-1"></i>Reintentar
+        </button>
       </div>
 
       <!-- Analysis Dashboard -->
@@ -313,7 +349,7 @@
                   <div class="rule-tags">
                     <span class="rule-tag tag-triggered" *ngIf="rule.shouldTrigger">ACTIVA</span>
                     <span class="rule-tag tag-no-data" *ngIf="rule.confidence === 0 && !rule.shouldTrigger">SIN DATOS</span>
-                    <span class="rule-tag tag-adjust" *ngIf="rule.volumeAdjustment && rule.volumeAdjustment !== 1.0">
+                    <span class="rule-tag tag-adjust" *ngIf="rule.shouldTrigger && rule.volumeAdjustment && rule.volumeAdjustment !== 1.0">
                       Volumen {{ rule.volumeAdjustment > 1 ? '+' : '' }}{{ ((rule.volumeAdjustment - 1) * 100).toFixed(0) }}%
                     </span>
                     <span class="rule-tag tag-conf" *ngIf="rule.confidence > 0">{{ rule.confidence }}% conf.</span>
@@ -334,6 +370,18 @@
             <i class="bi bi-check2-square"></i>
             Decisión Final
           </h4>
+
+          <!-- Missing Data Warnings -->
+          <div *ngIf="currentRecommendation.missingData?.length" class="missing-data-warnings">
+            <div class="missing-data-header">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <strong>Datos de configuración faltantes — el cálculo de volumen no está disponible:</strong>
+            </div>
+            <ul class="missing-data-list">
+              <li *ngFor="let item of currentRecommendation.missingData">{{ item }}</li>
+            </ul>
+          </div>
+
           <div class="final-decision-card" [class.irrigate]="currentRecommendation.shouldIrrigate">
             <div class="fd-icon">
               <i class="bi" [class.bi-droplet-fill]="currentRecommendation.shouldIrrigate" [class.bi-shield-check]="!currentRecommendation.shouldIrrigate"></i>
@@ -350,19 +398,20 @@
                 Momento óptimo sugerido: <strong>{{ formatDateTime(currentRecommendation.bestTimeToExecute) }}</strong>
               </p>
             </div>
-            <div class="fd-metrics" *ngIf="currentRecommendation.shouldIrrigate">
+            <!-- Metrics: volume and duration both available -->
+            <div class="fd-metrics" *ngIf="currentRecommendation.shouldIrrigate && currentRecommendation.recommendedVolume !== null && currentRecommendation.recommendedDuration !== null">
               <div class="fd-metric">
-                <span class="fd-metric-value">{{ currentRecommendation.recommendedVolume.toFixed(1) }} L</span>
+                <span class="fd-metric-value">{{ currentRecommendation.recommendedVolume!.toFixed(1) }} L</span>
                 <span class="fd-metric-label">Por contenedor</span>
               </div>
               <div class="fd-divider"></div>
               <div class="fd-metric">
-                <span class="fd-metric-value">{{ formatDuration(currentRecommendation.recommendedDuration) }}</span>
+                <span class="fd-metric-value">{{ formatDuration(currentRecommendation.recommendedDuration!) }}</span>
                 <span class="fd-metric-label">Duración</span>
               </div>
-              <div class="fd-divider"></div>
-              <div class="fd-metric">
-                <span class="fd-metric-value">{{ currentRecommendation.totalVolume.toFixed(0) }} L</span>
+              <div class="fd-divider" *ngIf="currentRecommendation.totalVolume !== null"></div>
+              <div class="fd-metric" *ngIf="currentRecommendation.totalVolume !== null">
+                <span class="fd-metric-value">{{ currentRecommendation.totalVolume!.toFixed(0) }} L</span>
                 <span class="fd-metric-label">Volumen total</span>
               </div>
               <div class="fd-divider"></div>
@@ -370,6 +419,27 @@
                 <span class="fd-metric-value">{{ currentRecommendation.confidence }}%</span>
                 <span class="fd-metric-label">Confianza</span>
               </div>
+            </div>
+
+            <!-- Volume known but duration not calculable (missing dropper config) -->
+            <div class="fd-not-calculable fd-not-calculable--partial"
+                 *ngIf="currentRecommendation.shouldIrrigate && currentRecommendation.recommendedVolume !== null && currentRecommendation.recommendedDuration === null">
+              <div class="fd-metric">
+                <span class="fd-metric-value">{{ currentRecommendation.recommendedVolume!.toFixed(1) }} L</span>
+                <span class="fd-metric-label">Por contenedor</span>
+              </div>
+              <div class="fd-divider"></div>
+              <div class="fd-metric fd-metric--error">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <span class="fd-metric-label">Duración no calculable — configure el gotero y número de goteros por contenedor</span>
+              </div>
+            </div>
+
+            <!-- Nothing calculable (missing container volume or TAW) -->
+            <div class="fd-not-calculable"
+                 *ngIf="currentRecommendation.shouldIrrigate && currentRecommendation.recommendedVolume === null">
+              <i class="bi bi-exclamation-circle-fill"></i>
+              <span>Volumen y duración no calculables — corrija los datos faltantes indicados arriba</span>
             </div>
             <div class="fd-confidence-only" *ngIf="!currentRecommendation.shouldIrrigate">
               <span class="fd-conf-label">Confianza del análisis:</span>
@@ -472,7 +542,7 @@
                 class="form-control"
                 formControlName="cropProductionId">
                 <option [value]="null">Todas las producciones</option>
-                <option *ngFor="let production of filteredCropProductions" [value]="production.id">
+                <option *ngFor="let production of cropProductions" [value]="production.id">
                   {{ production.name }}
                 </option>
               </select>

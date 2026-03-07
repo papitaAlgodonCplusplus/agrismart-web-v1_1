@@ -17,15 +17,15 @@ namespace AgriSmart.OnDemandIrrigation.Entities
         public double BetweenContainerDistance { get; set; }
         public double BetweenPlantDistance { get; set; }
         public int PlantsPerContainer { get; set; }
-        public int NumberOfDroppersPerContainer { get; set; }//not in database
+        public int NumberOfDroppersPerContainer { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public double WindSpeedMeasurementHeight { get; set; }
         public int Altitude { get; set; }
         public double LatitudeGrades { get; set; }
         public double LatitudeMinutes { get; set; }
-        public double DepletionPercentage { get; set; }//not in database
-        public double DrainThreshold { get; set; }//not in database
+        public double DepletionPercentage { get; set; }
+        public double DrainThreshold { get; set; }
         public bool Active { get; set; }
         public Crop? Crop { get; set; }
         public ProductionUnit? ProductionUnit { get; set; }

@@ -76,18 +76,17 @@ namespace AgriSmart.Calculator.Logic
                                     GrowingMedium growingMedium = agriSmartApiClient.GetGrowingMedium(cropProduction.GrowingMediumId).Result;
                                     cropProductionEntity.GrowingMedium = new GrowingMediumEntity(growingMedium);
 
-                                    // Note: You'll need to determine the correct dropper ID
-                                    // For now, I'm adding a null check in case dropper data is not available
                                     _logger.LogInformation("Loading dropper data...");
-                                    try
+                                    if (cropProduction.DropperId > 0)
                                     {
-                                        // You may need to adjust this based on your business logic
-                                        // cropProductionEntity.Dropper = agriSmartApiClient.GetDropper(1).Result;
-                                        // For now, let's skip the dropper to avoid the error
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        _logger.LogWarning($"Could not load dropper data: {ex.Message}");
+                                        try
+                                        {
+                                            cropProductionEntity.Dropper = agriSmartApiClient.GetDropper(cropProduction.DropperId).Result;
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogWarning($"Could not load dropper data: {ex.Message}");
+                                        }
                                     }
 
                                     cropProductionEntity.ProductionUnit = productionUnit;

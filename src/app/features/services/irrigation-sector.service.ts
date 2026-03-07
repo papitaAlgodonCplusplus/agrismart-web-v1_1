@@ -1030,7 +1030,7 @@ export class IrrigationSectorService {
     return this.http.get<any>(`${this.apiConfig.agronomicApiUrl}/Dropper/${id}`, {
       headers: this.getAuthHeaders()
     }).pipe(
-      map(response => response.success ? response.result : null),
+      map(response => response.success ? response.result.dropper : null),
       catchError(this.handleError)
     );
   }

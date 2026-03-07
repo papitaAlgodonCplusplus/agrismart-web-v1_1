@@ -576,7 +576,7 @@ export class CropProductionListComponent implements OnInit, OnDestroy {
 
   getDropperName(production: any): string {
     if (production.dropper?.name) return production.dropper.name;
-    if ((production as any).dropperId) {
+    if ((production as any).dropperId && (production as any).dropperId > 0) {
       const dropper = this.droppers.find(d => d.id === (production as any).dropperId);
       return dropper?.name || 'No especificado';
     }

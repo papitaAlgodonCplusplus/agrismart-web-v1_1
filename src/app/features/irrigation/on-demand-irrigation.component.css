@@ -1604,6 +1604,38 @@ textarea.form-control {
   font-size: 1.25rem;
 }
 
+/* Valve Info Panel */
+.valve-info-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.valve-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.valve-info-item i {
+  opacity: 0.8;
+}
+
+.valve-info-label {
+  font-weight: 600;
+}
+
+.valve-info-value {
+  font-weight: 400;
+}
+
 /* Auto Mode Status */
 .auto-mode-status {
   display: flex;
@@ -1872,6 +1904,38 @@ textarea.form-control {
   border-top: 1px solid var(--border-color);
 }
 
+.missing-data-warnings {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  color: #92400e;
+}
+
+.missing-data-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.missing-data-header i {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.missing-data-list {
+  margin: 0;
+  padding-left: 1.5rem;
+  font-size: 0.85rem;
+}
+
+.missing-data-list li {
+  margin-bottom: 0.25rem;
+}
+
 .auto-execution-notice {
   margin-top: 1rem;
   padding: 1rem;
@@ -1902,6 +1966,92 @@ textarea.form-control {
   margin-bottom: 1rem;
   display: block;
   opacity: 0.8;
+}
+
+/* ============================================================
+   RECOMMENDATION ERROR PANEL
+   Shown when the decision engine throws (missing sensor data, etc.)
+   ============================================================ */
+.recommendation-error-panel {
+  margin-top: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: #fef2f2;
+  border: 1.5px solid #fca5a5;
+  border-left: 5px solid #ef4444;
+  border-radius: 10px;
+  color: #7f1d1d;
+}
+
+.error-panel-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.error-panel-header i {
+  font-size: 1.5rem;
+  color: #ef4444;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.error-panel-header h4 {
+  margin: 0 0 0.15rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #991b1b;
+}
+
+.error-panel-header small {
+  color: #b91c1c;
+  font-size: 0.8rem;
+}
+
+.error-panel-details {
+  margin: 0 0 0.5rem;
+  padding-left: 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.error-panel-details li + li {
+  margin-top: 0.2rem;
+}
+
+/* ============================================================
+   FINAL DECISION CARD — NOT CALCULABLE STATES
+   ============================================================ */
+.fd-not-calculable {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #fff7ed;
+  border: 1px solid #fb923c;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #9a3412;
+}
+
+.fd-not-calculable i {
+  font-size: 1rem;
+  color: #f97316;
+  flex-shrink: 0;
+}
+
+.fd-not-calculable--partial {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.fd-metric--error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #9a3412;
+  font-size: 0.82rem;
 }
 
 .no-recommendation p {

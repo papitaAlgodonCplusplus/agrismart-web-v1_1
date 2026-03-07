@@ -11,9 +11,9 @@ export interface RuleEvaluationDisplay extends RuleEvaluation {
 
 export interface IrrigationRecommendation {
   shouldIrrigate: boolean;
-  recommendedVolume: number; // liters per container
-  recommendedDuration: number; // minutes
-  totalVolume: number; // liters total for all containers
+  recommendedVolume: number | null; // liters per container, null if data missing
+  recommendedDuration: number | null; // minutes, null if data missing
+  totalVolume: number | null; // liters total for all containers, null if data missing
   confidence: number; // 0-100%
   reasoning: string[];
   urgency: 'low' | 'medium' | 'high' | 'critical';
@@ -21,6 +21,7 @@ export interface IrrigationRecommendation {
   nextRecommendedCheck?: Date; // when to check again
   decisionFactors?: IrrigationDecisionFactors;
   ruleEvaluations?: RuleEvaluationDisplay[];
+  missingData?: string[]; // list of missing configuration fields
 }
 
 export interface IrrigationDecisionFactors {
