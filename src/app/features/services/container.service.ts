@@ -9,6 +9,7 @@ export interface Container {
   catalogId: number;
   name: string;
   containerTypeId: number;
+  volume: number;
   height: number;
   width: number;
   length: number;

@@ -26,6 +26,7 @@ namespace AgriSmart.Application.Agronomic.Mappers
                 cfg.AddProfile<SensorMappingProfile>();
                 cfg.AddProfile<DropperMappingProfile>();
                 cfg.AddProfile<ContainerMappingProfile>();
+                cfg.AddProfile<ContainerTypeMappingProfile>();
                 cfg.AddProfile<GrowingMediumMappingProfile>();
                 cfg.AddProfile<CatalogMappingProfile>();
                 cfg.AddProfile<UserMappingProfile>();

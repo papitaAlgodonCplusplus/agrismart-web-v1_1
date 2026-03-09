@@ -27,6 +27,8 @@ namespace AgriSmart.AgronomicProcess.Entities
         public ContainerEntity(Container model)
         {
             this.CopyPropertiesFrom(model);
+            ContainerType = (ContainerType)model.FormulaType;
+            measureType = Volume.volumeMeasure.toLitre;
         }
 
         private Volume getVolume()
@@ -37,12 +39,12 @@ namespace AgriSmart.AgronomicProcess.Entities
             {
                 case ContainerType.conicalContainer:
                     {
-                        double lowerRadium = LowerDiameter / 2;
-                        double upperRadium = UpperDiameter / 2;
-                        double lowerArea = Math.Pow(LowerDiameter, 2) * Math.PI;
-                        double upperArea = Math.Pow(UpperDiameter, 2) * Math.PI;
+                        double lowerRadium = LowerDiameter / 2.0;
+                        double upperRadium = UpperDiameter / 2.0;
+                        double lowerArea = Math.Pow(lowerRadium, 2) * Math.PI;
+                        double upperArea = Math.Pow(upperRadium, 2) * Math.PI;
 
-                        value = 1 / 3 * (lowerArea + upperArea + Math.Sqrt(lowerArea * upperArea)) * Height;
+                        value = 1.0 / 3.0 * (lowerArea + upperArea + Math.Sqrt(lowerArea * upperArea)) * Height;
 
                         break;
                     }

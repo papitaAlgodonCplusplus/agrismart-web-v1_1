@@ -1,0 +1,278 @@
+<div class="manager-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2><i class="bi bi-layers-fill"></i> Gestión de Medios de Cultivo</h2>
+      <p class="text-muted">Administre los sustratos y medios de crecimiento</p>
+    </div>
+    <button class="btn btn-primary" (click)="createNew()">
+      <i class="bi bi-plus-circle"></i> Nuevo Medio de Cultivo
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show">
+    <i class="bi bi-check-circle-fill"></i> {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="text" class="form-control" placeholder="Buscar por nombre o ID..."
+        [(ngModel)]="searchTerm" />
+      <button *ngIf="searchTerm" class="btn-clear" (click)="clearSearch()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="filter-actions">
+      <button class="btn btn-outline-secondary" [class.active]="includeInactives" (click)="toggleActiveFilter()">
+        <i class="bi" [class.bi-eye]="!includeInactives" [class.bi-eye-slash]="includeInactives"></i>
+        {{ includeInactives ? 'Ver solo activos' : 'Ver inactivos' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p>Cargando medios de cultivo...</p>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!isLoading" class="table-container">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Catálogo</th>
+          <th title="Capacidad de Contenedor (1 kPa)">CC (%)</th>
+          <th title="Punto de Marchitez Permanente">PPM (%)</th>
+          <th title="Humedad a 5 kPa">H5kPa (%)</th>
+          <th title="Agua Total Disponible = CC - PPM">ATD (%)</th>
+          <th title="Agua Fácilmente Disponible = CC - H5kPa">AGF (%)</th>
+          <th title="Agua de Reserva = H5kPa - PPM">AR (%)</th>
+          <th>Estado</th>
+          <th class="text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of filteredMedia$ | async; trackBy: trackByFn">
+          <td class="fw-bold">#{{ m.id }}</td>
+          <td><i class="bi bi-layers text-success me-2"></i>{{ m.name }}</td>
+          <td><span class="badge bg-info">{{ getCatalogName(m.catalogId) }}</span></td>
+          <td class="text-center">{{ m.containerCapacityPercentage | number:'1.1-1' }}</td>
+          <td class="text-center">{{ m.permanentWiltingPoint | number:'1.1-1' }}</td>
+          <td class="text-center">{{ m.fiveKpaHumidity | number:'1.1-1' }}</td>
+          <td class="text-center fw-semibold text-primary">{{ m.totalAvailableWaterPercentage | number:'1.1-1' }}</td>
+          <td class="text-center text-success">{{ m.easelyAvailableWaterPercentage | number:'1.1-1' }}</td>
+          <td class="text-center text-warning">{{ m.reserveWaterPercentage | number:'1.1-1' }}</td>
+          <td>
+            <span class="badge" [class.bg-success]="m.active" [class.bg-secondary]="!m.active">
+              <i class="bi" [class.bi-check-circle]="m.active" [class.bi-x-circle]="!m.active"></i>
+              {{ m.active ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-primary" (click)="view(m)" title="Ver detalles"><i class="bi bi-eye"></i></button>
+              <button class="btn btn-outline-warning" (click)="edit(m)" title="Editar"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger" (click)="delete(m)" title="Eliminar"><i class="bi bi-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="(filteredMedia$ | async)?.length === 0" class="empty-state">
+      <i class="bi bi-layers"></i>
+      <h4>{{ getEmptyStateMessage() }}</h4>
+    </div>
+  </div>
+</div>
+
+<!-- Create / Edit Modal -->
+<div class="modal" [class.show]="showCreateModal || showEditModal" *ngIf="showCreateModal || showEditModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-layers-fill"></i>
+          {{ showCreateModal ? 'Nuevo Medio de Cultivo' : 'Editar Medio de Cultivo' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <form [formGroup]="mediumForm" (ngSubmit)="save()">
+        <div class="modal-body">
+          <div *ngIf="formErrorMessage" class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> {{ formErrorMessage }}
+          </div>
+
+          <div class="row g-3">
+            <!-- Catalog -->
+            <div class="col-md-6">
+              <label class="form-label">Catálogo <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="catalogId"
+                [class.is-invalid]="mediumForm.get('catalogId')?.invalid && mediumForm.get('catalogId')?.touched">
+                <option [value]="null">Seleccione un catálogo</option>
+                <option *ngFor="let cat of catalogs" [value]="cat.id">{{ cat.name }}</option>
+              </select>
+              <div class="invalid-feedback">El catálogo es requerido</div>
+            </div>
+
+            <!-- Name -->
+            <div class="col-md-6">
+              <label class="form-label">Nombre <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="name"
+                placeholder="Ej: Lana de Roca 100% Grodan"
+                [class.is-invalid]="mediumForm.get('name')?.invalid && mediumForm.get('name')?.touched" />
+              <div class="invalid-feedback">El nombre debe tener al menos 2 caracteres</div>
+            </div>
+
+            <!-- Characteristic Points -->
+            <div class="col-12"><hr class="my-1"><small class="text-muted fw-semibold">Puntos Característicos (valores en %)</small></div>
+
+            <div class="col-md-4">
+              <label class="form-label">
+                Capacidad de Contenedor (CC) <span class="text-danger">*</span>
+                <i class="bi bi-info-circle text-muted ms-1" title="Humedad volumétrica a 1 kPa"></i>
+              </label>
+              <div class="input-group">
+                <input type="number" class="form-control" formControlName="containerCapacityPercentage"
+                  min="0" max="100" step="0.1" placeholder="Ej: 72.5"
+                  [class.is-invalid]="mediumForm.get('containerCapacityPercentage')?.invalid && mediumForm.get('containerCapacityPercentage')?.touched" />
+                <span class="input-group-text">%</span>
+              </div>
+              <small class="form-text text-muted">θ a 1 kPa</small>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">
+                Punto de Marchitez Permanente (PPM) <span class="text-danger">*</span>
+                <i class="bi bi-info-circle text-muted ms-1" title="Humedad volumétrica a 15 kPa"></i>
+              </label>
+              <div class="input-group">
+                <input type="number" class="form-control" formControlName="permanentWiltingPoint"
+                  min="0" max="100" step="0.1" placeholder="Ej: 18.3"
+                  [class.is-invalid]="mediumForm.get('permanentWiltingPoint')?.invalid && mediumForm.get('permanentWiltingPoint')?.touched" />
+                <span class="input-group-text">%</span>
+              </div>
+              <small class="form-text text-muted">θ a 15 kPa</small>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">
+                Humedad a 5 kPa (H5kPa) <span class="text-danger">*</span>
+                <i class="bi bi-info-circle text-muted ms-1" title="Límite de agua fácilmente disponible"></i>
+              </label>
+              <div class="input-group">
+                <input type="number" class="form-control" formControlName="fiveKpaHumidity"
+                  min="0" max="100" step="0.1" placeholder="Ej: 54.4"
+                  [class.is-invalid]="mediumForm.get('fiveKpaHumidity')?.invalid && mediumForm.get('fiveKpaHumidity')?.touched" />
+                <span class="input-group-text">%</span>
+              </div>
+              <small class="form-text text-muted">θ a 5 kPa</small>
+            </div>
+
+            <!-- Derived Water Zones (auto-calculated, read-only) -->
+            <div class="col-12"><hr class="my-1"><small class="text-muted fw-semibold">Zonas de Agua Disponible <span class="badge bg-secondary">Calculado automáticamente</span></small></div>
+
+            <div class="col-md-4">
+              <label class="form-label text-primary fw-semibold">ATD — Agua Total Disponible</label>
+              <div class="input-group">
+                <input type="number" class="form-control bg-light" formControlName="totalAvailableWaterPercentage" readonly />
+                <span class="input-group-text">%</span>
+              </div>
+              <small class="form-text text-muted">CC − PPM</small>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label text-success fw-semibold">AGF — Agua Fácilmente Disponible</label>
+              <div class="input-group">
+                <input type="number" class="form-control bg-light" formControlName="easelyAvailableWaterPercentage" readonly />
+                <span class="input-group-text">%</span>
+              </div>
+              <small class="form-text text-muted">CC − H5kPa</small>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label text-warning fw-semibold">AR — Agua de Reserva</label>
+              <div class="input-group">
+                <input type="number" class="form-control bg-light" formControlName="reserveWaterPercentage" readonly />
+                <span class="input-group-text">%</span>
+              </div>
+              <small class="form-text text-muted">H5kPa − PPM</small>
+            </div>
+
+            <!-- Active (edit only) -->
+            <div class="col-12" *ngIf="showEditModal">
+              <div class="form-check form-switch">
+                <input type="checkbox" class="form-check-input" formControlName="active" id="activeCheckMedium" />
+                <label class="form-check-label" for="activeCheckMedium">
+                  {{ mediumForm.get('active')?.value ? 'Activo' : 'Inactivo' }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting || mediumForm.invalid">
+            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!isSubmitting" class="bi bi-save me-2"></i>
+            {{ isSubmitting ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- View Modal -->
+<div class="modal" [class.show]="showViewModal" *ngIf="showViewModal && selectedMedium">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-info-circle-fill"></i> Detalles del Medio de Cultivo</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-section">
+          <div class="detail-row"><span class="detail-label">ID:</span><span class="detail-value">#{{ selectedMedium.id }}</span></div>
+          <div class="detail-row"><span class="detail-label">Nombre:</span><span class="detail-value">{{ selectedMedium.name }}</span></div>
+          <div class="detail-row"><span class="detail-label">Catálogo:</span><span class="detail-value"><span class="badge bg-info">{{ getCatalogName(selectedMedium.catalogId) }}</span></span></div>
+          <div class="detail-row"><span class="detail-label">CC (1 kPa):</span><span class="detail-value fw-bold">{{ selectedMedium.containerCapacityPercentage | number:'1.2-2' }}%</span></div>
+          <div class="detail-row"><span class="detail-label">PPM (15 kPa):</span><span class="detail-value fw-bold">{{ selectedMedium.permanentWiltingPoint | number:'1.2-2' }}%</span></div>
+          <div class="detail-row"><span class="detail-label">H5kPa:</span><span class="detail-value fw-bold">{{ selectedMedium.fiveKpaHumidity | number:'1.2-2' }}%</span></div>
+          <div class="detail-row detail-row--derived"><span class="detail-label text-primary">ATD (CC−PPM):</span><span class="detail-value fw-bold text-primary">{{ selectedMedium.totalAvailableWaterPercentage | number:'1.2-2' }}%</span></div>
+          <div class="detail-row detail-row--derived"><span class="detail-label text-success">AGF (CC−H5kPa):</span><span class="detail-value fw-bold text-success">{{ selectedMedium.easelyAvailableWaterPercentage | number:'1.2-2' }}%</span></div>
+          <div class="detail-row detail-row--derived"><span class="detail-label text-warning">AR (H5kPa−PPM):</span><span class="detail-value fw-bold text-warning">{{ selectedMedium.reserveWaterPercentage | number:'1.2-2' }}%</span></div>
+          <div class="detail-row">
+            <span class="detail-label">Estado:</span>
+            <span class="detail-value">
+              <span class="badge" [class.bg-success]="selectedMedium.active" [class.bg-secondary]="!selectedMedium.active">
+                {{ selectedMedium.active ? 'Activo' : 'Inactivo' }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-row"><span class="detail-label">Creado:</span><span class="detail-value">{{ formatDate(selectedMedium.dateCreated) }}</span></div>
+          <div class="detail-row" *ngIf="selectedMedium.dateUpdated"><span class="detail-label">Actualizado:</span><span class="detail-value">{{ formatDate(selectedMedium.dateUpdated) }}</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
+        <button type="button" class="btn btn-warning" (click)="edit(selectedMedium!); showViewModal = false;">
+          <i class="bi bi-pencil"></i> Editar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" [class.show]="showCreateModal || showEditModal || showViewModal"
+  *ngIf="showCreateModal || showEditModal || showViewModal"></div>

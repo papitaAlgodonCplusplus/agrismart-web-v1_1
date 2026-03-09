@@ -93,6 +93,7 @@ export class CropPhaseComponent implements OnInit {
       cropId: [null, Validators.required],
       catalogId: [null, Validators.required],
       startingWeek: [1, [Validators.required, Validators.min(1), Validators.max(52)]],
+      endingWeek: [1, [Validators.required, Validators.min(1), Validators.max(52)]],
       durationWeeks: [1, [Validators.required, Validators.min(1), Validators.max(52)]],
       criticalNotes: ['', Validators.maxLength(1000)],
       temperatureRange: [''],
@@ -107,7 +108,7 @@ export class CropPhaseComponent implements OnInit {
 
     forkJoin({
       catalogs: this.catalogService.getAll(),
-      crops: this.cropService.getAll(true),
+      crops: this.cropService.getAll(),
       cropPhases: this.cropPhaseService.getAll()
     }).subscribe({
       next: (data: any) => {

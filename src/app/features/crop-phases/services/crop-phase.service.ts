@@ -13,9 +13,9 @@ interface BackendResponse<T> {
 }
 
 export interface CropPhase {
-  criticalNotes: any;
-durationWeeks: any;
-temperatureRange: any;
+    criticalNotes: any;
+    durationWeeks: any;
+    temperatureRange: any;
     id: number;
     Id: number;
     dateCreated?: Date;
@@ -39,32 +39,32 @@ temperatureRange: any;
 
 // Update the interface to match the API exactly:
 export interface CropPhaseSolutionRequirementApiRequest {
-  cropPhaseId: number;
-  phaseId: number;
-  ec: number;
-  hcO3: number;      // Note the capital O
-  nO3: number;       // Note the capital O
-  h2PO4: number;     // Note the capital PO
-  sO4: number;       // Note the capital O
-  cl: number;
-  nH4: number;       // Note the capital H
-  k: number;
-  ca: number;
-  mg: number;
-  na: number;
-  fe: number;
-  mn: number;
-  zn: number;
-  cu: number;
-  b: number;
-  mo: number;
-  pH: number;        // Note the capital H
-  temperature: number;
-  notes: string;
-  name: string;
-  description: string;
-  active: boolean;
-  createdBy: number;
+    cropPhaseId: number;
+    phaseId: number;
+    ec: number;
+    hcO3: number;      // Note the capital O
+    nO3: number;       // Note the capital O
+    h2PO4: number;     // Note the capital PO
+    sO4: number;       // Note the capital O
+    cl: number;
+    nH4: number;       // Note the capital H
+    k: number;
+    ca: number;
+    mg: number;
+    na: number;
+    fe: number;
+    mn: number;
+    zn: number;
+    cu: number;
+    b: number;
+    mo: number;
+    pH: number;        // Note the capital H
+    temperature: number;
+    notes: string;
+    name: string;
+    description: string;
+    active: boolean;
+    createdBy: number;
 }
 
 export interface CropPhaseCreateRequest {
@@ -118,20 +118,20 @@ export class CropPhaseService {
         let params = new HttpParams();
         const headers = this.getAuthHeaders();
 
-        // if (filters) {
-        //     if (filters.cropId !== undefined) {
-        //         params = params.set('CropId', filters.cropId.toString());
-        //     }
-        //     if (filters.catalogId !== undefined) {
-        //         params = params.set('CatalogId', filters.catalogId.toString());
-        //     }
-        //     if (filters.includeInactives !== undefined) {
-        //         params = params.set('IncludeInactives', filters.includeInactives.toString());
-        //     }
-        //     if (filters.onlyActive !== undefined) {
-        //         params = params.set('IncludeInactives', (!filters.onlyActive).toString());
-        //     }
-        // }
+        if (filters) {
+            if (filters.cropId !== undefined) {
+                params = params.set('CropId', filters.cropId.toString());
+            }
+            if (filters.catalogId !== undefined) {
+                params = params.set('CatalogId', filters.catalogId.toString());
+            }
+            if (filters.includeInactives !== undefined) {
+                params = params.set('IncludeInactives', filters.includeInactives.toString());
+            }
+            if (filters.onlyActive !== undefined) {
+                params = params.set('IncludeInactives', (!filters.onlyActive).toString());
+            }
+        }
 
         const url = `${this.apiConfig.agronomicApiUrl}/CropPhase`;
 
@@ -139,23 +139,9 @@ export class CropPhaseService {
             .pipe(
                 map(response => {
                     console.log('CropPhase getAll response:', response);
-
-                    // Handle direct array response
-                    if (Array.isArray(response)) {
-                        return response;
-                    }
-
-                    // Handle wrapped response
-                    if (response.success && response.result) {
-                        return response.result.cropPhases || [];
-                    }
-
-                    // Handle other wrapped formats
-                    if (response.cropPhases) {
-                        return response.cropPhases;
-                    }
-
-                    throw new Error(`CropPhase API failed: ${response.exception || 'Unknown error'}`);
+ 
+                    return response.result.cropPhases || [];
+ 
                 }),
                 catchError(error => {
                     console.error('CropPhaseService.getAll error:', error);

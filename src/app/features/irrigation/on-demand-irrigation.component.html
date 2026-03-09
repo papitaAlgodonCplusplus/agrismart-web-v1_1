@@ -16,14 +16,6 @@
         <i class="bi bi-arrow-left"></i>
         Regresar al Dashboard
       </button>
-      <button
-        class="btn btn-primary btn-execute"
-        (click)="showExecutionDialog()"
-        [disabled]="!onDemandMode || irrigationPlans.length === 0"
-        *ngIf="!showExecutionForm">
-        <i class="bi bi-play-circle-fill"></i>
-        Ejecutar Riego
-      </button>
     </div>
   </div>
 
@@ -125,6 +117,15 @@
             <i class="bi" [class.bi-toggle-off]="!autoModeEnabled" [class.bi-toggle-on]="autoModeEnabled"></i>
             {{ autoModeEnabled ? 'Desactivar' : 'Activar' }}
           </button>
+          <button
+            class="btn btn-toggle"
+            [class.active]="autoAcceptEnabled"
+            (click)="toggleAutoAccept()"
+            [disabled]="!autoModeEnabled"
+            title="Ejecuta automáticamente el plan de riego recomendado en cada verificación">
+            <i class="bi" [class.bi-robot]="autoAcceptEnabled" [class.bi-robot]="!autoAcceptEnabled"></i>
+            Auto-aceptar ejecuciones
+          </button>
         </div>
       </div>
 
@@ -145,6 +146,11 @@
           <span class="valve-info-label">Producción de Cultivo:</span>
           <span class="valve-info-value">{{ getSelectedCropProductionName() }}</span>
         </div>
+        <div class="valve-info-item">
+          <i class="bi bi-tree"></i>
+          <span class="valve-info-label">Cultivo:</span>
+          <span class="valve-info-value">{{ getSelectedCropName() }}</span>
+        </div>
       </div>
 
       <!-- Auto Mode Status -->
@@ -152,6 +158,10 @@
         <div class="status-item">
           <i class="bi bi-eye-fill"></i>
           <span>Estado: <strong>Monitoreando</strong></span>
+        </div>
+        <div class="status-item" *ngIf="autoAcceptEnabled">
+          <i class="bi bi-robot"></i>
+          <span>Auto-aceptar: <strong>Activo</strong> — las recomendaciones se ejecutarán automáticamente</span>
         </div>
         <div class="status-item" *ngIf="lastRecommendationTime">
           <i class="bi bi-clock"></i>
@@ -179,7 +189,7 @@
         <ul class="error-panel-details">
           <li *ngFor="let detail of recommendationError.details">{{ detail }}</li>
         </ul>
-        <button class="btn btn-sm btn-outline-danger mt-2" (click)="loadRecommendation()">
+        <button class="btn btn-sm btn-outline-danger mt-2" (click)="monitor.loadRecommendation()">
           <i class="bi bi-arrow-clockwise me-1"></i>Reintentar
         </button>
       </div>
@@ -352,13 +362,9 @@
                     <span class="rule-tag tag-adjust" *ngIf="rule.shouldTrigger && rule.volumeAdjustment && rule.volumeAdjustment !== 1.0">
                       Volumen {{ rule.volumeAdjustment > 1 ? '+' : '' }}{{ ((rule.volumeAdjustment - 1) * 100).toFixed(0) }}%
                     </span>
-                    <span class="rule-tag tag-conf" *ngIf="rule.confidence > 0">{{ rule.confidence }}% conf.</span>
                   </div>
                 </div>
                 <p class="rule-reason-text">{{ rule.reason }}</p>
-                <div class="rule-conf-track">
-                  <div class="rule-conf-fill" [style.width.%]="rule.confidence" [class]="getRuleStatusClass(rule)"></div>
-                </div>
               </div>
             </div>
           </div>
@@ -414,11 +420,6 @@
                 <span class="fd-metric-value">{{ currentRecommendation.totalVolume!.toFixed(0) }} L</span>
                 <span class="fd-metric-label">Volumen total</span>
               </div>
-              <div class="fd-divider"></div>
-              <div class="fd-metric">
-                <span class="fd-metric-value">{{ currentRecommendation.confidence }}%</span>
-                <span class="fd-metric-label">Confianza</span>
-              </div>
             </div>
 
             <!-- Volume known but duration not calculable (missing dropper config) -->
@@ -441,18 +442,81 @@
               <i class="bi bi-exclamation-circle-fill"></i>
               <span>Volumen y duración no calculables — corrija los datos faltantes indicados arriba</span>
             </div>
-            <div class="fd-confidence-only" *ngIf="!currentRecommendation.shouldIrrigate">
-              <span class="fd-conf-label">Confianza del análisis:</span>
-              <div class="confidence-bar">
-                <div class="confidence-fill" [style.width.%]="currentRecommendation.confidence"></div>
-                <span class="confidence-text">{{ currentRecommendation.confidence }}%</span>
-              </div>
-            </div>
           </div>
 
-          <div class="auto-execution-notice" *ngIf="currentRecommendation.urgency === 'critical'">
+          <div class="auto-execution-notice" *ngIf="autoAcceptEnabled || currentRecommendation.urgency === 'critical'">
             <i class="bi bi-lightning-fill"></i>
-            <span>Urgencia CRÍTICA — El riego se ejecutará automáticamente</span>
+            <span *ngIf="autoAcceptEnabled">Auto-aceptar activo — El riego se ejecutará automáticamente</span>
+            <span *ngIf="!autoAcceptEnabled && currentRecommendation.urgency === 'critical'">Urgencia CRÍTICA — El riego se ejecutará automáticamente</span>
+          </div>
+        </div>
+
+        <!-- SECTION 4: Calculation Breakdown -->
+        <div class="analysis-section" *ngIf="currentRecommendation.shouldIrrigate && currentRecommendation.calculationBreakdown">
+          <h4 class="analysis-section-title">
+            <i class="bi bi-calculator"></i>
+            Detalle del Cálculo
+          </h4>
+          <div class="calc-breakdown-grid">
+
+            <!-- Volume per container -->
+            <div class="calc-row" *ngIf="currentRecommendation.calculationBreakdown.baseVolumeLiters !== null">
+              <span class="calc-label">Volumen base por contenedor</span>
+              <span class="calc-formula">
+                TAW ({{ currentRecommendation.calculationBreakdown.tawPercentage?.toFixed(1) }}%)
+                × Depleción ({{ ((currentRecommendation.calculationBreakdown.depletionFraction ?? 0) * 100).toFixed(1) }}%)
+                × Contenedor ({{ currentRecommendation.calculationBreakdown.containerVolumeLiters?.toFixed(1) }} L)
+              </span>
+              <span class="calc-result">= {{ currentRecommendation.calculationBreakdown.baseVolumeLiters.toFixed(2) }} L</span>
+            </div>
+
+            <div class="calc-row" *ngIf="currentRecommendation.calculationBreakdown.volumeMultiplier !== 1.0">
+              <span class="calc-label">Ajuste por reglas</span>
+              <span class="calc-formula">× {{ currentRecommendation.calculationBreakdown.volumeMultiplier.toFixed(2) }}</span>
+              <span class="calc-result">= {{ currentRecommendation.recommendedVolume!.toFixed(2) }} L / contenedor</span>
+            </div>
+
+            <div class="calc-row calc-row--highlight" *ngIf="currentRecommendation.recommendedVolume !== null">
+              <span class="calc-label"><strong>L por contenedor</strong></span>
+              <span class="calc-formula"></span>
+              <span class="calc-result"><strong>{{ currentRecommendation.recommendedVolume!.toFixed(2) }} L</strong></span>
+            </div>
+
+            <!-- Duration -->
+            <div class="calc-row" *ngIf="currentRecommendation.calculationBreakdown.flowRateLPerMin !== null">
+              <span class="calc-label">Caudal por contenedor</span>
+              <span class="calc-formula">
+                {{ currentRecommendation.calculationBreakdown.dropperFlowRateLH?.toFixed(2) }} L/h/gotero
+                × {{ currentRecommendation.calculationBreakdown.droppersPerContainer }} goteros / 60
+              </span>
+              <span class="calc-result">= {{ currentRecommendation.calculationBreakdown.flowRateLPerMin.toFixed(3) }} L/min</span>
+            </div>
+
+            <div class="calc-row calc-row--highlight" *ngIf="currentRecommendation.recommendedDuration !== null">
+              <span class="calc-label"><strong>Duración</strong></span>
+              <span class="calc-formula">
+                {{ currentRecommendation.recommendedVolume!.toFixed(2) }} L
+                ÷ {{ currentRecommendation.calculationBreakdown.flowRateLPerMin?.toFixed(3) }} L/min
+              </span>
+              <span class="calc-result"><strong>= {{ currentRecommendation.recommendedDuration }} min</strong></span>
+            </div>
+
+            <!-- Total volume -->
+            <div class="calc-row" *ngIf="currentRecommendation.calculationBreakdown.totalContainers !== null">
+              <span class="calc-label">Contenedores totales</span>
+              <span class="calc-formula">Área / (dist. filas × dist. contenedores)</span>
+              <span class="calc-result">= {{ currentRecommendation.calculationBreakdown.totalContainers }} contenedores</span>
+            </div>
+
+            <div class="calc-row calc-row--highlight" *ngIf="currentRecommendation.totalVolume !== null">
+              <span class="calc-label"><strong>Volumen total</strong></span>
+              <span class="calc-formula">
+                {{ currentRecommendation.recommendedVolume!.toFixed(2) }} L
+                × {{ currentRecommendation.calculationBreakdown.totalContainers }} contenedores
+              </span>
+              <span class="calc-result"><strong>= {{ currentRecommendation.totalVolume!.toFixed(0) }} L</strong></span>
+            </div>
+
           </div>
         </div>
 
@@ -638,172 +702,6 @@
             </button>
           </div>
         </form>
-      </div>
-    </div>
-
-    <!-- Quick Actions Grid -->
-    <div class="quick-actions-section">
-      <h2 class="section-title">
-        <i class="bi bi-lightning-charge-fill"></i>
-        Acciones Rápidas
-      </h2>
-      
-      <div *ngIf="irrigationPlans.length === 0" class="empty-state">
-        <i class="bi bi-inbox"></i>
-        <p>No hay planes de riego disponi   bles</p>
-      </div>
-
-      <div class="quick-actions-grid">
-        <div *ngFor="let plan of irrigationPlans" class="quick-action-card">
-          <div class="plan-header">
-            <h3>{{ plan.name }}</h3>
-            <span class="badge badge-success">Activo</span>
-          </div>
-          <div class="plan-info" *ngIf="plan.name">
-            <p>
-              <i class="bi bi-flower1"></i>
-              {{ plan.name || 'Sin producción' }}
-            </p>
-          </div>
-
-          <div class="duration-buttons">
-            <button 
-              *ngFor="let duration of getPlanDurations(plan.id)"
-              class="btn btn-duration"
-              (click)="quickExecute(plan.id, duration)"
-              [disabled]="isExecuting">
-              <i class="bi bi-play-circle"></i>
-              {{ formatDuration(duration) }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Execution History Section -->
-    <div class="execution-history-section">
-      <div class="section-header">
-        <h2 class="section-title">
-          <i class="bi bi-clock-history"></i>
-          Historial de Ejecuciones
-        </h2>
-        <button 
-          class="btn btn-secondary btn-sm"
-          (click)="loadExecutionHistory()">
-          <i class="bi bi-arrow-clockwise"></i>
-          Actualizar
-        </button>
-      </div>
-
-      <div *ngIf="executionHistory.length === 0" class="empty-state">
-        <i class="bi bi-inbox"></i>
-        <p>No hay registros de ejecución</p>
-        <small>Las ejecuciones aparecerán aquí una vez que se ejecuten los riegos</small>
-      </div>
-
-      <div class="history-grid">
-        <div 
-          *ngFor="let history of executionHistory"
-          class="history-card"
-          [class]="getStatusClass(history)">
-          
-          <div class="history-header">
-            <div class="history-title">
-              <h4>{{ getIrrigationPlanName(history.irrigationPlanId) }}</h4>
-              <span class="history-badge" [class]="getStatusClass(history)">
-                {{ getHistoryStatus(history) }}
-              </span>
-            </div>
-            <div class="history-actions">
-              <button 
-                class="btn-icon"
-                (click)="viewHistoryDetails(history)"
-                title="Ver detalles">
-                <i class="bi bi-eye"></i>
-              </button>
-              <button 
-                class="btn-icon btn-icon-danger"
-                (click)="deleteHistory(history)"
-                title="Eliminar">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-
-          <div class="history-content">
-            <div class="history-row">
-              <div class="history-item">
-                <i class="bi bi-calendar3"></i>
-                <span class="label">Inicio:</span>
-                <span class="value">{{ formatDateTime(history.executionStartTime) }}</span>
-              </div>
-            </div>
-
-            <div class="history-row">
-              <div class="history-item">
-                <i class="bi bi-hourglass-split"></i>
-                <span class="label">Duración Planificada:</span>
-                <span class="value">{{ formatDuration(history.plannedDuration) }}</span>
-              </div>
-              <div class="history-item" *ngIf="history.actualDuration">
-                <i class="bi bi-hourglass-bottom"></i>
-                <span class="label">Duración Real:</span>
-                <span class="value">{{ formatDuration(history.actualDuration) }}</span>
-              </div>
-            </div>
-
-            <div class="history-row" *ngIf="history.executionEndTime">
-              <div class="history-item">
-                <i class="bi bi-calendar-check"></i>
-                <span class="label">Fin:</span>
-                <span class="value">{{ formatDateTime(history.executionEndTime) }}</span>
-              </div>
-            </div>
-
-            <div class="history-row" *ngIf="history.waterVolumeDelivered">
-              <div class="history-item">
-                <i class="bi bi-droplet"></i>
-                <span class="label">Volumen:</span>
-                <span class="value">{{ history.waterVolumeDelivered }} L</span>
-              </div>
-            </div>
-
-            <div class="history-row" *ngIf="history.notes">
-              <div class="history-item full-width">
-                <i class="bi bi-chat-left-text"></i>
-                <span class="label">Notas:</span>
-                <span class="value">{{ history.notes }}</span>
-              </div>
-            </div>
-
-            <div class="history-row" *ngIf="history.errorMessage">
-              <div class="history-item full-width error-message">
-                <i class="bi bi-exclamation-triangle"></i>
-                <span class="label">Error:</span>
-                <span class="value">{{ history.errorMessage }}</span>
-              </div>
-            </div>
-
-            <div class="history-meta">
-              <span class="meta-item">
-                <i class="bi bi-person"></i>
-                Usuario #{{ history.createdBy }}
-              </span>
-              <span class="meta-item" *ngIf="history.isManualExecution">
-                <i class="bi bi-hand-index"></i>
-                Manual
-              </span>
-              <span class="meta-item" *ngIf="!history.isManualExecution">
-                <i class="bi bi-gear"></i>
-                Automático
-              </span>
-              <span class="meta-item" *ngIf="history.deviceId">
-                <i class="bi bi-cpu"></i>
-                {{ history.deviceId }}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 

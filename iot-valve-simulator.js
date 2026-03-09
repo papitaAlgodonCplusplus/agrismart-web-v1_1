@@ -257,19 +257,19 @@ async function processEntry(entry, now) {
 
   // ── START ────────────────────────────────────────────────────────────────────
   if (status !== 'executing' && status !== 'finished' && now > execDate) {
-    const plannedStop = new Date(execDate.getTime() + entry.duration * 60 * 1000);
+    const plannedStop = new Date(now.getTime() + entry.duration * 60 * 1000);
 
     printCard(
       valveOpen(shortName, formatMs(plannedStop - now)),
       `  Entry #${entry.id} | Plan: ${entry.irrigationPlanName}\n` +
-      `  Started:  ${execDate.toLocaleString()}\n` +
+      `  Started:  ${now.toLocaleString()}\n` +
       `  Duration: ${entry.duration} min\n` +
       `  Stops at: ${plannedStop.toLocaleString()}`
     );
 
     await updateEntry(entry, {
       status:       'executing',
-      retrieveDate: entry.executionDate,
+      retrieveDate: now.toISOString(),
       stopDate:     plannedStop.toISOString(),
     });
     return;

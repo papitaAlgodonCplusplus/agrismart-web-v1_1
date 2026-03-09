@@ -25,6 +25,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             {
                 return await (from c in _context.Container
                               join ca in _context.Catalog on c.CatalogId equals ca.Id
+                              join ct in _context.ContainerType on c.ContainerTypeId equals ct.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
@@ -38,6 +39,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   CatalogId = c.CatalogId,
                                   Name = c.Name,
                                   ContainerTypeId = c.ContainerTypeId,
+                                  FormulaType = ct.FormulaType,
                                   Height = c.Height,
                                   Width = c.Width,
                                   Length = c.Length,
@@ -62,6 +64,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             {
                 return await (from c in _context.Container
                               join ca in _context.Catalog on c.CatalogId equals ca.Id
+                              join ct in _context.ContainerType on c.ContainerTypeId equals ct.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
@@ -74,6 +77,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   CatalogId = c.CatalogId,
                                   Name = c.Name,
                                   ContainerTypeId = c.ContainerTypeId,
+                                  FormulaType = ct.FormulaType,
                                   Height = c.Height,
                                   Width = c.Width,
                                   Length = c.Length,

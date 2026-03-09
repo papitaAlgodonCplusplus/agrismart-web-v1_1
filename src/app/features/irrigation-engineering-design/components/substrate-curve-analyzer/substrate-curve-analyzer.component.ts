@@ -9,6 +9,8 @@ import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { SubstrateAnalysisService } from '../../services/substrate-analysis.service';
 import { IrrigationSectorService, GrowingMedium, Container } from '../../../services/irrigation-sector.service';
 import { AlertService } from '../../../../core/services/alert.service';
+import { CropProductionService } from '../../../crop-production/services/crop-production.service';
+import { CropProduction } from '../../../../core/models/models';
 
 // Models
 import { SubstrateReleaseCurve, SubstrateCurveChartConfig } from '../../models/substrate-analysis.models';
@@ -36,6 +38,8 @@ export class SubstrateCurveAnalyzerComponent implements OnInit, AfterViewInit, O
   selectionForm!: FormGroup;
 
   // Data
+  cropProductions: CropProduction[] = [];
+  selectedCropProduction: CropProduction | null = null;
   growingMedia: GrowingMedium[] = [];
   containers: Container[] = [];
   currentCurve: SubstrateReleaseCurve | null = null;
@@ -53,7 +57,8 @@ export class SubstrateCurveAnalyzerComponent implements OnInit, AfterViewInit, O
     private fb: FormBuilder,
     private substrateService: SubstrateAnalysisService,
     private irrigationService: IrrigationSectorService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private cropProductionService: CropProductionService
   ) {
     this.initializeForms();
     this.chartConfig = this.substrateService.getDefaultChartConfig();
@@ -79,8 +84,9 @@ export class SubstrateCurveAnalyzerComponent implements OnInit, AfterViewInit, O
 
   private initializeForms(): void {
     this.selectionForm = this.fb.group({
-      growingMediumId: [null, Validators.required],
-      containerId: [null, Validators.required]
+      cropProductionId: [null, Validators.required],
+      growingMediumId:  [null, Validators.required],
+      containerId:      [null, Validators.required]
     });
   }
 
@@ -88,41 +94,38 @@ export class SubstrateCurveAnalyzerComponent implements OnInit, AfterViewInit, O
     this.isLoading = true;
     this.errorMessage = '';
 
-    // Load growing media and containers
-    this.irrigationService.getAllGrowingMediums(true)
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => this.isLoading = false)
-      )
+    this.cropProductionService.getAll({ onlyActive: true })
+      .pipe(takeUntil(this.destroy$), finalize(() => this.isLoading = false))
       .subscribe({
-        next: (media) => {
-          this.growingMedia = media;
-          if (this.growingMedia.length > 0) {
-            this.selectionForm.patchValue({ growingMediumId: this.growingMedia[0].id });
-          }
-        },
-        error: (error) => {
-          console.error('Error loading growing media:', error);
-          this.errorMessage = 'Error al cargar los medios de cultivo';
-        }
+        next: (res: any) => { this.cropProductions = res.cropProductions ?? res ?? []; },
+        error: () => { this.errorMessage = 'Error al cargar las producciones de cultivo'; }
+      });
+
+    this.irrigationService.getAllGrowingMediums(true)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (media) => { this.growingMedia = media; },
+        error: () => { this.errorMessage = 'Error al cargar los medios de cultivo'; }
       });
 
     this.irrigationService.getAllContainers(false)
-      .pipe(
-        takeUntil(this.destroy$)
-      )
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (containers) => {
-          this.containers = containers;
-          if (this.containers.length > 0) {
-            this.selectionForm.patchValue({ containerId: this.containers[0].id });
-          }
-        },
-        error: (error) => {
-          console.error('Error loading containers:', error);
-          this.errorMessage = 'Error al cargar los contenedores';
-        }
+        next: (containers) => { this.containers = containers; },
+        error: () => { this.errorMessage = 'Error al cargar los contenedores'; }
       });
+  }
+
+  onCropProductionSelected(event: Event): void {
+    const id = parseInt((event.target as HTMLSelectElement).value);
+    this.selectedCropProduction = this.cropProductions.find(cp => cp.id === id) ?? null;
+
+    if (this.selectedCropProduction) {
+      this.selectionForm.patchValue({
+        growingMediumId: this.selectedCropProduction.growingMediumId,
+        containerId:     this.selectedCropProduction.containerId
+      });
+    }
   }
 
   // ==========================================================================

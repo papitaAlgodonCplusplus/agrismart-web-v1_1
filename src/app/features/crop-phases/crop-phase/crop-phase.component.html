@@ -187,11 +187,15 @@
             </th>
             
             <th (click)="sortByField('startingWeek')" class="sortable" style="cursor: pointer;">
-              Semanas
+              Sem. Inicio
               <i class="bi bi-arrow-down-short" *ngIf="sortField === 'startingWeek' && sortDirection === 'asc'"></i>
               <i class="bi bi-arrow-up-short" *ngIf="sortField === 'startingWeek' && sortDirection === 'desc'"></i>
             </th>
-            <th>Características</th>
+            <th (click)="sortByField('endingWeek')" class="sortable" style="cursor: pointer;">
+              Sem. Fin
+              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'endingWeek' && sortDirection === 'asc'"></i>
+              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'endingWeek' && sortDirection === 'desc'"></i>
+            </th>
             <th (click)="sortByField('active')" class="sortable" style="cursor: pointer;">
               Estado
               <i class="bi bi-arrow-down-short" *ngIf="sortField === 'active' && sortDirection === 'asc'"></i>
@@ -203,20 +207,18 @@
         <tbody>
           <tr *ngFor="let phase of getPaginatedData(); trackBy: trackByIndex">
             <td>
+              <div class="phase-info">
+                <strong>{{ phase.name }}</strong>
+                <small class="text-muted d-block" *ngIf="phase.description">{{ phase.description }}</small>
+              </div>
+            </td>
+            <td>
               <div class="crop-info">
                 <strong>{{ getCropName(phase.cropId) }}</strong>
               </div>
-            </td>
-            <td>
-              <div class="phase-info">
-                <strong>{{ phase.name }}</strong>
-                <small class="text-muted" *ngIf="phase.description">{{ phase.description }}</small>
-              </div>
             </td> 
-            <td>{{ phase.startingWeek }}</td>
-            <td>
-              <span class="badge bg-secondary">{{ phase.durationWeeks }} sem.</span>
-            </td>
+            <td>{{ phase.startingWeek ?? '—' }}</td>
+            <td>{{ phase.endingWeek ?? '—' }}</td>
             <!-- <td>
               <small class="text-muted">{{ phase.temperatureRange || 'N/A' }}</small>
             </td> -->
@@ -335,6 +337,12 @@
             <input type="number" class="form-control" id="startingWeek" formControlName="startingWeek"
               [class.is-invalid]="getFieldError('startingWeek')" placeholder="1" min="1" max="52">
             <div class="invalid-feedback">{{ getFieldError('startingWeek') }}</div>
+          </div>
+          <div class="col-md-4">
+            <label for="endingWeek" class="form-label">Semana de Fin *</label>
+            <input type="number" class="form-control" id="endingWeek" formControlName="endingWeek"
+              [class.is-invalid]="getFieldError('endingWeek')" placeholder="4" min="1" max="52">
+            <div class="invalid-feedback">{{ getFieldError('endingWeek') }}</div>
           </div>
           <div class="col-md-4">
             <label for="durationWeeks" class="form-label">Duración (Semanas) *</label>

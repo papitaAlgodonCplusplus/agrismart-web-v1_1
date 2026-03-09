@@ -30,5 +30,17 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                 throw new Exception(ex.Message, ex);
             }
         }
+
+        public async Task<ContainerType?> GetByIdAsync(int id)
+        {
+            try
+            {
+                return await _context.ContainerType.FirstOrDefaultAsync(ct => ct.Id == id);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        }
     }
 }

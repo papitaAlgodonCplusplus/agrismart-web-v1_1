@@ -52,6 +52,10 @@ import { IrrigationEngineeringDesignComponent } from './features/irrigation-engi
 // Droppers Management
 import { DropperListComponent } from './features/droppers/dropper-list/dropper-list.component';
 
+// Container & Growing Medium Management
+import { ContainerManagerComponent } from './features/containers/container-manager/container-manager.component';
+import { CropMediumManagerComponent } from './features/growing-medium/crop-medium-manager/crop-medium-manager.component';
+
 // Users & Administration
 import { ProfileComponent } from './features/profile/profile.component';
 
@@ -253,6 +257,20 @@ export const routes: Routes = [
         path: 'droppers',
         component: DropperListComponent,
         data: { title: 'Goteros' }
+      },
+
+      // Container Management
+      {
+        path: 'containers',
+        component: ContainerManagerComponent,
+        data: { title: 'Contenedores' }
+      },
+
+      // Growing Medium Management
+      {
+        path: 'crop-medium',
+        component: CropMediumManagerComponent,
+        data: { title: 'Medios de Cultivo' }
       },
 
       // User Profile

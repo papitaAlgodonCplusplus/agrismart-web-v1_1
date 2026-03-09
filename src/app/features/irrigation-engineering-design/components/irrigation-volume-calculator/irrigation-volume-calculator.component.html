@@ -27,42 +27,6 @@
   <!-- ==================== MAIN CALCULATOR (when substrate curve available) ==================== -->
   <div class="calculator-main" *ngIf="substrateCurve">
 
-    <!-- ==================== CROP PRODUCTION DATA SOURCE ==================== -->
-    <div class="data-source-section">
-      <h5 class="section-title">
-        <i class="bi bi-database"></i>
-        Origen de Datos
-      </h5>
-
-      <div class="row g-3">
-        <div class="col-md-12">
-          <label class="form-label">
-            <i class="bi bi-plant"></i>
-            Seleccionar Producción de Cultivo
-          </label>
-          <select
-            class="form-select"
-            (change)="onCropProductionSelected($event)"
-            [disabled]="isLoadingCropProductions">
-            <option value="">-- Ingreso Manual --</option>
-            <option
-              *ngFor="let cp of cropProductions"
-              [value]="cp.id">
-              {{ cp.name || cp.code }}
-              ({{ cp.crop?.name || 'Sin cultivo' }} - {{ cp.productionUnit?.name || 'Sin unidad' }})
-            </option>
-          </select>
-          <small class="text-muted" *ngIf="isLoadingCropProductions">
-            <i class="bi bi-hourglass-split"></i> Cargando producciones...
-          </small>
-          <small class="text-success" *ngIf="selectedCropProduction">
-            <i class="bi bi-check-circle"></i>
-            Datos cargados desde: {{ selectedCropProduction.name || selectedCropProduction.code }}
-          </small>
-        </div>
-      </div>
-    </div>
-
     <!-- ==================== QUICK PRESETS ==================== -->
     <div class="presets-section">
       <h5 class="section-title">
@@ -174,19 +138,8 @@
         </div>
       </div>
 
-      <!-- ADVANCED OPTIONS TOGGLE -->
-      <div class="advanced-toggle">
-        <button
-          type="button"
-          class="btn btn-link"
-          (click)="toggleAdvancedOptions()">
-          <i class="bi" [ngClass]="showAdvancedOptions ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-          {{ showAdvancedOptions ? 'Ocultar' : 'Mostrar' }} Opciones Avanzadas
-        </button>
-      </div>
-
       <!-- ADVANCED OPTIONS -->
-      <div class="advanced-options" *ngIf="showAdvancedOptions">
+      <div class="advanced-options">
         <div class="row g-3">
 
           <!-- Number of Containers -->
@@ -287,8 +240,7 @@
         <button
           type="button"
           class="btn btn-primary btn-calculate"
-          (click)="calculate()"
-          [disabled]="calculatorForm.invalid || !substrateCurve">
+          (click)="calculate()">
           <i class="bi bi-calculator"></i>
           Calcular Volumen
         </button>

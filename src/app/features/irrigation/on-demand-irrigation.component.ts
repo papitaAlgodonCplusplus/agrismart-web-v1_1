@@ -4,7 +4,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Observable, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 
@@ -24,13 +24,12 @@ import {
     IrrigationPlanEntryHistory,
     CreateIrrigationPlanEntryHistoryCommand
 } from '../services/irrigation-plan-entry-history.service';
-import { AlertService } from '../../core/services/alert.service';
-import { IrrigationDecisionEngineService } from '../services/irrigation-decision-engine.service';
 import { IrrigationRecommendation } from '../services/models/irrigation-decision.models';
-import { AuthService } from '../../core/auth/auth.service';
+import { IrrigationAutoMonitorService } from '../services/irrigation-auto-monitor.service';
+import { CropService } from '../crops/services/crop.service';
 
 // Models
-import { CropProduction, Farm } from '../../core/models/models';
+import { CropProduction, Farm, Crop } from '../../core/models/models';
 
 @Component({
     selector: 'app-on-demand-irrigation',
@@ -41,7 +40,6 @@ import { CropProduction, Farm } from '../../core/models/models';
 })
 export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     private destroy$ = new Subject<void>();
-    private monitoringInterval: any;
 
     // Core Data
     onDemandMode: IrrigationMode | null = null;
@@ -52,6 +50,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     // Reference Data
     farms: Farm[] = [];
     cropProductions: CropProduction[] = [];
+    crops: Crop[] = [];
     sectors: any[] = [];
 
     // Forms
@@ -63,7 +62,7 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     showExecutionForm = false;
     selectedHistory: IrrigationPlanEntryHistory | null = null;
 
-    // Auto Mode State
+    // Auto Mode State (mirrored from IrrigationAutoMonitorService)
     autoModeEnabled = false;
     currentRecommendation: IrrigationRecommendation | null = null;
     recommendationError: { title: string; details: string[] } | null = null;
@@ -71,9 +70,9 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
     selectedSector: any | null = null;
     selectedCropProductionId: number | null = null;
     isLoadingRecommendation = false;
+    autoAcceptEnabled = false;
     lastRecommendationTime: Date | null = null;
     nextCheckCountdown: number = 0;
-    private countdownInterval: any;
 
     // Messages
     errorMessage = '';
@@ -86,22 +85,51 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         private sectorService: IrrigationSectorService,
         private cropProductionService: CropProductionService,
         private farmService: FarmService,
-        private alertService: AlertService,
         private router: Router,
-        private decisionEngine: IrrigationDecisionEngineService,
-        private authService: AuthService
+        private cropService: CropService,
+        public monitor: IrrigationAutoMonitorService,
     ) {
         this.initializeForm();
     }
 
     ngOnInit(): void {
         this.loadInitialData();
+        this.subscribeToMonitor();
     }
 
     ngOnDestroy(): void {
-        this.stopAutoMonitoring();
+        // Do NOT stop monitoring here — it must survive navigation.
+        // monitoring lives in IrrigationAutoMonitorService (root singleton).
         this.destroy$.next();
         this.destroy$.complete();
+    }
+
+    private subscribeToMonitor(): void {
+        this.monitor.autoModeEnabled$.pipe(takeUntil(this.destroy$))
+            .subscribe(v => this.autoModeEnabled = v);
+        this.monitor.currentRecommendation$.pipe(takeUntil(this.destroy$))
+            .subscribe(v => this.currentRecommendation = v);
+        this.monitor.recommendationError$.pipe(takeUntil(this.destroy$))
+            .subscribe(v => this.recommendationError = v);
+        this.monitor.isLoadingRecommendation$.pipe(takeUntil(this.destroy$))
+            .subscribe(v => this.isLoadingRecommendation = v);
+        this.monitor.lastRecommendationTime$.pipe(takeUntil(this.destroy$))
+            .subscribe(v => this.lastRecommendationTime = v);
+        this.monitor.nextCheckCountdown$.pipe(takeUntil(this.destroy$))
+            .subscribe(v => this.nextCheckCountdown = v);
+        this.monitor.isExecuting$.pipe(takeUntil(this.destroy$))
+            .subscribe(v => this.isExecuting = v);
+        this.monitor.autoAcceptEnabled$.pipe(takeUntil(this.destroy$))
+            .subscribe(v => this.autoAcceptEnabled = v);
+        this.monitor.notification$.pipe(takeUntil(this.destroy$))
+            .subscribe(n => {
+                if (n.type === 'success') {
+                    this.showSuccess(n.message);
+                    this.loadExecutionHistory();
+                } else {
+                    this.showError(n.message);
+                }
+            });
     }
 
     // ==================== INITIALIZATION ====================
@@ -154,6 +182,14 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
                 error: (error) => { console.error('Error loading farms:', error); }
             });
 
+        // Load crops
+        this.cropService.getAll()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (crops) => { this.crops = crops; },
+                error: (error) => { console.error('Error loading crops:', error); }
+            });
+
         // Load crop productions
         this.cropProductionService.getAll()
             .pipe(takeUntil(this.destroy$))
@@ -186,9 +222,13 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
                     const plansArray = Array.isArray(plans.irrigationPlans) ? plans.irrigationPlans : [];
                     this.irrigationPlans = plansArray.filter((p: { active: any; }) => p.active);
 
+                    if (this.monitor.isEnabled) {
+                        this.monitor.updateConfig({ irrigationPlans: this.irrigationPlans });
+                    }
+
                     // Load available entries (schedules/durations) for the on-demand mode
                     const entriesArray = Array.isArray(plans.irrigationPlanEntries) ? plans.irrigationPlanEntries : [];
-                    this.onDemandEntries = entriesArray.filter((e: { irrigationModeId: number; }) => 
+                    this.onDemandEntries = entriesArray.filter((e: { irrigationModeId: number; }) =>
                         e.irrigationModeId === this.onDemandMode!.id
                     );
 
@@ -629,166 +669,28 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
 
     // ==================== AUTO MODE METHODS ====================
 
-    toggleAutoMode(): void {
-        this.autoModeEnabled = !this.autoModeEnabled;
+    toggleAutoAccept(): void {
+        this.monitor.setAutoAccept(!this.monitor.isAutoAcceptEnabled);
+    }
 
-        if (this.autoModeEnabled) {
-            if (!this.selectedSectorId) {
+    toggleAutoMode(): void {
+        if (this.monitor.isEnabled) {
+            this.monitor.stop();
+            this.showSuccess('Auto Mode disabled');
+        } else {
+            if (!this.selectedSectorId || !this.selectedCropProductionId || !this.onDemandMode) {
                 this.showError('Por favor seleccione una válvula primero');
-                this.autoModeEnabled = false;
                 return;
             }
-            this.startAutoMonitoring();
-            this.showSuccess('Auto Mode enabled - monitoring irrigation needs');
-        } else {
-            this.stopAutoMonitoring();
-            this.showSuccess('Auto Mode disabled');
-        }
-    }
-
-    startAutoMonitoring(): void {
-        // Load initial recommendation
-        this.loadRecommendation();
-
-        // Set up periodic checking (every 5 minutes)
-        this.monitoringInterval = setInterval(() => {
-            this.loadRecommendation();
-        }, 300000); // 5 minutes
-
-        // Start countdown timer
-        this.startCountdown();
-    }
-
-    stopAutoMonitoring(): void {
-        if (this.monitoringInterval) {
-            clearInterval(this.monitoringInterval);
-            this.monitoringInterval = null;
-        }
-        if (this.countdownInterval) {
-            clearInterval(this.countdownInterval);
-            this.countdownInterval = null;
-        }
-        this.currentRecommendation = null;
-        this.recommendationError = null;
-        this.lastRecommendationTime = null;
-        this.nextCheckCountdown = 0;
-    }
-
-    loadRecommendation(): void {
-        if (!this.selectedCropProductionId) {
-            return;
-        }
-
-        this.isLoadingRecommendation = true;
-        this.recommendationError = null;
-        this.lastRecommendationTime = new Date();
-
-        this.decisionEngine.getRecommendation(this.selectedCropProductionId)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-                next: (recommendation) => {
-                    this.currentRecommendation = recommendation;
-                    this.recommendationError = null;
-                    this.isLoadingRecommendation = false;
-
-                    // Handle critical urgency - auto-execute
-                    if (recommendation.shouldIrrigate && recommendation.urgency === 'critical') {
-                        this.autoExecuteRecommendation(recommendation);
-                    }
-                },
-                error: (error) => {
-                    console.error('Error loading recommendation:', error);
-                    this.recommendationError = this.parseRecommendationError(error);
-                    this.currentRecommendation = null;
-                    this.isLoadingRecommendation = false;
-                }
+            this.monitor.start({
+                cropProductionId: this.selectedCropProductionId,
+                sectorId: this.selectedSectorId,
+                selectedSector: this.selectedSector,
+                onDemandMode: this.onDemandMode,
+                irrigationPlans: this.irrigationPlans,
             });
-    }
-
-    private parseRecommendationError(error: any): { title: string; details: string[] } {
-        const message: string = error?.message || String(error) || 'Error desconocido';
-
-        const errorMap: Array<{ match: string; title: string; details: string[] }> = [
-            {
-                match: 'Sin datos de sensor de humedad de suelo',
-                title: 'Sensor de humedad de suelo no disponible',
-                details: [
-                    'No se encontraron lecturas del sensor water_SOIL en las últimas 24 horas.',
-                    'Verifique que el sensor esté conectado y transmitiendo datos al sistema.'
-                ]
-            },
-            {
-                match: 'Sin datos de sensor de temperatura',
-                title: 'Sensor de temperatura no disponible',
-                details: [
-                    'No se encontraron lecturas de temperatura en las últimas 24 horas.',
-                    'Sensores compatibles: temp_SOIL, temp_DS18B20, TEMP_SOIL, TempC_DS18B20.',
-                    'Verifique que alguno de estos sensores esté activo y conectado.'
-                ]
-            },
-            {
-                match: 'Sin historial de eventos de riego',
-                title: 'Sin historial de riego detectado',
-                details: [
-                    'No se detectaron eventos de riego en las últimas 24 horas.',
-                    'Sensores requeridos: Water_flow_value o Total_pulse.',
-                    'Se necesita al menos un evento de flujo reciente para calcular la recomendación.'
-                ]
-            },
-            {
-                match: 'No se encontró ningún medio de cultivo activo',
-                title: 'Medio de cultivo no configurado',
-                details: [
-                    'No existe ningún medio de cultivo activo en el sistema.',
-                    'Cree y active un medio de cultivo con los campos: Capacidad de Contenedor (%) y Punto de Marchitez Permanente.'
-                ]
-            },
-            {
-                match: 'Medio de cultivo sin containerCapacityPercentage',
-                title: 'Datos de sustrato incompletos',
-                details: [
-                    'El medio de cultivo activo no tiene configurado el porcentaje de Capacidad de Contenedor.',
-                    'Complete este campo en la configuración del medio de cultivo.'
-                ]
-            },
-            {
-                match: 'Medio de cultivo sin permanentWiltingPoint',
-                title: 'Datos de sustrato incompletos',
-                details: [
-                    'El medio de cultivo activo no tiene configurado el Punto de Marchitez Permanente.',
-                    'Complete este campo en la configuración del medio de cultivo.'
-                ]
-            },
-            {
-                match: 'has no containerId',
-                title: 'Producción sin contenedor asignado',
-                details: [
-                    'Esta producción de cultivo no tiene un contenedor (maceta/bolsa) asignado.',
-                    'Asigne un contenedor en la configuración de la producción de cultivo.'
-                ]
-            }
-        ];
-
-        for (const entry of errorMap) {
-            if (message.includes(entry.match)) {
-                return { title: entry.title, details: entry.details };
-            }
+            this.showSuccess('Auto Mode enabled - monitoring irrigation needs');
         }
-
-        return {
-            title: 'Error al cargar la recomendación de riego',
-            details: [message]
-        };
-    }
-
-    startCountdown(): void {
-        this.nextCheckCountdown = 300; // 5 minutes in seconds
-        this.countdownInterval = setInterval(() => {
-            this.nextCheckCountdown--;
-            if (this.nextCheckCountdown <= 0) {
-                this.nextCheckCountdown = 300;
-            }
-        }, 1000);
     }
 
     formatCountdown(seconds: number): string {
@@ -797,134 +699,17 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
-    autoExecuteRecommendation(recommendation: IrrigationRecommendation): void {
-        if (!this.selectedCropProductionId || this.isExecuting) {
-            return;
-        }
-
-        if (recommendation.recommendedDuration === null) {
-            this.showError('No se puede ejecutar automáticamente: faltan datos de configuración para calcular la duración');
-            return;
-        }
-
-        // Find a suitable irrigation plan
-        const plan = this.irrigationPlans[0]; // Use first available plan
-        if (!plan) {
-            this.showError('No irrigation plan available for auto-execution');
-            return;
-        }
-
-        const now = new Date();
-        const userId = 1; // Placeholder
-
-        this.isExecuting = true;
-
-        // Create entry command
-        const entryCommand: CreateIrrigationPlanEntryCommand = {
-            irrigationPlanId: plan.id,
-            irrigationModeId: this.onDemandMode!.id,
-            executionDate: now.toISOString(),
-            duration: recommendation.recommendedDuration!,
-            sequence: 1,
-            active: true,
-            createdBy: userId
-        };
-
-        this.schedulingService.createIrrigationPlanEntry(entryCommand)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-                next: (entryResponse) => {
-                    // Create execution history
-                    const historyCommand: CreateIrrigationPlanEntryHistoryCommand = {
-                        irrigationPlanEntryId: entryResponse.id,
-                        irrigationPlanId: plan.id,
-                        irrigationModeId: this.onDemandMode!.id,
-                        executionStartTime: now,
-                        plannedDuration: recommendation.recommendedDuration!,
-                        executionStatus: 'InProgress',
-                        isManualExecution: false,
-                        notes: `Auto-executed: ${recommendation.reasoning.join('; ')}`,
-                        createdBy: userId
-                    };
-
-                    this.historyService.create(historyCommand)
-                        .pipe(takeUntil(this.destroy$))
-                        .subscribe({
-                            next: () => {
-                                this.showSuccess(`Auto-irrigation started: ${recommendation.recommendedDuration!} min (${recommendation.urgency} urgency)`);
-                                this.loadExecutionHistory();
-                                this.isExecuting = false;
-                            },
-                            error: (error) => {
-                                this.showError('Failed to create auto-execution history');
-                                console.error('Error:', error);
-                                this.isExecuting = false;
-                            }
-                        });
-                },
-                error: (error) => {
-                    this.showError('Failed to auto-execute irrigation');
-                    console.error('Error:', error);
-                    this.isExecuting = false;
-                }
-            });
-    }
-
     manualExecuteRecommendation(): void {
-        if (!this.currentRecommendation || !this.selectedCropProductionId || !this.onDemandMode) {
-            return;
-        }
-
-        if (this.currentRecommendation.recommendedDuration === null) {
-            this.showError('No se puede ejecutar: faltan datos de configuración para calcular la duración');
-            return;
-        }
-
-        const onDemandDefaultPlan = this.irrigationPlans.find(p => p.name === 'OnDemandDefault');
-        if (!onDemandDefaultPlan) {
-            this.showError('Plan "OnDemandDefault" no encontrado. Cree un plan con ese nombre para continuar.');
-            return;
-        }
-
-        const user = this.authService.getCurrentUser();
-        const userId: number = user?.id ?? 1;
-        const companyId: number = user?.clientId ?? undefined;
-
-        const executionDate = new Date();
-        executionDate.setMinutes(executionDate.getMinutes() + 2);
-
-        const command: CreateIrrigationPlanEntryCommand = {
-            irrigationPlanId: onDemandDefaultPlan.id,
-            irrigationModeId: this.onDemandMode.id,
-            executionDate: executionDate.toISOString(),
-            duration: this.currentRecommendation.recommendedDuration!,
-            sequence: 1,
-            active: true,
-            createdBy: userId,
-            sectorID: this.selectedSectorId ?? undefined,
-            cropID: this.selectedSector?.cropProductionId ?? undefined,
-            companyID: companyId
-        };
-
-        this.isExecuting = true;
-
-        this.schedulingService.createIrrigationPlanEntry(command)
+        this.monitor.manualExecuteRecommendation()
             .pipe(takeUntil(this.destroy$))
             .subscribe({
-                next: () => {
-                    this.showSuccess(`Riego programado para ejecutarse en 2 minutos (${this.currentRecommendation!.recommendedDuration} min)`);
-                    this.isExecuting = false;
-                },
-                error: (error) => {
-                    this.showError('Error al crear la entrada del plan de riego');
-                    console.error('Error:', error);
-                    this.isExecuting = false;
-                }
+                next: () => this.showSuccess(`Riego programado para ejecutarse en 2 minutos (${this.currentRecommendation!.recommendedDuration} min)`),
+                error: (error) => this.showError(error.message || 'Error al crear la entrada del plan de riego')
             });
     }
 
     dismissRecommendation(): void {
-        this.currentRecommendation = null;
+        this.monitor.dismissRecommendation();
     }
 
     getUrgencyClass(urgency: string): string {
@@ -952,8 +737,13 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         this.selectedSector = this.sectors.find(s => s.id === this.selectedSectorId) || null;
         this.selectedCropProductionId = this.selectedSector?.cropProductionId || null;
 
-        if (this.autoModeEnabled) {
-            this.loadRecommendation();
+        if (this.monitor.isEnabled) {
+            this.monitor.updateConfig({
+                sectorId: this.selectedSectorId!,
+                selectedSector: this.selectedSector,
+                cropProductionId: this.selectedCropProductionId!,
+            });
+            this.monitor.loadRecommendation();
         }
     }
 
@@ -961,5 +751,13 @@ export class OnDemandIrrigationComponent implements OnInit, OnDestroy {
         if (!this.selectedSector?.cropProductionId) return '—';
         const cp = this.cropProductions.find((p: any) => p.id === this.selectedSector.cropProductionId) as any;
         return cp?.name || cp?.code || `Producción #${this.selectedSector.cropProductionId}`;
+    }
+
+    getSelectedCropName(): string {
+        if (!this.selectedSector?.cropProductionId) return '—';
+        const cp = this.cropProductions.find((p: any) => p.id === this.selectedSector.cropProductionId) as any;
+        if (!cp?.cropId) return '—';
+        const crop = this.crops.find(c => c.id === cp.cropId);
+        return crop?.name || `Cultivo #${cp.cropId}`;
     }
 }

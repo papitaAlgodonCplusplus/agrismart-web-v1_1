@@ -2098,3 +2098,46 @@ textarea.form-control {
     width: 100%;
   }
 }
+/* ── Calculation Breakdown ─────────────────────────────────────────────────── */
+.calc-breakdown-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.calc-row {
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.calc-row--highlight {
+  background: #f1f5f9;
+  color: #1e293b;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.calc-label {
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.calc-formula {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.calc-result {
+  white-space: nowrap;
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #0f172a;
+  text-align: right;
+}

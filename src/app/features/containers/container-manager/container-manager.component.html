@@ -1,0 +1,363 @@
+<div class="manager-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h2><i class="bi bi-box-seam-fill"></i> Gestión de Contenedores</h2>
+      <p class="text-muted">Administre los contenedores y tipos del sistema</p>
+    </div>
+    <button class="btn btn-primary" (click)="activeTab === 'containers' ? createNew() : createNewType()">
+      <i class="bi bi-plus-circle"></i> {{ activeTab === 'containers' ? 'Nuevo Contenedor' : 'Nuevo Tipo' }}
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab === 'containers'" (click)="activeTab = 'containers'">
+        <i class="bi bi-box-seam me-1"></i> Contenedores
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab === 'types'" (click)="activeTab = 'types'">
+        <i class="bi bi-collection me-1"></i> Tipos de Contenedor
+      </button>
+    </li>
+  </ul>
+
+  <!-- ══════════════════════ CONTAINERS TAB ══════════════════════ -->
+  <div *ngIf="activeTab === 'containers'">
+    <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show">
+      <i class="bi bi-check-circle-fill"></i> {{ successMessage }}
+      <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+    </div>
+    <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ errorMessage }}
+      <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+    </div>
+
+    <div class="filters-section">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" class="form-control" placeholder="Buscar por nombre o ID..." [(ngModel)]="searchTerm" />
+        <button *ngIf="searchTerm" class="btn-clear" (click)="clearSearch()"><i class="bi bi-x"></i></button>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-outline-secondary" [class.active]="includeInactives" (click)="toggleActiveFilter()">
+          <i class="bi" [class.bi-eye]="!includeInactives" [class.bi-eye-slash]="includeInactives"></i>
+          {{ includeInactives ? 'Ver solo activos' : 'Ver inactivos' }}
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p>Cargando contenedores...</p>
+    </div>
+
+    <div *ngIf="!isLoading" class="table-container">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>ID</th><th>Nombre</th><th>Catálogo</th><th>Tipo</th>
+            <th>Volumen (L)</th><th>Dimensiones (cm)</th><th>Diámetros (cm)</th>
+            <th>Estado</th><th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of filteredContainers$ | async; trackBy: trackByFn">
+            <td class="fw-bold">#{{ c.id }}</td>
+            <td><i class="bi bi-box-seam text-primary me-2"></i>{{ c.name }}</td>
+            <td><span class="badge bg-info">{{ getCatalogName(c.catalogId) }}</span></td>
+            <td>{{ getContainerTypeName(c.containerTypeId) }}</td>
+            <td class="fw-semibold text-primary">{{ c.volume | number:'1.1-1' }} L</td>
+            <td class="dim-cell">
+              <span title="Alto">H: {{ c.height }}</span> ×
+              <span title="Ancho">W: {{ c.width }}</span> ×
+              <span title="Largo">L: {{ c.length }}</span>
+            </td>
+            <td class="dim-cell">
+              <span title="Diámetro inferior">↓ {{ c.lowerDiameter }}</span> /
+              <span title="Diámetro superior">↑ {{ c.upperDiameter }}</span>
+            </td>
+            <td>
+              <span class="badge" [class.bg-success]="c.active" [class.bg-secondary]="!c.active">
+                <i class="bi" [class.bi-check-circle]="c.active" [class.bi-x-circle]="!c.active"></i>
+                {{ c.active ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" (click)="view(c)" title="Ver detalles"><i class="bi bi-eye"></i></button>
+                <button class="btn btn-outline-warning" (click)="edit(c)" title="Editar"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-outline-danger" (click)="delete(c)" title="Eliminar"><i class="bi bi-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="(filteredContainers$ | async)?.length === 0" class="empty-state">
+        <i class="bi bi-box-seam"></i>
+        <h4>{{ getEmptyStateMessage() }}</h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ TYPES TAB ══════════════════════ -->
+  <div *ngIf="activeTab === 'types'">
+    <div *ngIf="typeSuccessMessage" class="alert alert-success alert-dismissible fade show">
+      <i class="bi bi-check-circle-fill"></i> {{ typeSuccessMessage }}
+      <button type="button" class="btn-close" (click)="typeSuccessMessage = ''"></button>
+    </div>
+    <div *ngIf="typeErrorMessage" class="alert alert-danger alert-dismissible fade show">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ typeErrorMessage }}
+      <button type="button" class="btn-close" (click)="typeErrorMessage = ''"></button>
+    </div>
+
+    <div class="filter-actions mb-3">
+      <button class="btn btn-outline-secondary" [class.active]="includeInactiveTypes" (click)="toggleInactiveTypes()">
+        <i class="bi" [class.bi-eye]="!includeInactiveTypes" [class.bi-eye-slash]="includeInactiveTypes"></i>
+        {{ includeInactiveTypes ? 'Ver solo activos' : 'Ver inactivos' }}
+      </button>
+    </div>
+
+    <div *ngIf="isLoadingTypes" class="loading-container">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p>Cargando tipos...</p>
+    </div>
+
+    <div *ngIf="!isLoadingTypes" class="table-container">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>ID</th><th>Nombre</th><th>Fórmula de Volumen</th><th>Estado</th><th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of containerTypes; trackBy: trackByTypeFn">
+            <td class="fw-bold">#{{ t.id }}</td>
+            <td><i class="bi bi-collection text-secondary me-2"></i>{{ t.name }}</td>
+            <td>
+              <span class="badge bg-light text-dark border">
+                <i class="bi bi-calculator me-1"></i>{{ getFormulaLabel(t.formulaType) }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [class.bg-success]="t.active" [class.bg-secondary]="!t.active">
+                <i class="bi" [class.bi-check-circle]="t.active" [class.bi-x-circle]="!t.active"></i>
+                {{ t.active ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-warning" (click)="editType(t)" title="Editar"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-outline-danger" (click)="deleteType(t)" title="Eliminar"><i class="bi bi-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="containerTypes.length === 0" class="empty-state">
+        <i class="bi bi-collection"></i>
+        <h4>No hay tipos de contenedor registrados</h4>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ Container Create/Edit Modal ══════════ -->
+<div class="modal" [class.show]="showCreateModal || showEditModal" *ngIf="showCreateModal || showEditModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-box-seam-fill"></i>
+          {{ showCreateModal ? 'Nuevo Contenedor' : 'Editar Contenedor' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <form [formGroup]="containerForm" (ngSubmit)="save()">
+        <div class="modal-body">
+          <div *ngIf="formErrorMessage" class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> {{ formErrorMessage }}
+          </div>
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label">Catálogo <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="catalogId"
+                [class.is-invalid]="containerForm.get('catalogId')?.invalid && containerForm.get('catalogId')?.touched">
+                <option [value]="null">Seleccione un catálogo</option>
+                <option *ngFor="let cat of catalogs" [value]="cat.id">{{ cat.name }}</option>
+              </select>
+              <div class="invalid-feedback">El catálogo es requerido</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Tipo de Contenedor <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="containerTypeId"
+                [class.is-invalid]="containerForm.get('containerTypeId')?.invalid && containerForm.get('containerTypeId')?.touched">
+                <option [value]="null">Seleccione un tipo</option>
+                <option *ngFor="let type of containerTypes" [value]="type.id">{{ type.name }}</option>
+              </select>
+              <div class="invalid-feedback">El tipo es requerido</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Nombre <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="name" placeholder="Ej: Maceta 18L Redonda"
+                [class.is-invalid]="containerForm.get('name')?.invalid && containerForm.get('name')?.touched" />
+              <div class="invalid-feedback">El nombre debe tener al menos 2 caracteres</div>
+            </div>
+            <div class="col-12"><hr class="my-1"><small class="text-muted fw-semibold">Dimensiones (cm)</small></div>
+            <div class="col-md-4">
+              <label class="form-label">Alto <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" formControlName="height" min="0" step="0.1" placeholder="cm"
+                [class.is-invalid]="containerForm.get('height')?.invalid && containerForm.get('height')?.touched" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Ancho <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" formControlName="width" min="0" step="0.1" placeholder="cm"
+                [class.is-invalid]="containerForm.get('width')?.invalid && containerForm.get('width')?.touched" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Largo <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" formControlName="length" min="0" step="0.1" placeholder="cm"
+                [class.is-invalid]="containerForm.get('length')?.invalid && containerForm.get('length')?.touched" />
+            </div>
+            <div class="col-12"><hr class="my-1"><small class="text-muted fw-semibold">Diámetros (cm)</small></div>
+            <div class="col-md-6">
+              <label class="form-label">Diámetro Inferior <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" formControlName="lowerDiameter" min="0" step="0.1" placeholder="cm"
+                [class.is-invalid]="containerForm.get('lowerDiameter')?.invalid && containerForm.get('lowerDiameter')?.touched" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Diámetro Superior <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" formControlName="upperDiameter" min="0" step="0.1" placeholder="cm"
+                [class.is-invalid]="containerForm.get('upperDiameter')?.invalid && containerForm.get('upperDiameter')?.touched" />
+            </div>
+            <div class="col-12" *ngIf="showEditModal">
+              <div class="form-check form-switch">
+                <input type="checkbox" class="form-check-input" formControlName="active" id="activeCheck" />
+                <label class="form-check-label" for="activeCheck">
+                  {{ containerForm.get('active')?.value ? 'Activo' : 'Inactivo' }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting || containerForm.invalid">
+            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!isSubmitting" class="bi bi-save me-2"></i>
+            {{ isSubmitting ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ Container View Modal ══════════ -->
+<div class="modal" [class.show]="showViewModal" *ngIf="showViewModal && selectedContainer">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-info-circle-fill"></i> Detalles del Contenedor</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-section">
+          <div class="detail-row"><span class="detail-label">ID:</span><span class="detail-value">#{{ selectedContainer.id }}</span></div>
+          <div class="detail-row"><span class="detail-label">Nombre:</span><span class="detail-value">{{ selectedContainer.name }}</span></div>
+          <div class="detail-row"><span class="detail-label">Catálogo:</span><span class="detail-value"><span class="badge bg-info">{{ getCatalogName(selectedContainer.catalogId) }}</span></span></div>
+          <div class="detail-row"><span class="detail-label">Tipo:</span><span class="detail-value">{{ getContainerTypeName(selectedContainer.containerTypeId) }}</span></div>
+          <div class="detail-row"><span class="detail-label">Volumen:</span><span class="detail-value fw-bold text-primary">{{ selectedContainer.volume | number:'1.1-1' }} L</span></div>
+          <div class="detail-row"><span class="detail-label">Alto:</span><span class="detail-value">{{ selectedContainer.height }} cm</span></div>
+          <div class="detail-row"><span class="detail-label">Ancho:</span><span class="detail-value">{{ selectedContainer.width }} cm</span></div>
+          <div class="detail-row"><span class="detail-label">Largo:</span><span class="detail-value">{{ selectedContainer.length }} cm</span></div>
+          <div class="detail-row"><span class="detail-label">Diámetro Inferior:</span><span class="detail-value">{{ selectedContainer.lowerDiameter }} cm</span></div>
+          <div class="detail-row"><span class="detail-label">Diámetro Superior:</span><span class="detail-value">{{ selectedContainer.upperDiameter }} cm</span></div>
+          <div class="detail-row">
+            <span class="detail-label">Estado:</span>
+            <span class="detail-value">
+              <span class="badge" [class.bg-success]="selectedContainer.active" [class.bg-secondary]="!selectedContainer.active">
+                {{ selectedContainer.active ? 'Activo' : 'Inactivo' }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-row"><span class="detail-label">Creado:</span><span class="detail-value">{{ formatDate(selectedContainer.dateCreated) }}</span></div>
+          <div class="detail-row" *ngIf="selectedContainer.dateUpdated"><span class="detail-label">Actualizado:</span><span class="detail-value">{{ formatDate(selectedContainer.dateUpdated) }}</span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
+        <button type="button" class="btn btn-warning" (click)="edit(selectedContainer!); showViewModal = false;">
+          <i class="bi bi-pencil"></i> Editar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ ContainerType Create/Edit Modal ══════════ -->
+<div class="modal" [class.show]="showCreateTypeModal || showEditTypeModal" *ngIf="showCreateTypeModal || showEditTypeModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-collection-fill"></i>
+          {{ showCreateTypeModal ? 'Nuevo Tipo de Contenedor' : 'Editar Tipo de Contenedor' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeTypeModal()"></button>
+      </div>
+      <form [formGroup]="containerTypeForm" (ngSubmit)="saveType()">
+        <div class="modal-body">
+          <div *ngIf="typeFormErrorMessage" class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i> {{ typeFormErrorMessage }}
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Nombre <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="name" placeholder="Ej: Hidro Bucket"
+                [class.is-invalid]="containerTypeForm.get('name')?.invalid && containerTypeForm.get('name')?.touched" />
+              <div class="invalid-feedback">El nombre debe tener al menos 2 caracteres</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Fórmula de Volumen <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="formulaType"
+                [class.is-invalid]="containerTypeForm.get('formulaType')?.invalid && containerTypeForm.get('formulaType')?.touched">
+                <option [value]="null">Seleccione una fórmula</option>
+                <option *ngFor="let f of formulaTypes" [value]="f.value">{{ f.label }}</option>
+              </select>
+              <div class="invalid-feedback">La fórmula de volumen es requerida</div>
+              <div class="form-text">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>Cónico:</strong> Macetas troncocónicas (usa diámetros inferior y superior) ·
+                <strong>Cilíndrico:</strong> Baldes, tubos (usa diámetro superior) ·
+                <strong>Cúbico:</strong> Bandejas, cajas (usa alto × ancho × largo)
+              </div>
+            </div>
+            <div class="col-12" *ngIf="showEditTypeModal">
+              <div class="form-check form-switch">
+                <input type="checkbox" class="form-check-input" formControlName="active" id="typeActiveCheck" />
+                <label class="form-check-label" for="typeActiveCheck">
+                  {{ containerTypeForm.get('active')?.value ? 'Activo' : 'Inactivo' }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeTypeModal()" [disabled]="isSubmittingType">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmittingType || containerTypeForm.invalid">
+            <span *ngIf="isSubmittingType" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!isSubmittingType" class="bi bi-save me-2"></i>
+            {{ isSubmittingType ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop"
+  [class.show]="showCreateModal || showEditModal || showViewModal || showCreateTypeModal || showEditTypeModal"
+  *ngIf="showCreateModal || showEditModal || showViewModal || showCreateTypeModal || showEditTypeModal"></div>

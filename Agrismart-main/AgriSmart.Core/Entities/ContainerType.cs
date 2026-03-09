@@ -3,6 +3,7 @@
     public class ContainerType : BaseEntity
     {
         public string? Name { get; set; }
+        public int FormulaType { get; set; }
         public bool? Active { get; set; }
     }
 }

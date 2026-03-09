@@ -934,6 +934,14 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/droppers']);
   }
 
+  navigateToContainers(): void {
+    this.router.navigate(['/containers']);
+  }
+
+  navigateToCropMedium(): void {
+    this.router.navigate(['/crop-medium']);
+  }
+
 
   /**
    * Load crop production locations with lat/lon/altitude

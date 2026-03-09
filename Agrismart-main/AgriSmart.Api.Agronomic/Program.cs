@@ -280,6 +280,7 @@ builder.Services.AddTransient<ICropQueryRepository, CropQueryRepository>();
 builder.Services.AddTransient<ICropCommandRepository, CropCommandRepository>();
 builder.Services.AddTransient<IContainerQueryRepository, ContainerQueryRepository>();
 builder.Services.AddTransient<IContainerTypeQueryRepository, ContainerTypeQueryRepository>();
+builder.Services.AddTransient<IContainerTypeCommandRepository, ContainerTypeCommandRepository>();
 builder.Services.AddTransient<IGrowingMediumQueryRepository, GrowingMediumQueryRepository>();
 builder.Services.AddTransient<ISensorQueryRepository, SensorQueryRepository>();
 builder.Services.AddTransient<ISensorCommandRepository, SensorCommandRepository>();

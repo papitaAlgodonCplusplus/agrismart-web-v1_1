@@ -17,12 +17,11 @@ import { CropPhaseService, CropPhase } from '../crop-phases/services/crop-phase.
 // Models
 import {
   IrrigationRecommendation,
+  IrrigationCalculationBreakdown,
   IrrigationDecisionFactors,
   IrrigationRule,
   RuleEvaluation,
   RuleEvaluationDisplay,
-  GrowthStageConfig,
-  WeatherForecast
 } from './models/irrigation-decision.models';
 import { GrowingMedium, Container } from './irrigation-sector.service';
 
@@ -46,47 +45,6 @@ const OPTIMAL_IRRIGATION_HOURS = {
 };
 const AVOID_IRRIGATION_HOURS = { start: 11, end: 14 }; // midday
 
-// ============================================================================
-// GROWTH STAGE CONFIGURATIONS
-// ============================================================================
-
-const GROWTH_STAGE_CONFIGS: { [key: string]: GrowthStageConfig } = {
-  germination: {
-    stage: 'germination',
-    depletionThreshold: 20, // Keep substrate moist
-    optimalMoistureRange: { min: 35, max: 40 },
-    irrigationFrequency: 3,
-    waterStressSensitivity: 'high'
-  },
-  vegetative: {
-    stage: 'vegetative',
-    depletionThreshold: 30,
-    optimalMoistureRange: { min: 30, max: 38 },
-    irrigationFrequency: 2,
-    waterStressSensitivity: 'medium'
-  },
-  flowering: {
-    stage: 'flowering',
-    depletionThreshold: 25, // More sensitive during flowering
-    optimalMoistureRange: { min: 32, max: 38 },
-    irrigationFrequency: 2,
-    waterStressSensitivity: 'high'
-  },
-  fruiting: {
-    stage: 'fruiting',
-    depletionThreshold: 30,
-    optimalMoistureRange: { min: 30, max: 36 },
-    irrigationFrequency: 2,
-    waterStressSensitivity: 'high'
-  },
-  harvest: {
-    stage: 'harvest',
-    depletionThreshold: 40, // Can tolerate more depletion
-    optimalMoistureRange: { min: 28, max: 35 },
-    irrigationFrequency: 1,
-    waterStressSensitivity: 'low'
-  }
-};
 
 // ============================================================================
 // SERVICE IMPLEMENTATION
@@ -341,11 +299,11 @@ export class IrrigationDecisionEngineService {
    */
   private getRecentIrrigationHistory(cropProductionId: number): Observable<any> {
     const now = new Date();
-    const oneDayAgo = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+    const fivedaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
 
     return this.irrigationService.getDeviceRawData(
       undefined,
-      oneDayAgo.toISOString(),
+      fivedaysAgo.toISOString(),
       now.toISOString()
     ).pipe(
       map(rawData => {
@@ -353,7 +311,7 @@ export class IrrigationDecisionEngineService {
         const flowEvents = this.detectFlowEvents(rawData);
 
         if (flowEvents.length === 0) {
-          console.error('Sin eventos de flujo de riego en los últimos 1 día (Water_flow_value, Total_pulse)');
+          console.error('Sin eventos de flujo de riego en los últimos 5 días (Water_flow_value, Total_pulse)');
           throw new Error('Sin historial de eventos de riego');
         }
 
@@ -370,7 +328,7 @@ export class IrrigationDecisionEngineService {
         // ml to L
         totalVolume = totalVolume / 1000;
 
-        const daysCovered = (now.getTime() - oneDayAgo.getTime()) / (1000 * 60 * 60 * 24);
+        const daysCovered = (now.getTime() - fivedaysAgo.getTime()) / (1000 * 60 * 60 * 24);
         const averageDailyVolume = totalVolume / daysCovered;
 
         // Calculate drainage percentage from drain sensors
@@ -392,10 +350,10 @@ export class IrrigationDecisionEngineService {
           }
 
           totalDrainVolume = totalDrainVolume / 1000; // ml to L
-          const daysCovered = (now.getTime() - oneDayAgo.getTime()) / (1000 * 60 * 60 * 24);
+          const daysCovered = (now.getTime() - fivedaysAgo.getTime()) / (1000 * 60 * 60 * 24);
           const averageDailyDrain = totalDrainVolume / daysCovered;
 
-          console.log(`Total irrigation volume in last 7 days: ${totalVolume.toFixed(2)} L, Total drainage volume: ${totalDrainVolume.toFixed(2)} L`);
+          console.log(`Total irrigation volume in last 5 days: ${totalVolume.toFixed(2)} L, Total drainage volume: ${totalDrainVolume.toFixed(2)} L`);
 
           // Calculate drainage as percentage of irrigation volume
           recentDrainagePercentage = (averageDailyDrain / averageDailyVolume) * 100;
@@ -565,8 +523,9 @@ export class IrrigationDecisionEngineService {
       hoursSinceLastIrrigation,
       currentHour,
       isOptimalTime: this.isOptimalTimeToIrrigate(currentHour),
-      growthStage: this.normalizePhaseToStage(data.cropPhase),
-      cropWaterStress: Math.max(0, depletionPercentage - 30)
+      growthStage: data.cropPhase?.name ?? undefined,
+      cropWaterStress: Math.max(0, depletionPercentage - 30),
+      ...this.derivePhaseConfig(data.cropPhase)
     };
   }
 
@@ -655,11 +614,16 @@ export class IrrigationDecisionEngineService {
     let recommendedDuration: number | null = null;
     let totalVolume: number | null = null;
 
+    // Breakdown intermediates
+    let baseVolume: number | null = null;
+    let volumeMultiplier = 1.0;
+    let flowRateLPerMin: number | null = null;
+    let totalContainersCalc: number | null = null;
+
     if (canCalculateVolume) {
-      const baseVolume = this.calculateIrrigationVolume(factors, substrate, container);
+      baseVolume = this.calculateIrrigationVolume(factors, substrate, container);
 
       // Apply volume adjustments only from triggered rules
-      let volumeMultiplier = 1.0;
       ruleResults.forEach(result => {
         if (result.shouldTrigger && result.volumeAdjustment) {
           volumeMultiplier *= result.volumeAdjustment;
@@ -670,16 +634,28 @@ export class IrrigationDecisionEngineService {
 
       if (canCalculateDuration) {
         // flowRate (L/h per dropper) × count / 60 = L/min for the container
-        const flowRate = (dropper!.flowRate * cropProduction.numberOfDroppersPerContainer) / 60;
-        recommendedDuration = Math.ceil(recommendedVolume / flowRate);
+        flowRateLPerMin = (dropper!.flowRate * cropProduction.numberOfDroppersPerContainer) / 60;
+        recommendedDuration = Math.ceil(recommendedVolume / flowRateLPerMin);
       }
 
       if (canCalculateTotal) {
         const containersPerM2 = 1 / (cropProduction.betweenRowDistance * cropProduction.betweenContainerDistance);
-        const totalContainers = Math.ceil(cropProduction.area * containersPerM2);
-        totalVolume = recommendedVolume * totalContainers;
+        totalContainersCalc = Math.ceil(cropProduction.area * containersPerM2);
+        totalVolume = recommendedVolume * totalContainersCalc;
       }
     }
+
+    const calculationBreakdown: IrrigationCalculationBreakdown = {
+      containerVolumeLiters: container.volume ?? null,
+      tawPercentage: substrate.totalAvailableWaterPercentage ?? null,
+      depletionFraction: factors.depletionPercentage != null ? factors.depletionPercentage / 100 : null,
+      baseVolumeLiters: baseVolume,
+      volumeMultiplier,
+      dropperFlowRateLH: dropper?.flowRate ?? null,
+      droppersPerContainer: cropProduction.numberOfDroppersPerContainer ?? null,
+      flowRateLPerMin,
+      totalContainers: totalContainersCalc,
+    };
 
     // Determine urgency
     const urgency = this.determineUrgency(factors, ruleResults);
@@ -711,7 +687,8 @@ export class IrrigationDecisionEngineService {
       nextRecommendedCheck: new Date(Date.now() + 4 * 60 * 60 * 1000),
       decisionFactors: factors,
       ruleEvaluations: ruleResults,
-      missingData: missingData.length > 0 ? missingData : undefined
+      missingData: missingData.length > 0 ? missingData : undefined,
+      calculationBreakdown
     };
   }
 
@@ -735,9 +712,7 @@ export class IrrigationDecisionEngineService {
           };
         }
 
-        const depletionThreshold = factors.growthStage
-          ? GROWTH_STAGE_CONFIGS[factors.growthStage]?.depletionThreshold || DEFAULT_DEPLETION_THRESHOLD
-          : DEFAULT_DEPLETION_THRESHOLD;
+        const depletionThreshold = factors.phaseDepletionThreshold ?? DEFAULT_DEPLETION_THRESHOLD;
 
         if (factors.depletionPercentage >= CRITICAL_DEPLETION_THRESHOLD) {
           return {
@@ -893,41 +868,44 @@ export class IrrigationDecisionEngineService {
   }
 
   /**
-   * Rule 5: Growth stage considerations
+   * Rule 5: Growth stage considerations.
+   * Uses CropPhase-derived sensitivity and depletion threshold — no hardcoded stages.
    */
   private growthStageRule(): IrrigationRule {
-    const stageNames: Record<string, string> = {
-      germination: 'Germinación',
-      vegetative: 'Vegetativo',
-      flowering: 'Floración',
-      fruiting: 'Fructificación',
-      harvest: 'Cosecha'
-    };
-
     return {
       name: 'Etapa de Crecimiento',
       priority: 8,
       evaluate: (factors: IrrigationDecisionFactors): RuleEvaluation => {
-        if (!factors.growthStage) {
+        if (!factors.growthStage || !factors.phaseWaterStressSensitivity) {
           return { shouldTrigger: false, confidence: 50, reason: 'Etapa de crecimiento no determinada' };
         }
 
-        const stageConfig = GROWTH_STAGE_CONFIGS[factors.growthStage];
-        const stageName = stageNames[factors.growthStage] || factors.growthStage;
+        const phaseName = factors.growthStage;
+        const sensitivity = factors.phaseWaterStressSensitivity;
+        const stress = factors.cropWaterStress ?? 0;
 
-        if (stageConfig.waterStressSensitivity === 'high' && factors.cropWaterStress && factors.cropWaterStress > 20) {
+        if (sensitivity === 'high' && stress > 20) {
           return {
             shouldTrigger: true,
             confidence: 80,
-            reason: `Etapa de ${stageName} es muy sensible al estrés hídrico (estrés actual: ${factors.cropWaterStress.toFixed(1)}%)`,
+            reason: `Etapa "${phaseName}" es muy sensible al estrés hídrico (estrés actual: ${stress.toFixed(1)}%)`,
             urgency: 'high'
+          };
+        }
+
+        if (sensitivity === 'medium' && stress > 35) {
+          return {
+            shouldTrigger: true,
+            confidence: 65,
+            reason: `Etapa "${phaseName}" con sensibilidad media — estrés hídrico elevado (${stress.toFixed(1)}%)`,
+            urgency: 'medium'
           };
         }
 
         return {
           shouldTrigger: false,
           confidence: 70,
-          reason: `Requerimientos hídricos de la etapa ${stageName} considerados`
+          reason: `Etapa "${phaseName}" (sensibilidad: ${sensitivity}) — sin estrés hídrico crítico`
         };
       }
     };
@@ -1017,8 +995,13 @@ export class IrrigationDecisionEngineService {
   }
 
   /**
-   * Find the currently active CropPhase for a crop production based on
-   * weeks elapsed since plantingDate. Returns null if undetermined.
+   * Find the currently active CropPhase for a crop production.
+   *
+   * Strategy (in order):
+   * 1. If phases have meaningful week ranges, use weeks-since-startDate to match.
+   * 2. If no week ranges are set (all 0), fall back to sequence order.
+   * 3. If startDate is missing or in the future, fall back to sequence order.
+   * In all sequence-order fallbacks, return the phase with the lowest sequence number.
    */
   private resolveCurrentPhase(phases: CropPhase[], cropProduction: any): CropPhase | null {
     if (!phases || phases.length === 0) {
@@ -1026,66 +1009,111 @@ export class IrrigationDecisionEngineService {
       return null;
     }
 
-    const plantingDate = cropProduction.plantingDate ? new Date(cropProduction.plantingDate) : null;
-    if (!plantingDate || isNaN(plantingDate.getTime())) {
-      console.warn('plantingDate no configurada — no se puede determinar la etapa de cultivo');
+    const activePhases = phases.filter(p => p.active);
+    if (activePhases.length === 0) {
+      console.warn('No hay fases de cultivo activas');
       return null;
+    }
+
+    // Sort by sequence ascending for fallbacks
+    const bySequence = [...activePhases].sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
+
+    // Check if any phase has meaningful week ranges (non-zero startingWeek or endingWeek)
+    const hasWeekRanges = activePhases.some(
+      p => (p.startingWeek != null && p.startingWeek > 0) || (p.endingWeek != null && p.endingWeek > 0)
+    );
+
+    if (!hasWeekRanges) {
+      const fallback = bySequence[0];
+      console.log(`Fases sin rangos de semana configurados — usando fase de menor secuencia: "${fallback.name}"`);
+      return fallback;
+    }
+
+    const startDate = cropProduction.startDate ? new Date(cropProduction.startDate) : null;
+    if (!startDate || isNaN(startDate.getTime())) {
+      const fallback = bySequence[0];
+      console.warn(`startDate no configurada — usando fase de menor secuencia: "${fallback.name}"`);
+      return fallback;
     }
 
     const now = new Date();
     const weeksSincePlanting = Math.floor(
-      (now.getTime() - plantingDate.getTime()) / (1000 * 60 * 60 * 24 * 7)
+      (now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7)
     );
 
-    const activePhases = phases.filter(p => p.active);
+    if (weeksSincePlanting < 0) {
+      // startDate is in the future — crop hasn't started yet, use first phase
+      const fallback = bySequence[0];
+      console.warn(`startDate es futura (semana ${weeksSincePlanting}) — usando primera fase: "${fallback.name}"`);
+      return fallback;
+    }
 
-    // Find the phase whose week range contains the current week
-    const currentPhase = activePhases.find(p =>
-      p.startingWeek != null &&
-      p.endingWeek != null &&
+    // Try exact week-range match
+    const exactMatch = activePhases.find(p =>
+      p.startingWeek != null && p.endingWeek != null &&
+      p.endingWeek > 0 &&
       weeksSincePlanting >= p.startingWeek &&
       weeksSincePlanting <= p.endingWeek
     );
-
-    if (currentPhase) {
-      console.log(`Etapa de cultivo resuelta: "${currentPhase.name}" (semana ${weeksSincePlanting} desde siembra)`);
-      return currentPhase;
+    if (exactMatch) {
+      console.log(`Etapa de cultivo resuelta: "${exactMatch.name}" (semana ${weeksSincePlanting} desde inicio)`);
+      return exactMatch;
     }
 
-    // If no exact match, use the last phase whose startingWeek has been passed
+    // Fall back to the phase with the highest startingWeek that we've already passed
     const pastPhases = activePhases
       .filter(p => p.startingWeek != null && weeksSincePlanting >= p.startingWeek)
       .sort((a, b) => (b.startingWeek ?? 0) - (a.startingWeek ?? 0));
 
     if (pastPhases.length > 0) {
-      console.log(`Etapa de cultivo aproximada: "${pastPhases[0].name}" (semana ${weeksSincePlanting} desde siembra)`);
+      console.log(`Etapa de cultivo aproximada: "${pastPhases[0].name}" (semana ${weeksSincePlanting} desde inicio)`);
       return pastPhases[0];
     }
 
-    console.warn(`Semana ${weeksSincePlanting} no coincide con ninguna fase de cultivo definida`);
-    return null;
+    // All phases are still in the future — use the first by sequence
+    const fallback = bySequence[0];
+    console.warn(`Semana ${weeksSincePlanting} anterior a todas las fases — usando primera fase: "${fallback.name}"`);
+    return fallback;
   }
 
   /**
-   * Map a CropPhase name to a GROWTH_STAGE_CONFIGS key using fuzzy matching.
-   * Falls back to 'vegetative' if no match is found.
+   * Derive water-stress sensitivity and depletion threshold directly from a CropPhase.
+   *
+   * Logic (no hardcoded stage names):
+   * - criticalNotes set → high sensitivity (grower explicitly flagged this phase)
+   * - sequence 1 OR startingWeek < 4 → high sensitivity (very early / establishment phase)
+   * - sequence 2-3 OR startingWeek < 10 → medium sensitivity
+   * - otherwise → low sensitivity (late / finishing phase)
    */
-  private normalizePhaseToStage(phase: CropPhase | null): string {
-    if (!phase) return 'vegetative';
+  private derivePhaseConfig(phase: CropPhase | null): {
+    phaseWaterStressSensitivity: 'low' | 'medium' | 'high' | undefined;
+    phaseDepletionThreshold: number | undefined;
+  } {
+    if (!phase) {
+      return { phaseWaterStressSensitivity: undefined, phaseDepletionThreshold: undefined };
+    }
 
-    const name = phase.name.toLowerCase();
+    const hasCriticalNotes = phase.criticalNotes != null && phase.criticalNotes !== '';
+    const seq = phase.sequence ?? 99;
+    const startWeek = phase.startingWeek ?? 99;
 
-    if (/germin/.test(name)) return 'germination';
-    if (/vegetat|crecimiento|vegeta/.test(name)) return 'vegetative';
-    if (/flor/.test(name)) return 'flowering';
-    if (/frut|fruit/.test(name)) return 'fruiting';
-    if (/cosech|harvest|madur/.test(name)) return 'harvest';
+    let sensitivity: 'low' | 'medium' | 'high';
+    let depletionThreshold: number;
 
-    // If the name directly matches a known key, use it
-    if (GROWTH_STAGE_CONFIGS[name]) return name;
+    if (hasCriticalNotes || seq <= 1 || startWeek < 4) {
+      sensitivity = 'high';
+      depletionThreshold = 20;
+    } else if (seq <= 3 || startWeek < 10) {
+      sensitivity = 'medium';
+      depletionThreshold = 30;
+    } else {
+      sensitivity = 'low';
+      depletionThreshold = DEFAULT_DEPLETION_THRESHOLD;
+    }
 
-    console.warn(`Fase "${phase.name}" no coincide con ninguna etapa conocida — usando vegetativo`);
-    return 'vegetative';
+    console.log(`CropPhase "${phase.name}" (seq=${seq}, startWeek=${startWeek}, criticalNotes=${hasCriticalNotes}) → sensitivity=${sensitivity}, depletionThreshold=${depletionThreshold}%`);
+
+    return { phaseWaterStressSensitivity: sensitivity, phaseDepletionThreshold: depletionThreshold };
   }
 
   /**

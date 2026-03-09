@@ -9,6 +9,18 @@ export interface RuleEvaluationDisplay extends RuleEvaluation {
   rulePriority: number;
 }
 
+export interface IrrigationCalculationBreakdown {
+  containerVolumeLiters: number | null;    // configured container volume (L)
+  tawPercentage: number | null;            // total available water %
+  depletionFraction: number | null;        // current depletion as 0-1
+  baseVolumeLiters: number | null;         // TAW * depletion * container volume
+  volumeMultiplier: number;                // combined rule adjustments (e.g. 1.2)
+  dropperFlowRateLH: number | null;        // L/h per dropper
+  droppersPerContainer: number | null;     // count
+  flowRateLPerMin: number | null;          // (flowRate * droppers) / 60
+  totalContainers: number | null;          // area / (rowSpacing * containerSpacing)
+}
+
 export interface IrrigationRecommendation {
   shouldIrrigate: boolean;
   recommendedVolume: number | null; // liters per container, null if data missing
@@ -22,6 +34,7 @@ export interface IrrigationRecommendation {
   decisionFactors?: IrrigationDecisionFactors;
   ruleEvaluations?: RuleEvaluationDisplay[];
   missingData?: string[]; // list of missing configuration fields
+  calculationBreakdown?: IrrigationCalculationBreakdown;
 }
 
 export interface IrrigationDecisionFactors {
@@ -41,8 +54,10 @@ export interface IrrigationDecisionFactors {
   hoursSinceLastIrrigation?: number;
 
   // Crop Requirements
-  growthStage?: string;
+  growthStage?: string; // phase name, for display only
   cropWaterStress?: number; // 0-100%
+  phaseWaterStressSensitivity?: 'low' | 'medium' | 'high'; // derived from CropPhase
+  phaseDepletionThreshold?: number; // % depletion to trigger irrigation, derived from CropPhase
 
   // Data availability flags
   hasSoilMoistureData: boolean;

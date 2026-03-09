@@ -22,68 +22,65 @@
     <form [formGroup]="selectionForm" class="selection-form">
       <div class="row g-3">
 
-        <!-- Growing Medium Selector -->
-        <div class="col-md-6">
+        <!-- Crop Production Selector -->
+        <div class="col-12">
           <div class="form-group">
             <label class="form-label">
-              <i class="bi bi-flower1 text-success"></i>
-              Medio de Cultivo
+              <i class="bi bi-seedling text-success"></i>
+              Producción de Cultivo
             </label>
             <select
-              formControlName="growingMediumId"
+              formControlName="cropProductionId"
               class="form-select"
-              (change)="onGrowingMediumChange()"
-              [class.is-invalid]="selectionForm.get('growingMediumId')?.invalid && selectionForm.get('growingMediumId')?.touched">
-              <option [value]="null" disabled>Seleccione medio de cultivo</option>
-              <option *ngFor="let medium of growingMedia" [value]="medium.id">
-                {{ medium.name }}
+              (change)="onCropProductionSelected($event)"
+              [class.is-invalid]="selectionForm.get('cropProductionId')?.invalid && selectionForm.get('cropProductionId')?.touched">
+              <option [value]="null" disabled>Seleccione una producción de cultivo</option>
+              <option *ngFor="let cp of cropProductions" [value]="cp.id">
+                {{ cp.name }}
               </option>
             </select>
-            <div class="invalid-feedback" *ngIf="selectionForm.get('growingMediumId')?.invalid">
-              Por favor seleccione un medio de cultivo
-            </div>
-
-            <!-- Quick info about selected medium -->
-            <div class="medium-info" *ngIf="selectedGrowingMedium">
-              <small class="text-muted">
-                <i class="bi bi-info-circle"></i>
-                ATD: {{ selectedGrowingMedium.totalAvailableWaterPercentage }}% |
-                CC: {{ selectedGrowingMedium.containerCapacityPercentage }}%
-              </small>
-            </div>
+            <div class="invalid-feedback">Por favor seleccione una producción de cultivo</div>
           </div>
         </div>
 
-        <!-- Container Selector -->
-        <div class="col-md-6">
-          <div class="form-group">
-            <label class="form-label">
-              <i class="bi bi-box text-primary"></i>
-              Contenedor
-            </label>
-            <select
-              formControlName="containerId"
-              class="form-select"
-              [class.is-invalid]="selectionForm.get('containerId')?.invalid && selectionForm.get('containerId')?.touched">
-              <option [value]="null" disabled>Seleccione contenedor</option>
-              <option *ngFor="let container of containers" [value]="container.id">
-                {{ container.name }} ({{ container.volume }}L)
-              </option>
-            </select>
-            <div class="invalid-feedback" *ngIf="selectionForm.get('containerId')?.invalid">
-              Por favor seleccione un contenedor
-            </div>
-
-            <!-- Quick info about selected container -->
-            <div class="container-info" *ngIf="selectedContainer">
-              <small class="text-muted">
-                <i class="bi bi-info-circle"></i>
-                Volumen: {{ selectedContainer.volume }}L |
-                Dimensiones: {{ selectedContainer.height }}×{{ selectedContainer.width }}×{{ selectedContainer.length }}cm
-              </small>
+        <!-- Auto-populated info -->
+        <ng-container *ngIf="selectedCropProduction">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">
+                <i class="bi bi-flower1 text-success"></i>
+                Medio de Cultivo
+              </label>
+              <div class="form-control-plaintext border rounded px-3 py-2 bg-light">
+                <strong>{{ selectedGrowingMedium?.name ?? 'ID ' + selectedCropProduction.growingMediumId }}</strong>
+                <div *ngIf="selectedGrowingMedium">
+                  <small class="text-muted">
+                    ATD: {{ selectedGrowingMedium.totalAvailableWaterPercentage }}% |
+                    CC: {{ selectedGrowingMedium.containerCapacityPercentage }}%
+                  </small>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label">
+                <i class="bi bi-box text-primary"></i>
+                Contenedor
+              </label>
+              <div class="form-control-plaintext border rounded px-3 py-2 bg-light">
+                <strong>{{ selectedContainer?.name ?? 'ID ' + selectedCropProduction.containerId }}</strong>
+                <div *ngIf="selectedContainer">
+                  <small class="text-muted">
+                    Volumen: {{ selectedContainer.volume | number:'1.2-2' }}L |
+                    {{ selectedContainer.height }}×{{ selectedContainer.width }}×{{ selectedContainer.length }} cm
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
 
       </div>
 
