@@ -611,11 +611,18 @@
             <!-- Pagination controls -->
             <div class="table-pagination">
               <div class="d-flex justify-content-between align-items-center">
-                <div class="pagination-info">
-                  <small class="text-muted">
+                <div class="d-flex align-items-center gap-2">
+                  <label class="text-muted mb-0" style="font-size:0.8rem;white-space:nowrap;">Filas por página:</label>
+                  <select class="form-select form-select-sm" style="width:auto;"
+                    [value]="climateKPIsPageSize"
+                    (change)="changeClimateKPIsPageSize(+$any($event.target).value)">
+                    <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+                  </select>
+                  <small class="text-muted" style="white-space:nowrap;">
                     Mostrando {{ (climateKPIsPage - 1) * climateKPIsPageSize + 1 }} -
                     {{ (climateKPIsPage * climateKPIsPageSize) < climateKPIs.length ? (climateKPIsPage * climateKPIsPageSize) :
-                      climateKPIs.length }} de {{ climateKPIs.length }} registros </small>
+                      climateKPIs.length }} de {{ climateKPIs.length }} registros
+                  </small>
                 </div>
                 <nav aria-label="Paginación de tabla">
                   <ul class="pagination pagination-sm mb-0">
@@ -726,8 +733,14 @@
               <!-- Pagination controls -->
               <div class="table-pagination">
                 <div class="d-flex justify-content-between align-items-center">
-                  <div class="pagination-info">
-                    <small class="text-muted">
+                  <div class="d-flex align-items-center gap-2">
+                    <label class="text-muted mb-0" style="font-size:0.8rem;white-space:nowrap;">Filas por página:</label>
+                    <select class="form-select form-select-sm" style="width:auto;"
+                      [value]="flowEventsPageSize"
+                      (change)="changeFlowEventsPageSize(+$any($event.target).value)">
+                      <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+                    </select>
+                    <small class="text-muted" style="white-space:nowrap;">
                       Mostrando {{ (flowEventsPage - 1) * flowEventsPageSize + 1 }} -
                       {{ ((flowEventsPage * flowEventsPageSize) < deviceEntry.value.length) ?
                         (flowEventsPage * flowEventsPageSize) : deviceEntry.value.length }} de {{
@@ -888,12 +901,19 @@
             <!-- Add pagination controls -->
             <div class="table-pagination">
               <div class="d-flex justify-content-between align-items-center">
-                <div class="pagination-info">
-                  <small class="text-muted">
+                <div class="d-flex align-items-center gap-2">
+                  <label class="text-muted mb-0" style="font-size:0.8rem;white-space:nowrap;">Filas por página:</label>
+                  <select class="form-select form-select-sm" style="width:auto;"
+                    [value]="irrigationMetricsPageSize"
+                    (change)="changeIrrigationMetricsPageSize(+$any($event.target).value)">
+                    <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+                  </select>
+                  <small class="text-muted" style="white-space:nowrap;">
                     Mostrando {{ (irrigationMetricsPage - 1) * irrigationMetricsPageSize + 1 }} -
                     {{ ((irrigationMetricsPage * irrigationMetricsPageSize) < irrigationMetrics.length) ?
                       (irrigationMetricsPage * irrigationMetricsPageSize) : irrigationMetrics.length }} de {{
-                      irrigationMetrics.length }} registros </small>
+                      irrigationMetrics.length }} registros
+                  </small>
                 </div>
                 <nav aria-label="Paginación de tabla">
                   <ul class="pagination pagination-sm mb-0">

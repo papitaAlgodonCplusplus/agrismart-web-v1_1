@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { HttpParams, HttpHeaders, HttpClient } from '@angular/common/http';
 import { forkJoin, Observable, of, catchError, tap, map, finalize } from 'rxjs';
 import { WaterChemistryService, WaterChemistry } from '../water-chemistry/services/water-chemistry.service';
+import { WaterService, Water } from '../water-chemistry/services/water.service';
 import { FertilizerService } from '../fertilizers/services/fertilizer.service';
 import { CropService } from '../crops/services/crop.service';
 import { ApiService } from '../../core/services/api.service';
@@ -505,6 +506,7 @@ export class NutrientFormulationComponent implements OnInit {
     public readonly FERTILIZER_INPUT_ENDPOINT = '/FertilizerInput';
     public readonly ANALYTICAL_ENTITY_ENDPOINT = '/AnalyticalEntity';
     waterSources: WaterChemistry[] = [];
+    waterMap: Map<number, string> = new Map();
     fertilizers: any[] = [];
     fertilizerChemistries: FertilizerChemistry[] = [];
     crops: Crop[] = [];
@@ -578,6 +580,7 @@ export class NutrientFormulationComponent implements OnInit {
         private fixedFormulationService: RealDataSimpleFormulationService,
         public authService: AuthService,
         public waterChemistryService: WaterChemistryService,
+        private waterService: WaterService,
         public fertilizerService: FertilizerService,
         public cropService: CropService,
         public catalogService: CatalogService,
@@ -852,10 +855,6 @@ export class NutrientFormulationComponent implements OnInit {
         a.download = `receta-${this.currentRecipe.name}.json`;
         a.click();
         URL.revokeObjectURL(url);
-    }
-    getWaterSourceName(id: number): string {
-        const source = this.waterSources.find(w => w.id === id);
-        return source?.name || 'Fuente desconocida';
     }
     getCropName(id: number): string {
         const crop = this.crops.find(c => c.id === id);
@@ -1737,8 +1736,12 @@ export class NutrientFormulationComponent implements OnInit {
                         return of([]);
                     })
                 );
+                const waters$ = this.waterService.getAll().pipe(
+                    catchError(() => of({ waters: [] }))
+                );
                 forkJoin({
                     waterSources: waterSources$,
+                    waters: waters$,
                     crops: crops$,
                     cropPhases: cropPhases$,
                     fertilizerChemistries: fertilizerChemistries$,
@@ -1747,6 +1750,8 @@ export class NutrientFormulationComponent implements OnInit {
                     next: (data) => {
                         console.log(" 🌞 full data: ", data)
                         this.waterSources = Array.isArray(data.waterSources.waterChemistries) ? data.waterSources.waterChemistries : [];
+                        const waterList: Water[] = data.waters?.waters || [];
+                        this.waterMap = new Map(waterList.map((w: Water) => [w.id!, w.name || '']));
                         this.crops = Array.isArray(data.crops) ? data.crops : [];
                         this.cropPhases = Array.isArray(data.cropPhases) ? data.cropPhases : [];
                         this.fertilizerChemistries = Array.isArray(data.fertilizerChemistries) ? data.fertilizerChemistries : [];
@@ -2383,19 +2388,22 @@ export class NutrientFormulationComponent implements OnInit {
         forkJoin({
             catalogs: this.loadCatalogs(),
             waterSources: this.loadWaterSources(),
+            waters: this.waterService.getAll().pipe(catchError(() => of({ waters: [] }))),
             cropPhases: this.loadCropPhases(),
             cropProductions: this.loadCropProductions()
         }).pipe(
             catchError(error => {
                 console.error('Error loading form data:', error);
                 this.errorMessage = 'Error al cargar los datos del formulario';
-                return of({ catalogs: [], waterSources: [], cropPhases: [], cropProductions: [] });
+                return of({ catalogs: [], waterSources: [], waters: { waters: [] }, cropPhases: [], cropProductions: [] });
             })
         ).subscribe({
             next: (data: any) => {
                 console.log('Form data loaded:', data);
                 this.catalogs = data.catalogs.catalogs;
                 this.waterSources = data.waterSources.waterChemistries;
+                const waterList: Water[] = data.waters?.waters || [];
+                this.waterMap = new Map(waterList.map((w: Water) => [w.id!, w.name || '']));
                 this.cropPhases = data.cropPhases.cropPhases;
                 this.cropProductions = data.cropProductions || [];
                 this.isLoading = false;
@@ -2436,6 +2444,14 @@ export class NutrientFormulationComponent implements OnInit {
 
     public loadWaterSources(): Observable<WaterChemistry[]> {
         return this.waterChemistryService.getAll();
+    }
+
+    public getWaterSourceName(water: WaterChemistry): string {
+        if (water.waterId != null) {
+            const name = this.waterMap.get(Number(water.waterId));
+            if (name) return name;
+        }
+        return water.name || `Fuente #${water.id}`;
     }
 
     public loadCropPhases(): Observable<CropPhase[]> {

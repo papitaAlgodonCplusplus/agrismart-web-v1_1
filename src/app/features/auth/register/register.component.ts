@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   templateUrl: './register.component.html',
   imports: [ CommonModule, ReactiveFormsModule ],
-  styleUrls: ['./register.component.css']
+  styleUrls: ['./register.component.scss']
 }) 
 export class RegisterComponent implements OnInit {
   registerForm!: FormGroup;
@@ -89,7 +89,7 @@ export class RegisterComponent implements OnInit {
     this.authService.register(registerData).subscribe({
       next: (response) => {
         this.loading = false;
-        this.successMessage = 'Registration successful! Redirecting to login...';
+        this.successMessage = '¡Registro exitoso! Redirigiendo al inicio de sesión...';
         
         // Redirect to login after 2 seconds
         setTimeout(() => {
@@ -105,7 +105,7 @@ export class RegisterComponent implements OnInit {
         } else if (error.message) {
           this.errorMessage = error.message;
         } else {
-          this.errorMessage = 'Registration failed. Please try again.';
+          this.errorMessage = 'El registro falló. Por favor intente nuevamente.';
         }
       }
     });

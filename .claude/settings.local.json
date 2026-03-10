@@ -88,7 +88,9 @@
       "Bash(claude mcp list:*)",
       "Bash(npx:*)",
       "Bash(node --version:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(find \"C:\\\\Users\\\\AlexQQ\\\\Desktop\\\\agrismart-web-v1_1/src/app\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.html\" \\\\\\) | xargs grep -l \"matPaginator\\\\|MatPaginator\" | head -10)",
+      "Bash(grep -r \"waterId\\\\|water-chemistry\\\\|WaterChemistry\" /c/Users/AlexQQ/Desktop/agrismart-web-v1_1/src --include=\"*.ts\" --include=\"*.html\" 2>/dev/null | grep -v \"node_modules\\\\|dist\" | head -30)"
     ],
     "deny": [],
     "ask": []

@@ -1257,9 +1257,10 @@ async def swagger_integrated_calculation_with_linear_programming(
                 final_solution = calculate_final_solution(nutrient_contrib, water_contrib)
 
                 # Create detailed verification with diagnostics
+                # Use LP achieved concentrations (not deterministic recalculation) for accurate diagnostics
                 verification_results = verifier.create_detailed_verification_with_diagnostics(
-                    dosages=dosages_g_l,
-                    achieved_concentrations=final_solution['FINAL_mg_L'],
+                    dosages=lp_result.dosages_g_per_L,
+                    achieved_concentrations=lp_result.achieved_concentrations,
                     target_concentrations=target_concentrations,
                     water_analysis=water_analysis,
                     fertilizers=enhanced_fertilizers,

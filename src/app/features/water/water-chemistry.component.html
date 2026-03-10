@@ -122,10 +122,8 @@
 
         <thead>
           <tr>
-            <th (click)="sortByField('name')" class="sortable" style="cursor: pointer;">
-              Registro
-              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'name' && sortDirection === 'asc'"></i>
-              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'name' && sortDirection === 'desc'"></i>
+            <th class="sortable">
+              Nombre / Fuente
             </th>
             <th  (click)="sortByField('ph')" class="sortable" style="cursor: pointer;">
               pH
@@ -174,13 +172,11 @@
           <tr *ngFor="let record of paginatedRecords" [class.table-active]="selectedRecord?.id === record.id">
             <td>
               <div class="record-info">
-                <strong>ID: {{ record.id || 'N/A' }}</strong>
+                <strong>{{ getWaterName(record.waterId) }}</strong>
                 <small class="d-block text-muted" *ngIf="record.analysisDate">
                   {{ record.analysisDate | date:'dd/MM/yyyy' }}
                 </small>
-                <small class="d-block text-muted" *ngIf="record.waterId">
-                  Water ID: {{ record.waterId }}
-                </small>
+                <small class="d-block text-muted">ID: {{ record.id }}</small>
               </div>
             </td>
             <td>
@@ -229,10 +225,10 @@
             </td>
             <td>
               <div class="action-buttons">
-                <!-- <button type="button" class="btn btn-outline-primary btn-sm" (click)="editRecord(record)"
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="editRecord(record)"
                   title="Editar">
                   <i class="bi bi-pencil"></i>
-                </button> -->
+                </button>
                 <button type="button" class="btn btn-outline-danger btn-sm" (click)="deleteRecord(record)"
                   title="Eliminar">
                   <i class="bi bi-trash"></i>
@@ -304,47 +300,87 @@
               Información Básica
             </h6>
 
-            <div class="row g-3">
-              <!-- ===== ADD THE CATALOG SELECTION HERE ===== -->
-              <div class="form-group mb-3">
-                <label for="catalogId" class="form-label">
-                  Catálogo <span class="text-danger">*</span>
-                </label>
-
-                <!-- Loading state for catalogs -->
-                <div *ngIf="isLoadingCatalogs" class="d-flex align-items-center">
-                  <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                  <span>Cargando catálogos...</span>
+            <!-- Water source mode toggle (only in create mode) -->
+            <div class="row g-3" *ngIf="!isEditMode">
+              <div class="col-12">
+                <label class="form-label fw-semibold">Fuente de Agua <span class="text-danger">*</span></label>
+                <div class="d-flex gap-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" id="modeNew" name="waterSourceMode"
+                      [checked]="waterSourceMode === 'new'" (change)="setWaterSourceMode('new')">
+                    <label class="form-check-label" for="modeNew">
+                      <i class="bi bi-plus-circle me-1"></i>Nueva fuente
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" id="modeExisting" name="waterSourceMode"
+                      [checked]="waterSourceMode === 'existing'" (change)="setWaterSourceMode('existing')">
+                    <label class="form-check-label" for="modeExisting">
+                      <i class="bi bi-list-ul me-1"></i>Fuente existente
+                    </label>
+                  </div>
                 </div>
-
-                <!-- Catalog selection dropdown -->
-                <select id="catalogId" class="form-select" formControlName="catalogId" (change)="onCatalogChange()"
-                  [class.is-invalid]="isFieldInvalid('catalogId')">
-                  <option value="" disabled>Seleccione un catálogo</option>
-                  <option *ngFor="let catalog of availableCatalogs" [value]="catalog.id">
-                    {{ catalog.name }}
-                  </option>
-                </select>
-
-                <!-- No catalogs available message -->
-                <div *ngIf="!isLoadingCatalogs && availableCatalogs.length === 0" class="alert alert-warning">
-                  <i class="fas fa-exclamation-triangle me-2"></i>
-                  No hay catálogos disponibles. Por favor contacte al administrador.
-                </div>
-
-                <!-- Validation error message -->
-                <div *ngIf="isFieldInvalid('catalogId')" class="invalid-feedback">
-                  {{ getFieldError('catalogId') }}
-                </div>
-
-                <!-- Selected catalog info -->
-                <small *ngIf="selectedCatalogId && !isFieldInvalid('catalogId')" class="form-text text-muted">
-                  <i class="fas fa-info-circle me-1"></i>
-                  Catálogo seleccionado: {{ getSelectedCatalogName() }}
-                </small>
               </div>
-              <!-- ===== END CATALOG SELECTION ===== -->
+            </div>
 
+            <div class="row g-3">
+
+              <!-- ===== NEW WATER: catalog + name ===== -->
+              <ng-container *ngIf="waterSourceMode === 'new'">
+                <div class="col-12">
+                  <label for="catalogId" class="form-label">
+                    Catálogo <span class="text-danger">*</span>
+                  </label>
+                  <div *ngIf="isLoadingCatalogs" class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <span>Cargando catálogos...</span>
+                  </div>
+                  <select id="catalogId" class="form-select" formControlName="catalogId" (change)="onCatalogChange()"
+                    [class.is-invalid]="isFieldInvalid('catalogId')">
+                    <option value="" disabled>Seleccione un catálogo</option>
+                    <option *ngFor="let catalog of availableCatalogs" [value]="catalog.id">
+                      {{ catalog.name }}
+                    </option>
+                  </select>
+                  <div *ngIf="!isLoadingCatalogs && availableCatalogs.length === 0" class="alert alert-warning mt-1 mb-0 py-2">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    No hay catálogos disponibles. Por favor contacte al administrador.
+                  </div>
+                  <div *ngIf="isFieldInvalid('catalogId')" class="invalid-feedback d-block">
+                    {{ getFieldError('catalogId') }}
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <label for="name" class="form-label">
+                    Nombre de la Fuente de Agua <span class="text-danger">*</span>
+                  </label>
+                  <input type="text" class="form-control" id="name" formControlName="name"
+                    placeholder="Ej. Agua de pozo norte, Agua de red municipal..."
+                    [class.is-invalid]="isFieldInvalid('name')">
+                  <div class="invalid-feedback">{{ getFieldError('name') }}</div>
+                </div>
+              </ng-container>
+
+              <!-- ===== EXISTING WATER: dropdown ===== -->
+              <ng-container *ngIf="waterSourceMode === 'existing'">
+                <div class="col-12">
+                  <label for="waterIdSelect" class="form-label">
+                    Seleccionar Fuente Existente <span class="text-danger">*</span>
+                  </label>
+                  <select id="waterIdSelect" class="form-select" formControlName="waterId"
+                    [class.is-invalid]="isFieldInvalid('waterId')">
+                    <option [ngValue]="null" disabled>Seleccione una fuente de agua</option>
+                    <option *ngFor="let w of waters" [ngValue]="w.id">{{ w.name }}</option>
+                  </select>
+                  <div *ngIf="isFieldInvalid('waterId')" class="invalid-feedback d-block">
+                    Debe seleccionar una fuente de agua
+                  </div>
+                  <small class="text-muted" *ngIf="waters.length === 0">
+                    No hay fuentes de agua registradas aún.
+                  </small>
+                </div>
+              </ng-container>
 
               <div class="col-md-6">
                 <label for="analysisDate" class="form-label">Fecha de Análisis</label>

@@ -177,6 +177,7 @@ export class DashboardComponent implements OnInit {
   irrigationMetricsPageSize = 5;
   flowEventsPage = 1;
   flowEventsPageSize = 5;
+  pageSizeOptions = [5, 10, 25, 50];
 
   // Collapse state properties (collapsed by default)
   isClimateKPIsCollapsed = true;
@@ -2009,6 +2010,11 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  changeClimateKPIsPageSize(size: number): void {
+    this.climateKPIsPageSize = size;
+    this.climateKPIsPage = 1;
+  }
+
   getIrrigationMetricsPaginated(): IrrigationDashboardMetric[] {
     const startIndex = (this.irrigationMetricsPage - 1) * this.irrigationMetricsPageSize;
     const endIndex = startIndex + this.irrigationMetricsPageSize;
@@ -2023,6 +2029,11 @@ export class DashboardComponent implements OnInit {
     if (page >= 1 && page <= this.getIrrigationMetricsTotalPages()) {
       this.irrigationMetricsPage = page;
     }
+  }
+
+  changeIrrigationMetricsPageSize(size: number): void {
+    this.irrigationMetricsPageSize = size;
+    this.irrigationMetricsPage = 1;
   }
 
   getPageNumbers(currentPage: number, totalPages: number): (number | string)[] {
@@ -2144,6 +2155,11 @@ export class DashboardComponent implements OnInit {
     if (typeof page === 'number' && page >= 1) {
       this.flowEventsPage = page;
     }
+  }
+
+  changeFlowEventsPageSize(size: number): void {
+    this.flowEventsPageSize = size;
+    this.flowEventsPage = 1;
   }
 
 }

@@ -2,10 +2,11 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Observable, catchError, tap, of, finalize } from 'rxjs';
+import { Observable, catchError, tap, of, finalize, switchMap, forkJoin } from 'rxjs';
 
 // Services
 import { WaterChemistryService, WaterChemistry, WaterChemistryFilters } from '../water-chemistry/services/water-chemistry.service';
+import { WaterService, Water } from '../water-chemistry/services/water.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { CatalogService, Catalog } from '../catalogs/services/catalog.service';
 
@@ -21,6 +22,11 @@ export class WaterChemistryComponent implements OnInit {
   filteredRecords: WaterChemistry[] = [];
   selectedRecord: WaterChemistry | null = null;
   waterChemistryForm!: FormGroup;
+
+  // Waters
+  waters: Water[] = [];
+  waterMap: Map<number, string> = new Map();
+  waterSourceMode: 'new' | 'existing' = 'new';
 
   // Catalogs
   availableCatalogs: Catalog[] = [];
@@ -53,6 +59,7 @@ export class WaterChemistryComponent implements OnInit {
 
   constructor(
     private waterChemistryService: WaterChemistryService,
+    private waterService: WaterService,
     private authService: AuthService,
     private catalogService: CatalogService,
     private fb: FormBuilder,
@@ -66,6 +73,7 @@ export class WaterChemistryComponent implements OnInit {
     this.checkAuthentication();
     this.loadCatalogs();
     this.loadWaterChemistryRecords();
+    this.loadWaters();
   }
 
   private checkAuthentication(): void {
@@ -79,7 +87,7 @@ export class WaterChemistryComponent implements OnInit {
     this.waterChemistryForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
       description: ['', Validators.maxLength(500)],
-      catalogId: [null, Validators.required], // Add catalog selection to form
+      catalogId: [null, Validators.required],
 
       // Major ions (mg/L)
       no3: [0, [Validators.min(0), Validators.max(1000)]],
@@ -126,7 +134,7 @@ export class WaterChemistryComponent implements OnInit {
       oxygenLevel: [0, [Validators.min(0), Validators.max(20)]],
       nitrateLevel: [0, [Validators.min(0), Validators.max(1000)]],
       phosphateLevel: [0, [Validators.min(0), Validators.max(100)]],
-      waterId: [null, Validators.required],
+      waterId: [null],
 
       isActive: [true]
     });
@@ -208,6 +216,44 @@ export class WaterChemistryComponent implements OnInit {
       // this.applyFilters();
       // this.updatePagination();
     });
+  }
+
+  loadWaters(): void {
+    this.waterService.getAll().pipe(
+      catchError(() => of({ waters: [] }))
+    ).subscribe(response => {
+      this.waters = response?.waters || [];
+      this.waterMap = new Map(this.waters.map(w => [w.id!, w.name || '']));
+    });
+  }
+
+  getWaterName(waterId?: any): string {
+    if (waterId == null) return '—';
+    const name = this.waterMap.get(Number(waterId));
+    return name || `Fuente #${waterId}`;
+  }
+
+  setWaterSourceMode(mode: 'new' | 'existing'): void {
+    this.waterSourceMode = mode;
+    const nameCtrl = this.waterChemistryForm.get('name')!;
+    const catalogCtrl = this.waterChemistryForm.get('catalogId')!;
+    const waterIdCtrl = this.waterChemistryForm.get('waterId')!;
+
+    if (mode === 'new') {
+      nameCtrl.setValidators([Validators.required, Validators.maxLength(100)]);
+      catalogCtrl.setValidators([Validators.required]);
+      waterIdCtrl.clearValidators();
+      waterIdCtrl.setValue(null);
+    } else {
+      nameCtrl.clearValidators();
+      catalogCtrl.clearValidators();
+      waterIdCtrl.setValidators([Validators.required]);
+      nameCtrl.setValue('');
+    }
+
+    nameCtrl.updateValueAndValidity();
+    catalogCtrl.updateValueAndValidity();
+    waterIdCtrl.updateValueAndValidity();
   }
 
   onCatalogChange(): void {
@@ -326,11 +372,14 @@ export class WaterChemistryComponent implements OnInit {
     this.selectedRecord = null;
     this.isEditMode = false;
     this.isFormVisible = true;
+    this.waterSourceMode = 'new';
     this.waterChemistryForm.reset();
     this.waterChemistryForm.patchValue({
       isActive: true,
-      catalogId: this.selectedCatalogId // Set default catalog if available
+      catalogId: this.selectedCatalogId
     });
+    // Restore 'new' mode validators
+    this.setWaterSourceMode('new');
     this.clearMessages();
   }
 
@@ -338,7 +387,12 @@ export class WaterChemistryComponent implements OnInit {
     this.selectedRecord = record;
     this.isEditMode = true;
     this.isFormVisible = true;
-    this.waterChemistryForm.patchValue(record);
+    this.waterSourceMode = 'new'; // edit always shows the name field
+    this.setWaterSourceMode('new');
+    this.waterChemistryForm.patchValue({
+      ...record,
+      name: this.getWaterName(record.waterId)
+    });
     this.clearMessages();
   }
 
@@ -362,14 +416,8 @@ export class WaterChemistryComponent implements OnInit {
     const formData = this.waterChemistryForm.value;
 
     if (this.isEditMode && this.selectedRecord?.id) {
-      console.log("updating")
-      // Find the matching record and add its ID to formData
-      const existingRecord = this.waterChemistryRecords.find(record => record.waterId.toString() === formData.waterId.toString());
-      if (existingRecord) {
-        formData.id = existingRecord.id;
-      }
-      console.log("Form Data: ", this.waterChemistryForm.value);
-
+      formData.id = this.selectedRecord.id;
+      formData.waterId = this.selectedRecord.waterId;
       this.updateRecord(formData);
     } else {
       console.log("creating")
@@ -378,14 +426,16 @@ export class WaterChemistryComponent implements OnInit {
   }
 
   private createRecord(data: Partial<WaterChemistry>): void {
-    // Validate catalog selection
-    if (!data.catalogId) {
+    if (this.waterSourceMode === 'new' && !data.catalogId) {
       this.errorMessage = 'Por favor seleccione un catálogo';
       this.isLoading = false;
       return;
     }
-
-    console.log("Creating record with data: ", data);
+    if (this.waterSourceMode === 'existing' && !data.waterId) {
+      this.errorMessage = 'Por favor seleccione una fuente de agua existente';
+      this.isLoading = false;
+      return;
+    }
     this.waterChemistryService.create(data).pipe(
       catchError(error => {
         console.error('Error creating water chemistry record:', error);
@@ -406,34 +456,49 @@ export class WaterChemistryComponent implements OnInit {
   }
 
   private updateRecord(data: Partial<WaterChemistry>): void {
-    console.log("updating with data: ", data)
-    this.waterChemistryService.update(data).pipe(
+    const waterId = this.selectedRecord?.waterId;
+
+    const doWaterChemistryUpdate = () => this.waterChemistryService.update(data).pipe(
       catchError(error => {
-        console.error('Error updating water chemistry record:', error);
+        console.error('Error updating record:', error);
         this.errorMessage = 'Error al actualizar el registro de química del agua';
         return of(null);
       }),
-      finalize(() => {
-        this.isLoading = false;
-      })
-    ).subscribe(result => {
+      finalize(() => { this.isLoading = false; })
+    );
+
+    const handleResult = (result: any) => {
       if (result) {
         this.successMessage = 'Registro de química del agua actualizado exitosamente';
-        window.location.reload()
+        this.loadWaters();
+        this.loadWaterChemistryRecords();
+        this.cancelForm();
       }
-    });
+    };
+
+    if (waterId && data.name) {
+      this.waterService.update({ id: Number(waterId), name: data.name, active: true }).pipe(
+        switchMap(() => doWaterChemistryUpdate())
+      ).subscribe(handleResult);
+    } else {
+      doWaterChemistryUpdate().subscribe(handleResult);
+    }
   }
 
   deleteRecord(record: WaterChemistry): void {
     if (!record.id) return;
 
-    if (confirm(`¿Está seguro de que desea eliminar el registro "${record.name}"?`)) {
+    const displayName = this.getWaterName(record.waterId);
+    if (confirm(`¿Está seguro de que desea eliminar "${displayName}"?`)) {
       this.isLoading = true;
       this.clearMessages();
 
+      const waterId = record.waterId ? Number(record.waterId) : null;
+
       this.waterChemistryService.delete(record.id).pipe(
+        switchMap(() => waterId ? this.waterService.delete(waterId) : of(null)),
         catchError(error => {
-          console.error('Error deleting water chemistry record:', error);
+          console.error('Error deleting record:', error);
           this.errorMessage = 'Error al eliminar el registro de química del agua';
           return of(null);
         }),
@@ -442,6 +507,7 @@ export class WaterChemistryComponent implements OnInit {
         })
       ).subscribe(() => {
         this.successMessage = 'Registro eliminado exitosamente';
+        this.loadWaters();
         this.loadWaterChemistryRecords();
       });
     }

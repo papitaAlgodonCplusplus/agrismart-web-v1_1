@@ -100,6 +100,17 @@ import { AuthService } from '../../../core/auth/auth.service';
             </button>
           </div>
 
+          <!-- Register Link -->
+          <div class="form-group text-center">
+            <span class="text-muted" style="font-size: 0.9rem;">¿No tienes cuenta? </span>
+            <button
+              type="button"
+              class="btn-link-register"
+              (click)="router.navigate(['/register'])">
+              Registrarse
+            </button>
+          </div>
+
           <!-- Error Message -->
           <div *ngIf="errorMessage" class="alert alert-danger mt-3" role="alert">
             <i class="bi bi-exclamation-triangle me-2"></i>
@@ -308,6 +319,23 @@ import { AuthService } from '../../../core/auth/auth.service';
 
     .link-primary:hover {
       color: #5a6fd8;
+      text-decoration: underline;
+    }
+
+    .btn-link-register {
+      background: none;
+      border: none;
+      color: #667eea;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .btn-link-register:hover {
+      color: #764ba2;
       text-decoration: underline;
     }
 

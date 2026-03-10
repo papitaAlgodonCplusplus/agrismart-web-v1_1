@@ -1,7 +1,7 @@
 <!-- src/app/features/auth/register/register.component.html -->
 <div class="register-container">
   <div class="register-card">
-    <!-- Logo/Header Section -->
+    <!-- Sección Logo/Encabezado -->
     <div class="register-header">
       <div class="logo-container">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -10,11 +10,11 @@
           <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <h1>Create Account</h1>
-      <p>Sign up to get started with AgriSmart</p>
+      <h1>Crear Cuenta</h1>
+      <p>Regístrate para comenzar a usar AgriSmart</p>
     </div>
 
-    <!-- Success Message -->
+    <!-- Mensaje de Éxito -->
     <div *ngIf="successMessage" class="alert alert-success" role="alert">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -23,7 +23,7 @@
       {{ successMessage }}
     </div>
 
-    <!-- Error Message -->
+    <!-- Mensaje de Error -->
     <div *ngIf="errorMessage" class="alert alert-error" role="alert">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"></circle>
@@ -33,12 +33,12 @@
       {{ errorMessage }}
     </div>
 
-    <!-- Registration Form -->
+    <!-- Formulario de Registro -->
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
-      
-      <!-- Email Field -->
+
+      <!-- Campo Correo Electrónico -->
       <div class="form-group">
-        <label for="userEmail">Email Address</label>
+        <label for="userEmail">Correo Electrónico</label>
         <div class="input-wrapper">
           <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
@@ -50,19 +50,19 @@
             formControlName="userEmail"
             class="form-control"
             [class.is-invalid]="submitted && f['userEmail'].errors"
-            placeholder="your@email.com"
+            placeholder="tu@correo.com"
             autocomplete="email"
           />
         </div>
         <div *ngIf="submitted && f['userEmail'].errors" class="invalid-feedback">
-          <span *ngIf="f['userEmail'].errors['required']">Email is required</span>
-          <span *ngIf="f['userEmail'].errors['email']">Please enter a valid email</span>
+          <span *ngIf="f['userEmail'].errors['required']">El correo electrónico es requerido</span>
+          <span *ngIf="f['userEmail'].errors['email']">Ingrese un correo electrónico válido</span>
         </div>
       </div>
 
-      <!-- Password Field -->
+      <!-- Campo Contraseña -->
       <div class="form-group">
-        <label for="password">Password</label>
+        <label for="password">Contraseña</label>
         <div class="input-wrapper">
           <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -74,7 +74,7 @@
             formControlName="password"
             class="form-control"
             [class.is-invalid]="submitted && f['password'].errors"
-            placeholder="Enter your password"
+            placeholder="Ingrese su contraseña"
             autocomplete="new-password"
           />
           <button
@@ -94,14 +94,14 @@
           </button>
         </div>
         <div *ngIf="submitted && f['password'].errors" class="invalid-feedback">
-          <span *ngIf="f['password'].errors['required']">Password is required</span>
-          <span *ngIf="f['password'].errors['minlength']">Password must be at least 6 characters</span>
+          <span *ngIf="f['password'].errors['required']">La contraseña es requerida</span>
+          <span *ngIf="f['password'].errors['minlength']">La contraseña debe tener al menos 6 caracteres</span>
         </div>
       </div>
 
-      <!-- Confirm Password Field -->
+      <!-- Campo Confirmar Contraseña -->
       <div class="form-group">
-        <label for="confirmPassword">Confirm Password</label>
+        <label for="confirmPassword">Confirmar Contraseña</label>
         <div class="input-wrapper">
           <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -113,7 +113,7 @@
             formControlName="confirmPassword"
             class="form-control"
             [class.is-invalid]="submitted && f['confirmPassword'].errors"
-            placeholder="Confirm your password"
+            placeholder="Confirme su contraseña"
             autocomplete="new-password"
           />
           <button
@@ -133,18 +133,18 @@
           </button>
         </div>
         <div *ngIf="submitted && f['confirmPassword'].errors" class="invalid-feedback">
-          <span *ngIf="f['confirmPassword'].errors['required']">Please confirm your password</span>
-          <span *ngIf="f['confirmPassword'].errors['passwordMismatch']">Passwords do not match</span>
+          <span *ngIf="f['confirmPassword'].errors['required']">Por favor confirme su contraseña</span>
+          <span *ngIf="f['confirmPassword'].errors['passwordMismatch']">Las contraseñas no coinciden</span>
         </div>
       </div>
 
-      <!-- Submit Button -->
+      <!-- Botón de Envío -->
       <button
         type="submit"
         class="btn btn-primary btn-block"
         [disabled]="loading"
       >
-        <span *ngIf="!loading">Create Account</span>
+        <span *ngIf="!loading">Crear Cuenta</span>
         <span *ngIf="loading" class="loading-spinner">
           <svg class="spinner" width="20" height="20" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" />
@@ -153,11 +153,11 @@
       </button>
     </form>
 
-    <!-- Login Link -->
+    <!-- Enlace de Inicio de Sesión -->
     <div class="register-footer">
       <p>
-        Already have an account?
-        <a (click)="goToLogin()" class="link">Sign in</a>
+        ¿Ya tienes una cuenta?
+        <a (click)="goToLogin()" class="link">Iniciar sesión</a>
       </p>
     </div>
   </div>

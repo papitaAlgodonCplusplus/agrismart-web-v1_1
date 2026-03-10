@@ -108,11 +108,6 @@ export class WaterChemistryService {
    * Create water chemistry record
    */
   create(data: Partial<WaterChemistry>): Observable<WaterChemistry> {
-    // Validate that catalogId is provided
-    if (!data.catalogId) {
-      return throwError(() => new Error('Catalog ID is required'));
-    }
-
     const curatedData = {
       waterId: data.waterId,
       ca: data.ca ? data.ca : 0, // Default to 0 if not provided
@@ -146,12 +141,19 @@ export class WaterChemistryService {
     console.log('Water data:', curatedWaterData);
     console.log('Chemistry data:', curatedData);
 
-    // First create the water, then create the chemistry record
+    // If waterId is already provided, link to existing Water — skip Water creation
+    if (data.waterId) {
+      return this.apiService.post<WaterChemistry>(this.baseUrl, curatedData);
+    }
+
+    // Otherwise create a new Water record first, then create the chemistry record
+    if (!data.catalogId) {
+      return throwError(() => new Error('Se requiere un catálogo o una fuente de agua existente'));
+    }
+
     return this.apiService.post<WaterChemistry>('/Water', curatedWaterData).pipe(
-      // Use switchMap to chain the second request after the first succeeds
       switchMap((response) => {
-        console.log('Water created successfully:', response);
-        curatedData.waterId = response.id; // Set the returned water ID
+        curatedData.waterId = response.id;
         return this.apiService.post<WaterChemistry>(this.baseUrl, curatedData);
       }),
       catchError((error) => {

@@ -629,14 +629,17 @@ class SolutionVerifier:
         # Analyze reasons for discrepancy
         reasons = []
         severity = 'low'
-        
+
+        is_excess = achieved > target * 1.1
+        is_deficit = achieved < target * 0.9
+
         # 1. Check if any fertilizers supply this nutrient
         supplying_fertilizers = []
         for fert in fertilizers:
             cation_content = fert.composition.cations.get(nutrient, 0)
             anion_content = fert.composition.anions.get(nutrient, 0)
             total_content = cation_content + anion_content
-            
+
             if total_content > 0:
                 dosage = dosages.get(fert.name, 0)
                 if dosage > 0:
@@ -645,26 +648,49 @@ class SolutionVerifier:
                         'content_percent': total_content,
                         'dosage_g_l': dosage
                     })
-        
-        # 2. No fertilizers supply this nutrient
-        if len(supplying_fertilizers) == 0:
+
+        # 2. Achieved exceeds target
+        if is_excess:
+            water_contribution = water_analysis.get(nutrient, 0)
+
+            if water_contribution > target * 0.5:
+                reasons.append({
+                    'type': 'excessive_water_content',
+                    'description': f'El agua aporta {water_contribution:.1f} ppm de {nutrient}, excediendo el objetivo de {target:.1f} ppm'
+                })
+                severity = 'high'
+
+            if len(supplying_fertilizers) > 0:
+                reasons.append({
+                    'type': 'optimizer_excess',
+                    'description': f'El optimizador no pudo reducir {nutrient} sin comprometer otros nutrientes objetivo'
+                })
+            else:
+                reasons.append({
+                    'type': 'fertilizer_byproduct',
+                    'description': f'{nutrient} se aporta como subproducto inevitable de fertilizantes dirigidos a otros nutrientes'
+                })
+            severity = 'medium' if severity != 'high' else 'high'
+
+        # 3. No fertilizers supply this nutrient (deficit only)
+        elif is_deficit and len(supplying_fertilizers) == 0:
             reasons.append({
                 'type': 'no_fertilizer_source',
                 'description': f'Ningún fertilizante en el catálogo contiene {nutrient}'
             })
             severity = 'high'
-        
-        # 3. Fertilizers supply it but dosage is too low
-        elif achieved < target * 0.9:
+
+        # 4. Fertilizers supply it but dosage is too low
+        elif is_deficit:
             water_contribution = water_analysis.get(nutrient, 0)
-            
+
             if water_contribution > target * 0.3:
                 reasons.append({
                     'type': 'high_water_content',
                     'description': f'El agua aporta {water_contribution:.1f} ppm de {nutrient}, limitando los fertilizantes necesarios'
                 })
                 severity = 'medium'
-            
+
             total_dosage = sum(dosages.values())
             if total_dosage > 12:
                 reasons.append({
@@ -672,7 +698,7 @@ class SolutionVerifier:
                     'description': f'Alta dosificación total ({total_dosage:.1f} g/L) limita la cantidad de fertilizantes que aportan {nutrient}'
                 })
                 severity = 'medium'
-            
+
             if nutrient in self.nutrient_ranges:
                 ranges = self.nutrient_ranges[nutrient]
                 if target > ranges['max']:
@@ -681,7 +707,7 @@ class SolutionVerifier:
                         'description': f'Objetivo de {nutrient} ({target:.1f} ppm) excede límite seguro ({ranges["max"]} ppm)'
                     })
                     severity = 'high'
-            
+
             avg_content = sum([f['content_percent'] for f in supplying_fertilizers]) / len(supplying_fertilizers)
             if avg_content < 5:
                 reasons.append({
@@ -689,23 +715,6 @@ class SolutionVerifier:
                     'description': f'Los fertilizantes disponibles tienen bajo contenido de {nutrient} (promedio {avg_content:.1f}%)'
                 })
                 severity = 'medium'
-        
-        # 4. Achieved exceeds target
-        elif achieved > target * 1.1:
-            water_contribution = water_analysis.get(nutrient, 0)
-            
-            if water_contribution > target * 0.5:
-                reasons.append({
-                    'type': 'excessive_water_content',
-                    'description': f'El agua aporta {water_contribution:.1f} ppm de {nutrient}, excediendo el objetivo de {target:.1f} ppm'
-                })
-                severity = 'high'
-            
-            reasons.append({
-                'type': 'fertilizer_byproduct',
-                'description': f'{nutrient} se aporta como subproducto de fertilizantes dirigidos a otros nutrientes'
-            })
-            severity = 'medium'
         
         # 5. Check unusual phase requirements
         if nutrient in self.nutrient_ranges:
