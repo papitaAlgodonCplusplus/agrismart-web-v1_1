@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subject, forkJoin, of } from 'rxjs';
+import { Subject, forkJoin, of, tap, finalize } from 'rxjs';
 import { takeUntil, catchError, map } from 'rxjs/operators';
 import { SplitApplicationService } from '../../services/split-application.service';
 import {
@@ -58,9 +58,9 @@ export class SplitApplicationCalculatorComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    this.loadDataFromAPI();
     this.initializeForm();
     this.loadStrategyPresets();
-    this.loadDataFromAPI();
     this.setupFormListeners();
   }
 
@@ -210,7 +210,7 @@ export class SplitApplicationCalculatorComponent implements OnInit, OnDestroy {
     }
 
     // Find crop phases for this crop
-    const phases = this.cropPhases.filter(p => p.cropId === crop.id);
+    const phases = this.cropPhases.filter(p => p.cropId.toString() === crop.id.toString());
 
     if (phases.length === 0) {
       console.warn(`No phases found for crop "${cropName}" - no growth stages available`);
