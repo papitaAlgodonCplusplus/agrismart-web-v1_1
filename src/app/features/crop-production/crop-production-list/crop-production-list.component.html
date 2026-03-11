@@ -186,13 +186,6 @@
                       </button>
                       <button
                         type="button"
-                        class="btn btn-sm btn-outline-success"
-                        (click)="manageIrrigation(production)"
-                        title="Gestionar irrigación">
-                        <i class="bi bi-droplet"></i>
-                      </button>
-                      <button
-                        type="button"
                         class="btn btn-sm btn-outline-danger"
                         (click)="delete(production)"
                         title="Eliminar">
@@ -836,69 +829,4 @@
   </div>
   <div class="modal-backdrop fade show" *ngIf="showCreateModal || showEditModal" (click)="closeModal()"></div>
 
-  <!-- IRRIGATION MODAL -->
-  <div class="modal fade show d-block" *ngIf="showIrrigationModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header bg-info text-white">
-          <h5 class="modal-title">
-            <i class="bi bi-droplet me-2"></i>
-            Gestión de Riego
-          </h5>
-          <button type="button" class="btn-close btn-close-white" (click)="closeModal()"></button>
-        </div>
-        <div class="modal-body" *ngIf="selectedProduction">
-          <h6 class="mb-3">
-            Producción: <strong>{{ selectedProduction.code || 'CP-' + selectedProduction.id }}</strong>
-          </h6>
-
-          <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>
-            <strong>Información:</strong> Configure los parámetros de riego para esta producción.
-          </div>
-
-          <div class="card mb-3">
-            <div class="card-body">
-              <h6 class="card-title">Parámetros de Riego</h6>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Frecuencia de Riego (días)</label>
-                  <input type="number" class="form-control" value="3" min="1">
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Volumen por Riego (L)</label>
-                  <input type="number" class="form-control" value="100" min="0">
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Método de Riego</label>
-                  <select class="form-select">
-                    <option>Goteo</option>
-                    <option>Aspersión</option>
-                    <option>Microaspersión</option>
-                    <option>Inundación</option>
-                  </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Horario Preferido</label>
-                  <input type="time" class="form-control" value="06:00">
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="alert alert-warning">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            <strong>Nota:</strong> Los cambios se guardarán en el sistema de gestión de riego.
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button type="button" class="btn btn-info" (click)="onProductionSaved()">
-            <i class="bi bi-save me-1"></i>Guardar Configuración
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="modal-backdrop fade show" *ngIf="showIrrigationModal" (click)="closeModal()"></div>
 </div>

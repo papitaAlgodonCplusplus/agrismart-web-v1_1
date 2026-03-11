@@ -22,6 +22,11 @@ import { FertilizerService } from '../fertilizers/services/fertilizer.service';
 import { WaterChemistryService } from '../water-chemistry/services/water-chemistry.service';
 import { LicenseService } from '../licenses/services/license.service';
 import { CatalogService } from '../catalogs/services/catalog.service';
+import { CropProductionService } from '../crop-production/services/crop-production.service';
+import { CropProductionSpecsService } from '../crop-production-specs/services/crop-production-specs.service';
+import { DropperService } from '../services/dropper.service';
+import { ContainerTypeService } from '../containers/services/container-type.service';
+import { GrowingMediumService } from '../growing-medium/services/growing-medium.service';
 
 interface Entity {
   id?: number;
@@ -70,7 +75,12 @@ interface AdminStats {
   totalFertilizers: number;
   totalWaterChemistry: number;
   totalLicenses: number;
-  totalCatalogs: number; // Add catalog count
+  totalCatalogs: number;
+  totalCropProductions: number;
+  totalCropProductionSpecs: number;
+  totalDroppers: number;
+  totalContainerTypes: number;
+  totalGrowingMedia: number;
   [key: string]: number;
 }
 
@@ -98,6 +108,11 @@ export class AdminComponent implements OnInit {
   private licenseService = inject(LicenseService);
   private catalogService = inject(CatalogService);
   private cropPhaseService = inject(CropPhaseService);
+  private cropProductionService = inject(CropProductionService);
+  private cropProductionSpecsService = inject(CropProductionSpecsService);
+  private dropperService = inject(DropperService);
+  private containerTypeService = inject(ContainerTypeService);
+  private growingMediumService = inject(GrowingMediumService);
   showDetailsModal = false;
   selectedFertilizer: any;
 
@@ -148,7 +163,12 @@ export class AdminComponent implements OnInit {
     totalWaterChemistry: 0,
     totalLicenses: 0,
     totalCropPhases: 0,
-    totalCatalogs: 0
+    totalCatalogs: 0,
+    totalCropProductions: 0,
+    totalCropProductionSpecs: 0,
+    totalDroppers: 0,
+    totalContainerTypes: 0,
+    totalGrowingMedia: 0
   };
 
   // Entity configurations with proper field mapping
@@ -410,6 +430,124 @@ export class AdminComponent implements OnInit {
         { key: 'allowedDevices', label: 'Dispositivos Permitidos', type: 'number' },
         { key: 'active', label: 'Activo', type: 'boolean' }
       ]
+    },
+    {
+      name: 'productionUnit',
+      endpoint: '/ProductionUnit',
+      displayName: 'Unidades de Producción',
+      icon: 'bi bi-grid-3x3-gap',
+      category: 'main',
+      useService: true,
+      nameField: 'name',
+      fields: [
+        { key: 'name', label: 'Nombre', type: 'text', required: true },
+        { key: 'description', label: 'Descripción', type: 'textarea' },
+        { key: 'farmId', label: 'Finca', type: 'select', required: true, options: [] },
+        { key: 'area', label: 'Área (m²)', type: 'number' },
+        { key: 'capacity', label: 'Capacidad', type: 'number' },
+        { key: 'location', label: 'Ubicación', type: 'text' },
+        { key: 'isActive', label: 'Activo', type: 'boolean' }
+      ]
+    },
+    {
+      name: 'cropProduction',
+      endpoint: '/CropProduction',
+      displayName: 'Producciones de Cultivo',
+      icon: 'bi bi-plant',
+      category: 'main',
+      useService: true,
+      nameField: 'name',
+      fields: [
+        { key: 'name', label: 'Nombre', type: 'text', required: true },
+        { key: 'cropId', label: 'Cultivo', type: 'select', required: true, options: [] },
+        { key: 'productionUnitId', label: 'Unidad de Producción', type: 'number', required: true },
+        { key: 'startDate', label: 'Fecha Inicio', type: 'date', required: true },
+        { key: 'endDate', label: 'Fecha Fin', type: 'date', required: true },
+        { key: 'status', label: 'Estado', type: 'select', options: [
+          { value: 'Preparacion', label: 'Preparación' },
+          { value: 'Siembra', label: 'Siembra' },
+          { value: 'Crecimiento', label: 'Crecimiento' },
+          { value: 'Floracion', label: 'Floración' },
+          { value: 'Fructificacion', label: 'Fructificación' },
+          { value: 'Cosecha', label: 'Cosecha' },
+          { value: 'Finalizada', label: 'Finalizada' }
+        ]}
+      ]
+    },
+    {
+      name: 'cropProductionSpecs',
+      endpoint: '/CropProductionSpecs',
+      displayName: 'Especificaciones de Producción',
+      icon: 'bi bi-rulers',
+      category: 'advanced',
+      useService: true,
+      nameField: 'name',
+      fields: [
+        { key: 'name', label: 'Nombre', type: 'text', required: true },
+        { key: 'description', label: 'Descripción', type: 'textarea' },
+        { key: 'betweenRowDistance', label: 'Distancia entre Filas (m)', type: 'number', required: true },
+        { key: 'betweenContainerDistance', label: 'Distancia entre Contenedores (m)', type: 'number', required: true },
+        { key: 'betweenPlantDistance', label: 'Distancia entre Plantas (m)', type: 'number', required: true },
+        { key: 'area', label: 'Área (m²)', type: 'number', required: true },
+        { key: 'containerVolume', label: 'Volumen de Contenedor (L)', type: 'number', required: true },
+        { key: 'availableWaterPercentage', label: 'Agua Disponible (%)', type: 'number', required: true },
+        { key: 'active', label: 'Activo', type: 'boolean' }
+      ]
+    },
+    {
+      name: 'dropper',
+      endpoint: '/Dropper',
+      displayName: 'Goteros',
+      icon: 'bi bi-droplet-half',
+      category: 'advanced',
+      useService: true,
+      nameField: 'name',
+      requiresCatalog: true,
+      fields: [
+        { key: 'catalogId', label: 'Catálogo', type: 'select', required: true, options: [] },
+        { key: 'name', label: 'Nombre', type: 'text', required: true },
+        { key: 'flowRate', label: 'Caudal (L/h)', type: 'number', required: true },
+        { key: 'active', label: 'Activo', type: 'boolean' }
+      ]
+    },
+    {
+      name: 'containerType',
+      endpoint: '/ContainerType',
+      displayName: 'Tipos de Contenedor',
+      icon: 'bi bi-box',
+      category: 'config',
+      useService: true,
+      nameField: 'name',
+      fields: [
+        { key: 'name', label: 'Nombre', type: 'text', required: true },
+        { key: 'formulaType', label: 'Tipo de Fórmula', type: 'select', required: true, options: [
+          { value: 1, label: 'Cónico (Troncocónico)' },
+          { value: 2, label: 'Cilíndrico' },
+          { value: 3, label: 'Cúbico' }
+        ]},
+        { key: 'active', label: 'Activo', type: 'boolean' }
+      ]
+    },
+    {
+      name: 'growingMedium',
+      endpoint: '/GrowingMedium',
+      displayName: 'Medios de Cultivo',
+      icon: 'bi bi-layers',
+      category: 'advanced',
+      useService: true,
+      nameField: 'name',
+      requiresCatalog: true,
+      fields: [
+        { key: 'catalogId', label: 'Catálogo', type: 'select', required: true, options: [] },
+        { key: 'name', label: 'Nombre', type: 'text', required: true },
+        { key: 'containerCapacityPercentage', label: 'Capacidad de Contenedor (%)', type: 'number', required: true },
+        { key: 'permanentWiltingPoint', label: 'Punto de Marchitez Permanente', type: 'number', required: true },
+        { key: 'fiveKpaHumidity', label: 'Humedad a 5 kPa (%)', type: 'number', required: true },
+        { key: 'easelyAvailableWaterPercentage', label: 'Agua Fácilmente Disponible (%)', type: 'number', required: true },
+        { key: 'reserveWaterPercentage', label: 'Agua de Reserva (%)', type: 'number', required: true },
+        { key: 'totalAvailableWaterPercentage', label: 'Agua Total Disponible (%)', type: 'number', required: true },
+        { key: 'active', label: 'Activo', type: 'boolean' }
+      ]
     }
   ];
   availableUsers: any;
@@ -504,6 +642,18 @@ export class AdminComponent implements OnInit {
           return Array.isArray(result.catalogs) ? result.catalogs : [];
         case 'fertilizer':
           return Array.isArray(result.fertilizers) ? result.fertilizers : [];
+        case 'cropProduction':
+          return Array.isArray(result.cropProductions) ? result.cropProductions : [];
+        case 'cropProductionSpecs':
+          return Array.isArray(result.cropProductionSpecs) ? result.cropProductionSpecs : [];
+        case 'dropper':
+          return Array.isArray(result.droppers) ? result.droppers : [];
+        case 'containerType':
+          return Array.isArray(result.containerTypes) ? result.containerTypes : [];
+        case 'growingMedium':
+          return Array.isArray(result.growingMedia) ? result.growingMedia : [];
+        case 'productionUnit':
+          return Array.isArray(result.productionUnits) ? result.productionUnits : [];
         default:
           // Try direct result if it's an array
           console.log('Direct result response:', result, entityName);
@@ -550,6 +700,32 @@ export class AdminComponent implements OnInit {
     }
   }
 
+  private updateProductionUnitFarmOptions(): void {
+    const puConfig = this.entityConfigs.find(config => config.name === 'productionUnit');
+    if (puConfig) {
+      const farmField = puConfig.fields.find(field => field.key === 'farmId');
+      if (farmField) {
+        farmField.options = (this.rawData['farms'] || []).map((farm: any) => ({
+          value: farm.id,
+          label: farm.name || `Finca ${farm.id}`
+        }));
+      }
+    }
+  }
+
+  private updateCropProductionCropOptions(): void {
+    const cpConfig = this.entityConfigs.find(config => config.name === 'cropProduction');
+    if (cpConfig) {
+      const cropField = cpConfig.fields.find(field => field.key === 'cropId');
+      if (cropField) {
+        cropField.options = this.availableCrops.map(crop => ({
+          value: crop.id,
+          label: crop.name || `Cultivo ${crop.id}`
+        }));
+      }
+    }
+  }
+
   /**
    * Load basic entities first, then load catalogs and fertilizers based on users
    */
@@ -589,6 +765,7 @@ export class AdminComponent implements OnInit {
           this.availableCrops = data;
           this.updateFarmCompanyOptions();
           this.updateCropPhaseCropOptions();
+          this.updateCropProductionCropOptions();
         }),
         catchError(error => {
           console.error('Crops error:', error);
@@ -659,6 +836,30 @@ export class AdminComponent implements OnInit {
           console.error('Production Units error:', error);
           return of([]);
         })
+      ),
+      cropProductions: this.cropProductionService.getAll().pipe(
+        map(data => this.extractResponseData(data, 'cropProduction')),
+        tap(data => console.log('Crop Productions extracted:', data)),
+        catchError(error => {
+          console.error('Crop Productions error:', error);
+          return of([]);
+        })
+      ),
+      cropProductionSpecs: this.cropProductionSpecsService.getAll(true).pipe(
+        map(data => this.extractResponseData(data, 'cropProductionSpecs')),
+        tap(data => console.log('Crop Production Specs extracted:', data)),
+        catchError(error => {
+          console.error('Crop Production Specs error:', error);
+          return of([]);
+        })
+      ),
+      containerTypes: this.containerTypeService.getAll(true).pipe(
+        map(data => this.extractResponseData(data, 'containerType')),
+        tap(data => console.log('Container Types extracted:', data)),
+        catchError(error => {
+          console.error('Container Types error:', error);
+          return of([]);
+        })
       )
     }).pipe(
       // After basic data is loaded, load catalogs and fertilizers based on users
@@ -676,7 +877,9 @@ export class AdminComponent implements OnInit {
           return of({
             ...basicData,
             catalogs: [],
-            fertilizers: []
+            fertilizers: [],
+            droppers: [],
+            growingMedia: []
           });
         }
 
@@ -702,7 +905,9 @@ export class AdminComponent implements OnInit {
             // Store catalogs
             this.availableCatalogs = allCatalogs;
             this.updateFertilizerCatalogOptions();
-            this.updateCropPhaseCatalogOptions(); // <-- Add this line
+            this.updateCropPhaseCatalogOptions();
+            this.updateDropperCatalogOptions();
+            this.updateGrowingMediumCatalogOptions();
 
             // Set default catalog if available
             if (this.availableCatalogs.length > 0) {
@@ -717,11 +922,13 @@ export class AdminComponent implements OnInit {
               return of({
                 ...basicData,
                 catalogs: allCatalogs,
-                fertilizers: []
+                fertilizers: [],
+                droppers: [],
+                growingMedia: []
               });
             }
 
-            // Load fertilizers for each catalog
+            // Load fertilizers, droppers, and growing media for each catalog
             const fertilizerRequests = catalogIds.map(catalogId =>
               this.fertilizerService.getFertilizersWithCatalogId(catalogId).pipe(
                 map(data => this.extractResponseData(data, 'fertilizer')),
@@ -733,16 +940,45 @@ export class AdminComponent implements OnInit {
               )
             );
 
-            return forkJoin(fertilizerRequests).pipe(
-              map(fertilizerArrays => {
-                // Flatten all fertilizers from all catalogs
+            const dropperRequests = catalogIds.map(catalogId =>
+              this.dropperService.getByCatalogId(catalogId as number).pipe(
+                map(data => this.extractResponseData(data, 'dropper')),
+                catchError(error => {
+                  console.error(`Droppers error for catalog ${catalogId}:`, error);
+                  return of([]);
+                })
+              )
+            );
+
+            const growingMediumRequests = catalogIds.map(catalogId =>
+              this.growingMediumService.getByCatalogId(catalogId as number).pipe(
+                map(data => this.extractResponseData(data, 'growingMedium')),
+                catchError(error => {
+                  console.error(`Growing Media error for catalog ${catalogId}:`, error);
+                  return of([]);
+                })
+              )
+            );
+
+            return forkJoin([
+              forkJoin(fertilizerRequests),
+              forkJoin(dropperRequests),
+              forkJoin(growingMediumRequests)
+            ]).pipe(
+              map(([fertilizerArrays, dropperArrays, growingMediumArrays]) => {
                 const allFertilizers = fertilizerArrays.flat();
+                const allDroppers = dropperArrays.flat();
+                const allGrowingMedia = growingMediumArrays.flat();
                 console.log('All fertilizers combined:', allFertilizers);
+                console.log('All droppers combined:', allDroppers);
+                console.log('All growing media combined:', allGrowingMedia);
 
                 return {
                   ...basicData,
                   catalogs: allCatalogs,
-                  fertilizers: allFertilizers
+                  fertilizers: allFertilizers,
+                  droppers: allDroppers,
+                  growingMedia: allGrowingMedia
                 };
               })
             );
@@ -796,8 +1032,16 @@ export class AdminComponent implements OnInit {
       totalWaterChemistry: data.waterChemistry?.length || 0,
       totalLicenses: data.licenses?.length || 0,// Add to the adminStats object
       totalCropPhases: data.cropPhases?.length || 0,
-      totalCatalogs: data.catalogs?.length || 0
+      totalCatalogs: data.catalogs?.length || 0,
+      totalCropProductions: data.cropProductions?.length || 0,
+      totalCropProductionSpecs: data.cropProductionSpecs?.length || 0,
+      totalDroppers: data.droppers?.length || 0,
+      totalContainerTypes: data.containerTypes?.length || 0,
+      totalGrowingMedia: data.growingMedia?.length || 0
     };
+
+    // Update farm options for production units (requires farms to be loaded)
+    this.updateProductionUnitFarmOptions();
 
     // Update entity stats for header display
     this.entityStats = [
@@ -845,6 +1089,43 @@ export class AdminComponent implements OnInit {
         break;
       case 'license':
         dataSource$ = this.licenseService.getAll({ "onlyActive": true });
+        break;
+      case 'cropProduction':
+        dataSource$ = this.cropProductionService.getAll();
+        break;
+      case 'cropProductionSpecs':
+        dataSource$ = this.cropProductionSpecsService.getAll(true);
+        break;
+      case 'containerType':
+        dataSource$ = this.containerTypeService.getAll(true);
+        break;
+      case 'dropper':
+        if (this.selectedCatalogId) {
+          dataSource$ = this.dropperService.getByCatalogId(this.selectedCatalogId);
+        } else {
+          const dropperCatalogIds = [...new Set(this.availableCatalogs.map(c => c.id).filter(id => id))];
+          if (dropperCatalogIds.length === 0) return of([]);
+          return forkJoin(dropperCatalogIds.map(cid =>
+            this.dropperService.getByCatalogId(cid).pipe(
+              map(data => this.extractResponseData(data, 'dropper')),
+              catchError(() => of([]))
+            )
+          )).pipe(map(arrays => arrays.flat()));
+        }
+        break;
+      case 'growingMedium':
+        if (this.selectedCatalogId) {
+          dataSource$ = this.growingMediumService.getByCatalogId(this.selectedCatalogId);
+        } else {
+          const gmCatalogIds = [...new Set(this.availableCatalogs.map(c => c.id).filter(id => id))];
+          if (gmCatalogIds.length === 0) return of([]);
+          return forkJoin(gmCatalogIds.map(cid =>
+            this.growingMediumService.getByCatalogId(cid).pipe(
+              map(data => this.extractResponseData(data, 'growingMedium')),
+              catchError(() => of([]))
+            )
+          )).pipe(map(arrays => arrays.flat()));
+        }
         break;
       case 'catalog':
         // For catalogs, we need to load from all client IDs
@@ -910,7 +1191,13 @@ export class AdminComponent implements OnInit {
       'waterChemistry': 'waterChemistry',
       'license': 'licenses',
       'catalog': 'catalogs',
-      'fertilizer': 'fertilizers'
+      'fertilizer': 'fertilizers',
+      'productionUnit': 'productionUnits',
+      'cropProduction': 'cropProductions',
+      'cropProductionSpecs': 'cropProductionSpecs',
+      'dropper': 'droppers',
+      'containerType': 'containerTypes',
+      'growingMedium': 'growingMedia'
     };
 
     const key = mappings[entityName];
@@ -931,7 +1218,13 @@ export class AdminComponent implements OnInit {
       'waterChemistry': 'waterChemistry',
       'license': 'licenses',
       'catalog': 'catalogs',
-      'fertilizer': 'fertilizers'
+      'fertilizer': 'fertilizers',
+      'productionUnit': 'productionUnits',
+      'cropProduction': 'cropProductions',
+      'cropProductionSpecs': 'cropProductionSpecs',
+      'dropper': 'droppers',
+      'containerType': 'containerTypes',
+      'growingMedium': 'growingMedia'
     };
 
     const key = mappings[entityName];
@@ -971,7 +1264,13 @@ export class AdminComponent implements OnInit {
       'license': 'totalLicenses',
       'catalog': 'totalCatalogs',
       'fertilizer': 'totalFertilizers',
-      'cropPhase': 'totalCropPhases' // <- ADD THIS MISSING MAPPING
+      'cropPhase': 'totalCropPhases',
+      'productionUnit': 'totalProductionUnits',
+      'cropProduction': 'totalCropProductions',
+      'cropProductionSpecs': 'totalCropProductionSpecs',
+      'dropper': 'totalDroppers',
+      'containerType': 'totalContainerTypes',
+      'growingMedium': 'totalGrowingMedia'
     };
 
     const statsKey = statsMapping[entityName];
@@ -1156,6 +1455,9 @@ export class AdminComponent implements OnInit {
   private async saveWithService(config: EntityConfig): Promise<void> {
     switch (config.name) {
       case 'company':
+        if (this.currentItem.clientId) {
+          this.currentItem.clientId = parseInt(this.currentItem.clientId.toString());
+        }
         if (this.isEditing) {
           await firstValueFrom(this.companyService.update(this.currentItem));
         } else {
@@ -1679,7 +1981,33 @@ export class AdminComponent implements OnInit {
           value: catalog.id,
           label: catalog.name || `Catálogo ${catalog.id}`
         }));
-        console.log('Updated crop phase catalog options:', catalogField.options); // Debug log
+        console.log('Updated crop phase catalog options:', catalogField.options);
+      }
+    }
+  }
+
+  private updateDropperCatalogOptions(): void {
+    const dropperConfig = this.entityConfigs.find(config => config.name === 'dropper');
+    if (dropperConfig) {
+      const catalogField = dropperConfig.fields.find(field => field.key === 'catalogId');
+      if (catalogField) {
+        catalogField.options = this.availableCatalogs.map(catalog => ({
+          value: catalog.id,
+          label: catalog.name || `Catálogo ${catalog.id}`
+        }));
+      }
+    }
+  }
+
+  private updateGrowingMediumCatalogOptions(): void {
+    const growingMediumConfig = this.entityConfigs.find(config => config.name === 'growingMedium');
+    if (growingMediumConfig) {
+      const catalogField = growingMediumConfig.fields.find(field => field.key === 'catalogId');
+      if (catalogField) {
+        catalogField.options = this.availableCatalogs.map(catalog => ({
+          value: catalog.id,
+          label: catalog.name || `Catálogo ${catalog.id}`
+        }));
       }
     }
   }

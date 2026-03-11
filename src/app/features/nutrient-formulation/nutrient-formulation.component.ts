@@ -29,6 +29,22 @@ import {
 import { SplitApplicationCalculatorComponent } from './components/split-application-calculator/split-application-calculator.component';
 
 // Interfaces for the new API response
+interface WaterDilutionInfo {
+    dilution_factor: number;
+    ro_water_fraction: number;
+    limiting_nutrient: string | null;
+    over_limit_nutrients: {
+        [nutrient: string]: {
+            water_value: number;
+            target: number;
+            excess_percent: number;
+            required_dilution: number;
+        };
+    };
+    adjusted_water: { [nutrient: string]: number };
+    dilution_needed: boolean;
+}
+
 interface CalculationResponse {
     user_info: UserInfo;
     optimization_method: string;
@@ -42,6 +58,7 @@ interface CalculationResponse {
     linear_programming_analysis: LinearProgrammingAnalysis;
     data_sources: DataSources;
     soil_analysis?: any;
+    water_dilution?: WaterDilutionInfo;
 }
 
 interface CalculationDataUsed {
@@ -1003,42 +1020,81 @@ export class NutrientFormulationComponent implements OnInit {
         return nMet && pMet && kMet;
     }
     /**
-  * Calculate nutrient contribution from fertilizer (in grams)
-  * Updated to work with new fertilizer data structure
+  * Calculate fertilizer nutrient contribution directly in mg/L.
+  * dosageGPerL is already normalized per final liter, so volume must not be applied again.
   */
-    private calculateNutrientContribution(fertilizer: any, dosageGPerL: number, volumeLiters: number): any {
-        if (!fertilizer) {
-            return { N: 0, P: 0, K: 0, Ca: 0, Mg: 0, S: 0, Fe: 0, Mn: 0, Zn: 0, Cu: 0, B: 0, Mo: 0 };
+    private calculateNutrientContribution(fertilizer: any, dosageGPerL: number, _volumeLiters: number): any {
+        const emptyContribution = { N: 0, P: 0, K: 0, Ca: 0, Mg: 0, S: 0, Fe: 0, Mn: 0, Zn: 0, Cu: 0, B: 0, Mo: 0 };
+
+        if (!fertilizer || dosageGPerL <= 0) {
+            return emptyContribution;
         }
+        const getRawNutrientValue = (...keys: string[]): number => {
+            for (const key of keys) {
+                const value = fertilizer?.[key];
+                if (typeof value === 'number' && Number.isFinite(value)) {
+                    return value;
+                }
+            }
+            return 0;
+        };
 
-        const totalGrams = dosageGPerL * volumeLiters;
-
-        // Helper function to get nutrient value
-        const getNutrientValue = (nutrientKey: string): number => {
-            const value = fertilizer[nutrientKey] || 0;
-
-            // If value is in ppm (> 1000), convert to percentage
-            if (value > 1000) {
-                return (value / 10000); // Convert ppm to percentage
+        const toMassFraction = (value: number): number => {
+            if (!Number.isFinite(value) || value <= 0) {
+                return 0;
             }
 
-            return value;
+            if (value <= 1) {
+                return value;
+            }
+
+            if (value <= 100) {
+                return value / 100;
+            }
+
+            return value / 1_000_000;
         };
 
+        const dosageMgPerL = dosageGPerL * 1000;
+        const contributionFor = (...keys: string[]): number => dosageMgPerL * toMassFraction(getRawNutrientValue(...keys));
+
         return {
-            N: (getNutrientValue('n') * totalGrams) / 100,
-            P: (getNutrientValue('p') * totalGrams) / 100,
-            K: (getNutrientValue('k') * totalGrams) / 100,
-            Ca: (getNutrientValue('ca') * totalGrams) / 100,
-            Mg: (getNutrientValue('mg') * totalGrams) / 100,
-            S: (getNutrientValue('s') * totalGrams) / 100,
-            Fe: (getNutrientValue('fe') * totalGrams) / 100,
-            Mn: (getNutrientValue('mn') * totalGrams) / 100,
-            Zn: (getNutrientValue('zn') * totalGrams) / 100,
-            Cu: (getNutrientValue('cu') * totalGrams) / 100,
-            B: (getNutrientValue('b') * totalGrams) / 100,
-            Mo: (getNutrientValue('mo') * totalGrams) / 100
+            N: contributionFor('n', 'N', 'nitrogenPercentage'),
+            P: contributionFor('p', 'P', 'phosphorusPercentage'),
+            K: contributionFor('k', 'K', 'potassiumPercentage'),
+            Ca: contributionFor('ca', 'Ca', 'calciumPercentage'),
+            Mg: contributionFor('mg', 'Mg', 'magnesiumPercentage'),
+            S: contributionFor('s', 'S', 'sulfurPercentage'),
+            Fe: contributionFor('fe', 'Fe', 'ironPercentage'),
+            Mn: contributionFor('mn', 'Mn', 'manganesePercentage'),
+            Zn: contributionFor('zn', 'Zn', 'zincPercentage'),
+            Cu: contributionFor('cu', 'Cu', 'copperPercentage'),
+            B: contributionFor('b', 'B', 'boronPercentage'),
+            Mo: contributionFor('mo', 'Mo', 'molybdenumPercentage')
         };
+    }
+
+    getFertilizerDosageDisplay(fert: any): string {
+        const rawFertilizer = fert?.raw_fertilizer;
+        const type = String(rawFertilizer?.type || '');
+        const stockUnit = String(rawFertilizer?.stockUnit || '');
+        const isLiquid = Boolean(rawFertilizer?.isLiquid)
+            || /liquid|l[ií]quido/i.test(type)
+            || /^(ml|l)$/i.test(stockUnit);
+
+        if (isLiquid && fert?.dosage_ml_per_L > 0) {
+            return `${fert.dosage_ml_per_L.toFixed(3)} mL/L`;
+        }
+
+        if (fert?.dosage_g_per_L > 0) {
+            return `${fert.dosage_g_per_L.toFixed(3)} g/L`;
+        }
+
+        if (fert?.dosage_ml_per_L > 0) {
+            return `${fert.dosage_ml_per_L.toFixed(3)} mL/L`;
+        }
+
+        return '0.000 g/L';
     }
     public generateEnhancedFormulationResults(recipe: FormulationRecipe, waterSource: WaterChemistry): any[] {
         let achievedN = waterSource.no3 || 0;
@@ -2457,7 +2513,7 @@ export class NutrientFormulationComponent implements OnInit {
                 const cost = costs[name] || 0;
                 const costPercentage = costPercentages[name] || 0;
 
-                // Calculate nutrient contribution
+                // dosage_g_per_L is already per final liter, so the helper returns mg/L directly.
                 const nutrientContribution = this.calculateNutrientContribution(
                     rawFert,
                     dosage.dosage_g_per_L,
@@ -2471,6 +2527,7 @@ export class NutrientFormulationComponent implements OnInit {
                     cost_crc: cost,
                     cost_percentage: costPercentage,
                     nutrient_contribution: nutrientContribution,
+                    nutrient_contribution_ppm: nutrientContribution,
                     raw_fertilizer: rawFert
                 };
             })
@@ -2480,6 +2537,33 @@ export class NutrientFormulationComponent implements OnInit {
     }
     private getRandomValue(): number {
         return parseFloat((Math.random() * 24 + 1).toFixed(2));
+    }
+
+    /**
+     * Returns per-nutrient summary: fertilizer total, water contribution, grand total,
+     * achieved (from API), and whether they match within 10%.
+     */
+    readonly NUTRIENT_KEYS = ['N', 'P', 'K', 'Ca', 'Mg', 'S', 'Fe', 'Mn', 'Zn', 'Cu', 'B', 'Mo'];
+
+    getFertilizerNutrientTotals(): { [nutrient: string]: { fert: number; water: number; grand: number; achieved: number; matches: boolean } } {
+        const achieved = this.calculationResults?.calculation_results?.achieved_concentrations || {};
+        const adjWater: any = (this.calculationResults as any)?.water_dilution?.adjusted_water
+            || this.calculationResults?.calculation_data_used?.water_analysis
+            || {};
+
+        const result: { [k: string]: { fert: number; water: number; grand: number; achieved: number; matches: boolean } } = {};
+
+        for (const nutrient of this.NUTRIENT_KEYS) {
+            const fert = this.fertilizerUsageData.reduce(
+                (sum, f) => sum + ((f.nutrient_contribution_ppm?.[nutrient]) || 0), 0
+            );
+            const water = (adjWater[nutrient] as number) || 0;
+            const grand = fert + water;
+            const ach = (achieved[nutrient] as number) || 0;
+            const diff = ach > 0 ? Math.abs(grand - ach) / ach : (grand > 0 ? 1 : 0);
+            result[nutrient] = { fert, water, grand, achieved: ach, matches: diff < 0.10 };
+        }
+        return result;
     }
 
     /**

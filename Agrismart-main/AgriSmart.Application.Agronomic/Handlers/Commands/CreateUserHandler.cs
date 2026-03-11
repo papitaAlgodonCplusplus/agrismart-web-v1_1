@@ -3,6 +3,7 @@ using AgriSmart.Application.Agronomic.Mappers;
 using AgriSmart.Application.Agronomic.Responses.Commands;
 using AgriSmart.Application.Agronomic.Validators.Commands;
 using AgriSmart.Core.Entities;
+using AgriSmart.Core.Enums;
 using AgriSmart.Core.Repositories.Commands;
 using AgriSmart.Core.Responses;
 using MediatR;
@@ -41,6 +42,12 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
 
                 if (createUserResult != null)
                 {
+                    if (createUserResult.ProfileId == (int)Profiles.ClientAdmin)
+                    {
+                        createUserResult.ClientId = createUserResult.Id;
+                        await _userCommandRepository.UpdateAsync(createUserResult);
+                    }
+
                     CreateUserResponse createUserResponse = AgronomicMapper.Mapper.Map<CreateUserResponse>(createUserResult);
 
                     return new Response<CreateUserResponse>(createUserResponse);

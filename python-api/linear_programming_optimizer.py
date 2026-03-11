@@ -122,15 +122,18 @@ class LinearProgrammingOptimizer:
         """
         print(f"[LP] Using PuLP solver for optimization...")
 
-        # CORRECTED: Targets are already fertilizer targets (additive to water)
-        # These are already what fertilizers should provide
-        fertilizer_targets = targets.copy()
-
-        print(f"\n[LP] FERTILIZER CONTRIBUTION TARGETS:")
-        for nutrient, fertilizer_target in fertilizer_targets.items():
+        # CRITICAL FIX: Adjust targets to account for water chemistry (same as SciPy)
+        # Fertilizers only need to contribute the DIFFERENCE between target and water supply
+        fertilizer_targets = {}
+        print(f"\n[LP] ADJUSTING TARGETS FOR WATER CHEMISTRY:")
+        for nutrient, total_target in targets.items():
             water_contribution = water.get(nutrient, 0.0)
-            expected_final = water_contribution + fertilizer_target
-            print(f"  {nutrient}: Fertilizer={fertilizer_target:.3f} + Water={water_contribution:.3f} = Final={expected_final:.3f} mg/L")
+            fertilizer_target = max(0.0, total_target - water_contribution)
+            fertilizer_targets[nutrient] = fertilizer_target
+            if water_contribution > 0:
+                print(f"  {nutrient}: Total={total_target:.3f} - Water={water_contribution:.3f} = Fertilizer={fertilizer_target:.3f} mg/L")
+            else:
+                print(f"  {nutrient}: Total={total_target:.3f} mg/L (no water contribution)")
 
         # Create the problem
         prob = lp.LpProblem("Fertilizer_Optimization", lp.LpMinimize)

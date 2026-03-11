@@ -2,7 +2,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Observable, forkJoin, of, catchError } from 'rxjs';
+import { Observable, forkJoin, of, catchError, firstValueFrom } from 'rxjs';
 
 // Services
 import { FarmService } from '../farms/services/farm.service';
@@ -171,6 +171,7 @@ export class DashboardComponent implements OnInit {
   cropPhaseRequirements: any[] = [];
   cropPhases: any[] = [];
   nutrientRecipes: any[] = [];
+  showNoFarmsEmptyState = false;
 
   // Selected filters
   selectedCropProductionId: number | null = null;
@@ -237,7 +238,6 @@ export class DashboardComponent implements OnInit {
     this.irrigationCalcService = irrigationCalcServiceInjected;
   }
 
-  // Add after calculateClimateKPIs() method (around line 450)
   private calculateAggregateClimateKPIs(): void {
     if (this.climateKPIs.length === 0) {
       this.aggregateClimateKPIs = null;
@@ -258,9 +258,19 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    void this.initializeDashboard();
+  }
+
+  private async initializeDashboard(): Promise<void> {
+    const hasFarms = await this.loadCropProductionLocations();
+
+    if (!hasFarms) {
+      this.isLoading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
     this.loadDashboardStats();
-    // ADD THESE:
-    this.loadCropProductionLocations();
     this.loadAvailableCatalogs();
     this.loadCropPhaseRequirements();
     this.loadCropProductionSpecs();
@@ -294,7 +304,7 @@ export class DashboardComponent implements OnInit {
       ).pipe(catchError(() => of([])))
     }).subscribe({
       next: (data) => {
-        
+
         this.lastLoadedData = twelveHourAgo.toISOString();
         this.rawData = data;
         this.totalRecordsLoaded = Array.isArray(data.deviceRawData) ? data.deviceRawData.length : 0;
@@ -305,7 +315,6 @@ export class DashboardComponent implements OnInit {
         }
 
         this.detectFlowEvents();
-        this.calculateIrrigationMetrics();
         this.calculateStats();
         this.generateRecentActivitiesFromRealData();
         this.calculateClimateKPIs();
@@ -963,46 +972,53 @@ export class DashboardComponent implements OnInit {
   /**
    * Load crop production locations with lat/lon/altitude
    */
-  private loadCropProductionLocations(): void {
-    this.farmService.getAll(true).subscribe({
-      next: (farms: any) => {
-        console.log('Loaded farms for crop production locations:', farms);
- 
-        if (farms.length === 0) {
-          console.error('No farms found - farm location data is required for climate calculations');
-          this.cropProductionLocations = [];
-          return;
-        }
+  private async loadCropProductionLocations(): Promise<boolean> {
+    this.showNoFarmsEmptyState = false;
+    this.cropProductionLocations = [];
 
-        // Map farms to crop production locations with validation
-        this.cropProductionLocations = farms
-          .filter((farm: any) => {
-            // Only include farms with valid coordinates
-            if (!farm.latitude || !farm.longitude) {
-              console.warn(`Farm ${farm.name} (ID: ${farm.id}) missing coordinates - skipping`);
-              return false;
-            }
-            return true;
-          })
-          .map((farm: any) => ({
-            id: farm.id,
-            name: farm.name,
-            latitude: farm.latitude,
-            longitude: farm.longitude,
-            altitude: farm.altitude || 100 // TODO: Add altitude field to Farm entity - using default 100m
-          }));
+    try {
+      const farms = await firstValueFrom(this.farmService.getAll(true));
 
-        if (this.cropProductionLocations.length === 0) {
-          console.error('No farms with valid coordinates found - location data is required for climate calculations');
-        }
+      console.log('Loaded farms for crop production locations:', farms);
 
-        //
-      },
-      error: (error) => {
-        console.error('Error loading crop production locations:', error);
-        this.cropProductionLocations = [];
+      if (!Array.isArray(farms) || farms.length === 0) {
+        console.error('No farms found - farm location data is required for climate calculations');
+        this.showNoFarmsEmptyState = true;
+        this.cdr.markForCheck();
+        return false;
       }
-    });
+
+      this.showNoFarmsEmptyState = false;
+
+      this.cropProductionLocations = farms
+        .filter((farm: any) => {
+          if (!farm.latitude || !farm.longitude) {
+            console.warn(`Farm ${farm.name} (ID: ${farm.id}) missing coordinates - skipping`);
+            return false;
+          }
+          return true;
+        })
+        .map((farm: any) => ({
+          id: farm.id,
+          name: farm.name,
+          latitude: farm.latitude,
+          longitude: farm.longitude,
+          altitude: farm.altitude || 100
+        }));
+
+      if (this.cropProductionLocations.length === 0) {
+        console.error('No farms with valid coordinates found - location data is required for climate calculations');
+      }
+
+      this.cdr.markForCheck();
+      return true;
+    } catch (error) {
+      console.error('Error loading crop production locations:', error);
+      this.showNoFarmsEmptyState = false;
+      this.cropProductionLocations = [];
+      this.cdr.markForCheck();
+      return true;
+    }
   }
 
   /**
@@ -1353,15 +1369,15 @@ export class DashboardComponent implements OnInit {
       // Get Water_flow_value data for this event's time window
       const deviceFlowData = sourceDeviceId
         ? allFlowData.filter((d: any) => {
-            const recordDate = new Date(d.recordDate);
-            return d.deviceId === sourceDeviceId &&
-                   recordDate >= eventStart &&
-                   recordDate <= eventEnd;
-          })
+          const recordDate = new Date(d.recordDate);
+          return d.deviceId === sourceDeviceId &&
+            recordDate >= eventStart &&
+            recordDate <= eventEnd;
+        })
         : allFlowData.filter((d: any) => {
-            const recordDate = new Date(d.recordDate);
-            return recordDate >= eventStart && recordDate <= eventEnd;
-          });
+          const recordDate = new Date(d.recordDate);
+          return recordDate >= eventStart && recordDate <= eventEnd;
+        });
 
       // Calculate volume from Water_flow_value changes
       const volume = this.calculateVolumeFromWaterFlowChanges(deviceFlowData);
@@ -1482,7 +1498,7 @@ export class DashboardComponent implements OnInit {
       // Find most relevant crop production (match by cropId)
       const cropProduction = cropId
         ? cropProductions.find((cp: any) => cp.cropId === cropId && (cp.isActive || cp.active)) ||
-          cropProductions.find((cp: any) => cp.cropId === cropId)
+        cropProductions.find((cp: any) => cp.cropId === cropId)
         : null;
 
       // Phase name: prefer solution requirement name, then crop phase name
@@ -1963,9 +1979,9 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-    /**
-  * Load next page of device raw data and append to existing data
-  */
+  /**
+* Load next page of device raw data and append to existing data
+*/
   loadMoreDeviceDataBulk24(): void {
     if (this.isLoadingMore || !this.hasMoreData) {
       return;

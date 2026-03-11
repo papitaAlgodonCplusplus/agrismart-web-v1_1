@@ -49,7 +49,6 @@ export class CropProductionListComponent implements OnInit, OnDestroy {
   showCreateModal = false;
   showEditModal = false;
   showViewModal = false;
-  showIrrigationModal = false;
   selectedProduction: CropProduction | null = null;
 
   // Form
@@ -315,16 +314,10 @@ export class CropProductionListComponent implements OnInit, OnDestroy {
     this.showEditModal = true;
   }
 
-  manageIrrigation(production: CropProduction): void {
-    this.selectedProduction = production;
-    this.showIrrigationModal = true;
-  }
-
   closeModal(): void {
     this.showCreateModal = false;
     this.showEditModal = false;
     this.showViewModal = false;
-    this.showIrrigationModal = false;
     this.selectedProduction = null;
     this.formErrorMessage = '';
   }

@@ -1,78 +1,207 @@
-Help me determine if the information shown in irrigation-engineering-design component is agronomically correct / expected.
+In my nutrient-formulation component, using my python-api, I did a calculation based on cropPhaseRequierements id = 6 "Ayote (Squash) - Pico producción (Peak fruit production)",
+but, the api manages to get accurate target vs obtained values:
 
-Diseño de Ingeniería de Riego
-Gestione planes, modos, programaciones y revise el historial de ejecuciones
+Parámetro	Objetivo	Logrado	Desviación %	Estado	Info
+K	265.30	308.30	16.21%	Aceptable	
+Ca	171.80	207.80	20.95%	Aceptable	
+Mg	32.80	86.80	164.63%	Crítico	
+Fe	3.00	23.00	666.67%	Crítico	
+B	0.45	10.45	2222.22%	Crítico	
+Cu	0.05	4.05	8000.00%	Crítico	
+Zn	0.35	8.35	2285.71%	Crítico	
+Mn	0.80	4.80	500.00%	Crítico	
+N	105.50	105.50	0.00%	Óptimo	
+P	58.80	58.80	0.00%	Óptimo	
+S	42.60	42.60	0.00%	Óptimo	
+Mo	0.08	0.08	0.00%	Óptimo	
 
-Planes de Riego
-Entradas de Programación
-Modos de Riego
-Historial de Ejecuciones
-Métricas de Riego
-Análisis de Sustrato
-Métricas de Rendimiento de Riego
-Producción de Cultivo
+except, the water analysis (that I included on the analysis), makes those over 1000% deviations, however, I need to enhance my python api calculator, specifically when it encounters water chemistry values, to adjust the water L values to reduce the water-apported micro/macro nutrients, to avoid those huge deviations.
 
-Deirdre Tyler
-Fecha Inicio
+For example, for B, we obtained 0.45, throught the fertilizers, but the water used has 10.00 mg/L of B, and if we are using 1 L of water, that adds 10.00 mg of B, which is a huge contribution compared to the target of 0.45 mg/L.
 
-12/15/2025
-Fecha Fin
+So the api, when it encounters water chemistry values, should adjust the water L values to reduce the water-apported micro/macro nutrients, to avoid those huge deviations.
 
-12/22/2025
-Total Eventos
-19
-Vol. Prom/Evento
-13,746.77 L
-Drenaje Prom.
-2.5%
-Bajo (< 10%)
-Eficiencia Sistema
-97.5%
-Dur. Prom/Evento
-10.9 min
-Flujo Promedio
-138,885.34 L/hr
-Fecha/Hora	Duración (min)	Intervalo (hrs)	Vol. (L/m²)	Vol/Planta (L)	Vol. Total (L)	Drenaje %	Flujo (L/hr)	Acciones
-21/12/2025 18:56	2.2	0.4	440.06	1,570,580.57	16,282.29	9.8%	444,645.12	
-21/12/2025 18:19	12.0	0.4	440.74	1,572,994.42	16,307.31	0.0%	81,543.69	
-21/12/2025 17:42	12.0	0.4	440.81	1,573,237.49	16,309.83	3.3%	81,564.00	
-21/12/2025 17:05	12.0	0.4	440.87	1,573,475.85	16,312.30	10.3%	81,576.58	
-21/12/2025 16:28	12.0	0.4	440.87	1,573,471.78	16,312.26	0.4%	81,765.71	
-21/12/2025 15:51	12.0	0.4	441.00	1,573,946.79	16,317.18	8.9%	81,801.79	
-21/12/2025 15:14	12.0	0.4	441.07	1,574,176.79	16,319.57	12.1%	81,613.71	
-21/12/2025 14:37	12.0	0.4	441.13	1,574,403.58	16,321.92	1.9%	81,846.04	
-21/12/2025 14:00	12.0	12.0	441.15	1,574,452.45	16,322.43	0.1%	81,402.30	
-21/12/2025 01:57	0.9	0.4	440.65	1,572,690.03	16,304.16	0.0%	1,048,573.67	
-21/12/2025 01:21	12.0	0.4	441.34	1,575,136.24	16,329.52	0.0%	81,663.68	
-21/12/2025 00:43	11.9	0.4	441.45	1,575,545.87	16,333.76	0.0%	82,164.54	
-21/12/2025 00:06	11.9	0.4	441.52	1,575,781.24	16,336.20	0.0%	82,188.75	
-20/12/2025 23:29	11.9	0.4	441.58	1,576,009.31	16,338.57	0.0%	82,215.01	
-20/12/2025 22:52	11.9	0.4	441.65	1,576,244.24	16,341.00	0.0%	82,233.71	
-20/12/2025 22:15	11.9	0.4	0.73	2,616.19	27.12	0.0%	136.50	
-20/12/2025 21:38	12.0	0.4	441.78	1,576,716.68	16,345.90	0.0%	81,750.05	
-20/12/2025 21:01	12.0	0.7	0.74	2,633.34	27.30	0.0%	136.53	
-20/12/2025 20:06	12.0	-	0.00	0.00	0.00	0.0%	0.00	
+Now, this is assuming adjusting L values of water changes the amount of nutrients contributed by the water, which is a common practice in hydroponic nutrient management. If that's not the case, let me know what a better approach would be to handle the water chemistry contributions in the nutrient calculation.
+
+If for example then, api reduced water L values to 0.045 L, then the contribution of B from water would be 0.45 mg (10.00 mg/L * 0.045 L), which would align with the target of 0.45 mg/L when combined with the fertilizer contributions, by setting the fertilizers B target to 0 mg/L, since the water is already providing the necessary B.
+
+Example phases in the DB:
+
+-- ============================================================
+-- CORRECTIVE UPDATE: Nutrient solution values
+-- Units assumed: mg/L (ppm) for all ions
+--                mS/cm for EC
+-- ============================================================
+
+-- -------------------------------------------------------
+-- Record 2: Kale - Crecimiento (Growth/Vegetative phase)
+-- Leafy green: high N, moderate K, good Ca/Mg
+-- -------------------------------------------------------
+UPDATE CropPhaseSolutionRequirement
+SET
+    EC      = 1.8,
+    pH      = 6.0,
+    HCO3    = 20.00,
+    NO3     = 180.00,   -- High N for leafy growth
+    H2PO4   = 60.00,
+    SO4     = 80.00,
+    Cl      = 15.00,
+    NH4     = 10.00,
+    K       = 200.00,
+    Ca      = 160.00,
+    Mg      = 50.00,
+    Na      = 10.00,
+    Fe      = 3.00,
+    B       = 0.50,
+    Cu      = 0.05,
+    Zn      = 0.30,
+    Mn      = 0.80,
+    Mo      = 0.08,
+    DateUpdated = GETDATE()
+WHERE Id = 2;
+
+-- -------------------------------------------------------
+-- Record 3: Kale - Establecimiento (Establishment/Seedling)
+-- Lower EC, lower nutrients — young plants can't handle full strength
+-- -------------------------------------------------------
+UPDATE CropPhaseSolutionRequirement
+SET
+    EC      = 1.2,
+    pH      = 6.0,
+    HCO3    = 15.00,
+    NO3     = 120.00,
+    H2PO4   = 50.00,
+    SO4     = 60.00,
+    Cl      = 10.00,
+    NH4     = 5.00,     -- Low NH4 for seedlings (sensitive)
+    K       = 150.00,
+    Ca      = 130.00,
+    Mg      = 40.00,
+    Na      = 5.00,
+    Fe      = 2.00,
+    B       = 0.30,
+    Cu      = 0.02,
+    Zn      = 0.20,
+    Mn      = 0.50,
+    Mo      = 0.05,
+    DateUpdated = GETDATE()
+WHERE Id = 3;
+
+-- -------------------------------------------------------
+-- Record 4: Melón (Melon) - Fase 1 (Early vegetative)
+-- Fruiting crop: balanced early, build K/Ca for later fruit set
+-- -------------------------------------------------------
+UPDATE CropPhaseSolutionRequirement
+SET
+    EC      = 2.0,
+    pH      = 6.0,
+    HCO3    = 15.00,
+    NO3     = 170.00,
+    H2PO4   = 55.00,
+    SO4     = 80.00,
+    Cl      = 15.00,
+    NH4     = 8.00,
+    K       = 220.00,
+    Ca      = 180.00,
+    Mg      = 50.00,
+    Na      = 10.00,
+    Fe      = 3.00,
+    B       = 0.40,
+    Cu      = 0.04,
+    Zn      = 0.30,
+    Mn      = 0.60,
+    Mo      = 0.07,
+    DateUpdated = GETDATE()
+WHERE Id = 4;
+
+-- -------------------------------------------------------
+-- Record 5: Ayote (Squash) - Formación de planta
+-- Plant formation: moderate N, good Ca for structural growth
+-- -------------------------------------------------------
+UPDATE CropPhaseSolutionRequirement
+SET
+    EC      = 1.8,
+    pH      = 6.0,
+    HCO3    = 20.00,
+    NO3     = 160.00,
+    H2PO4   = 55.00,
+    SO4     = 75.00,
+    Cl      = 15.00,
+    NH4     = 8.00,
+    K       = 180.00,
+    Ca      = 160.00,
+    Mg      = 50.00,
+    Na      = 8.00,
+    Fe      = 3.00,
+    B       = 0.40,
+    Cu      = 0.04,
+    Zn      = 0.30,
+    Mn      = 0.70,
+    Mo      = 0.07,
+    DateUpdated = GETDATE()
+WHERE Id = 5;
+
+-- -------------------------------------------------------
+-- Record 6: Gerbera - Simple (Full cycle ornamental)
+-- Flowering ornamental: moderate N, higher K for blooms
+-- -------------------------------------------------------
+UPDATE CropPhaseSolutionRequirement
+SET
+    EC      = 1.6,
+    pH      = 5.8,     -- Slightly more acidic suits Gerbera
+    HCO3    = 10.00,
+    NO3     = 130.00,
+    H2PO4   = 45.00,
+    SO4     = 65.00,
+    Cl      = 10.00,
+    NH4     = 5.00,
+    K       = 230.00,  -- High K promotes flowering
+    Ca      = 140.00,
+    Mg      = 45.00,
+    Na      = 8.00,
+    Fe      = 4.00,    -- Slightly higher Fe for ornamentals
+    B       = 0.35,
+    Cu      = 0.04,
+    Zn      = 0.25,
+    Mn      = 0.60,
+    Mo      = 0.06,
+    DateUpdated = GETDATE()
+WHERE Id = 6;
+
+-- -------------------------------------------------------
+-- Record 7: Ayote (Squash) - Pico producción (Peak fruit production)
+-- Peak fruiting: reduce N, maximize K and Ca for fruit quality
+-- -------------------------------------------------------
+UPDATE CropPhaseSolutionRequirement
+SET
+    EC      = 2.2,
+    pH      = 6.2,
+    HCO3    = 15.00,
+    NO3     = 150.00,  -- Reduce N at fruiting to avoid vegetative overgrowth
+    H2PO4   = 60.00,
+    SO4     = 90.00,
+    Cl      = 15.00,
+    NH4     = 5.00,
+    K       = 280.00,  -- High K at peak fruiting
+    Ca      = 200.00,  -- High Ca prevents blossom-end rot
+    Mg      = 55.00,
+    Na      = 8.00,
+    Fe      = 3.00,
+    B       = 0.45,
+    Cu      = 0.05,
+    Zn      = 0.35,
+    Mn      = 0.80,
+    Mo      = 0.08,
+    DateUpdated = GETDATE()
+WHERE Id = 7; 
 
 
-On selection of first element
+example waters:
 
-Comparación de Métricas
+select * from WaterChemistry	
 
-Métrica Seleccionada: 21/12/2025 18:56
-Estadísticas del Período
-Parámetro	Valor Actual	Promedio	Mínimo	Máximo	Mediana	Desviación	Estado
-Volumen Total	16,282.29	13,746.77 L	0.00 L	16,345.90 L	16,317.18 L	18.4%	Advertencia
-Drenaje	9.8%	2.5%	0.0%	12.1%	0.0%	298.6%	Crítico
-Duración	2 min	11 min	1 min	12 min	12 min	-79.8%	Crítico
-Flujo	444,645.12	138,885.34 L/h	0.00 L/h	1,048,573.67 L/h	81,750.05 L/h	220.2%	Crítico
-Recomendaciones
-Drenaje muy bajo (<10%). Aumente el volumen de riego para alcanzar 15-25% de drenaje óptimo.
-Flujo de riego irregular. Verifique goteros y presión del sistema.
-Leyenda:
-Normal - Desviación < 10%
-Advertencia - Desviación entre 10% y 25%
-Crítico - Desviación > 25%
-Óptimo - Drenaje entre 15% y 25%
-
-
-The eye does not do anything
+Id	WaterId	Ca	K	Mg	Na	NH4	Fe	Cu	Mn	Zn	NO3	SO4	Cl	B	H2PO4	HCO3	BO4	MOO4	EC	pH	AnalysisDate	Active	DateCreated	DateUpdated	CreatedBy	UpdatedBy
+2	1	10,15	2,6	4,8	9,4	0	0	0,1	0	0,1	1,4	0	1,2	0	0	77	0	0,01	0,15	7	2022-12-08	1	2024-09-13 10:59:19.757	2025-10-12 17:25:16.700	1	12
+17	12	11,03	2,5	4,7	9,8	0	0	0,15	0	0,12	1,5	0	1,3	0	0	78	0	0,02	0,15	7	2022-12-09	1	2025-10-01 11:14:15.533	2025-11-18 21:43:35.167	8	6
+19	13	36	43	54	25	0	20	4	4	8	0	0	72	10	0	0	0	0	46	0	1992-01-24	1	2025-11-07 20:18:18.663	NULL	6	NULL
+20	14	59	85	87	37	0	10	2	4	3	0	0	13	10	0	0	0	0	10	0	2021-01-27	1	2025-11-18 21:23:20.847	NULL	6	NULL

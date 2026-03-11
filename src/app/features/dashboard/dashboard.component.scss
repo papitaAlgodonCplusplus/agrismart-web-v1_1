@@ -876,6 +876,87 @@
   letter-spacing: 0.12em;
 }
 
+.dashboard-empty-state {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 2rem;
+  border: 1px solid rgba(255,255,255,0.88);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,0.86), rgba(255,255,255,0) 32%),
+    linear-gradient(155deg, rgba(196,240,216,0.92) 0%, rgba(236,248,255,0.95) 48%, rgba(197,226,255,0.92) 100%);
+  box-shadow:
+    0 20px 44px rgba(45, 105, 149, 0.14),
+    inset 0 1px 0 rgba(255,255,255,0.98);
+  color: #154869;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.dashboard-empty-state:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 26px 50px rgba(45, 105, 149, 0.18),
+    inset 0 1px 0 rgba(255,255,255,1);
+}
+
+.dashboard-empty-icon {
+  width: 78px;
+  height: 78px;
+  flex: 0 0 78px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(220,243,255,0.78));
+  box-shadow:
+    0 12px 24px rgba(46, 112, 159, 0.16),
+    inset 0 1px 0 rgba(255,255,255,0.98);
+  font-size: 2rem;
+  color: #1e8f50;
+}
+
+.dashboard-empty-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dashboard-empty-kicker {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #3f8f69;
+}
+
+.dashboard-empty-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.dashboard-empty-text {
+  font-size: 0.96rem;
+  color: #527b99;
+}
+
+.dashboard-empty-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1.15rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.72);
+  color: #1a5fa0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .quick-action-card {
   min-height: 124px;
   position: relative;
@@ -976,6 +1057,23 @@
 
 .action-hub-body .col-md-3:nth-of-type(4n) .quick-action-card {
   background: linear-gradient(160deg, rgba(195,210,255,0.5), rgba(255,255,255,0.9));
+}
+
+@media (max-width: 767.98px) {
+  .dashboard-empty-state {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.5rem;
+  }
+
+  .dashboard-empty-action {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dashboard-empty-title {
+    font-size: 1.3rem;
+  }
 }
 
 .timeline {

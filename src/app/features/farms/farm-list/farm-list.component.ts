@@ -155,13 +155,13 @@ export class FarmListComponent implements OnInit {
 
     // Load companies and farms in parallel
     forkJoin({
-      companies: this.companyService.getAll(true).pipe(
+      companies: this.companyService.getAll().pipe(
         catchError(error => {
           console.error('Error loading companies:', error);
           return of([]);
         })
       ),
-      farms: this.farmService.getAll(true).pipe(
+      farms: this.farmService.getAll().pipe(
         catchError(error => {
           console.error('Error loading farms:', error);
           return of([]);

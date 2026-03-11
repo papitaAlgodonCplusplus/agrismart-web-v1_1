@@ -82,6 +82,62 @@ class CompleteFertilizerCalculator:
         self.fertilizer_db = fertilizer_db
         self.ml_optimizer = ml_optimizer
 
+    def calculate_water_dilution_factor(self,
+                                        water_analysis: Dict[str, float],
+                                        target_concentrations: Dict[str, float]) -> Dict[str, Any]:
+        """
+        Calculate the minimum dilution factor for source water so that no water-contributed
+        nutrient exceeds its crop target. Returns dilution info and adjusted water values.
+
+        This models blending source water with RO/pure water:
+        - dilution_factor = fraction of source water to use (1.0 = no dilution needed)
+        - adjusted water contribution = water_value * dilution_factor
+        - The limiting nutrient is the one that requires the most aggressive dilution
+        """
+        dilution_factor = 1.0
+        limiting_nutrient = None
+        over_limit_nutrients = {}
+
+        for nutrient, water_val in water_analysis.items():
+            if water_val <= 0:
+                continue
+            target = target_concentrations.get(nutrient, 0.0)
+            if target <= 0:
+                continue
+            if water_val > target:
+                needed_dilution = target / water_val
+                excess_pct = (water_val - target) / target * 100
+                over_limit_nutrients[nutrient] = {
+                    'water_value': round(water_val, 4),
+                    'target': round(target, 4),
+                    'excess_percent': round(excess_pct, 2),
+                    'required_dilution': round(needed_dilution, 4)
+                }
+                if needed_dilution < dilution_factor:
+                    dilution_factor = needed_dilution
+                    limiting_nutrient = nutrient
+
+        adjusted_water = {k: round(v * dilution_factor, 4) for k, v in water_analysis.items()}
+
+        if dilution_factor < 1.0:
+            print(f"\n[WATER DILUTION] Source water exceeds targets for {len(over_limit_nutrients)} nutrients!")
+            print(f"[WATER DILUTION] Limiting nutrient: {limiting_nutrient} → dilution factor = {dilution_factor:.4f}")
+            print(f"[WATER DILUTION] Use {dilution_factor*100:.2f}% source water + {(1-dilution_factor)*100:.2f}% RO/pure water per liter")
+            for nutrient, info in over_limit_nutrients.items():
+                adj = round(info['water_value'] * dilution_factor, 4)
+                print(f"  {nutrient}: {info['water_value']:.3f} → {adj:.3f} mg/L (target: {info['target']:.3f}, excess was {info['excess_percent']:.1f}%)")
+        else:
+            print(f"[WATER DILUTION] No dilution needed — all water nutrients are within targets")
+
+        return {
+            'dilution_factor': round(dilution_factor, 4),
+            'ro_water_fraction': round(1.0 - dilution_factor, 4),
+            'limiting_nutrient': limiting_nutrient,
+            'over_limit_nutrients': over_limit_nutrients,
+            'adjusted_water': adjusted_water,
+            'dilution_needed': dilution_factor < 1.0
+        }
+
     def calculate_advanced_solution(self, request: FertilizerRequest, method: str = "deterministic") -> Dict[str, Any]:
         """
         Calculate fertilizer solution using specified method - ENHANCED WITH MICRONUTRIENT ANALYSIS
@@ -91,6 +147,15 @@ class CompleteFertilizerCalculator:
         print(f"Fertilizers: {len(request.fertilizers)}")
         print(f"Targets: {request.target_concentrations}")
         print(f"Water: {request.water_analysis}")
+
+        # ===== WATER DILUTION CHECK =====
+        # When source water supplies more of a nutrient than the crop target,
+        # we must blend it with RO/pure water. Calculate the minimum dilution factor.
+        water_dilution_info = self.calculate_water_dilution_factor(
+            request.water_analysis, request.target_concentrations
+        )
+        # Use adjusted water for all calculations so optimizers see realistic contributions
+        effective_water = water_dilution_info['adjusted_water']
 
         # Choose calculation method (existing code remains the same)
         if method == "machine_learning":
@@ -108,7 +173,7 @@ class CompleteFertilizerCalculator:
                         dosages_g_l = self.ml_optimizer.optimize_fertilizer_dosages(
                             request.fertilizers,
                             request.target_concentrations,
-                            request.water_analysis,
+                            effective_water,
                             request.calculation_settings.volume_liters
                         )
                     else:
@@ -118,7 +183,7 @@ class CompleteFertilizerCalculator:
                         dosages_g_l = self.nutrient_calc.calculate_optimized_dosages(
                             request.fertilizers,
                             request.target_concentrations,
-                            request.water_analysis
+                            effective_water
                         )
                 except Exception as e:
                     print(
@@ -127,14 +192,14 @@ class CompleteFertilizerCalculator:
                     dosages_g_l = self.nutrient_calc.calculate_optimized_dosages(
                         request.fertilizers,
                         request.target_concentrations,
-                        request.water_analysis
+                        effective_water
                     )
             else:
                 # Use ML optimization
                 dosages_g_l = self.ml_optimizer.optimize_fertilizer_dosages(
                     request.fertilizers,
                     request.target_concentrations,
-                    request.water_analysis,
+                    effective_water,
                     request.calculation_settings.volume_liters
                 )
         else:
@@ -142,7 +207,7 @@ class CompleteFertilizerCalculator:
             dosages_g_l = self.nutrient_calc.calculate_optimized_dosages(
                 request.fertilizers,
                 request.target_concentrations,
-                request.water_analysis
+                effective_water
             )
 
         # Convert to FertilizerDosage format
@@ -158,16 +223,16 @@ class CompleteFertilizerCalculator:
             dosages_g_l, request.fertilizers, request.calculation_settings.volume_liters
         )
 
-        # Calculate water contributions
+        # Calculate water contributions (using dilution-adjusted water)
         water_contrib = self.calculate_water_contributions(
-            request.water_analysis, request.calculation_settings.volume_liters
+            effective_water, request.calculation_settings.volume_liters
         )
 
         # Calculate final solution
         final_solution = self.calculate_final_solution(
             nutrient_contrib, water_contrib)
 
-            
+
         # ============ ENHANCED VERIFICATION WITH DIAGNOSTICS ============
         print(f"\n{'='*80}")
         print(f"[VERIFY] PERFORMING ENHANCED VERIFICATION WITH DIAGNOSTICS")
@@ -178,15 +243,15 @@ class CompleteFertilizerCalculator:
             dosages=dosages_g_l,
             achieved_concentrations=final_solution['FINAL_mg_L'],
             target_concentrations=request.target_concentrations,
-            water_analysis=request.water_analysis,
+            water_analysis=effective_water,
             fertilizers=request.fertilizers,
             volume_liters=request.calculation_settings.volume_liters
         )
-        
+
         # Continue with existing ionic verification...
         ionic_relationships = verifier.verify_ionic_relationships(
-            final_solution['FINAL_meq_L'], 
-            final_solution['FINAL_mmol_L'], 
+            final_solution['FINAL_meq_L'],
+            final_solution['FINAL_mmol_L'],
             final_solution['FINAL_mg_L']
         )
         ionic_balance = verifier.verify_ionic_balance(final_solution['FINAL_meq_L'])
@@ -208,9 +273,9 @@ class CompleteFertilizerCalculator:
         # *** NEW: ADD MICRONUTRIENT ANALYSIS HERE ***
         print(f"\nPERFORMING ENHANCED MICRONUTRIENT ANALYSIS...")
 
-        # 1. Analyze micronutrient coverage
+        # 1. Analyze micronutrient coverage (use effective/diluted water)
         micronutrient_coverage = self.nutrient_calc.analyze_micronutrient_coverage(
-            request.fertilizers, request.target_concentrations, request.water_analysis
+            request.fertilizers, request.target_concentrations, effective_water
         )
 
         # 2. Calculate micronutrient dosages if needed
@@ -250,7 +315,8 @@ class CompleteFertilizerCalculator:
             'micronutrient_coverage': micronutrient_coverage,
             'micronutrient_dosages': micronutrient_dosages,
             'micronutrient_validation': micronutrient_validation,
-            'optimization_method': method
+            'optimization_method': method,
+            'water_dilution': water_dilution_info
         }
 
     def enhance_fertilizers_with_micronutrients(self,
@@ -992,10 +1058,16 @@ async def swagger_integrated_calculation_with_linear_programming(
                 f"[TARGET] Target concentrations: {len(target_concentrations)} parameters")
             print(f"[WATER] Water analysis: {len(water_analysis)} parameters")
 
+            # ===== WATER DILUTION CHECK =====
+            water_dilution_info = calculator.calculate_water_dilution_factor(
+                water_analysis, target_concentrations
+            )
+            effective_water = water_dilution_info['adjusted_water']
+
             # Enhanced fertilizer database with micronutrient auto-supplementation
             print(f"\n[INFO] Enhancing fertilizer database with micronutrients...")
             enhanced_fertilizers = calculator.enhance_fertilizers_with_micronutrients(
-                api_fertilizers, target_concentrations, water_analysis
+                api_fertilizers, target_concentrations, effective_water
             )
 
             micronutrients_added = len(
@@ -1028,11 +1100,11 @@ async def swagger_integrated_calculation_with_linear_programming(
                 print(
                     f"\n[DEBUG] Original target concentrations: {target_concentrations}")
 
-                # Use Linear Programming Optimizer
+                # Use Linear Programming Optimizer (use dilution-adjusted water)
                 lp_result = lp_optimizer.optimize_fertilizer_solution(
                     fertilizers=enhanced_fertilizers,
-                    target_concentrations=target_concentrations,  # FIXED: Pass original targets
-                    water_analysis=water_analysis,
+                    target_concentrations=target_concentrations,
+                    water_analysis=effective_water,
                     volume_liters=volume_liters,
                     apply_safety_caps=apply_safety_caps,
                     strict_caps=strict_caps
@@ -1118,7 +1190,7 @@ async def swagger_integrated_calculation_with_linear_programming(
                 dosages_g_l = nutrient_calc.calculate_optimized_dosages(
                     enhanced_fertilizers,
                     target_concentrations,
-                    water_analysis
+                    effective_water
                 )
                 
                 def calculate_nutrient_contributions(dosages_g_l: Dict[str, float], fertilizers: List):
@@ -1249,11 +1321,11 @@ async def swagger_integrated_calculation_with_linear_programming(
                     dosages_g_l, enhanced_fertilizers
                 )
 
-                # Calculate water contributions
+                # Calculate water contributions (dilution-adjusted)
                 water_contrib = calculate_water_contributions(
-                    water_analysis, volume_liters
+                    effective_water, volume_liters
                 )
-                
+
                 final_solution = calculate_final_solution(nutrient_contrib, water_contrib)
 
                 # Create detailed verification with diagnostics
@@ -1262,7 +1334,7 @@ async def swagger_integrated_calculation_with_linear_programming(
                     dosages=lp_result.dosages_g_per_L,
                     achieved_concentrations=lp_result.achieved_concentrations,
                     target_concentrations=target_concentrations,
-                    water_analysis=water_analysis,
+                    water_analysis=effective_water,
                     fertilizers=enhanced_fertilizers,
                     volume_liters=volume_liters
                 )
@@ -1496,12 +1568,14 @@ async def swagger_integrated_calculation_with_linear_programming(
                 },
                 "calculation_results": calculation_results,
                 "fertilizer_database": {},  # Add fertilizer database
-                "water_analysis": water_analysis,  # FIXED: Add water analysis
+                "water_analysis": effective_water,  # Use dilution-adjusted water for report
+                "water_analysis_original": water_analysis,  # Keep original for reference
+                "water_dilution": water_dilution_info,  # Include dilution metadata
                 "target_concentrations": target_concentrations  # FIXED: Add target concentrations
             }
 
             # FIXED: Store water analysis for PDF generator access
-            pdf_generator._current_water_analysis = water_analysis
+            pdf_generator._current_water_analysis = effective_water
 
             pdf_generator.generate_comprehensive_pdf(
                 calculation_data, pdf_filename)
@@ -1663,9 +1737,12 @@ async def swagger_integrated_calculation_with_linear_programming(
                 }
             }} if include_pdf_data and pdf_base64 else {}),
 
+            "water_dilution": water_dilution_info,
+
             # Enhanced calculation data for building the PDF
             "calculation_data_used": {
-                "water_analysis": water_analysis,
+                "water_analysis": effective_water,
+                "water_analysis_original": water_analysis,
                 "target_concentrations": target_concentrations,
                 "fertilizer_database": [fert.to_dict() for fert in enhanced_fertilizers],
                 "api_fertilizers_raw": fertilizers_data,

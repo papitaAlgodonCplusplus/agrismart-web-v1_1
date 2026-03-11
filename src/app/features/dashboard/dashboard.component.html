@@ -21,7 +21,7 @@
           <div class="hero-chip chip-sky hero-chip-loading">Actualizando sistema...</div>
         </div>
       </div>
-      <div class="hero-ribbon-row" *ngIf="!isLoading">
+      <div class="hero-ribbon-row" *ngIf="!isLoading && !showNoFarmsEmptyState">
         <div class="hero-ribbon">
           <i class="bi bi-broadcast"></i>
           Vista principal de producción, clima, riego y recomendaciones.
@@ -31,11 +31,28 @@
           Panel dinámico con accesos rápidos y métricas en tiempo real.
           </div>
         </div>
+    </div>
+
+    <div class="row mb-4" *ngIf="showNoFarmsEmptyState && !isLoading">
+      <div class="col-12">
+        <button type="button" class="dashboard-empty-state" (click)="navigateToFarms()">
+          <span class="dashboard-empty-icon">
+            <i class="bi bi-geo-alt"></i>
+          </span>
+          <span class="dashboard-empty-copy">
+            <span class="dashboard-empty-kicker">Farm setup required</span>
+            <span class="dashboard-empty-title">No farms yet, create your first farm!</span>
+            <span class="dashboard-empty-text">Open farm management to add your first location and unlock climate calculations.</span>
+          </span>
+          <span class="dashboard-empty-action">
+            <span>Go to farms</span>
+            <i class="bi bi-arrow-right"></i>
+          </span>
+        </button>
       </div>
     </div>
 
-    <div class="row mb-4 dashboard-stats-row" *ngIf="stats && !isLoading">
-    <div class="row mb-4" *ngIf="stats && !isLoading">
+    <div class="row mb-4 dashboard-stats-row" *ngIf="stats && !isLoading && !showNoFarmsEmptyState">
       <!-- Farms Card -->
       <div class="col-xl-3 col-md-6 mb-4">
         <div class="aero-card aero-glass-card stats-card card-success">
@@ -114,7 +131,7 @@
     </div>
 
     <!-- Charts and Activities Section -->
-    <div class="row mb-4" *ngIf="!isLoading">
+    <div class="row mb-4" *ngIf="!isLoading && !showNoFarmsEmptyState">
       <!-- Quick Actions -->
       <div class="col-lg-8 mb-4">
         <div class="aero-card aero-glass-card action-card dashboard-action-hub">
@@ -518,7 +535,7 @@
     </div>
 
     <!-- Replace the Climate KPIs Summary section (around line 170) -->
-    <div class="pagination-actions">
+    <div class="pagination-actions" *ngIf="!showNoFarmsEmptyState">
       <button class="btn aero-btn aero-btn-outline-success me-2" (click)="resetPagination()"
         [disabled]="isLoadingMore || currentPage === 1">
         <i class="bi bi-arrow-clockwise me-1"></i>
@@ -550,7 +567,7 @@
     <br />
 
     <!-- Climate KPIs Section with Collapse/Expand -->
-    <div class="row mt-4" *ngIf="aggregateClimateKPIs">
+    <div class="row mt-4" *ngIf="aggregateClimateKPIs && !showNoFarmsEmptyState">
       <div class="col-12">
         <div class="aero-card aero-glass-card">
           <div class="aero-card-header bg-primary text-white">
@@ -694,7 +711,7 @@
 
 
     <!-- Flow Events Detection Section -->
-    <div class="row mt-4" *ngIf="flowEvents.length > 0">
+    <div class="row mt-4" *ngIf="flowEvents.length > 0 && !showNoFarmsEmptyState">
       <div class="col-12">
         <div class="aero-card aero-glass-card">
           <div class="aero-card-header bg-primary text-white">
@@ -824,7 +841,7 @@
     </div>
 
     <!-- Irrigation Metrics Section -->
-    <div class="row mt-4" *ngIf="irrigationMetrics.length > 0">
+    <div class="row mt-4" *ngIf="irrigationMetrics.length > 0 && !showNoFarmsEmptyState">
       <div class="col-12">
         <div class="aero-card aero-glass-card">
           <div class="aero-card-header bg-info text-white">
@@ -1001,7 +1018,7 @@
     </div>
 
     <!-- Fertilizer Recommendations Section -->
-    <div class="row mt-4" *ngIf="fertilizerDosages.length > 0">
+    <div class="row mt-4" *ngIf="fertilizerDosages.length > 0 && !showNoFarmsEmptyState">
       <div class="col-12">
         <div class="aero-card aero-glass-card">
           <div class="aero-card-header bg-success text-white">
@@ -1140,7 +1157,7 @@
     </div>
 
     <!-- Fertilizer Details Modal -->
-    <div class="modal fade" [class.show]="showFertilizerDetailsModal"
+    <div class="modal fade" *ngIf="!showNoFarmsEmptyState" [class.show]="showFertilizerDetailsModal"
       [style.display]="showFertilizerDetailsModal ? 'block' : 'none'" tabindex="-1" role="dialog">
       <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">

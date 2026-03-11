@@ -104,10 +104,10 @@
     <!-- ==================== END WELCOME SCREEN ==================== -->
 
     <div class="tab-container" *ngIf="selectedTab === 'calculadora'">
-      <div class="row h-100">
+      <div class="calculator-layout">
 
         <!-- Left Panel - Advanced Calculator Form -->
-        <div class="col-lg-8">
+        <div class="calculator-main">
           <div class="content-scroll">
 
             <!-- Advanced Calculator Card -->
@@ -171,10 +171,8 @@
                       </select>
                     </div>
 
-                    <div class="col-md-4">
-                      <label class="form-label">Volumen (L)</label>
-                      <input type="number" class="form-control" formControlName="volume_liters" min="1" step="1">
-                    </div>
+                    <!-- volume_liters is sent to API with default 1000 L -->
+                    <input type="hidden" formControlName="volume_liters">
                   </div>
 
                   <!-- Action Buttons -->
@@ -657,6 +655,78 @@
                   </div>
                 </div>
 
+                <!-- Water Dilution Info -->
+                <ng-container *ngIf="calculationResults?.water_dilution as wd">
+                <div class="row mb-4">
+                  <div class="col-12">
+                    <h6><i class="bi bi-droplet-half me-2"></i>Calidad del Agua de Riego (por Litro)</h6>
+                    <div class="alert mb-2"
+                      [class.alert-warning]="wd.dilution_needed"
+                      [class.alert-success]="!wd.dilution_needed">
+                      <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="bi"
+                          [class.bi-exclamation-triangle-fill]="wd.dilution_needed"
+                          [class.bi-check-circle-fill]="!wd.dilution_needed"></i>
+                        <strong>
+                          {{ wd.dilution_needed
+                            ? 'Se requiere dilución: agua fuente excede objetivos'
+                            : 'Agua fuente dentro de objetivos — sin dilución necesaria' }}
+                        </strong>
+                      </div>
+                      <div *ngIf="wd.dilution_needed" class="mt-2">
+                        <p class="mb-1 small">
+                          Nutriente limitante: <strong>{{ wd.limiting_nutrient }}</strong>.
+                          Mezcle por cada litro de solución final:
+                        </p>
+                        <div class="d-flex gap-3 mb-2">
+                          <span class="badge bg-primary fs-6">
+                            {{ (wd.dilution_factor * 100) | number:'1.2-2' }}% agua fuente
+                          </span>
+                          <span class="badge bg-secondary fs-6">
+                            {{ (wd.ro_water_fraction * 100) | number:'1.2-2' }}% agua RO/pura
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Per-liter water nutrient table -->
+                    <div class="table-responsive" *ngIf="wd.over_limit_nutrients">
+                      <table class="table table-sm table-bordered mb-0"
+                        *ngIf="(wd.over_limit_nutrients | keyvalue).length > 0">
+                        <caption class="caption-top small text-muted">
+                          Nutrientes del agua que excedían objetivos — ajustados con factor de dilución
+                          {{ wd.dilution_factor | number:'1.4-4' }}
+                        </caption>
+                        <thead class="table-warning">
+                          <tr>
+                            <th>Nutriente</th>
+                            <th class="text-end">Agua fuente<br><small>(mg/L)</small></th>
+                            <th class="text-end">Objetivo<br><small>(mg/L)</small></th>
+                            <th class="text-end">Dilución<br><small>requerida</small></th>
+                            <th class="text-end">Aporte ajustado<br><small>(mg/L por L final)</small></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let entry of wd.over_limit_nutrients | keyvalue">
+                            <td><strong>{{ entry.key }}</strong></td>
+                            <td class="text-end text-danger fw-bold">
+                              {{ $any(entry.value).water_value | number:'1.2-2' }}
+                            </td>
+                            <td class="text-end">{{ $any(entry.value).target | number:'1.2-2' }}</td>
+                            <td class="text-end text-warning fw-bold">
+                              {{ ($any(entry.value).required_dilution * 100) | number:'1.2-2' }}%
+                            </td>
+                            <td class="text-end text-success fw-bold">
+                              {{ ($any(entry.value).water_value * wd.dilution_factor) | number:'1.3-3' }}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                </ng-container>
+
                 <!-- Soil Analysis -->
                 <div class="row mb-4" *ngIf="soilAnalysisData && soilAnalysisData.used">
                   <div class="col-12">
@@ -738,16 +808,19 @@
                     </div>
 
                     <!-- Nutritional Contribution Table -->
+                    <ng-container *ngIf="fertilizerUsageData.length > 0">
+                    <ng-container *ngIf="getFertilizerNutrientTotals() as totals">
                     <div class="card">
-                      <div class="card-header">
-                        <strong>Aporte Nutricional por Fertilizante (g)</strong>
+                      <div class="card-header d-flex justify-content-between align-items-center">
+                        <strong>Aporte Nutricional por Fertilizante (mg/L)</strong>
+                        <small class="text-muted">concentración final = fertilizante + agua</small>
                       </div>
-                      <div class="card-body">
+                      <div class="card-body p-0">
                         <div class="table-responsive">
-                          <table class="table table-sm table-hover">
-                            <thead>
+                          <table class="table table-sm table-hover mb-0" style="font-size:0.8rem">
+                            <thead class="table-dark">
                               <tr>
-                                <th>Fertilizante</th>
+                                <th style="min-width:160px">Fertilizante<br><small class="fw-normal text-muted">dosificación usada</small></th>
                                 <th class="text-end">N</th>
                                 <th class="text-end">P</th>
                                 <th class="text-end">K</th>
@@ -764,25 +837,148 @@
                             </thead>
                             <tbody>
                               <tr *ngFor="let fert of fertilizerUsageData">
-                                <td><strong>{{ fert.name }}</strong></td>
-                                <td class="text-end">{{ fert.nutrient_contribution.N.toFixed(2) }}</td>
-                                <td class="text-end">{{ fert.nutrient_contribution.P.toFixed(2) }}</td>
-                                <td class="text-end">{{ fert.nutrient_contribution.K.toFixed(2) }}</td>
-                                <td class="text-end">{{ fert.nutrient_contribution.Ca.toFixed(2) }}</td>
-                                <td class="text-end">{{ fert.nutrient_contribution.Mg.toFixed(2) }}</td>
-                                <td class="text-end">{{ fert.nutrient_contribution.S.toFixed(2) }}</td>
-                                <td class="text-end">{{ fert.nutrient_contribution.Fe.toFixed(2) }}</td>
-                                <td class="text-end">{{ fert.nutrient_contribution.Mn.toFixed(2) }}</td>
-                                <td class="text-end">{{ fert.nutrient_contribution.Zn.toFixed(2) }}</td>
-                                <td class="text-end">{{ fert.nutrient_contribution.Cu.toFixed(2) }}</td>
-                                <td class="text-end">{{ fert.nutrient_contribution.B.toFixed(2) }}</td>
-                                <td class="text-end">{{ fert.nutrient_contribution.Mo.toFixed(2) }}</td>
+                                <td>
+                                  <strong>{{ fert.name }}</strong><br>
+                                  <small class="text-muted">{{ getFertilizerDosageDisplay(fert) }}</small>
+                                </td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.N || 0).toFixed(3) }}</td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.P || 0).toFixed(3) }}</td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.K || 0).toFixed(3) }}</td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.Ca || 0).toFixed(3) }}</td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.Mg || 0).toFixed(3) }}</td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.S || 0).toFixed(3) }}</td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.Fe || 0).toFixed(3) }}</td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.Mn || 0).toFixed(3) }}</td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.Zn || 0).toFixed(3) }}</td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.Cu || 0).toFixed(3) }}</td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.B || 0).toFixed(3) }}</td>
+                                <td class="text-end">{{ (fert.nutrient_contribution_ppm?.Mo || 0).toFixed(3) }}</td>
                               </tr>
                             </tbody>
+                            <tfoot>
+                              <!-- Σ fertilizers -->
+                              <tr class="table-secondary fw-bold">
+                                <td>Σ Fertilizantes</td>
+                                <td class="text-end">{{ totals['N'].fert.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['P'].fert.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['K'].fert.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Ca'].fert.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mg'].fert.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['S'].fert.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Fe'].fert.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mn'].fert.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Zn'].fert.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Cu'].fert.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['B'].fert.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mo'].fert.toFixed(3) }}</td>
+                              </tr>
+                              <!-- Water contribution -->
+                              <tr class="table-info">
+                                <td><i class="bi bi-droplet me-1"></i>Agua (ajustada)</td>
+                                <td class="text-end">{{ totals['N'].water.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['P'].water.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['K'].water.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Ca'].water.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mg'].water.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['S'].water.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Fe'].water.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mn'].water.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Zn'].water.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Cu'].water.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['B'].water.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mo'].water.toFixed(3) }}</td>
+                              </tr>
+                              <!-- Grand total -->
+                              <tr class="table-primary fw-bold">
+                                <td>Total Final (Fert + Agua)</td>
+                                <td class="text-end">{{ totals['N'].grand.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['P'].grand.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['K'].grand.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Ca'].grand.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mg'].grand.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['S'].grand.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Fe'].grand.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mn'].grand.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Zn'].grand.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Cu'].grand.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['B'].grand.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mo'].grand.toFixed(3) }}</td>
+                              </tr>
+                              <!-- Achieved from API -->
+                              <tr class="table-success fw-bold">
+                                <td><i class="bi bi-check2 me-1"></i>Logrado (API)</td>
+                                <td class="text-end">{{ totals['N'].achieved.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['P'].achieved.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['K'].achieved.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Ca'].achieved.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mg'].achieved.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['S'].achieved.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Fe'].achieved.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mn'].achieved.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Zn'].achieved.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Cu'].achieved.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['B'].achieved.toFixed(3) }}</td>
+                                <td class="text-end">{{ totals['Mo'].achieved.toFixed(3) }}</td>
+                              </tr>
+                              <!-- Match row -->
+                              <tr class="table-light">
+                                <td class="text-muted small">Coincide (±10%)</td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['N'].matches" [class.text-success]="totals['N'].matches"
+                                     [class.bi-x-circle-fill]="!totals['N'].matches" [class.text-danger]="!totals['N'].matches"></i>
+                                </td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['P'].matches" [class.text-success]="totals['P'].matches"
+                                     [class.bi-x-circle-fill]="!totals['P'].matches" [class.text-danger]="!totals['P'].matches"></i>
+                                </td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['K'].matches" [class.text-success]="totals['K'].matches"
+                                     [class.bi-x-circle-fill]="!totals['K'].matches" [class.text-danger]="!totals['K'].matches"></i>
+                                </td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['Ca'].matches" [class.text-success]="totals['Ca'].matches"
+                                     [class.bi-x-circle-fill]="!totals['Ca'].matches" [class.text-danger]="!totals['Ca'].matches"></i>
+                                </td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['Mg'].matches" [class.text-success]="totals['Mg'].matches"
+                                     [class.bi-x-circle-fill]="!totals['Mg'].matches" [class.text-danger]="!totals['Mg'].matches"></i>
+                                </td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['S'].matches" [class.text-success]="totals['S'].matches"
+                                     [class.bi-x-circle-fill]="!totals['S'].matches" [class.text-danger]="!totals['S'].matches"></i>
+                                </td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['Fe'].matches" [class.text-success]="totals['Fe'].matches"
+                                     [class.bi-x-circle-fill]="!totals['Fe'].matches" [class.text-danger]="!totals['Fe'].matches"></i>
+                                </td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['Mn'].matches" [class.text-success]="totals['Mn'].matches"
+                                     [class.bi-x-circle-fill]="!totals['Mn'].matches" [class.text-danger]="!totals['Mn'].matches"></i>
+                                </td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['Zn'].matches" [class.text-success]="totals['Zn'].matches"
+                                     [class.bi-x-circle-fill]="!totals['Zn'].matches" [class.text-danger]="!totals['Zn'].matches"></i>
+                                </td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['Cu'].matches" [class.text-success]="totals['Cu'].matches"
+                                     [class.bi-x-circle-fill]="!totals['Cu'].matches" [class.text-danger]="!totals['Cu'].matches"></i>
+                                </td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['B'].matches" [class.text-success]="totals['B'].matches"
+                                     [class.bi-x-circle-fill]="!totals['B'].matches" [class.text-danger]="!totals['B'].matches"></i>
+                                </td>
+                                <td class="text-center">
+                                  <i class="bi" [class.bi-check-circle-fill]="totals['Mo'].matches" [class.text-success]="totals['Mo'].matches"
+                                     [class.bi-x-circle-fill]="!totals['Mo'].matches" [class.text-danger]="!totals['Mo'].matches"></i>
+                                </td>
+                              </tr>
+                            </tfoot>
                           </table>
                         </div>
                       </div>
                     </div>
+                    </ng-container>
+                    </ng-container>
                   </div>
                 </div>
 
@@ -827,21 +1023,26 @@
                               </span>
                             </td>
 
-                            <!-- NEW INFO COLUMN -->
+                            <!-- INFO COLUMN: based on actual param.status -->
                             <td class="text-center">
-                              <ng-container *ngIf="hasNutrientDiscrepancy(param.parameter)">
-                                <i class="bi bi-info-circle-fill"
-                                  [class.text-warning]="getNutrientDiagnosticSeverity(param.parameter) === 'medium'"
-                                  [class.text-danger]="getNutrientDiagnosticSeverity(param.parameter) === 'high'"
-                                  [class.text-info]="getNutrientDiagnosticSeverity(param.parameter) === 'low'"
-                                  style="cursor: pointer; font-size: 1.2rem;" [attr.data-bs-toggle]="'tooltip'"
-                                  [attr.data-bs-placement]="'left'" [attr.data-bs-html]="true"
-                                  [attr.title]="getNutrientDiagnosticMessage(param.parameter)">
+                              <ng-container *ngIf="param.status === 'optimal'">
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 1.2rem;"
+                                  [attr.data-bs-toggle]="'tooltip'"
+                                  [attr.title]="param.parameter + ': concentración óptima alcanzada'">
                                 </i>
                               </ng-container>
-                              <ng-container *ngIf="!hasNutrientDiscrepancy(param.parameter)">
-                                <i class="bi bi-check-circle-fill text-success" style="font-size: 1.2rem;"
-                                  [attr.data-bs-toggle]="'tooltip'" [attr.title]="'Concentración óptima alcanzada'">
+                              <ng-container *ngIf="param.status === 'acceptable'">
+                                <i class="bi bi-info-circle-fill text-warning"
+                                  style="cursor: pointer; font-size: 1.2rem;"
+                                  [attr.data-bs-toggle]="'tooltip'" [attr.data-bs-placement]="'left'"
+                                  [attr.title]="param.parameter + ': desviación aceptable (' + (param.difference > 0 ? '+' : '') + param.difference + (param.unit ? ' ' + param.unit : '') + ' del objetivo ' + param.target + ')'">
+                                </i>
+                              </ng-container>
+                              <ng-container *ngIf="param.status === 'critical'">
+                                <i class="bi bi-exclamation-triangle-fill text-danger"
+                                  style="cursor: pointer; font-size: 1.2rem;"
+                                  [attr.data-bs-toggle]="'tooltip'" [attr.data-bs-placement]="'left'"
+                                  [attr.title]="param.parameter + ': desviación crítica — logrado ' + param.achieved + (param.unit ? ' ' + param.unit : '') + ', objetivo ' + param.target + (param.unit ? ' ' + param.unit : '')">
                                 </i>
                               </ng-container>
                             </td>
@@ -882,14 +1083,13 @@
                 <br />
                 <br />
                 <br />
-              </div>
             </div>
 
           </div>
         </div>
 
         <!-- Right Panel - Status and Info -->
-        <div class="col-lg-4">
+        <div class="calculator-sidebar">
           <div class="sidebar-scroll">
 
             <!-- Quick Stats -->
