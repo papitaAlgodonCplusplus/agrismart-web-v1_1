@@ -287,7 +287,7 @@ export class IrrigationAutoMonitorService {
                 match: 'Sin historial de eventos de riego',
                 title: 'Sin historial de riego detectado',
                 details: [
-                    'No se detectaron eventos de riego en las últimas 24 horas.',
+                    'No se detectaron eventos de riego en los últimas 10 días.',
                     'Sensores requeridos: Water_flow_value o Total_pulse.',
                     'Se necesita al menos un evento de flujo reciente para calcular la recomendación.'
                 ]

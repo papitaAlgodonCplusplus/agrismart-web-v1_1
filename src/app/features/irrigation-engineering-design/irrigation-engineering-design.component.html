@@ -1,67 +1,73 @@
 <!-- src/app/features/irrigation-engineering-design/irrigation-engineering-design.component.html -->
-<div class="irrigation-scheduling-container">
+<div class="page-wrapper irrigation-engineering-page">
+  <div class="container-fluid py-3">
+    <div class="irrigation-scheduling-container">
 
   <!-- ==================== PAGE HEADER ==================== -->
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">
-        <i class="bi bi-gear"></i>
-        Diseño de Ingeniería de Riego
-      </h1>
-      <p class="lead">Gestione planes, modos, programaciones y revise el historial de ejecuciones</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-secondary me-2" (click)="goToDashboard()">
-        <i class="bi bi-arrow-left"></i>
-        Regresar al Dashboard
-      </button>
-      <button class="btn btn-success" (click)="exportToCSV()" [disabled]="isLoading">
-        <i class="bi bi-download"></i>
-        Exportar
-      </button>
+  <div class="aero-header mb-3">
+    <div class="aero-header-content">
+      <div class="d-flex align-items-center gap-3">
+        <div class="aero-icon-orb">
+          <i class="bi bi-gear"></i>
+        </div>
+        <div class="header-content">
+          <h1 class="aero-title mb-0">Diseño de Ingeniería de Riego</h1>
+          <p class="aero-subtitle mb-0">Gestione planes, modos, programaciones y revise el historial de ejecuciones</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="aero-btn-back me-2" (click)="goToDashboard()">
+          <i class="bi bi-arrow-left me-1"></i>
+          Regresar al Dashboard
+        </button>
+        <button class="btn aero-btn aero-btn-success" (click)="exportToCSV()" [disabled]="isLoading">
+          <i class="bi bi-download"></i>
+          Exportar
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- ==================== NAVIGATION TABS ==================== -->
-  <ul class="nav nav-tabs">
+  <ul class="nav nav-tabs aero-tab-bar design-tab-bar">
     <li class="nav-item">
-      <a class="nav-link" [class.active]="activeTab === 'plans'" (click)="setActiveTab('plans')">
+      <a class="nav-link aero-tab" [class.active]="activeTab === 'plans'" (click)="setActiveTab('plans')">
         <i class="bi bi-calendar-check"></i>
         Planes de Riego
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" [class.active]="activeTab === 'entries'" (click)="setActiveTab('entries')">
+      <a class="nav-link aero-tab" [class.active]="activeTab === 'entries'" (click)="setActiveTab('entries')">
         <i class="bi bi-clock-history"></i>
         Entradas de Programación
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" [class.active]="activeTab === 'modes'" (click)="setActiveTab('modes')">
+      <a class="nav-link aero-tab" [class.active]="activeTab === 'modes'" (click)="setActiveTab('modes')">
         <i class="bi bi-water"></i>
         Modos de Riego
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" [class.active]="activeTab === 'history'" (click)="setActiveTab('history')">
+      <a class="nav-link aero-tab" [class.active]="activeTab === 'history'" (click)="setActiveTab('history')">
         <i class="bi bi-clock-history"></i>
         Historial de Ejecuciones
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" [class.active]="activeTab === 'sectors'" (click)="setActiveTab('sectors')">
+      <a class="nav-link aero-tab" [class.active]="activeTab === 'sectors'" (click)="setActiveTab('sectors')">
         <i class="bi bi-diagram-3"></i>
         Sectores y Válvulas
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" [class.active]="activeTab === 'metrics'" (click)="setActiveTab('metrics')">
+      <a class="nav-link aero-tab" [class.active]="activeTab === 'metrics'" (click)="setActiveTab('metrics')">
         <i class="bi bi-graph-up"></i>
         Métricas de Riego
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" [class.active]="activeTab === 'substrate'" (click)="setActiveTab('substrate')">
+      <a class="nav-link aero-tab" [class.active]="activeTab === 'substrate'" (click)="setActiveTab('substrate')">
         <i class="bi bi-graph-up-arrow"></i>
         Análisis de Sustrato
       </a>
@@ -69,7 +75,7 @@
   </ul>
 
   <!-- ==================== LOADING STATE ==================== -->
-  <div *ngIf="isLoading" class="text-center py-5">
+  <div *ngIf="isLoading" class="text-center py-5 aero-loading-panel">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Cargando...</span>
     </div>
@@ -78,18 +84,18 @@
 
   <!-- ==================== PLANS TAB ==================== -->
   <div *ngIf="activeTab === 'plans' && !isLoading">
-    <div class="card">
-      <div class="card-header">
+    <div class=" aero-card aero-glass-card ">
+      <div class=" aero-card aero-glass-card -header">
         <h5 class="mb-0">
           <i class="bi bi-calendar-check"></i>
           Planes de Riego
         </h5>
-        <button class="btn btn-primary" (click)="openPlanModal()">
+        <button class=" btn aero-btn aero-btn-primary " (click)="openPlanModal()">
           <i class="bi bi-plus-circle"></i>
           Nuevo Plan
         </button>
       </div>
-      <div class="card-body">
+      <div class=" aero-card aero-glass-card -body">
         <div class="table-responsive">
           <table class="table table-hover" *ngIf="irrigationPlans.length > 0; else emptyPlans">
             <thead class="table-header">
@@ -125,7 +131,7 @@
                 <td>{{ formatDate(plan.dateCreated) }}</td>
                 <td>
                   <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" (click)="openPlanModal(plan)" title="Editar">
+                    <button class=" btn aero-btn aero-btn-outline-primary " (click)="openPlanModal(plan)" title="Editar">
                       <i class="bi bi-pencil"></i>
                     </button>
                     <button class="btn btn-outline-danger" (click)="deletePlan(plan)" title="Eliminar">
@@ -149,23 +155,23 @@
 
   <!-- ==================== ENTRIES TAB (SCHEDULE TEMPLATES) ==================== -->
   <div *ngIf="activeTab === 'entries' && !isLoading">
-    <div class="card">
-      <div class="card-header">
+    <div class=" aero-card aero-glass-card ">
+      <div class=" aero-card aero-glass-card -header">
         <h5 class="mb-0">
           <i class="bi bi-clock-history"></i>
           Entradas de Programación (Plantillas)
         </h5>
-        <button class="btn btn-primary" (click)="openEntryModal()">
+        <button class=" btn aero-btn aero-btn-primary " (click)="openEntryModal()">
           <i class="bi bi-plus-circle"></i>
           Nueva Entrada
         </button>
       </div>
-      <div class="card-body">
+      <div class=" aero-card aero-glass-card -body">
         <!-- Filters -->
         <div class="row g-3 mb-4">
           <div class="col-md-4">
             <label class="form-label">Filtrar por Plan</label>
-            <select class="form-select" [(ngModel)]="filterPlanId" (change)="applyEntryFilters()">
+            <select class="form-select aero-input" [(ngModel)]="filterPlanId" (change)="applyEntryFilters()">
               <option [ngValue]="null">Todos los planes</option>
               <option *ngFor="let plan of irrigationPlans" [ngValue]="plan.id">
                 {{ plan.name }}
@@ -174,7 +180,7 @@
           </div>
           <div class="col-md-4">
             <label class="form-label">Filtrar por Modo</label>
-            <select class="form-select" [(ngModel)]="filterModeId" (change)="applyEntryFilters()">
+            <select class="form-select aero-input" [(ngModel)]="filterModeId" (change)="applyEntryFilters()">
               <option [ngValue]="null">Todos los modos</option>
               <option *ngFor="let mode of irrigationModes" [ngValue]="mode.id">
                 {{ mode.name }}
@@ -182,7 +188,7 @@
             </select>
           </div>
           <div class="col-md-4 d-flex align-items-end">
-            <button class="btn btn-secondary w-100" (click)="clearFilters()">
+            <button class=" btn aero-btn aero-btn-secondary w-100" (click)="clearFilters()">
               <i class="bi bi-x-circle"></i>
               Limpiar Filtros
             </button>
@@ -261,7 +267,7 @@
                 <td>{{ entry.sequence }}</td>
                 <td>
                   <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" (click)="openEntryModal(entry)" title="Editar">
+                    <button class=" btn aero-btn aero-btn-outline-primary " (click)="openEntryModal(entry)" title="Editar">
                       <i class="bi bi-pencil"></i>
                     </button>
                     <button class="btn btn-outline-danger" (click)="deleteEntry(entry)" title="Eliminar">
@@ -285,18 +291,18 @@
 
   <!-- ==================== MODES TAB ==================== -->
   <div *ngIf="activeTab === 'modes' && !isLoading">
-    <div class="card">
-      <div class="card-header">
+    <div class=" aero-card aero-glass-card ">
+      <div class=" aero-card aero-glass-card -header">
         <h5 class="mb-0">
           <i class="bi bi-water"></i>
           Modos de Riego
         </h5>
-        <button class="btn btn-primary" (click)="openModeModal()">
+        <button class=" btn aero-btn aero-btn-primary " (click)="openModeModal()">
           <i class="bi bi-plus-circle"></i>
           Nuevo Modo
         </button>
       </div>
-      <div class="card-body">
+      <div class=" aero-card aero-glass-card -body">
         <div class="table-responsive">
           <table class="table table-hover" *ngIf="irrigationModes.length > 0; else emptyModes">
             <thead class="table-header">
@@ -326,7 +332,7 @@
                 <td>{{ formatDate(mode.dateCreated) }}</td>
                 <td>
                   <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" (click)="openModeModal(mode)" title="Editar">
+                    <button class=" btn aero-btn aero-btn-outline-primary " (click)="openModeModal(mode)" title="Editar">
                       <i class="bi bi-pencil"></i>
                     </button>
                     <button class="btn btn-outline-danger" (click)="deleteMode(mode)" title="Eliminar">
@@ -350,18 +356,18 @@
 
   <!-- ==================== EXECUTION HISTORY TAB ==================== -->
   <div *ngIf="activeTab === 'history' && !isLoading">
-    <div class="card">
-      <div class="card-header">
+    <div class=" aero-card aero-glass-card ">
+      <div class=" aero-card aero-glass-card -header">
         <h5 class="mb-0">
           <i class="bi bi-clock-history"></i>
           Historial de Ejecuciones (Registros Reales)
         </h5>
-        <button class="btn btn-secondary" (click)="loadExecutionHistory()">
+        <button class=" btn aero-btn aero-btn-secondary " (click)="loadExecutionHistory()">
           <i class="bi bi-arrow-clockwise"></i>
           Refrescar
         </button>
       </div>
-      <div class="card-body">
+      <div class=" aero-card aero-glass-card -body">
         <!-- Table -->
         <div class="table-responsive">
           <table class="table table-hover" *ngIf="filteredHistory.length > 0; else emptyHistory">
@@ -433,20 +439,20 @@
   </div>
 
   <div *ngIf="activeTab === 'metrics' && !isLoading">
-    <div class="card">
-      <div class="card-header">
+    <div class=" aero-card aero-glass-card ">
+      <div class=" aero-card aero-glass-card -header">
         <h5 class="mb-0">
           <i class="bi bi-graph-up"></i>
           Métricas de Rendimiento de Riego
         </h5>
       </div>
-      <div class="card-body">
+      <div class=" aero-card aero-glass-card -body">
         <!-- Metrics Controls -->
         <div class="metrics-controls mb-4">
           <div class="row g-3">
             <div class="col-md-4">
               <label class="form-label">Producción de Cultivo</label>
-              <select class="form-select" [(ngModel)]="selectedCropProductionId" (change)="onCropProductionChange()">
+              <select class="form-select aero-input" [(ngModel)]="selectedCropProductionId" (change)="onCropProductionChange()">
                 <option [value]="null">Seleccionar...</option>
                 <option *ngFor="let cp of cropProductions" [value]="cp.id">
                   {{ cp.name || 'Producción #' + cp.id }}
@@ -456,16 +462,16 @@
 
             <div class="col-md-3">
               <label class="form-label">Fecha Inicio</label>
-              <input type="date" class="form-control" [(ngModel)]="metricsStartDate" (change)="loadMetrics()">
+              <input type="date" class="form-control aero-input" [(ngModel)]="metricsStartDate" (change)="loadMetrics()">
             </div>
 
             <div class="col-md-3">
               <label class="form-label">Fecha Fin</label>
-              <input type="date" class="form-control" [(ngModel)]="metricsEndDate" (change)="loadMetrics()">
+              <input type="date" class="form-control aero-input" [(ngModel)]="metricsEndDate" (change)="loadMetrics()">
             </div>
 
             <div class="col-md-2 d-flex align-items-end">
-              <button class="btn btn-primary w-100" (click)="loadMetrics()" [disabled]="isLoadingMetrics">
+              <button class=" btn aero-btn aero-btn-primary w-100" (click)="loadMetrics()" [disabled]="isLoadingMetrics">
                 <i class="bi bi-arrow-clockwise"></i>
                 {{ isLoadingMetrics ? 'Cargando...' : 'Actualizar' }}
               </button>
@@ -477,7 +483,7 @@
         <div class="metrics-summary mb-4" *ngIf="irrigationMetrics.length > 0">
           <div class="row g-3">
             <div class="col-md-3">
-              <div class="metric-card">
+              <div class="metric- aero-card aero-glass-card ">
                 <div class="metric-icon">
                   <i class="bi bi-water"></i>
                 </div>
@@ -489,7 +495,7 @@
             </div>
 
             <div class="col-md-3">
-              <div class="metric-card">
+              <div class="metric- aero-card aero-glass-card ">
                 <div class="metric-icon">
                   <i class="bi bi-droplet"></i>
                 </div>
@@ -501,7 +507,7 @@
             </div>
 
             <div class="col-md-3">
-              <div class="metric-card"
+              <div class="metric- aero-card aero-glass-card "
                 [class.warning]="metricsSummary.avgDrainPercentage < 10 || metricsSummary.avgDrainPercentage > 30">
                 <div class="metric-icon">
                   <i class="bi bi-funnel"></i>
@@ -517,7 +523,7 @@
             </div>
 
             <div class="col-md-3">
-              <div class="metric-card">
+              <div class="metric- aero-card aero-glass-card ">
                 <div class="metric-icon">
                   <i class="bi bi-speedometer"></i>
                 </div>
@@ -529,7 +535,7 @@
             </div>
 
             <div class="col-md-3">
-              <div class="metric-card">
+              <div class="metric- aero-card aero-glass-card ">
                 <div class="metric-icon">
                   <i class="bi bi-clock"></i>
                 </div>
@@ -541,7 +547,7 @@
             </div>
 
             <div class="col-md-3">
-              <div class="metric-card">
+              <div class="metric- aero-card aero-glass-card ">
                 <div class="metric-icon">
                   <i class="bi bi-graph-up"></i>
                 </div>
@@ -592,7 +598,7 @@
                 <td>{{ metric.irrigationFlow.value | number:'1.2-2' }}</td>
                 <td>
                   <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" (click)="viewMetricDetails(metric)" title="Ver Detalles">
+                    <button class=" btn aero-btn aero-btn-outline-primary " (click)="viewMetricDetails(metric)" title="Ver Detalles">
                       <i class="bi bi-eye"></i>
                     </button>
                     <button class="btn btn-outline-secondary" (click)="compareMetrics(metric)" title="Comparar">
@@ -629,18 +635,18 @@
   <div *ngIf="activeTab === 'sectors' && !isLoading">
 
     <!-- ---- SECTORS TABLE ---- -->
-    <div class="card mb-3">
-      <div class="card-header d-flex justify-content-between align-items-center">
+    <div class=" aero-card aero-glass-card mb-3">
+      <div class=" aero-card aero-glass-card -header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
           <i class="bi bi-diagram-3"></i>
           Sectores de Riego
         </h5>
-        <button class="btn btn-primary btn-sm" (click)="openSectorModal()">
+        <button class=" btn aero-btn aero-btn-primary btn-sm" (click)="openSectorModal()">
           <i class="bi bi-plus-lg"></i>
           Nuevo Sector
         </button>
       </div>
-      <div class="card-body p-0">
+      <div class=" aero-card aero-glass-card -body p-0">
         <div *ngIf="isLoadingSectors" class="text-center py-4">
           <div class="spinner-border spinner-border-sm text-primary"></div>
           <span class="ms-2 text-muted">Cargando sectores...</span>
@@ -710,8 +716,8 @@
     </div>
 
     <!-- ---- RELAY MODULES TABLE ---- -->
-    <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
+    <div class=" aero-card aero-glass-card ">
+      <div class=" aero-card aero-glass-card -header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
           <i class="bi bi-cpu"></i>
           Módulos de Relay
@@ -719,12 +725,12 @@
             (usados como relays de bomba y válvula en los sectores)
           </span>
         </h5>
-        <button class="btn btn-primary btn-sm" (click)="openRelayModuleModal()">
+        <button class=" btn aero-btn aero-btn-primary btn-sm" (click)="openRelayModuleModal()">
           <i class="bi bi-plus-lg"></i>
           Nuevo Relay
         </button>
       </div>
-      <div class="card-body p-0">
+      <div class=" aero-card aero-glass-card -body p-0">
         <div *ngIf="isLoadingRelays" class="text-center py-4">
           <div class="spinner-border spinner-border-sm text-primary"></div>
           <span class="ms-2 text-muted">Cargando módulos...</span>
@@ -811,7 +817,7 @@
         <div class="row">
           <div class="col-12 mb-3">
             <label class="form-label">Nombre del Plan *</label>
-            <input type="text" class="form-control" formControlName="name" placeholder="Ingrese el nombre del plan">
+            <input type="text" class="form-control aero-input" formControlName="name" placeholder="Ingrese el nombre del plan">
             <div class="invalid-feedback" *ngIf="planForm.get('name')?.invalid && planForm.get('name')?.touched">
               El nombre es requerido
             </div>
@@ -842,10 +848,10 @@
       </div>
 
       <div class="form-footer">
-        <button type="button" class="btn btn-secondary" (click)="closePlanModal()">
+        <button type="button" class=" btn aero-btn aero-btn-secondary " (click)="closePlanModal()">
           Cancelar
         </button>
-        <button type="submit" class="btn btn-primary" [disabled]="isSaving || planForm.invalid">
+        <button type="submit" class=" btn aero-btn aero-btn-primary " [disabled]="isSaving || planForm.invalid">
           <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
           {{ isSaving ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Guardar') }}
         </button>
@@ -870,7 +876,7 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label class="form-label">Plan de Riego *</label>
-            <select class="form-select" formControlName="irrigationPlanId">
+            <select class="form-select aero-input" formControlName="irrigationPlanId">
               <option [ngValue]="null">Seleccione un plan</option>
               <option *ngFor="let plan of irrigationPlans" [ngValue]="plan.id">
                 {{ plan.name }}
@@ -884,7 +890,7 @@
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Modo de Riego *</label>
-            <select class="form-select" formControlName="irrigationModeId">
+            <select class="form-select aero-input" formControlName="irrigationModeId">
               <option [ngValue]="null">Seleccione un modo</option>
               <option *ngFor="let mode of irrigationModes" [ngValue]="mode.id">
                 {{ mode.name }}
@@ -898,7 +904,7 @@
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Empresa</label>
-            <select class="form-select" formControlName="companyID">
+            <select class="form-select aero-input" formControlName="companyID">
               <option [ngValue]="null">Seleccione una empresa</option>
               <option *ngFor="let company of companies" [ngValue]="company.id">
                 {{ company.name }}
@@ -908,7 +914,7 @@
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Sector</label>
-            <select class="form-select" formControlName="sectorID">
+            <select class="form-select aero-input" formControlName="sectorID">
               <option [ngValue]="null">Seleccione un sector</option>
               <option *ngFor="let sector of sectors" [ngValue]="sector.id">
                 {{ sector.name }}
@@ -918,7 +924,7 @@
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Cultivo</label>
-            <select class="form-select" formControlName="cropID">
+            <select class="form-select aero-input" formControlName="cropID">
               <option [ngValue]="null">Seleccione un cultivo</option>
               <option *ngFor="let crop of crops" [ngValue]="crop.id">
                 {{ crop.name }}
@@ -928,7 +934,7 @@
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Fecha de Ejecución *</label>
-            <input type="datetime-local" class="form-control" formControlName="executionDate">
+            <input type="datetime-local" class="form-control aero-input" formControlName="executionDate">
             <div class="invalid-feedback"
               *ngIf="entryForm.get('executionDate')?.invalid && entryForm.get('executionDate')?.touched">
               La fecha de ejecución es requerida
@@ -937,7 +943,7 @@
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Duración (minutos) *</label>
-            <input type="number" class="form-control" formControlName="duration" min="1" placeholder="Ej: 30">
+            <input type="number" class="form-control aero-input" formControlName="duration" min="1" placeholder="Ej: 30">
             <div class="invalid-feedback"
               *ngIf="entryForm.get('duration')?.invalid && entryForm.get('duration')?.touched">
               La duración debe ser mayor a 0
@@ -946,22 +952,22 @@
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Semana de Inicio (1-52)</label>
-            <input type="number" class="form-control" formControlName="wStart" min="1" max="52" placeholder="Opcional">
+            <input type="number" class="form-control aero-input" formControlName="wStart" min="1" max="52" placeholder="Opcional">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Semana de Fin (1-52)</label>
-            <input type="number" class="form-control" formControlName="wEnd" min="1" max="52" placeholder="Opcional">
+            <input type="number" class="form-control aero-input" formControlName="wEnd" min="1" max="52" placeholder="Opcional">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Frecuencia (días)</label>
-            <input type="number" class="form-control" formControlName="frequency" min="1" placeholder="Opcional">
+            <input type="number" class="form-control aero-input" formControlName="frequency" min="1" placeholder="Opcional">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Secuencia *</label>
-            <input type="number" class="form-control" formControlName="sequence" min="1"
+            <input type="number" class="form-control aero-input" formControlName="sequence" min="1"
               placeholder="Orden de ejecución">
             <div class="invalid-feedback"
               *ngIf="entryForm.get('sequence')?.invalid && entryForm.get('sequence')?.touched">
@@ -981,10 +987,10 @@
       </div>
 
       <div class="form-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeEntryModal()">
+        <button type="button" class=" btn aero-btn aero-btn-secondary " (click)="closeEntryModal()">
           Cancelar
         </button>
-        <button type="submit" class="btn btn-primary" [disabled]="isSaving || entryForm.invalid">
+        <button type="submit" class=" btn aero-btn aero-btn-primary " [disabled]="isSaving || entryForm.invalid">
           <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
           {{ isSaving ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Guardar') }}
         </button>
@@ -1009,7 +1015,7 @@
         <div class="row">
           <div class="col-12 mb-3">
             <label class="form-label">Nombre del Modo *</label>
-            <input type="text" class="form-control" formControlName="name" placeholder="Ingrese el nombre del modo">
+            <input type="text" class="form-control aero-input" formControlName="name" placeholder="Ingrese el nombre del modo">
             <div class="invalid-feedback" *ngIf="modeForm.get('name')?.invalid && modeForm.get('name')?.touched">
               El nombre es requerido
             </div>
@@ -1027,10 +1033,10 @@
       </div>
 
       <div class="form-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeModeModal()">
+        <button type="button" class=" btn aero-btn aero-btn-secondary " (click)="closeModeModal()">
           Cancelar
         </button>
-        <button type="submit" class="btn btn-primary" [disabled]="isSaving || modeForm.invalid">
+        <button type="submit" class=" btn aero-btn aero-btn-primary " [disabled]="isSaving || modeForm.invalid">
           <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
           {{ isSaving ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Guardar') }}
         </button>
@@ -1056,7 +1062,7 @@
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Producción de Cultivo *</label>
-            <select class="form-select" formControlName="cropProductionId">
+            <select class="form-select aero-input" formControlName="cropProductionId">
               <option [ngValue]="null">Seleccione producción</option>
               <option *ngFor="let cp of cropProductions" [ngValue]="cp.id">
                 {{ cp.name || cp.id }}
@@ -1070,7 +1076,7 @@
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Nombre del Sector *</label>
-            <input type="text" class="form-control" formControlName="name" placeholder="Ej: Sector Norte A1">
+            <input type="text" class="form-control aero-input" formControlName="name" placeholder="Ej: Sector Norte A1">
             <div class="invalid-feedback"
               *ngIf="sectorForm.get('name')?.invalid && sectorForm.get('name')?.touched">
               El nombre es requerido
@@ -1082,7 +1088,7 @@
               <i class="bi bi-lightning-charge text-info"></i>
               Relay de Bomba
             </label>
-            <select class="form-select" formControlName="pumpRelayId">
+            <select class="form-select aero-input" formControlName="pumpRelayId">
               <option [ngValue]="null">Sin relay de bomba</option>
               <option *ngFor="let relay of relayModules" [ngValue]="relay.id">
                 #{{ relay.id }} — {{ relay.name }}
@@ -1096,7 +1102,7 @@
               <i class="bi bi-toggles text-secondary"></i>
               Relay de Válvula
             </label>
-            <select class="form-select" formControlName="valveRelayId">
+            <select class="form-select aero-input" formControlName="valveRelayId">
               <option [ngValue]="null">Sin relay de válvula</option>
               <option *ngFor="let relay of relayModules" [ngValue]="relay.id">
                 #{{ relay.id }} — {{ relay.name }}
@@ -1107,7 +1113,7 @@
 
           <div class="col-12 mb-3">
             <label class="form-label">Polígono (WKT / GeoJSON)</label>
-            <textarea class="form-control" formControlName="polygon" rows="3"
+            <textarea class="form-control aero-input" formControlName="polygon" rows="3"
               placeholder="Opcional — coordenadas del sector en formato WKT o GeoJSON"></textarea>
           </div>
 
@@ -1122,8 +1128,8 @@
       </div>
 
       <div class="form-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeSectorModal()">Cancelar</button>
-        <button type="submit" class="btn btn-primary" [disabled]="isSaving || sectorForm.invalid">
+        <button type="button" class=" btn aero-btn aero-btn-secondary " (click)="closeSectorModal()">Cancelar</button>
+        <button type="submit" class=" btn aero-btn aero-btn-primary " [disabled]="isSaving || sectorForm.invalid">
           <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
           {{ isSaving ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Guardar') }}
         </button>
@@ -1149,7 +1155,7 @@
 
           <div class="col-12 mb-3">
             <label class="form-label">Nombre del Relay *</label>
-            <input type="text" class="form-control" formControlName="name"
+            <input type="text" class="form-control aero-input" formControlName="name"
               placeholder="Ej: Relay-Bomba-01, Relay-Valvula-02">
             <div class="form-text text-muted">
               Máximo 32 caracteres. Se recomienda un nombre descriptivo del hardware (p.ej. canal en el módulo).
@@ -1188,8 +1194,8 @@
       </div>
 
       <div class="form-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeRelayModuleModal()">Cancelar</button>
-        <button type="submit" class="btn btn-primary" [disabled]="isSaving || relayModuleForm.invalid">
+        <button type="button" class=" btn aero-btn aero-btn-secondary " (click)="closeRelayModuleModal()">Cancelar</button>
+        <button type="submit" class=" btn aero-btn aero-btn-primary " [disabled]="isSaving || relayModuleForm.invalid">
           <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
           {{ isSaving ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Guardar') }}
         </button>
@@ -1261,7 +1267,7 @@
     </div>
 
     <div class="form-footer">
-      <button type="button" class="btn btn-secondary" (click)="closeHistoryDetailsModal()">
+      <button type="button" class=" btn aero-btn aero-btn-secondary " (click)="closeHistoryDetailsModal()">
         Cerrar
       </button>
     </div>
@@ -1424,9 +1430,11 @@
     </div>
 
     <div class="form-footer">
-      <button type="button" class="btn btn-secondary" (click)="closeComparisonModal()">
+      <button type="button" class=" btn aero-btn aero-btn-secondary " (click)="closeComparisonModal()">
         Cerrar
       </button>
     </div>
+  </div>
+</div>
   </div>
 </div>

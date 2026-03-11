@@ -299,11 +299,11 @@ export class IrrigationDecisionEngineService {
    */
   private getRecentIrrigationHistory(cropProductionId: number): Observable<any> {
     const now = new Date();
-    const fivedaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+    const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
 
     return this.irrigationService.getDeviceRawData(
       undefined,
-      fivedaysAgo.toISOString(),
+      tenDaysAgo.toISOString(),
       now.toISOString()
     ).pipe(
       map(rawData => {
@@ -311,7 +311,7 @@ export class IrrigationDecisionEngineService {
         const flowEvents = this.detectFlowEvents(rawData);
 
         if (flowEvents.length === 0) {
-          console.error('Sin eventos de flujo de riego en los últimos 5 días (Water_flow_value, Total_pulse)');
+          console.error('Sin eventos de flujo de riego en los últimos 10 días (Water_flow_value, Total_pulse)');
           throw new Error('Sin historial de eventos de riego');
         }
 
@@ -328,7 +328,7 @@ export class IrrigationDecisionEngineService {
         // ml to L
         totalVolume = totalVolume / 1000;
 
-        const daysCovered = (now.getTime() - fivedaysAgo.getTime()) / (1000 * 60 * 60 * 24);
+        const daysCovered = (now.getTime() - tenDaysAgo.getTime()) / (1000 * 60 * 60 * 24);
         const averageDailyVolume = totalVolume / daysCovered;
 
         // Calculate drainage percentage from drain sensors
@@ -350,7 +350,7 @@ export class IrrigationDecisionEngineService {
           }
 
           totalDrainVolume = totalDrainVolume / 1000; // ml to L
-          const daysCovered = (now.getTime() - fivedaysAgo.getTime()) / (1000 * 60 * 60 * 24);
+          const daysCovered = (now.getTime() - tenDaysAgo.getTime()) / (1000 * 60 * 60 * 24);
           const averageDailyDrain = totalDrainVolume / daysCovered;
 
           console.log(`Total irrigation volume in last 5 days: ${totalVolume.toFixed(2)} L, Total drainage volume: ${totalDrainVolume.toFixed(2)} L`);

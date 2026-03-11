@@ -1,32 +1,39 @@
 <!-- Crop Production Specs List Component -->
-<div class="container-fluid crop-production-specs-container">
+<div class="page-wrapper crop-production-specs-page">
+  <div class="container-fluid py-3">
+    <div class="crop-production-specs-container">
   <!-- Header -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="page-header">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <button class="btn btn-outline-secondary me-3" (click)="navigateBack()">
-              <i class="bi bi-arrow-left"></i> Volver
-            </button>
-            <h2 class="d-inline-block mb-0">
-              <i class="bi bi-rulers text-info"></i>
-              Especificaciones de Producción
-            </h2>
+      <div class="aero-header">
+        <div class="aero-header-content">
+          <div class="d-flex align-items-center gap-3">
+            <div class="aero-icon-orb">
+              <i class="bi bi-rulers"></i>
+            </div>
+            <div>
+              <h2 class="aero-title mb-0">Especificaciones de Producción</h2>
+              <p class="aero-subtitle mb-0">Configuración de distancias, área y agua disponible para producción</p>
+            </div>
           </div>
-          <button class="btn btn-primary" (click)="openCreateModal()">
-            <i class="bi bi-plus-circle me-2"></i>
-            Nueva Configuración
-          </button>
+          <div class="header-actions">
+            <button class="aero-btn-back" (click)="navigateBack()">
+              <i class="bi bi-arrow-left me-1"></i> Volver
+            </button>
+            <button class="btn btn-primary" (click)="openCreateModal()">
+              <i class="bi bi-plus-circle me-2"></i>
+              Nueva Configuración
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Filters and Search -->
-  <div class="row mb-3">
+  <div class="row mb-3 filters-row">
     <div class="col-md-6">
-      <div class="input-group">
+      <div class="input-group aero-glass-panel filters-panel">
         <span class="input-group-text">
           <i class="bi bi-search"></i>
         </span>
@@ -40,7 +47,7 @@
       </div>
     </div>
     <div class="col-md-6 text-end">
-      <div class="form-check form-switch d-inline-block">
+      <div class="form-check form-switch d-inline-block aero-glass-panel toggle-panel">
         <input
           class="form-check-input"
           type="checkbox"
@@ -68,7 +75,7 @@
 
   <!-- Loading State -->
   <div class="row" *ngIf="isLoading">
-    <div class="col-12 text-center py-5">
+    <div class="col-12 text-center py-5 aero-glass-panel loading-panel">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Cargando...</span>
       </div>
@@ -79,7 +86,7 @@
   <!-- Table -->
   <div class="row" *ngIf="!isLoading">
     <div class="col-12">
-      <div class="card">
+      <div class="card aero-glass-panel">
         <div class="card-body">
           <div class="table-responsive">
             <table class="table table-hover">
@@ -195,6 +202,8 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
     </div>
   </div>
 </div>

@@ -1,250 +1,305 @@
 /* ============================================================================
-   SOIL ANALYSIS FORM STYLES
+   SOIL ANALYSIS FORM — FRUTIGER AERO THEME
    ============================================================================ */
 
-/* Main Container */
+@keyframes aeroFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .soil-analysis-form {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(180deg, rgba(255,255,255,0.80) 0%, rgba(220,240,255,0.75) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
+  padding: 1.8rem;
+  box-shadow: 0 4px 24px rgba(60,140,220,0.12), inset 0 1px 0 rgba(255,255,255,0.95);
+  border: 1px solid rgba(255,255,255,0.9);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #1a3a5c;
+  animation: aeroFadeIn 0.5s ease-out;
 }
 
 /* Form Header */
 .form-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.8rem;
   padding-bottom: 1rem;
-  border-bottom: 3px solid #007bff;
+  border-bottom: 2px solid rgba(33,150,243,0.3);
 }
 
 .form-title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #343a40;
-  margin-bottom: 0.5rem;
+  color: #1a3a5c;
+  margin-bottom: 0.4rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
 }
 
-.form-title i {
-  color: #007bff;
-}
+.form-title i { color: #2196f3; font-size: 1.4rem; }
+.form-subtitle { color: #3a6a9c; margin: 0; font-size: 0.9rem; }
 
-.form-subtitle {
-  color: #6c757d;
-  margin: 0;
-  font-size: 1rem;
-}
+/* Alerts */
+.alert { border-radius: 12px; border: none; padding: 0.85rem 1.2rem; display: flex; align-items: center; gap: 0.6rem; font-weight: 500; backdrop-filter: blur(6px); margin-bottom: 1.2rem; }
+.alert-danger { background: rgba(244,67,54,0.1); color: #7f1d1d; border: 1px solid rgba(244,67,54,0.2); border-left: 4px solid #f44336; }
+.alert-success { background: rgba(45,184,106,0.12); color: #166534; border: 1px solid rgba(45,184,106,0.3); border-left: 4px solid #2db86a; }
+.alert-warning { background: rgba(255,167,38,0.12); color: #92400e; border: 1px solid rgba(255,167,38,0.3); border-left: 4px solid #ffa726; }
 
-/* Form Sections */
+/* Sections */
 .form-section {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #dee2e6;
-  transition: all 0.3s ease;
+  margin-bottom: 1.8rem;
+  padding: 1.2rem;
+  background: rgba(255,255,255,0.35);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px);
 }
 
-.form-section:hover {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-.section-header {
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid #dee2e6;
-}
-
-.section-header.clickable {
-  cursor: pointer;
-  user-select: none;
-}
-
-.section-header.clickable:hover .section-title {
-  color: #007bff;
-}
+.section-header { margin-bottom: 0.85rem; }
 
 .section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #343a40;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a3a5c;
   margin: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: color 0.2s ease;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid rgba(120,180,240,0.3);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.7);
 }
 
-.section-content {
-  animation: slideDown 0.3s ease;
+.section-title i { color: #2196f3; }
+.section-content { padding-top: 0.75rem; }
+
+/* Form controls */
+.form-label { font-weight: 600; color: #1a3a5c; margin-bottom: 0.4rem; font-size: 0.88rem; }
+.form-label.required::after { content: ' *'; color: #f44336; }
+
+.form-control, .form-select {
+  border-color: rgba(120,180,240,0.5);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(6px);
+  color: #1a3a5c;
+  transition: all 0.25s ease;
+  font-size: 0.9rem;
+  width: 100%;
+}
+.form-control:focus, .form-select:focus { border-color: rgba(33,150,243,0.6); box-shadow: 0 0 0 3px rgba(33,150,243,0.12); background: rgba(255,255,255,0.85); outline: none; }
+.form-control.is-invalid, .form-select.is-invalid { border-color: #f44336; }
+.invalid-feedback { display: block; font-size: 0.82rem; color: #c62828; margin-top: 0.2rem; }
+.form-text { font-size: 0.78rem; color: #3a6a9c; margin-top: 0.2rem; }
+
+.form-check { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: rgba(33,150,243,0.05); border-radius: 8px; }
+.form-check-input:checked { background-color: #2196f3; border-color: #2196f3; }
+.form-check-label { font-weight: 500; color: #1a3a5c; }
+.form-switch .form-check-input { cursor: pointer; }
+
+/* Buttons */
+.btn { cursor: pointer; transition: all 0.25s ease; display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 22px; font-weight: 600; padding: 0.55rem 1.2rem; font-size: 0.88rem; }
+.btn-primary { background: linear-gradient(180deg, #5bc4f5 0%, #2196f3 50%, #1565c0 100%); border: 1px solid rgba(33,150,243,0.6); color: white; box-shadow: 0 3px 12px rgba(33,150,243,0.35), inset 0 1px 0 rgba(255,255,255,0.35); }
+.btn-primary:hover { background: linear-gradient(180deg, #80d4ff 0%, #42a5f5 50%, #1976d2 100%); transform: translateY(-1px); color: white; }
+.btn-primary:disabled { opacity: 0.6; transform: none; }
+.btn-secondary { background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(200,225,250,0.75) 100%); border: 1px solid rgba(120,180,240,0.5); color: #1a3a5c; box-shadow: 0 2px 8px rgba(60,140,220,0.1), inset 0 1px 0 rgba(255,255,255,0.8); }
+.btn-secondary:hover { transform: translateY(-1px); color: #1a3a5c; }
+.btn-outline-secondary { border-radius: 18px; border: 1px solid rgba(120,180,240,0.5); background: rgba(255,255,255,0.5); color: #1a3a5c; }
+.btn-outline-secondary:hover { background: rgba(255,255,255,0.8); }
+
+/* Form actions */
+.form-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1.2rem; border-top: 1px solid rgba(120,180,240,0.3); }
+
+/* Input group */
+.input-group-text { background: rgba(168,216,240,0.4); border-color: rgba(120,180,240,0.5); color: #1a3a5c; border-radius: 10px 0 0 10px; }
+
+/* Nutrient display */
+.nutrient-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+.nutrient-item { background: rgba(255,255,255,0.45); border-radius: 10px; padding: 0.75rem; border: 1px solid rgba(120,180,240,0.25); text-align: center; }
+.nutrient-label { font-size: 0.78rem; font-weight: 700; color: #3a6a9c; margin-bottom: 0.35rem; }
+.nutrient-value { font-size: 1.2rem; font-weight: 700; color: #1a3a5c; }
+.nutrient-unit { font-size: 0.72rem; color: #3a6a9c; }
+
+/* Rating display */
+.rating-bar { height: 6px; background: rgba(120,180,240,0.2); border-radius: 3px; overflow: hidden; margin-top: 0.5rem; }
+.rating-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+.rating-excellent .rating-fill { background: linear-gradient(90deg, #81e0a0, #2db86a); }
+.rating-good .rating-fill { background: linear-gradient(90deg, #80deea, #26c6da); }
+.rating-fair .rating-fill { background: linear-gradient(90deg, #ffd54f, #ffa726); }
+.rating-poor .rating-fill { background: linear-gradient(90deg, #ff8a80, #f44336); }
+
+/* Badges */
+.badge { font-size: 0.73rem; padding: 0.3rem 0.65rem; border-radius: 16px; font-weight: 600; }
+.bg-success { background: linear-gradient(135deg, #81e0a0, #2db86a) !important; color: white; }
+.bg-danger { background: linear-gradient(135deg, #ff8a80, #f44336) !important; color: white; }
+.bg-warning { background: linear-gradient(135deg, #ffd54f, #ffa726) !important; color: #1a3a5c; }
+.bg-info { background: linear-gradient(135deg, #80deea, #26c6da) !important; color: white; }
+.bg-secondary { background: rgba(120,160,200,0.45) !important; color: #1a3a5c; }
+
+.text-danger { color: #f44336 !important; }
+.fw-bold { font-weight: 700; }
+.text-muted { color: #3a6a9c !important; }
+
+@media (max-width: 768px) {
+  .soil-analysis-form { padding: 1.2rem; }
+  .form-section { padding: 0.85rem; }
+  .nutrient-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .form-actions { flex-direction: column; }
+  .form-actions .btn { width: 100%; justify-content: center; }
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 2000px;
-  }
+/* --- AERO THEME INJECTIONS --- */
+.page-wrapper {
+    min-height: calc(100vh - 60px);
+    background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 50%, #81d4fa 100%);
+    padding-bottom: 2rem;
 }
 
-/* Nutrient Groups */
-.nutrient-group {
-  background: white;
-  padding: 1rem;
-  border-radius: 6px;
-  margin-bottom: 1rem;
-  border-left: 4px solid #007bff;
+.table {
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.7);
 }
 
-.nutrient-group-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #495057;
-  margin-bottom: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.aero-table-header {
+    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6)) !important;
+    color: #1a5fa0 !important;
 }
 
-/* Form Controls */
-.form-label {
-  font-weight: 600;
-  color: #495057;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+.aero-badge {
+    background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
+    border: 1px solid rgba(255,255,255,0.6);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    color: #333;
 }
 
-.form-label.required::after {
-  content: '*';
-  color: #dc3545;
-  margin-left: 0.25rem;
+.aero-card {
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15) !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    overflow: hidden !important;
+}
+.aero-glass-card {
+    backdrop-filter: blur(12px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+}
+.aero-card-header {
+    background: linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
+    color: #1a3a5c !important;
+    font-weight: 600 !important;
+}
+.aero-btn {
+    border-radius: 20px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    border: 1px solid rgba(255,255,255,0.6) !important;
+    backdrop-filter: blur(4px) !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+}
+.aero-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15) !important;
+}
+.aero-btn-primary { background: linear-gradient(180deg, #4da6ff 0%, #1a75ff 100%) !important; color: white !important; }
+.aero-btn-success { background: linear-gradient(180deg, #6ae094 0%, #2db86a 100%) !important; color: white !important; }
+.aero-btn-danger  { background: linear-gradient(180deg, #ff7a7a 0%, #e60000 100%) !important; color: white !important; }
+.aero-btn-warning { background: linear-gradient(180deg, #ffcc66 0%, #ff9900 100%) !important; color: #333 !important; }
+.aero-btn-secondary{background: linear-gradient(180deg, #f0f0f0 0%, #d9d9d9 100%) !important; color: #333 !important; }
+.aero-input {
+    background: rgba(255,255,255,0.8) !important;
+    border: 1px solid rgba(255,255,255,0.6) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(4px) !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05) !important;
+}
+.aero-modal-header-primary {
+    background: linear-gradient(180deg, #4da6ff 0%, #1a75ff 100%) !important;
+    color: white !important;
+    border-radius: 16px 16px 0 0 !important;
 }
 
-.form-label i.bi-question-circle {
-  font-size: 0.875rem;
-  cursor: help;
+/* ============================================================================
+   SOIL ANALYSIS FORM — AERO CONSISTENCY OVERRIDES
+   ============================================================================ */
+
+.soil-analysis-form {
+  background: linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(225,242,255,0.9) 100%);
+  border-radius: 22px;
+  box-shadow:
+    0 10px 30px rgba(60,140,220,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.94),
+    inset 0 -1px 0 rgba(100,170,240,0.18);
+}
+
+.form-header {
+  border-bottom: 1px solid rgba(140,197,236,0.36);
+  margin-bottom: 1.4rem;
+}
+
+.form-title,
+.section-title,
+.nutrient-group-title,
+.soil-analysis-form strong {
+  color: #16354c;
+}
+
+.form-subtitle,
+.form-text,
+.nutrient-label,
+.nutrient-unit,
+.text-muted {
+  color: #365d7d !important;
+}
+
+.form-section,
+.nutrient-item,
+.form-check {
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(232,245,255,0.84));
+  border: 1px solid rgba(150,203,239,0.35);
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(60,140,220,0.06), inset 0 1px 0 rgba(255,255,255,0.88);
 }
 
 .form-control,
-.form-select {
-  border: 2px solid #ced4da;
-  border-radius: 6px;
-  padding: 0.625rem 0.75rem;
-  transition: all 0.3s ease;
+.form-select,
+.aero-input {
+  border-radius: 16px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(230,244,255,0.88)) !important;
+  border: 1px solid rgba(125,180,225,0.44) !important;
+  color: #1d3f59 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.92), 0 2px 8px rgba(120,180,230,0.08) !important;
 }
 
 .form-control:focus,
-.form-select:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.form-select:focus,
+.aero-input:focus {
+  border-color: rgba(59,152,232,0.75) !important;
+  box-shadow: 0 0 0 4px rgba(85,177,247,0.15), inset 0 1px 0 rgba(255,255,255,0.96) !important;
 }
 
-.form-control.is-invalid,
-.form-select.is-invalid {
-  border-color: #dc3545;
+.btn,
+.aero-btn {
+  border-radius: 18px !important;
 }
 
-.invalid-feedback {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: 0.875rem;
+.btn-primary,
+.aero-btn-primary {
+  background: linear-gradient(180deg, #7ec8f7 0%, #3ea8f0 45%, #1a88e0 55%, #0d72c8 100%) !important;
+  border-color: rgba(10,90,180,0.42) !important;
 }
 
-/* Texture Validation Alert */
-.alert {
-  border-radius: 8px;
-  border: none;
-  padding: 1rem;
+.btn-secondary,
+.btn-outline-secondary {
+  background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(221,238,251,0.86)) !important;
+  color: #1a5fa0 !important;
 }
 
-.alert i {
-  font-size: 1.25rem;
-}
-
-.alert-success {
-  background: #d4edda;
-  color: #155724;
-}
-
-.alert-warning {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.alert-info {
-  background: #d1ecf1;
-  color: #0c5460;
-}
-
-/* Form Actions */
 .form-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 2px solid #dee2e6;
-}
-
-.form-actions .btn {
-  padding: 0.75rem 2rem;
-  font-weight: 600;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.form-actions .btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.form-actions .btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .soil-analysis-form {
-    padding: 1rem;
-  }
-
-  .form-title {
-    font-size: 1.5rem;
-  }
-
-  .section-title {
-    font-size: 1.1rem;
-  }
-
-  .form-actions {
-    flex-direction: column;
-  }
-
-  .form-actions .btn {
-    width: 100%;
-  }
-
-  .nutrient-group {
-    padding: 0.75rem;
-  }
-}
-
-/* Print Styles */
-@media print {
-  .form-actions,
-  .section-header.clickable i.bi-chevron-down,
-  .section-header.clickable i.bi-chevron-right {
-    display: none;
-  }
-
-  .form-section {
-    page-break-inside: avoid;
-  }
+  border-top: 1px solid rgba(140,197,236,0.36);
 }

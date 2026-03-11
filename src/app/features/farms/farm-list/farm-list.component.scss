@@ -572,3 +572,406 @@
     font-size: 0.875rem;
   }
 }
+
+/* ============================================================================
+   FARM LIST — FRUTIGER AERO OVERRIDES
+   ============================================================================ */
+
+.farm-list-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 32%),
+    radial-gradient(circle at top right, rgba(120,206,255,0.24) 0%, rgba(120,206,255,0) 28%),
+    linear-gradient(160deg, #a9daf2 0%, #caecfd 24%, #ddf3ff 55%, #eff8ff 80%, #f7fdff 100%);
+}
+
+.farm-list-page .container-fluid {
+  max-width: none;
+  width: 100%;
+}
+
+.farm-list-container {
+  min-height: auto;
+  background: transparent;
+  padding: 0;
+}
+
+.aero-header {
+  position: relative;
+  margin-bottom: 2rem;
+  border-radius: 30px;
+  overflow: hidden;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.9) 0%,
+    rgba(222,241,255,0.82) 48%,
+    rgba(186,224,255,0.68) 100%);
+  border: 1px solid rgba(255,255,255,0.82);
+  box-shadow:
+    0 24px 48px rgba(48, 111, 160, 0.14),
+    inset 0 1px 0 rgba(255,255,255,0.94),
+    inset 0 -12px 24px rgba(111, 196, 255, 0.16);
+  backdrop-filter: blur(16px);
+}
+
+.aero-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.42), rgba(255,255,255,0));
+  pointer-events: none;
+}
+
+.aero-header-content {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem 1.75rem;
+}
+
+.aero-icon-orb {
+  width: 70px;
+  height: 70px;
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  color: #0f4f7c;
+  font-size: 1.85rem;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.35) 38%, rgba(70,175,245,0.45) 100%),
+    linear-gradient(160deg, rgba(150,225,255,0.9), rgba(93,180,245,0.72));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    0 18px 30px rgba(63, 147, 206, 0.2);
+}
+
+.aero-title,
+.page-title {
+  color: #12344c;
+  font-size: clamp(1.8rem, 2.2vw, 2.45rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.aero-subtitle,
+.page-description {
+  color: rgba(18, 52, 76, 0.74) !important;
+  font-size: 0.98rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.aero-btn-back,
+.btn {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.aero-btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.3rem;
+  color: #1f4f6e;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(126, 181, 218, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.92),
+    0 10px 24px rgba(67, 138, 191, 0.14);
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #46b1f7, #1b8fe2);
+  border-color: rgba(20, 109, 179, 0.72);
+  box-shadow: 0 12px 24px rgba(40, 132, 197, 0.24);
+}
+.btn-secondary,
+.btn-outline-secondary,
+.btn-outline-warning,
+.btn-outline-danger {
+  color: #204861;
+}
+
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, #53bcff, #2298ec);
+  border-color: rgba(20, 109, 179, 0.82);
+}
+
+.btn-secondary,
+.btn-outline-secondary,
+.btn-outline-warning,
+.btn-outline-danger {
+  background: rgba(255,255,255,0.62);
+}
+
+.aero-glass-panel,
+.stat-card,
+.filters-card,
+.table-card,
+.loading-panel,
+.form-panel.aero-modal-shell {
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(233,245,255,0.82));
+  border: 1px solid rgba(255,255,255,0.82);
+  box-shadow:
+    0 18px 36px rgba(69, 132, 183, 0.12),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+  backdrop-filter: blur(14px);
+}
+
+.stat-card,
+.filters-card,
+.table-card,
+.form-panel.aero-modal-shell {
+  border-radius: 28px;
+}
+
+.stat-card {
+  color: #16384f;
+}
+
+.stat-primary {
+  background: linear-gradient(180deg, rgba(88,182,244,0.34), rgba(255,255,255,0.9));
+}
+
+.stat-success {
+  background: linear-gradient(180deg, rgba(82,209,170,0.28), rgba(255,255,255,0.9));
+}
+
+.stat-info {
+  background: linear-gradient(180deg, rgba(103,198,241,0.26), rgba(255,255,255,0.9));
+}
+
+.stat-icon {
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+}
+
+.stat-content h4,
+.stat-content p,
+.filters-header h5,
+.table-header h5,
+.farm-name strong,
+.company-name,
+.area-value,
+.empty-state-content h4,
+.form-label,
+.form-header h5,
+.table td,
+.table th,
+.results-info {
+  color: #16384f;
+}
+
+.messages .alert {
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 24px rgba(62, 119, 159, 0.12);
+}
+
+.filters-card {
+  padding: 1.4rem;
+}
+
+.filters-header {
+  border-bottom-color: rgba(127, 181, 220, 0.28);
+}
+
+.filters-header i,
+.table-header i {
+  color: #2a8fd7;
+}
+
+.aero-input,
+.form-control,
+.form-select,
+.input-group-text {
+  background: rgba(255,255,255,0.86);
+  border-color: rgba(127, 181, 220, 0.48);
+}
+
+.aero-input:focus,
+.form-control:focus,
+.form-select:focus {
+  background: rgba(255,255,255,0.96);
+  border-color: rgba(69, 151, 214, 0.75);
+  box-shadow: 0 0 0 0.25rem rgba(88, 174, 234, 0.18);
+}
+
+.input-group-text {
+  color: rgba(22, 56, 79, 0.68);
+}
+
+.loading-panel {
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 24px;
+  padding: 2rem 1rem;
+}
+
+.loading-panel p,
+.farm-id,
+.farm-description small,
+.coordinates,
+.empty-state-content p,
+.text-muted {
+  color: rgba(22, 56, 79, 0.72) !important;
+}
+
+.table-card {
+  overflow: hidden;
+}
+
+.table-header,
+.pagination-wrapper {
+  background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(232,244,255,0.55));
+  border-color: rgba(130, 184, 220, 0.28);
+}
+
+.table-responsive {
+  max-height: 70vh;
+}
+
+.table thead th {
+  background: rgba(222,239,251,0.68);
+  color: #1b4966;
+  border-color: rgba(127, 181, 220, 0.42);
+}
+
+.table tbody tr:hover {
+  background: rgba(197, 233, 255, 0.38);
+}
+
+.sortable:hover {
+  background: rgba(167, 222, 255, 0.35);
+}
+
+.badge.bg-success {
+  background: linear-gradient(180deg, rgba(56,178,112,0.95), rgba(36,140,82,0.92)) !important;
+}
+
+.badge.bg-danger {
+  background: linear-gradient(180deg, rgba(233,98,98,0.95), rgba(204,60,60,0.92)) !important;
+}
+
+.empty-state {
+  background: linear-gradient(180deg, rgba(255,255,255,0.42), rgba(227,243,255,0.52));
+}
+
+.pagination-wrapper {
+  border-top: 1px solid rgba(130, 184, 220, 0.24);
+}
+
+.page-link {
+  border-radius: 999px;
+  border-color: rgba(127, 181, 220, 0.4);
+  color: #2a6790;
+  background: rgba(255,255,255,0.76);
+}
+
+.page-link:hover,
+.page-link:focus,
+.page-item.active .page-link {
+  background: linear-gradient(180deg, #46b1f7, #1b8fe2);
+  border-color: rgba(20, 109, 179, 0.72);
+  color: #fff;
+}
+
+.form-overlay {
+  background: rgba(105, 152, 184, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.form-panel.aero-modal-shell {
+  border: 1px solid rgba(255,255,255,0.82);
+  box-shadow:
+    0 30px 60px rgba(46, 96, 135, 0.22),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(236,246,255,0.9));
+}
+
+.aero-modal-header,
+.form-header {
+  color: #fff;
+  border-bottom: 1px solid rgba(123, 182, 221, 0.26);
+  background: linear-gradient(135deg, rgba(60,170,241,0.95), rgba(28,132,206,0.9));
+}
+
+.form-header h5,
+.form-header i,
+.aero-modal-header h5,
+.aero-modal-header i {
+  color: inherit;
+}
+
+.form-body {
+  background: transparent;
+}
+
+.form-footer {
+  background: rgba(238,246,252,0.78);
+  border-top: 1px solid rgba(130, 184, 220, 0.24);
+}
+
+.form-check-input:checked {
+  background-color: #2a8fd7;
+  border-color: #2a8fd7;
+}
+
+@media (max-width: 991px) {
+  .aero-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 768px) {
+  .farm-list-page .container-fluid {
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+
+  .aero-header {
+    border-radius: 24px;
+  }
+
+  .aero-header-content {
+    padding: 1.2rem;
+  }
+
+  .aero-icon-orb {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    font-size: 1.55rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions .btn,
+  .header-actions .aero-btn-back {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stat-card,
+  .filters-card,
+  .table-card,
+  .form-panel.aero-modal-shell {
+    border-radius: 22px;
+  }
+}

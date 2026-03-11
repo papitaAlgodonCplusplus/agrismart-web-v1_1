@@ -1,17 +1,23 @@
-<div class="dropper-list-container">
+<div class="page-wrapper dropper-page">
+  <div class="container-fluid py-3">
+    <div class="dropper-list-container">
   <!-- Header -->
-  <div class="page-header">
-    <div class="header-content">
-      <h2>
-        <i class="bi bi-droplet-fill"></i>
-        Gestión de Goteros
-      </h2>
-      <p class="text-muted">Administre los goteros del sistema de riego</p>
+  <div class="aero-header mb-3">
+    <div class="aero-header-content">
+      <div class="d-flex align-items-center gap-3">
+        <div class="aero-icon-orb">
+          <i class="bi bi-droplet-fill"></i>
+        </div>
+        <div class="header-content">
+          <h2 class="aero-title mb-0">Gestión de Goteros</h2>
+          <p class="aero-subtitle mb-0">Administre los goteros del sistema de riego</p>
+        </div>
+      </div>
+      <button class="btn btn-primary aero-btn-primary" (click)="createNew()">
+        <i class="bi bi-plus-circle"></i>
+        Nuevo Gotero
+      </button>
     </div>
-    <button class="btn btn-primary" (click)="createNew()">
-      <i class="bi bi-plus-circle"></i>
-      Nuevo Gotero
-    </button>
   </div>
 
   <!-- Success/Error Messages -->
@@ -28,7 +34,7 @@
   </div>
 
   <!-- Filters -->
-  <div class="filters-section">
+  <div class="filters-section aero-glass-panel">
     <div class="search-box">
       <i class="bi bi-search"></i>
       <input
@@ -55,7 +61,7 @@
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="isLoading" class="loading-container">
+  <div *ngIf="isLoading" class="loading-container aero-glass-panel">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Cargando...</span>
     </div>
@@ -63,7 +69,7 @@
   </div>
 
   <!-- Droppers Table -->
-  <div *ngIf="!isLoading" class="table-container">
+  <div *ngIf="!isLoading" class="table-container aero-glass-panel">
     <table class="table table-hover">
       <thead>
         <tr>
@@ -137,6 +143,8 @@
         Comience creando un nuevo gotero usando el botón "Nuevo Gotero"
       </p>
     </div>
+  </div>
+</div>
   </div>
 </div>
 

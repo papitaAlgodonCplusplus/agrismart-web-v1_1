@@ -90,7 +90,8 @@
       "Bash(node --version:*)",
       "Bash(tasklist:*)",
       "Bash(find \"C:\\\\Users\\\\AlexQQ\\\\Desktop\\\\agrismart-web-v1_1/src/app\" -type f \\\\\\( -name \"*.ts\" -o -name \"*.html\" \\\\\\) | xargs grep -l \"matPaginator\\\\|MatPaginator\" | head -10)",
-      "Bash(grep -r \"waterId\\\\|water-chemistry\\\\|WaterChemistry\" /c/Users/AlexQQ/Desktop/agrismart-web-v1_1/src --include=\"*.ts\" --include=\"*.html\" 2>/dev/null | grep -v \"node_modules\\\\|dist\" | head -30)"
+      "Bash(grep -r \"waterId\\\\|water-chemistry\\\\|WaterChemistry\" /c/Users/AlexQQ/Desktop/agrismart-web-v1_1/src --include=\"*.ts\" --include=\"*.html\" 2>/dev/null | grep -v \"node_modules\\\\|dist\" | head -30)",
+      "Bash(python3 -c \"\nwith open\\(r'C:\\\\Users\\\\AlexQQ\\\\Desktop\\\\agrismart-web-v1_1\\\\src\\\\app\\\\features\\\\nutrient-formulation\\\\nutrient-formulation.component.html', 'r', encoding='utf-8'\\) as f:\n    content = f.read\\(\\)\n    lines = content.split\\('\\\\n'\\)\n\nprint\\('Line 38-40:'\\)\nfor i in range\\(37, 41\\):\n    print\\(f'{i+1}: {lines[i]!r}'\\)\nprint\\(\\)\nprint\\('Line 1955-1970:'\\)\nfor i in range\\(1954, 1970\\):\n    print\\(f'{i+1}: {lines[i]!r}'\\)\nprint\\(\\)\nprint\\('Line 1964-1975:'\\)\nfor i in range\\(1963, 1975\\):\n    print\\(f'{i+1}: {lines[i]!r}'\\)\n\")"
     ],
     "deny": [],
     "ask": []

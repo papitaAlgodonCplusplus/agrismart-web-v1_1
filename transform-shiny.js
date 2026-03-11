@@ -1,4 +1,57 @@
-/* ============================================================================
+const fs = require('fs');
+const path = require('path');
+
+const htmlPath = path.join(__dirname, 'src/app/features/dashboard/shiny/shiny-dashboard.component.html');
+const cssPath = path.join(__dirname, 'src/app/features/dashboard/shiny/shiny-dashboard.component.css');
+
+let html = fs.readFileSync(htmlPath, 'utf8');
+
+// 1. Wrap with page-wrapper
+html = html.replace(/<div class="dashboard-container">/g, '<div class="page-wrapper">\n  <div class="container-fluid mx-auto p-3">');
+// Find the last </div> and add another one
+const lastDivIndex = html.lastIndexOf('</div>');
+html = html.substring(0, lastDivIndex) + '</div>\n</div>' + html.substring(lastDivIndex + 6);
+
+// 2. Change header
+html = html.replace(
+  /<div class="dashboard-header">[\s\S]*?<h1>(.*?)<\/h1>\s*<div class="header-controls">/m,
+  `<div class="aero-header mb-4">
+    <div class="aero-header-content">
+      <div class="d-flex align-items-center" style="gap: 1rem;">
+        <div class="aero-icon-orb"><i class="bi bi-speedometer2"></i></div>
+        <div>
+          <h1 class="aero-title">$1</h1>
+          <div class="aero-subtitle">Monitoreo y Control de Dispositivos</div>
+        </div>
+      </div>
+      <div class="header-controls">`
+);
+html = html.replace(/<\/div>\s*<\/div>\s*<\!-- Device Activity/m, '</div>\n    </div>\n  </div>\n\n  <!-- Device Activity');
+
+// 3. Update buttons
+html = html.replace(/class="btn btn-secondary/g, 'class="aero-btn aero-btn-secondary');
+html = html.replace(/class="chart-toggle-btn"/g, 'class="aero-btn aero-btn-primary"');
+html = html.replace(/class="refresh-btn"/g, 'class="aero-btn aero-btn-primary"');
+html = html.replace(/class="btn btn-sm btn-light"/g, 'class="aero-btn aero-btn-secondary btn-sm"');
+html = html.replace(/<button class="retry-btn"/g, '<button class="aero-btn aero-btn-danger"');
+
+// 4. Update cards
+html = html.replace(/class="card mb-4"/g, 'class="aero-card mb-4"');
+html = html.replace(/class="card-header/g, 'class="aero-card-header');
+html = html.replace(/class="card-body"/g, 'class="aero-card-body"');
+
+// 5. Update activity cards
+html = html.replace(/class="activity-card/g, 'class="aero-card activity-card');
+html = html.replace(/overview-card/g, 'aero-card overview-card');
+html = html.replace(/device-card/g, 'aero-card device-card');
+
+fs.writeFileSync(htmlPath, html);
+console.log('HTML updated');
+
+let css = fs.readFileSync(cssPath, 'utf8');
+
+// Completely replace CSS with the proper Aero CSS
+const aeroCss = `/* ============================================================================
    SHINY DASHBOARD COMPONENT — FRUTIGER AERO THEME
    ============================================================================ */
 
@@ -231,3 +284,7 @@
 /* Wind rose specific */
 .custom-wind-rose-container { display: flex; justify-content: center; align-items: center; padding: 1rem; }
 .wind-rose-svg { max-width: 100%; height: auto; }
+`
+
+fs.writeFileSync(cssPath, aeroCss);
+console.log('CSS updated');

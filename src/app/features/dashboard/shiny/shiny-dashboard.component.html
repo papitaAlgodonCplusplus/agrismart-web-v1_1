@@ -1,34 +1,43 @@
-<div class="dashboard-container">
+<div class="page-wrapper">
+  <div class="container-fluid mx-auto p-3">
   <!-- Header -->
-  <div class="dashboard-header">
-    <h1>Panel de Control del Sistema de Riego</h1>
-    <div class="header-controls">
-      <button class="btn btn-secondary me-2" (click)="goToDashboard()">
+  <div class="aero-header mb-4">
+    <div class="aero-header-content">
+      <div class="d-flex align-items-center" style="gap: 1rem;">
+        <div class="aero-icon-orb"><i class="bi bi-speedometer2"></i></div>
+        <div>
+          <h1 class="aero-title">Panel de Control del Sistema de Riego</h1>
+          <div class="aero-subtitle">Monitoreo y Control de Dispositivos</div>
+        </div>
+      </div>
+      <div class="header-controls">
+      <button class="aero-btn aero-btn-secondary me-2" (click)="goToDashboard()">
         <i class="bi bi-arrow-left"></i>
         Regresar al Dashboard
       </button>
-      <button class="chart-toggle-btn" (click)="toggleCharts()">
+      <button class="aero-btn aero-btn-primary" (click)="toggleCharts()">
         {{ showCharts ? 'Ocultar Gráficos' : 'Mostrar Gráficos' }}
       </button>
-      <button class="refresh-btn" (click)="refreshData()" [disabled]="isLoading">
+      <button class="aero-btn aero-btn-primary" (click)="refreshData()" [disabled]="isLoading">
         {{ isLoading ? 'Cargando...' : 'Actualizar Datos' }}
       </button>
+    </div>
     </div>
   </div>
 
   <!-- Device Activity Summary -->
   <div *ngIf="!isLoading && !error" class="device-activity-summary">
     <div class="activity-overview">
-      <div class="activity-card total">
+      <div class="aero-card activity-card total">
         <h3>Total de Dispositivos</h3>
         <div class="activity-number">{{ getTotalRegisteredDevices() }}</div>
       </div>
-      <div class="activity-card active">
+      <div class="aero-card activity-card active">
         <h3>Dispositivos Activos</h3>
         <div class="activity-number">{{ getTotalActiveDevices() }}</div>
         <div class="activity-percentage">{{ getDeviceActivityPercentage().toFixed(1) }}% del total</div>
       </div>
-      <div class="activity-card inactive">
+      <div class="aero-card activity-card inactive">
         <h3>Dispositivos Inactivos</h3>
         <div class="activity-number">{{ getTotalInactiveDevices() }}</div>
         <div class="activity-percentage">{{ (100 - getDeviceActivityPercentage()).toFixed(1) }}% del total</div>
@@ -38,7 +47,7 @@
 
   <!-- System Overview -->
   <div *ngIf="!isLoading && !error" class="system-overview">
-    <div class="overview-card">
+    <div class="aero-card overview-card">
       <h3>Medidores de Flujo</h3>
       <div class="status-summary">
         <span class="status-item online">{{ getDeviceTypeSummary(flowDevices).online }} En Línea</span>
@@ -47,7 +56,7 @@
         <span class="status-item inactive">{{ getDeviceTypeSummary(flowDevices).inactive }} Inactivo</span>
       </div>
     </div>
-    <div class="overview-card">
+    <div class="aero-card overview-card">
       <h3>Sensores de Suelo</h3>
       <div class="status-summary">
         <span class="status-item online">{{ getDeviceTypeSummary(soilDevices).online }} En Línea</span>
@@ -56,7 +65,7 @@
         <span class="status-item inactive">{{ getDeviceTypeSummary(soilDevices).inactive }} Inactivo</span>
       </div>
     </div>
-    <div class="overview-card">
+    <div class="aero-card overview-card">
       <h3>Estaciones Climáticas</h3>
       <div class="status-summary">
         <span class="status-item online">{{ getDeviceTypeSummary(climateDevices).online }} En Línea</span>
@@ -65,7 +74,7 @@
         <span class="status-item inactive">{{ getDeviceTypeSummary(climateDevices).inactive }} Inactivo</span>
       </div>
     </div>
-    <div class="overview-card">
+    <div class="aero-card overview-card">
       <h3>Sensores de Presión</h3>
       <div class="status-summary">
         <span class="status-item online">{{ getDeviceTypeSummary(pressureDevices).online }} En Línea</span>
@@ -85,24 +94,24 @@
   <!-- Error State -->
   <div *ngIf="error && !isLoading" class="error-state">
     <p class="error-message">{{ error }}</p>
-    <button class="retry-btn" (click)="refreshData()">Reintentar</button>
+    <button class="aero-btn aero-btn-danger" (click)="refreshData()">Reintentar</button>
   </div>
 
   <!-- Charts Section -->
-  <div *ngIf="showCharts && !isLoading && !error" class="card mb-4">
-    <div class="card-header bg-primary text-white">
+  <div *ngIf="showCharts && !isLoading && !error" class="aero-card mb-4">
+    <div class="aero-card-header bg-primary text-white">
       <div class="d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
           <i class="bi bi-graph-up"></i> Gráficos de Datos Históricos
         </h5>
-        <button class="btn btn-sm btn-light" (click)="toggleHistoricalCharts()">
+        <button class="aero-btn aero-btn-secondary btn-sm" (click)="toggleHistoricalCharts()">
           <i class="bi" [class.bi-chevron-down]="isChartsCollapsed"
              [class.bi-chevron-up]="!isChartsCollapsed"></i>
           {{ isChartsCollapsed ? 'Expandir' : 'Contraer' }}
         </button>
       </div>
     </div>
-    <div class="card-body" *ngIf="!isChartsCollapsed">
+    <div class="aero-card-body" *ngIf="!isChartsCollapsed">
       <div class="charts-section">
         <div class="chart-type-selector">
           <button *ngFor="let type of getAvailableChartTypes()"
@@ -127,20 +136,20 @@
 
   <div *ngIf="showCharts && !isLoading && !error">
 
-    <div class="card mb-4">
-      <div class="card-header bg-info text-white">
+    <div class="aero-card mb-4">
+      <div class="aero-card-header bg-info text-white">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
             <i class="fas fa-wind"></i> Rosa de Vientos
           </h5>
-          <button class="btn btn-sm btn-light" (click)="toggleWindRose()">
+          <button class="aero-btn aero-btn-secondary btn-sm" (click)="toggleWindRose()">
             <i class="bi" [class.bi-chevron-down]="isWindRoseCollapsed"
                [class.bi-chevron-up]="!isWindRoseCollapsed"></i>
             {{ isWindRoseCollapsed ? 'Expandir' : 'Contraer' }}
           </button>
         </div>
       </div>
-      <div class="card-body" *ngIf="!isWindRoseCollapsed">
+      <div class="aero-card-body" *ngIf="!isWindRoseCollapsed">
         <div class="chart-card wind-rose-card">
           <div class="chart-info">
             <small>Distribución de velocidad y dirección del viento</small>
@@ -222,20 +231,20 @@
     </div>
 
     <!-- THERMOSTAT TEMPERATURE CARD -->
-    <div class="card mb-4">
-      <div class="card-header bg-warning text-dark">
+    <div class="aero-card mb-4">
+      <div class="aero-card-header bg-warning text-dark">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
             <i class="fas fa-thermometer-half"></i> Monitoreo de Temperatura
           </h5>
-          <button class="btn btn-sm btn-light" (click)="toggleThermostat()">
+          <button class="aero-btn aero-btn-secondary btn-sm" (click)="toggleThermostat()">
             <i class="bi" [class.bi-chevron-down]="isThermostatCollapsed"
                [class.bi-chevron-up]="!isThermostatCollapsed"></i>
             {{ isThermostatCollapsed ? 'Expandir' : 'Contraer' }}
           </button>
         </div>
       </div>
-      <div class="card-body" *ngIf="!isThermostatCollapsed">
+      <div class="aero-card-body" *ngIf="!isThermostatCollapsed">
         <div class="chart-card thermostat-card">
           <div class="chart-info mb-3">
             <small>Lecturas en tiempo real con rangos óptimos y normales para Costa Rica</small>
@@ -418,20 +427,20 @@
     </div>
 
     <!-- TSR DLIg CHART CARD -->
-    <div class="card mb-4">
-      <div class="card-header bg-success text-white">
+    <div class="aero-card mb-4">
+      <div class="aero-card-header bg-success text-white">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
             <i class="fas fa-sun"></i> Radiación Solar Total (TSR) - DLIg
           </h5>
-          <button class="btn btn-sm btn-light" (click)="toggleTSRChart()">
+          <button class="aero-btn aero-btn-secondary btn-sm" (click)="toggleTSRChart()">
             <i class="bi" [class.bi-chevron-down]="isTSRChartCollapsed"
                [class.bi-chevron-up]="!isTSRChartCollapsed"></i>
             {{ isTSRChartCollapsed ? 'Expandir' : 'Contraer' }}
           </button>
         </div>
       </div>
-      <div class="card-body" *ngIf="!isTSRChartCollapsed">
+      <div class="aero-card-body" *ngIf="!isTSRChartCollapsed">
         <div class="chart-card tsr-dlig-card">
           <div class="chart-info mb-3">
             <small>Daily Light Integral - Global | Período: {{ tsrChartData.dataPoints.length }} horas</small>
@@ -636,20 +645,20 @@
     </div>
 
     <!-- PAR DLIp CHART CARD -->
-    <div class="card mb-4">
-      <div class="card-header bg-dark text-white">
+    <div class="aero-card mb-4">
+      <div class="aero-card-header bg-dark text-white">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
             <i class="fas fa-lightbulb"></i> PAR & DLIp - Radiación Fotosintética Activa
           </h5>
-          <button class="btn btn-sm btn-light" (click)="togglePARChart()">
+          <button class="aero-btn aero-btn-secondary btn-sm" (click)="togglePARChart()">
             <i class="bi" [class.bi-chevron-down]="isPARChartCollapsed"
                [class.bi-chevron-up]="!isPARChartCollapsed"></i>
             {{ isPARChartCollapsed ? 'Expandir' : 'Contraer' }}
           </button>
         </div>
       </div>
-      <div class="card-body" *ngIf="!isPARChartCollapsed">
+      <div class="aero-card-body" *ngIf="!isPARChartCollapsed">
         <div class="chart-card par-dlip-card">
           <div class="chart-info mb-3">
             <small>Daily Light Integral - PAR | Período: {{ parChartData.dataPoints.length }} horas</small>
@@ -874,23 +883,23 @@
   <div *ngIf="!isLoading && !error" class="dashboard-content">
 
     <!-- Flow Meters Section -->
-    <div class="card mb-4">
-      <div class="card-header bg-primary text-white">
+    <div class="aero-card mb-4">
+      <div class="aero-card-header bg-primary text-white">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
             <i class="bi bi-droplet"></i> Medidores de Flujo
           </h5>
-          <button class="btn btn-sm btn-light" (click)="toggleFlowDevices()">
+          <button class="aero-btn aero-btn-secondary btn-sm" (click)="toggleFlowDevices()">
             <i class="bi" [class.bi-chevron-down]="isFlowDevicesCollapsed"
                [class.bi-chevron-up]="!isFlowDevicesCollapsed"></i>
             {{ isFlowDevicesCollapsed ? 'Expandir' : 'Contraer' }}
           </button>
         </div>
       </div>
-      <div class="card-body" *ngIf="!isFlowDevicesCollapsed">
+      <div class="aero-card-body" *ngIf="!isFlowDevicesCollapsed">
         <div class="dashboard-section">
           <div class="devices-grid">
-        <div *ngFor="let device of flowDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
+        <div *ngFor="let device of flowDevices" class="aero-card device-card" [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
             <span class="status-indicator"></span>
@@ -945,23 +954,23 @@
     </div>
 
     <!-- Soil Sensors Section -->
-    <div class="card mb-4">
-      <div class="card-header bg-success text-white">
+    <div class="aero-card mb-4">
+      <div class="aero-card-header bg-success text-white">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
             <i class="bi bi-moisture"></i> Sensores de Suelo
           </h5>
-          <button class="btn btn-sm btn-light" (click)="toggleSoilDevices()">
+          <button class="aero-btn aero-btn-secondary btn-sm" (click)="toggleSoilDevices()">
             <i class="bi" [class.bi-chevron-down]="isSoilDevicesCollapsed"
                [class.bi-chevron-up]="!isSoilDevicesCollapsed"></i>
             {{ isSoilDevicesCollapsed ? 'Expandir' : 'Contraer' }}
           </button>
         </div>
       </div>
-      <div class="card-body" *ngIf="!isSoilDevicesCollapsed">
+      <div class="aero-card-body" *ngIf="!isSoilDevicesCollapsed">
         <div class="dashboard-section">
           <div class="devices-grid">
-        <div *ngFor="let device of soilDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
+        <div *ngFor="let device of soilDevices" class="aero-card device-card" [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
             <span class="status-indicator"></span>
@@ -1009,23 +1018,23 @@
     </div>
 
     <!-- pH Sensors Section -->
-    <div class="card mb-4">
-      <div class="card-header bg-warning text-dark">
+    <div class="aero-card mb-4">
+      <div class="aero-card-header bg-warning text-dark">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
             <i class="bi bi-vial"></i> Sensores de pH
           </h5>
-          <button class="btn btn-sm btn-light" (click)="togglePhDevices()">
+          <button class="aero-btn aero-btn-secondary btn-sm" (click)="togglePhDevices()">
             <i class="bi" [class.bi-chevron-down]="isPhDevicesCollapsed"
                [class.bi-chevron-up]="!isPhDevicesCollapsed"></i>
             {{ isPhDevicesCollapsed ? 'Expandir' : 'Contraer' }}
           </button>
         </div>
       </div>
-      <div class="card-body" *ngIf="!isPhDevicesCollapsed">
+      <div class="aero-card-body" *ngIf="!isPhDevicesCollapsed">
         <div class="dashboard-section">
           <div class="devices-grid">
-        <div *ngFor="let device of phDevices" class="device-card" [class]="getStatusClass(getDeviceStatus(device))">
+        <div *ngFor="let device of phDevices" class="aero-card device-card" [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
             <span class="status-indicator"></span>
@@ -1086,23 +1095,23 @@
     </div>
 
     <!-- Pressure Sensors Section -->
-    <div class="card mb-4">
-      <div class="card-header bg-info text-white">
+    <div class="aero-card mb-4">
+      <div class="aero-card-header bg-info text-white">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
             <i class="bi bi-speedometer"></i> Sensores de Presión
           </h5>
-          <button class="btn btn-sm btn-light" (click)="togglePressureDevices()">
+          <button class="aero-btn aero-btn-secondary btn-sm" (click)="togglePressureDevices()">
             <i class="bi" [class.bi-chevron-down]="isPressureDevicesCollapsed"
                [class.bi-chevron-up]="!isPressureDevicesCollapsed"></i>
             {{ isPressureDevicesCollapsed ? 'Expandir' : 'Contraer' }}
           </button>
         </div>
       </div>
-      <div class="card-body" *ngIf="!isPressureDevicesCollapsed">
+      <div class="aero-card-body" *ngIf="!isPressureDevicesCollapsed">
         <div class="dashboard-section">
           <div class="devices-grid">
-        <div *ngFor="let device of pressureDevices" class="device-card"
+        <div *ngFor="let device of pressureDevices" class="aero-card device-card"
           [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
@@ -1166,23 +1175,23 @@
     </div>
 
     <!-- Climate Station Section -->
-    <div class="card mb-4">
-      <div class="card-header bg-secondary text-white">
+    <div class="aero-card mb-4">
+      <div class="aero-card-header bg-secondary text-white">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
             <i class="bi bi-cloud-sun"></i> Estación Climática
           </h5>
-          <button class="btn btn-sm btn-light" (click)="toggleClimateDevices()">
+          <button class="aero-btn aero-btn-secondary btn-sm" (click)="toggleClimateDevices()">
             <i class="bi" [class.bi-chevron-down]="isClimateDevicesCollapsed"
                [class.bi-chevron-up]="!isClimateDevicesCollapsed"></i>
             {{ isClimateDevicesCollapsed ? 'Expandir' : 'Contraer' }}
           </button>
         </div>
       </div>
-      <div class="card-body" *ngIf="!isClimateDevicesCollapsed">
+      <div class="aero-card-body" *ngIf="!isClimateDevicesCollapsed">
         <div class="dashboard-section">
           <div class="devices-grid">
-        <div *ngFor="let device of climateDevices" class="device-card climate-card"
+        <div *ngFor="let device of climateDevices" class="aero-card device-card climate-card"
           [class]="getStatusClass(getDeviceStatus(device))">
           <div class="device-header">
             <h3>{{ device.deviceId }}</h3>
@@ -1260,4 +1269,5 @@
       </div>
     </div>
   </div>
+</div>
 </div>

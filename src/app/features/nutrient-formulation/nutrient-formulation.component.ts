@@ -11,7 +11,6 @@ import { CropService } from '../crops/services/crop.service';
 import { ApiService } from '../../core/services/api.service';
 import { CatalogService, Catalog } from '../catalogs/services/catalog.service';
 import { AuthService } from '../../core/auth/auth.service';
-import { RealDataSimpleFormulationService, SimpleFormulationRequest, SimpleFormulationResult } from './real-data-simple-formulation.service';
 import { Chart, registerables } from 'chart.js';
 import { AfterViewInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { NgZone } from '@angular/core';
@@ -538,6 +537,7 @@ export class NutrientFormulationComponent implements OnInit {
     calculationResults: CalculationResponse | null = null;
 
     showResults = false;
+    selectedTab: string | null = null;
 
     // Chart data
     fertilizerChartData: any[] = [];
@@ -547,11 +547,6 @@ export class NutrientFormulationComponent implements OnInit {
     private dosageChart: Chart | null = null;
     private costDistributionChart: Chart | null = null;
 
-    public realDataFormulationService = new RealDataSimpleFormulationService();
-
-    // Simple formulation specific properties
-    simpleFormulationResult: SimpleFormulationResult | null = null;
-    isCalculatingSimple = false;
     // Enhanced formulation results (includes Ca, Mg, pH, EC estimates)
     enhancedFormulationResults: any[] = [];
 
@@ -577,7 +572,6 @@ export class NutrientFormulationComponent implements OnInit {
         private nutrientRecipeService: NutrientRecipeService,
         public http: HttpClient,
         public router: Router,
-        private fixedFormulationService: RealDataSimpleFormulationService,
         public authService: AuthService,
         public waterChemistryService: WaterChemistryService,
         private waterService: WaterService,
@@ -833,16 +827,9 @@ export class NutrientFormulationComponent implements OnInit {
                     console.error('Error parsing saved advanced calculation data:', error);
                 }
             }
-        } else {
-            // Switch to simple tab
-            const simpleTab = document.querySelector('#simple-tab') as HTMLElement;
-            if (simpleTab) {
-                simpleTab.click();
-            }
         }
 
         // Recreate the formulation results from saved data
-        this.simpleFormulationResult = this.convertRecipeToSimpleResult(recipe);
         this.formulationResults = this.generateFormulationResults(this.currentRecipe);
     }
     exportRecipe(): void {
@@ -922,76 +909,6 @@ export class NutrientFormulationComponent implements OnInit {
             targetEc: Number(formValue.targetEc) || 1.5,
             maxBudgetPerLiter: Number(formValue.maxBudgetPerLiter) || 100
         };
-    }
-    public calculateSimpleFertilizerMix(recipe: FormulationRecipe, fertilizers: Fertilizer[]): RecipeFertilizer[] {
-        const selectedFertilizers: RecipeFertilizer[] = [];
-        const targets = {
-            nitrogen: Number(recipe.targetNitrogen) || 200,
-            phosphorus: Number(recipe.targetPhosphorus) || 50,
-            potassium: Number(recipe.targetPotassium) || 300
-        };
-        const nSource = fertilizers
-            .filter(f => f.composition && f.composition.nitrogen > 0)
-            .sort((a, b) => (b.composition?.nitrogen || 0) - (a.composition?.nitrogen || 0))[0];
-        const pSource = fertilizers
-            .filter(f => f.composition && f.composition.phosphorus > 0)
-            .sort((a, b) => (b.composition?.phosphorus || 0) - (a.composition?.phosphorus || 0))[0];
-        const kSource = fertilizers
-            .filter(f => f.composition && f.composition.potassium > 0)
-            .sort((a, b) => (b.composition?.potassium || 0) - (a.composition?.potassium || 0))[0];
-        const volumeLiters = Number(recipe.volumeLiters) || 1000;
-        if (nSource) {
-            const concentration = this.calculateSimpleConcentration(nSource, targets.nitrogen, 'nitrogen', volumeLiters);
-            if (concentration > 0) {
-                selectedFertilizers.push({
-                    fertilizerId: nSource.id,
-                    fertilizer: nSource,
-                    concentration: concentration,
-                    percentageOfN: 60,
-                    percentageOfP: 20,
-                    percentageOfK: 20,
-                    costPortion: concentration * (nSource.pricePerUnit || 0) * volumeLiters / 1000
-                });
-            }
-        }
-        if (pSource && pSource.id !== nSource?.id) {
-            const concentration = this.calculateSimpleConcentration(pSource, targets.phosphorus, 'phosphorus', volumeLiters);
-            if (concentration > 0) {
-                selectedFertilizers.push({
-                    fertilizerId: pSource.id,
-                    fertilizer: pSource,
-                    concentration: concentration,
-                    percentageOfN: 20,
-                    percentageOfP: 60,
-                    percentageOfK: 20,
-                    costPortion: concentration * (pSource.pricePerUnit || 0) * volumeLiters / 1000
-                });
-            }
-        }
-        if (kSource && kSource.id !== nSource?.id && kSource.id !== pSource?.id) {
-            const concentration = this.calculateSimpleConcentration(kSource, targets.potassium, 'potassium', volumeLiters);
-            if (concentration > 0) {
-                selectedFertilizers.push({
-                    fertilizerId: kSource.id,
-                    fertilizer: kSource,
-                    concentration: concentration,
-                    percentageOfN: 20,
-                    percentageOfP: 20,
-                    percentageOfK: 60,
-                    costPortion: concentration * (kSource.pricePerUnit || 0) * volumeLiters / 1000
-                });
-            }
-        }
-        recipe.totalCost = selectedFertilizers.reduce((sum, fert) => sum + fert.costPortion, 0);
-        return selectedFertilizers;
-    }
-    public calculateSimpleConcentration(fertilizer: Fertilizer, targetPpm: number, nutrient: keyof FertilizerComposition, volumeLiters: number): number {
-        if (!fertilizer.composition) return 0;
-        let nutrientPercentageRaw = fertilizer.composition[nutrient];
-        const nutrientPercentage = typeof nutrientPercentageRaw === 'number' ? nutrientPercentageRaw : Number(nutrientPercentageRaw) || 0;
-        if (nutrientPercentage === 0) return 0;
-        const concentration = (targetPpm * volumeLiters) / (nutrientPercentage * 10);
-        return Math.max(0, Math.min(5, concentration));
     }
     public selectOptimalFertilizersFixed(fertilizers: any[], targets: any, volumeLiters: number): any[] {
         if (fertilizers.length === 0) {
@@ -1244,7 +1161,7 @@ export class NutrientFormulationComponent implements OnInit {
         console.log(`Extracted integer from last 2 chars of "${value}":`, intValue);
         return isNaN(intValue) ? 0 : intValue;
     }
-    public saveRecipe(result: SimpleFormulationResult | any): void {
+    public saveRecipe(result: any): void {
         console.log('💾 Saving recipe to database...', result);
         console.log('cropPhases:', this.cropPhases);
 
@@ -1356,7 +1273,7 @@ export class NutrientFormulationComponent implements OnInit {
             achievedIron: result.nutrientBalance?.iron?.achieved ? Number(result.nutrientBalance.iron.achieved) : null,
             totalCost: result.totalCost ? Number(result.totalCost) : null,
             costPerLiter: result.volumeLiters ? (Number(result.totalCost) || 0) / Number(result.volumeLiters) : null,
-            recipeType: this.isSimpleFormulationActive() ? 'Simple' : 'Advanced',
+            recipeType: 'Advanced',
             instructions: JSON.stringify(result.instructions || []),
             warnings: JSON.stringify(result.warnings || []),
             notes: result.notes || null,
@@ -1378,7 +1295,6 @@ export class NutrientFormulationComponent implements OnInit {
 
             // Result Summary
             statusMessage: this.getFormulationStatusMessage(result),
-            summaryLine: this.getSimpleFormulationSummary(),
 
             // Advanced Calculator Specific Fields (for advanced formulations)
             optimizationMethod: result.optimization_method || result.optimizationMethod || null,
@@ -2064,28 +1980,8 @@ export class NutrientFormulationComponent implements OnInit {
                 cropPhaseId,
                 { onlyActive: true }
             ).pipe(
-                map((response: any) => {
-                    console.log(`Received fertilizers for crop phase ${cropPhaseId}:`, response);
-                    // let fertilizers: any[] = [];
+                map((response: any) => { 
                     const fertilizers = response;
-                    // if (Array.isArray(response)) {
-                    // } else if (response && typeof response === 'object') {
-                    //     if (Array.isArray(response.fertilizers)) {
-                    //         fertilizers = response.fertilizers;
-                    //     } else if (Array.isArray(response.result)) {
-                    //         fertilizers = response.result;
-                    //     } else if (Array.isArray(response.data)) {
-                    //         fertilizers = response.data;
-                    //     } else if (Array.isArray(response.items)) {
-                    //         fertilizers = response.items;
-                    //     } else {
-                    //         console.warn(`Unexpected response format for crop phase ${cropPhaseId}:`, response);
-                    //         fertilizers = [];
-                    //     }
-                    // } else {
-                    //     console.warn(`Invalid response for crop phase ${cropPhaseId}:`, response);
-                    //     fertilizers = [];
-                    // }
                     return { cropPhaseId, fertilizers };
                 }),
                 catchError(error => {
@@ -2111,11 +2007,9 @@ export class NutrientFormulationComponent implements OnInit {
                         }
                     });
                 });
-                console.log('Consolidated fertilizers from all crop phases:', Array.from(allFertilizers.values()));
                 const transformedFertilizers = this.transformFertilizersData({
                     fertilizers: Array.from(allFertilizers.values())
                 });
-                console.log('Consolidated optimized fertilizers:', transformedFertilizers);
                 this.fertilizers = transformedFertilizers;
                 this.isLoading = false;
             },
@@ -2215,7 +2109,6 @@ export class NutrientFormulationComponent implements OnInit {
                 composition: composition,
                 optimizationScore: f.optimizationScore
             };
-            console.log('Transformed fertilizer:', transformedFertilizer);
             return transformedFertilizer;
         });
     }
@@ -3307,80 +3200,6 @@ export class NutrientFormulationComponent implements OnInit {
 
 
     /**
-     * Calculate simple formulation using ONLY real database data
-     * Requires actual CropPhaseSolutionRequirement and Fertilizer data
-     */
-    calculateSimpleFormulation(): void {
-        // if (this.formulationForm.invalid) {
-        //     const invalidFields = Object.keys(this.formulationForm.controls).filter(key => this.formulationForm.get(key)?.invalid);
-        //     console.error('Formulario inválido, campos faltantes o incorrectos:', invalidFields);
-        //     this.errorMessage = 'Por favor complete todos los campos requeridos';
-        //     return;
-        // }
-
-        this.isCalculatingSimple = true;
-        this.errorMessage = '';
-        this.successMessage = '';
-        this.simpleFormulationResult = null;
-
-        const formValue = this.formulationForm.value;
-
-        // Get REAL crop phase requirements from database
-        const realRequirements = this.getRealCropPhaseRequirements(formValue.cropPhaseId);
-        if (!realRequirements) {
-            this.errorMessage = 'No se encontraron requerimientos nutricionales reales en la base de datos para esta fase del cultivo';
-            this.isCalculatingSimple = false;
-            return;
-        }
-
-        // Get REAL fertilizers with compositions from database
-        const realFertilizers = this.getRealFertilizersWithCompositions();
-        if (realFertilizers.length === 0) {
-            this.errorMessage = 'No hay fertilizantes con composiciones reales disponibles en la base de datos';
-            this.isCalculatingSimple = false;
-            return;
-        }
-
-        // Create request with real data
-        const request = {
-            cropId: formValue.cropId,
-            cropPhaseId: formValue.cropPhaseId,
-            volumeLiters: formValue.volumeLiters,
-            waterSourceId: formValue.waterSourceId,
-            targetPh: formValue.targetPh,
-            targetEc: formValue.targetEc
-        };
-
-        // Calculate using ONLY real data
-        this.realDataFormulationService.calculateSimpleFormulation(
-            request,
-            realRequirements,
-            realFertilizers
-        ).subscribe({
-            next: (result) => {
-                this.simpleFormulationResult = result;
-                // ✅ NUEVO: Generar resultados mejorados
-                const recipe = this.convertSimpleResultToRecipe(result);
-                console.log('Recipe generated from simple result:', recipe);
-                const waterSource = this.waterSources.find(w => w.id === formValue.waterSourceId);
-                if (waterSource) {
-                    this.enhancedFormulationResults = this.generateEnhancedFormulationResults(recipe, waterSource);
-                    console.log('Enhanced results generated:', this.enhancedFormulationResults);
-                }
-
-                this.currentRecipe = this.convertSimpleResultToRecipe(result);
-                this.successMessage = 'Formulación calculada exitosamente';
-                this.isCalculatingSimple = false;
-            },
-            error: (error) => {
-                console.error('Error calculating simple formulation:', error);
-                this.errorMessage = error.message || 'Error al calcular la formulación';
-                this.isCalculatingSimple = false;
-            }
-        });
-    }
-
-    /**
      * Get REAL crop phase requirements from database ONLY
      * Returns null if no real data exists - NO FALLBACKS
      */
@@ -3512,82 +3331,11 @@ export class NutrientFormulationComponent implements OnInit {
     }
 
     /**
-     * Validate that all required real data is available before showing Simple Formulation
-     */
-    isSimpleFormulationAvailable(): boolean {
-        const hasRealRequirements = this.cropPhaseSolutionRequirements && this.cropPhaseSolutionRequirements.length > 0;
-        const hasRealFertilizers = this.getRealFertilizersWithCompositions().length > 0;
-
-        return hasRealRequirements && hasRealFertilizers;
-    }
-
-    /**
-     * Get validation message for missing real data
-     */
-    getSimpleFormulationValidationMessage(): string {
-        const hasRealRequirements = this.cropPhaseSolutionRequirements && this.cropPhaseSolutionRequirements.length > 0;
-        const hasRealFertilizers = this.getRealFertilizersWithCompositions().length > 0;
-
-        if (!hasRealRequirements && !hasRealFertilizers) {
-            return 'Se requieren requerimientos nutricionales y fertilizantes con composiciones en la base de datos';
-        } else if (!hasRealRequirements) {
-            return 'Se requieren requerimientos nutricionales reales en la tabla CropPhaseSolutionRequirement';
-        } else if (!hasRealFertilizers) {
-            return 'Se requieren fertilizantes con composiciones reales en la base de datos';
-        }
-
-        return '';
-    }
-
-
-    /**
-     * Convert simple result to recipe format (same as before)
-     */
-    public convertSimpleResultToRecipe(result: SimpleFormulationResult): any {
-        return {
-            name: result.recipeName,
-            cropId: result.cropId,
-            cropPhaseId: result.cropPhaseId,
-            waterSourceId: 0,
-            volumeLiters: result.volumeLiters,
-            targetPh: result.targetPh,
-            targetEc: result.targetEc,
-            fertilizers: result.fertilizers.map(f => ({
-                fertilizerId: f.fertilizerId,
-                fertilizerName: f.fertilizerName,
-                concentration: f.concentration,
-                cost: f.cost,
-                quantity: f.totalGrams,
-                percentageOfN: 0,
-                percentageOfP: 0,
-                percentageOfK: 0,
-                costPortion: f.cost || 0
-            })),
-            totalCost: result.totalCost,
-            nutrientProfile: {
-                nitrogen: result.nutrientBalance.nitrogen.achieved,
-                phosphorus: result.nutrientBalance.phosphorus.achieved,
-                potassium: result.nutrientBalance.potassium.achieved,
-                calcium: result.nutrientBalance.calcium?.achieved || 0,
-                magnesium: result.nutrientBalance.magnesium?.achieved || 0
-            },
-            instructions: result.instructions,
-            warnings: result.warnings,
-            createdAt: new Date()
-        };
-    }
-
-    /**
-     * Main calculate method - updated to route to correct calculation
+     * Main calculate method
      */
     calculateFormulation(): void {
-        if (this.isSimpleFormulationActive()) {
-            this.calculateSimpleFormulation();
-        } else {
-            // Keep existing advanced calculation logic
-            this.calculateAdvancedFormulation();
-            console.log("finished advanced calculation")
-        }
+        this.calculateAdvancedFormulation();
+        console.log("finished advanced calculation")
     }
 
     // Alias for template compatibility
@@ -3597,15 +3345,7 @@ export class NutrientFormulationComponent implements OnInit {
     }
 
     /**
-     * Check if we should use simple calculation (when in Simple Formulation tab)
-     */
-    isSimpleFormulationActive(): boolean {
-        const activeTab = document.querySelector('#simple-tab');
-        return activeTab?.classList.contains('active') || false;
-    }
-
-    /**
-     * Existing advanced calculation (renamed for clarity)
+     * Advanced calculation
      */
     public calculateAdvancedFormulation(): void {
         if (this.calculationForm.invalid) {
@@ -3929,30 +3669,6 @@ export class NutrientFormulationComponent implements OnInit {
     }
 
 
-    /**
-     * Reset simple formulation results
-     */
-    resetSimpleFormulation(): void {
-        this.simpleFormulationResult = null;
-        this.currentRecipe = null;
-        this.errorMessage = '';
-        this.successMessage = '';
-    }
-
-    /**
-     * Display methods for UI
-     */
-    getSimpleFormulationSummary(): string {
-        if (!this.simpleFormulationResult) return '';
-
-        const result = this.simpleFormulationResult;
-        const balance = result.nutrientBalance;
-
-        return `N: ${balance.nitrogen.achieved.toFixed(0)}ppm (${(balance.nitrogen.ratio * 100).toFixed(0)}%) | ` +
-            `P: ${balance.phosphorus.achieved.toFixed(0)}ppm (${(balance.phosphorus.ratio * 100).toFixed(0)}%) | ` +
-            `K: ${balance.potassium.achieved.toFixed(0)}ppm (${(balance.potassium.ratio * 100).toFixed(0)}%)`;
-    }
-
     getFormulationStatusMessage(result: any): string {
         if (!result || !result.nutrientBalance) return 'Formulación Calculada';
 
@@ -3973,180 +3689,8 @@ export class NutrientFormulationComponent implements OnInit {
         }
     }
 
-    getSimpleFertilizerCount(): number {
-        return this.simpleFormulationResult?.fertilizers.length || 0;
-    }
-
-    hasSimpleWarnings(): boolean {
-        return (this.simpleFormulationResult?.warnings.length || 0) > 0;
-    }
-
     getNutrientBalanceColor(nutrient: 'nitrogen' | 'phosphorus' | 'potassium'): string {
-        if (!this.simpleFormulationResult) return 'text-muted';
-
-        const ratio = this.simpleFormulationResult.nutrientBalance[nutrient].ratio;
-
-        if (ratio < 0.85) return 'text-warning';
-        if (ratio > 1.15) return 'text-danger';
-        return 'text-success';
-    }
-
-    /**
-     * Export and save methods
-     */
-    exportSimpleFormulation(): void {
-        if (!this.simpleFormulationResult) return;
-
-        const result = this.simpleFormulationResult;
-        const exportData = {
-            recipe: result.recipeName,
-            crop: this.getCropName(result.cropId),
-            phase: this.getCropPhaseName(result.cropPhaseId),
-            volume: `${result.volumeLiters}L`,
-            targetPh: result.targetPh,
-            targetEc: result.targetEc,
-            fertilizers: result.fertilizers.map(f => ({
-                name: f.fertilizerName,
-                concentration: `${f.concentration.toFixed(2)}g/L`,
-                total: `${f.totalGrams.toFixed(1)}g`,
-                cost: `₡${f.cost.toFixed(2)}`
-            })),
-            totalCost: `₡${result.totalCost.toFixed(2)}`,
-            nutrients: {
-                nitrogen: `${result.nutrientBalance.nitrogen.achieved.toFixed(0)}ppm`,
-                phosphorus: `${result.nutrientBalance.phosphorus.achieved.toFixed(0)}ppm`,
-                potassium: `${result.nutrientBalance.potassium.achieved.toFixed(0)}ppm`
-            },
-            instructions: result.instructions,
-            warnings: result.warnings,
-            generatedAt: new Date().toLocaleString(),
-            dataSource: 'Real database data - no fallbacks used'
-        };
-
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-            type: 'application/json'
-        });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `formulacion-simple-real-${result.recipeName.replace(/\s+/g, '-')}.json`;
-        link.click();
-        window.URL.revokeObjectURL(url);
-
-        this.successMessage = 'Formulación exportada exitosamente';
-    }
-
-    saveSimpleFormulation(): void {
-        if (!this.simpleFormulationResult) return;
-
-        const recipe = this.convertSimpleResultToRecipe(this.simpleFormulationResult);
-
-        this.savedRecipes.unshift(recipe);
-
-        if (this.savedRecipes.length > 50) {
-            this.savedRecipes = this.savedRecipes.slice(0, 50);
-        }
-
-        try {
-            localStorage.setItem('saved-recipes', JSON.stringify(this.savedRecipes));
-            this.successMessage = 'Receta guardada exitosamente';
-        } catch (error) {
-            console.error('Error saving recipe:', error);
-            this.errorMessage = 'Error al guardar la receta';
-        }
-    }
-
-    loadSimpleRecipe(recipe: FormulationRecipe): void {
-        this.formulationForm.patchValue({
-            recipeName: recipe.name,
-            cropId: recipe.cropId,
-            cropPhaseId: recipe.cropPhaseId,
-            waterSourceId: recipe.waterSourceId,
-            volumeLiters: recipe.volumeLiters,
-            targetPh: recipe.targetPh,
-            targetEc: recipe.targetEc
-        });
-
-        this.currentRecipe = recipe;
-        this.simpleFormulationResult = this.convertRecipeToSimpleResult(recipe);
-        this.successMessage = 'Receta cargada exitosamente';
-    }
-
-    public convertRecipeToSimpleResult(recipe: FormulationRecipe): SimpleFormulationResult {
-        // Parse instructions and warnings if they're JSON strings
-        let parsedInstructions: any[] = [];
-        let parsedWarnings: any[] = [];
-
-        if (recipe.instructions) {
-            try {
-                parsedInstructions = typeof recipe.instructions === 'string'
-                    ? JSON.parse(recipe.instructions)
-                    : recipe.instructions;
-            } catch (e) {
-                console.warn('Failed to parse instructions:', e);
-                parsedInstructions = [];
-            }
-        }
-
-        if (recipe.warnings) {
-            try {
-                parsedWarnings = typeof recipe.warnings === 'string'
-                    ? JSON.parse(recipe.warnings)
-                    : recipe.warnings;
-            } catch (e) {
-                console.warn('Failed to parse warnings:', e);
-                parsedWarnings = [];
-            }
-        }
-
-        return {
-            recipeName: recipe.name,
-            cropId: recipe.cropId,
-            cropPhaseId: recipe.cropPhaseId,
-            volumeLiters: recipe.volumeLiters,
-            targetPh: recipe.targetPh,
-            targetEc: recipe.targetEc,
-            fertilizers: recipe.fertilizers.map((f: any) => ({
-                fertilizerId: f.fertilizerId,
-                fertilizerName: f.fertilizerName || f.fertilizer?.name || 'Fertilizante desconocido',
-                concentration: f.concentrationGramsPerLiter || f.concentration || 0,
-                totalGrams: f.totalGrams || (f.concentrationGramsPerLiter || f.concentration || 0) * recipe.volumeLiters,
-                cost: f.totalCost || f.costPortion || 0,
-                npkContribution: {
-                    nitrogen: f.nitrogenContribution || 0,
-                    phosphorus: f.phosphorusContribution || 0,
-                    potassium: f.potassiumContribution || 0
-                },
-                realComposition: {
-                    nitrogen: f.percentageOfN || 0,
-                    phosphorus: f.percentageOfP || 0,
-                    potassium: f.percentageOfK || 0,
-                    calcium: f.calciumContribution || 0,
-                    magnesium: f.magnesiumContribution || 0,
-                    sulfur: f.sulfurContribution || 0
-                }
-            })),
-            totalCost: recipe.totalCost,
-            nutrientBalance: {
-                nitrogen: {
-                    target: recipe.targetNitrogen ?? 0,
-                    achieved: recipe.achievedNitrogen ?? 0,
-                    ratio: (recipe.targetNitrogen ?? 0) > 0 ? (recipe.achievedNitrogen ?? 0) / (recipe.targetNitrogen ?? 0) : 0
-                },
-                phosphorus: {
-                    target: recipe.targetPhosphorus ?? 0,
-                    achieved: recipe.achievedPhosphorus ?? 0,
-                    ratio: (recipe.targetPhosphorus ?? 0) > 0 ? (recipe.achievedPhosphorus ?? 0) / (recipe.targetPhosphorus ?? 0) : 0
-                },
-                potassium: {
-                    target: recipe.targetPotassium ?? 0,
-                    achieved: recipe.achievedPotassium ?? 0,
-                    ratio: (recipe.targetPotassium ?? 0) > 0 ? (recipe.achievedPotassium ?? 0) / (recipe.targetPotassium ?? 0) : 0
-                }
-            },
-            instructions: parsedInstructions,
-            warnings: parsedWarnings
-        };
+        return 'text-muted';
     }
 
 
@@ -4341,119 +3885,6 @@ export class NutrientFormulationComponent implements OnInit {
 
 
     /**
-     * Enhanced validation method for simple formulation availability
-     */
-    isEnhancedSimpleFormulationAvailable(): boolean {
-        // Check if we have crop phase requirements loaded
-        const hasRequirements = this.cropPhaseSolutionRequirements &&
-            this.cropPhaseSolutionRequirements.length > 0;
-
-        // Check if we have fertilizers with compositions loaded
-        const validFertilizers = this.getRealFertilizersWithCompositions();
-        const hasFertilizers = validFertilizers.length > 0;
-
-        // Check if we have water sources loaded
-        const hasWaterSources = this.waterSources && this.waterSources.length > 0;
-
-        // Check if we have crops loaded
-        const hasCrops = this.crops && this.crops.length > 0;
-
-        const isAvailable = hasRequirements && hasFertilizers && hasWaterSources && hasCrops;
-
-        console.log('Simple Formulation Availability Check:', {
-            hasRequirements: hasRequirements,
-            requirementsCount: this.cropPhaseSolutionRequirements?.length || 0,
-            hasFertilizers: hasFertilizers,
-            fertilizersCount: validFertilizers.length,
-            hasWaterSources: hasWaterSources,
-            waterSourcesCount: this.waterSources?.length || 0,
-            hasCrops: hasCrops,
-            cropsCount: this.crops?.length || 0,
-            isAvailable: isAvailable
-        });
-
-        return isAvailable;
-    }
-
-    /**
-     * Method to display detailed formulation results with better formatting
-     */
-    getDetailedFormulationSummary(): string {
-        if (!this.simpleFormulationResult) return '';
-
-        const result = this.simpleFormulationResult;
-        const balance = result.nutrientBalance;
-
-        const formatRatio = (ratio: number): string => {
-            const percentage = ratio * 100;
-            if (percentage >= 90) return `${percentage.toFixed(0)}% ✅`;
-            if (percentage >= 70) return `${percentage.toFixed(0)}% ⚠️`;
-            return `${percentage.toFixed(0)}% ❌`;
-        };
-
-        return [
-            `Nitrógeno: ${balance.nitrogen.achieved.toFixed(1)}/${balance.nitrogen.target} ppm (${formatRatio(balance.nitrogen.ratio)})`,
-            `Fósforo: ${balance.phosphorus.achieved.toFixed(1)}/${balance.phosphorus.target} ppm (${formatRatio(balance.phosphorus.ratio)})`,
-            `Potasio: ${balance.potassium.achieved.toFixed(1)}/${balance.potassium.target} ppm (${formatRatio(balance.potassium.ratio)})`,
-            `Fertilizantes: ${result.fertilizers.length}`,
-            `Costo total: ₡${result.totalCost != null ? result.totalCost.toFixed(2) : 'N/A'}`
-        ].join(' | ');
-    }
-
-    /**
-     * Get color class for nutrient achievement status
-     */
-    getNutrientAchievementColor(nutrient: 'nitrogen' | 'phosphorus' | 'potassium'): string {
-        if (!this.simpleFormulationResult) return 'text-muted';
-
-        const ratio = this.simpleFormulationResult.nutrientBalance[nutrient].ratio;
-
-        if (ratio >= 0.9) return 'text-success'; // Green for 90%+ achievement
-        if (ratio >= 0.7) return 'text-warning'; // Yellow for 70-89% achievement
-        return 'text-danger'; // Red for <70% achievement
-    }
-
-    /**
-     * Check if formulation meets minimum quality standards
-     */
-    isFormulationAcceptable(): boolean {
-        if (!this.simpleFormulationResult) return false;
-
-        const balance = this.simpleFormulationResult.nutrientBalance;
-
-        // Require at least 70% achievement for primary nutrients
-        return balance.nitrogen.ratio >= 0.7 &&
-            balance.phosphorus.ratio >= 0.7 &&
-            balance.potassium.ratio >= 0.7;
-    }
-
-    /**
-     * Generate recommendation text for improving formulation
-     */
-    getFormulationRecommendations(): string[] {
-        if (!this.simpleFormulationResult) return [];
-
-        const recommendations: string[] = [];
-        const balance = this.simpleFormulationResult.nutrientBalance;
-
-        if (balance.nitrogen.ratio < 0.7) {
-            recommendations.push('Considerar fertilizantes con mayor contenido de nitrógeno');
-        }
-        if (balance.phosphorus.ratio < 0.7) {
-            recommendations.push('Considerar fertilizantes con mayor contenido de fósforo');
-        }
-        if (balance.potassium.ratio < 0.7) {
-            recommendations.push('Considerar fertilizantes con mayor contenido de potasio');
-        }
-        if (this.simpleFormulationResult.fertilizers.length > 4) {
-            recommendations.push('Simplificar formulación usando menos fertilizantes');
-        }
-
-        return recommendations;
-    }
-
-
-    /**
      * 1. Handle crop change in Advanced Calculator
      */
     onAdvancedCropChange(): void {
@@ -4562,7 +3993,7 @@ export class NutrientFormulationComponent implements OnInit {
             totalCost: recipe.totalCost || 0,
             costPerLiter: recipe.costPerLiter || (recipe.totalCost / recipe.volumeLiters),
             dateCreated: recipe.dateCreated,
-            recipeType: recipe.recipeType || 'Simple',
+            recipeType: recipe.recipeType || 'Advanced',
             fertilizers: recipe.fertilizers?.map((f: any) => ({
                 fertilizerId: f.fertilizerId,
                 fertilizerName: f.fertilizerName,
@@ -4576,7 +4007,6 @@ export class NutrientFormulationComponent implements OnInit {
         };
 
         // Clear any existing calculation results to show only the loaded recipe
-        this.simpleFormulationResult = null;
         this.calculationResults = null;
 
         this.successMessage = `Receta "${recipe.name}" cargada exitosamente`;
@@ -4726,7 +4156,7 @@ export class NutrientFormulationComponent implements OnInit {
             <p><strong>Descripción:</strong> ${this.currentRecipe.description || 'N/A'}</p>
             <p><strong>Cultivo:</strong> ${this.currentRecipe.cropName || this.getCropName(this.currentRecipe.cropId)}</p>
             <p><strong>Fase:</strong> ${this.currentRecipe.cropPhaseName || this.getCropPhaseName(this.currentRecipe.cropPhaseId)}</p>
-            <p><strong>Tipo:</strong> ${this.currentRecipe.recipeType || 'Simple'}</p>
+            <p><strong>Tipo:</strong> ${this.currentRecipe.recipeType || 'Avanzada'}</p>
             <p><strong>Fecha de Creación:</strong> ${new Date(this.currentRecipe.dateCreated).toLocaleString()}</p>
 
             <h2>Parámetros Objetivo</h2>

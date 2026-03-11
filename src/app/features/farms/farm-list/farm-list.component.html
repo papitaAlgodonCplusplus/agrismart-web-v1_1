@@ -1,24 +1,30 @@
-<div class="farm-list-container">
+<div class="page-wrapper farm-list-page">
+  <div class="container-fluid py-3">
+    <div class="farm-list-container">
   <!-- Page Header -->
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">
-        <i class="bi bi-geo-alt"></i>
-        Gestión de Fincas
-      </h1>
-      <p class="page-description">
-        Administración y control de fincas para producción agrícola
-      </p>
-    </div>
-    <div class="header-actions">
-      <button type="button" class="btn btn-secondary me-2" (click)="goToDashboard()">
-        <i class="bi bi-arrow-left"></i>
-        Regresar al Dashboard
-      </button>
-      <button type="button" class="btn btn-primary" (click)="showCreateForm()" [disabled]="isLoading">
-        <i class="bi bi-plus-circle"></i>
-        Nueva Finca
-      </button>
+  <div class="aero-header">
+    <div class="aero-header-content">
+      <div class="d-flex align-items-center gap-3">
+        <div class="aero-icon-orb">
+          <i class="bi bi-geo-alt"></i>
+        </div>
+        <div class="header-content">
+          <h1 class="aero-title page-title mb-0">Gestión de Fincas</h1>
+          <p class="aero-subtitle page-description mb-0">
+            Administración y control de fincas para producción agrícola
+          </p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="aero-btn-back" (click)="goToDashboard()">
+          <i class="bi bi-arrow-left"></i>
+          Regresar al Dashboard
+        </button>
+        <button type="button" class="btn btn-primary" (click)="showCreateForm()" [disabled]="isLoading">
+          <i class="bi bi-plus-circle"></i>
+          Nueva Finca
+        </button>
+      </div>
     </div>
   </div>
 
@@ -39,7 +45,7 @@
   <!-- Statistics Cards -->
   <div class="row mb-4">
     <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
-      <div class="stat-card stat-primary">
+      <div class="stat-card stat-primary aero-glass-panel">
         <div class="stat-icon">
           <i class="bi bi-geo-alt"></i>
         </div>
@@ -50,7 +56,7 @@
       </div>
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
-      <div class="stat-card stat-success">
+      <div class="stat-card stat-success aero-glass-panel">
         <div class="stat-icon">
           <i class="bi bi-check-circle"></i>
         </div>
@@ -61,7 +67,7 @@
       </div>
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
-      <div class="stat-card stat-info">
+      <div class="stat-card stat-info aero-glass-panel">
         <div class="stat-icon">
           <i class="bi bi-rulers"></i>
         </div>
@@ -75,7 +81,7 @@
 
   <!-- Filters Section -->
   <div class="filters-section">
-    <div class="filters-card">
+    <div class="filters-card aero-glass-panel">
       <div class="filters-header">
         <h5><i class="bi bi-funnel"></i> Filtros</h5>
         <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">
@@ -100,20 +106,20 @@
           <label class="form-label">Buscar</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control" placeholder="Nombre, ubicación, empresa..."
+            <input type="text" class="form-control aero-input" placeholder="Nombre, ubicación, empresa..."
               [(ngModel)]="filters.searchTerm" (input)="onFilterChange()">
           </div>
         </div>
 
         <div class="col-md-2 mb-3">
           <label class="form-label">Ubicación</label>
-          <input type="text" class="form-control" placeholder="Ciudad, región..." [(ngModel)]="filters.location"
+          <input type="text" class="form-control aero-input" placeholder="Ciudad, región..." [(ngModel)]="filters.location"
             (input)="onFilterChange()">
         </div>
 
         <div class="col-md-2 mb-3">
           <label class="form-label">Clima</label>
-          <select class="form-select" [(ngModel)]="filters.climate" (change)="onFilterChange()">
+          <select class="form-select aero-input" [(ngModel)]="filters.climate" (change)="onFilterChange()">
             <option value="">Todos</option>
             <option *ngFor="let climate of climateTypes" [value]="climate.value">
               {{ climate.label }}
@@ -123,7 +129,7 @@
 
         <div class="col-md-2 mb-3">
           <label class="form-label">Tipo de Suelo</label>
-          <select class="form-select" [(ngModel)]="filters.soilType" (change)="onFilterChange()">
+          <select class="form-select aero-input" [(ngModel)]="filters.soilType" (change)="onFilterChange()">
             <option value="">Todos</option>
             <option *ngFor="let soil of soilTypes" [value]="soil.value">
               {{ soil.label }}
@@ -135,19 +141,19 @@
       <div class="row">
         <div class="col-md-3 mb-3">
           <label class="form-label">Área Mínima (Ha)</label>
-          <input type="number" class="form-control" placeholder="0" step="0.1" [(ngModel)]="filters.minArea"
+          <input type="number" class="form-control aero-input" placeholder="0" step="0.1" [(ngModel)]="filters.minArea"
             (input)="onFilterChange()">
         </div>
 
         <div class="col-md-3 mb-3">
           <label class="form-label">Área Máxima (Ha)</label>
-          <input type="number" class="form-control" placeholder="1000" step="0.1" [(ngModel)]="filters.maxArea"
+          <input type="number" class="form-control aero-input" placeholder="1000" step="0.1" [(ngModel)]="filters.maxArea"
             (input)="onFilterChange()">
         </div>
 
         <div class="col-md-3 mb-3">
           <label class="form-label">Empresa</label>
-          <select class="form-select" [(ngModel)]="filters.companyId" (change)="onFilterChange()">
+          <select class="form-select aero-input" [(ngModel)]="filters.companyId" (change)="onFilterChange()">
             <option [value]="null">Todas las empresas</option>
             <option *ngFor="let company of availableCompanies" [value]="company.id">
               {{ company.name }}
@@ -159,7 +165,7 @@
   </div>
 
   <!-- Loading Indicator -->
-  <div class="text-center my-4" *ngIf="isLoading && !isFormVisible">
+  <div class="text-center my-4 loading-panel aero-glass-panel" *ngIf="isLoading && !isFormVisible">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Cargando...</span>
     </div>
@@ -167,7 +173,7 @@
   </div>
 
   <!-- Farms Table -->
-  <div class="table-card" *ngIf="!isLoading || isFormVisible">
+  <div class="table-card aero-glass-panel" *ngIf="!isLoading || isFormVisible">
     <div class="table-header">
       <h5>
         <i class="bi bi-table"></i>
@@ -338,12 +344,14 @@
       </nav>
     </div>
   </div>
+    </div>
+  </div>
 </div>
 
 <!-- Create/Edit Form Modal -->
 <div class="form-overlay" *ngIf="isFormVisible">
-  <div class="form-panel">
-    <div class="form-header">
+  <div class="form-panel aero-modal-shell">
+    <div class="form-header aero-modal-header primary-modal-header">
       <h5>
         <i class="bi bi-geo-alt"></i>
         {{ isEditMode ? 'Editar Finca' : 'Nueva Finca' }}
@@ -357,14 +365,14 @@
           <!-- Basic Information -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Nombre *</label>
-            <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('name')" formControlName="name"
+            <input type="text" class="form-control aero-input" [class.is-invalid]="isFieldInvalid('name')" formControlName="name"
               placeholder="Nombre de la finca">
             <div class="invalid-feedback">{{ getFieldError('name') }}</div>
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Empresa *</label>
-            <select class="form-select" [class.is-invalid]="isFieldInvalid('companyId')" formControlName="companyId">
+            <select class="form-select aero-input" [class.is-invalid]="isFieldInvalid('companyId')" formControlName="companyId">
               <option value="">Seleccionar empresa...</option>
               <option *ngFor="let company of availableCompanies" [value]="company.id">
                 {{ company.name }}
@@ -375,45 +383,45 @@
 
           <div class="col-12 mb-3">
             <label class="form-label">Descripción</label>
-            <textarea class="form-control" rows="3" formControlName="description"
+            <textarea class="form-control aero-input" rows="3" formControlName="description"
               placeholder="Descripción de la finca"></textarea>
           </div>
 
           <!-- Location Information -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Ubicación</label>
-            <input type="text" class="form-control" formControlName="location" placeholder="Ciudad, región, país">
+            <input type="text" class="form-control aero-input" formControlName="location" placeholder="Ciudad, región, país">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Dirección</label>
-            <input type="text" class="form-control" formControlName="address" placeholder="Dirección completa">
+            <input type="text" class="form-control aero-input" formControlName="address" placeholder="Dirección completa">
           </div>
 
           <!-- Coordinates -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Latitud</label>
-            <input type="number" class="form-control" formControlName="latitude" step="0.0001" min="-90" max="90"
+            <input type="number" class="form-control aero-input" formControlName="latitude" step="0.0001" min="-90" max="90"
               placeholder="Ej: 10.0000">
           </div>
 
           <div class="col-md-6 mb-3">
             <label class="form-label">Longitud</label>
-            <input type="number" class="form-control" formControlName="longitude" step="0.0001" min="-180" max="180"
+            <input type="number" class="form-control aero-input" formControlName="longitude" step="0.0001" min="-180" max="180"
               placeholder="Ej: -84.0000">
           </div>
 
           <!-- Physical Characteristics -->
           <div class="col-md-4 mb-3">
             <label class="form-label">Área (Hectáreas)</label>
-            <input type="number" class="form-control" [class.is-invalid]="isFieldInvalid('area')" formControlName="area"
+            <input type="number" class="form-control aero-input" [class.is-invalid]="isFieldInvalid('area')" formControlName="area"
               step="0.1" min="0" placeholder="0.0">
             <div class="invalid-feedback">{{ getFieldError('area') }}</div>
           </div>
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Clima</label>
-            <select class="form-select" formControlName="climate">
+            <select class="form-select aero-input" formControlName="climate">
               <option value="">Seleccionar clima...</option>
               <option *ngFor="let climate of climateTypes" [value]="climate.value">
                 {{ climate.label }}
@@ -423,7 +431,7 @@
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Tipo de Suelo</label>
-            <select class="form-select" formControlName="soilType">
+            <select class="form-select aero-input" formControlName="soilType">
               <option value="">Seleccionar tipo de suelo...</option>
               <option *ngFor="let soil of soilTypes" [value]="soil.value">
                 {{ soil.label }}

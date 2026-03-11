@@ -1,13 +1,24 @@
-<div class="manager-container">
+<div class="page-wrapper crop-medium-page">
+  <div class="container-fluid py-3">
+    <div class="manager-container">
   <!-- Header -->
-  <div class="page-header">
-    <div class="header-content">
-      <h2><i class="bi bi-layers-fill"></i> Gestión de Medios de Cultivo</h2>
-      <p class="text-muted">Administre los sustratos y medios de crecimiento</p>
+  <div class="aero-header">
+    <div class="aero-header-content">
+      <div class="d-flex align-items-center gap-3">
+        <div class="aero-icon-orb">
+          <i class="bi bi-layers-fill"></i>
+        </div>
+        <div class="header-content">
+          <h2 class="aero-title mb-0">Gestión de Medios de Cultivo</h2>
+          <p class="aero-subtitle mb-0">Administre los sustratos y medios de crecimiento</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="createNew()">
+          <i class="bi bi-plus-circle"></i> Nuevo Medio de Cultivo
+        </button>
+      </div>
     </div>
-    <button class="btn btn-primary" (click)="createNew()">
-      <i class="bi bi-plus-circle"></i> Nuevo Medio de Cultivo
-    </button>
   </div>
 
   <!-- Alerts -->
@@ -21,10 +32,10 @@
   </div>
 
   <!-- Filters -->
-  <div class="filters-section">
+  <div class="filters-section aero-glass-panel">
     <div class="search-box">
       <i class="bi bi-search"></i>
-      <input type="text" class="form-control" placeholder="Buscar por nombre o ID..."
+      <input type="text" class="form-control aero-input" placeholder="Buscar por nombre o ID..."
         [(ngModel)]="searchTerm" />
       <button *ngIf="searchTerm" class="btn-clear" (click)="clearSearch()">
         <i class="bi bi-x"></i>
@@ -39,13 +50,13 @@
   </div>
 
   <!-- Loading -->
-  <div *ngIf="isLoading" class="loading-container">
+  <div *ngIf="isLoading" class="loading-container aero-glass-panel">
     <div class="spinner-border text-primary" role="status"></div>
     <p>Cargando medios de cultivo...</p>
   </div>
 
   <!-- Table -->
-  <div *ngIf="!isLoading" class="table-container">
+  <div *ngIf="!isLoading" class="table-container aero-glass-panel">
     <table class="table table-hover">
       <thead>
         <tr>
@@ -96,11 +107,14 @@
   </div>
 </div>
 
+  </div>
+</div>
+
 <!-- Create / Edit Modal -->
 <div class="modal" [class.show]="showCreateModal || showEditModal" *ngIf="showCreateModal || showEditModal">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
+    <div class="modal-content aero-modal-shell">
+      <div class="modal-header aero-modal-header primary-modal-header">
         <h5 class="modal-title">
           <i class="bi bi-layers-fill"></i>
           {{ showCreateModal ? 'Nuevo Medio de Cultivo' : 'Editar Medio de Cultivo' }}
@@ -117,7 +131,7 @@
             <!-- Catalog -->
             <div class="col-md-6">
               <label class="form-label">Catálogo <span class="text-danger">*</span></label>
-              <select class="form-select" formControlName="catalogId"
+              <select class="form-select aero-input" formControlName="catalogId"
                 [class.is-invalid]="mediumForm.get('catalogId')?.invalid && mediumForm.get('catalogId')?.touched">
                 <option [value]="null">Seleccione un catálogo</option>
                 <option *ngFor="let cat of catalogs" [value]="cat.id">{{ cat.name }}</option>
@@ -128,7 +142,7 @@
             <!-- Name -->
             <div class="col-md-6">
               <label class="form-label">Nombre <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" formControlName="name"
+              <input type="text" class="form-control aero-input" formControlName="name"
                 placeholder="Ej: Lana de Roca 100% Grodan"
                 [class.is-invalid]="mediumForm.get('name')?.invalid && mediumForm.get('name')?.touched" />
               <div class="invalid-feedback">El nombre debe tener al menos 2 caracteres</div>
@@ -143,7 +157,7 @@
                 <i class="bi bi-info-circle text-muted ms-1" title="Humedad volumétrica a 1 kPa"></i>
               </label>
               <div class="input-group">
-                <input type="number" class="form-control" formControlName="containerCapacityPercentage"
+                <input type="number" class="form-control aero-input" formControlName="containerCapacityPercentage"
                   min="0" max="100" step="0.1" placeholder="Ej: 72.5"
                   [class.is-invalid]="mediumForm.get('containerCapacityPercentage')?.invalid && mediumForm.get('containerCapacityPercentage')?.touched" />
                 <span class="input-group-text">%</span>
@@ -157,7 +171,7 @@
                 <i class="bi bi-info-circle text-muted ms-1" title="Humedad volumétrica a 15 kPa"></i>
               </label>
               <div class="input-group">
-                <input type="number" class="form-control" formControlName="permanentWiltingPoint"
+                <input type="number" class="form-control aero-input" formControlName="permanentWiltingPoint"
                   min="0" max="100" step="0.1" placeholder="Ej: 18.3"
                   [class.is-invalid]="mediumForm.get('permanentWiltingPoint')?.invalid && mediumForm.get('permanentWiltingPoint')?.touched" />
                 <span class="input-group-text">%</span>
@@ -171,7 +185,7 @@
                 <i class="bi bi-info-circle text-muted ms-1" title="Límite de agua fácilmente disponible"></i>
               </label>
               <div class="input-group">
-                <input type="number" class="form-control" formControlName="fiveKpaHumidity"
+                <input type="number" class="form-control aero-input" formControlName="fiveKpaHumidity"
                   min="0" max="100" step="0.1" placeholder="Ej: 54.4"
                   [class.is-invalid]="mediumForm.get('fiveKpaHumidity')?.invalid && mediumForm.get('fiveKpaHumidity')?.touched" />
                 <span class="input-group-text">%</span>
@@ -185,7 +199,7 @@
             <div class="col-md-4">
               <label class="form-label text-primary fw-semibold">ATD — Agua Total Disponible</label>
               <div class="input-group">
-                <input type="number" class="form-control bg-light" formControlName="totalAvailableWaterPercentage" readonly />
+                <input type="number" class="form-control aero-input bg-light" formControlName="totalAvailableWaterPercentage" readonly />
                 <span class="input-group-text">%</span>
               </div>
               <small class="form-text text-muted">CC − PPM</small>
@@ -194,7 +208,7 @@
             <div class="col-md-4">
               <label class="form-label text-success fw-semibold">AGF — Agua Fácilmente Disponible</label>
               <div class="input-group">
-                <input type="number" class="form-control bg-light" formControlName="easelyAvailableWaterPercentage" readonly />
+                <input type="number" class="form-control aero-input bg-light" formControlName="easelyAvailableWaterPercentage" readonly />
                 <span class="input-group-text">%</span>
               </div>
               <small class="form-text text-muted">CC − H5kPa</small>
@@ -203,7 +217,7 @@
             <div class="col-md-4">
               <label class="form-label text-warning fw-semibold">AR — Agua de Reserva</label>
               <div class="input-group">
-                <input type="number" class="form-control bg-light" formControlName="reserveWaterPercentage" readonly />
+                <input type="number" class="form-control aero-input bg-light" formControlName="reserveWaterPercentage" readonly />
                 <span class="input-group-text">%</span>
               </div>
               <small class="form-text text-muted">H5kPa − PPM</small>
@@ -236,8 +250,8 @@
 <!-- View Modal -->
 <div class="modal" [class.show]="showViewModal" *ngIf="showViewModal && selectedMedium">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
+    <div class="modal-content aero-modal-shell">
+      <div class="modal-header aero-modal-header info-modal-header">
         <h5 class="modal-title"><i class="bi bi-info-circle-fill"></i> Detalles del Medio de Cultivo</h5>
         <button type="button" class="btn-close" (click)="closeModal()"></button>
       </div>

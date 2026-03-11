@@ -53,6 +53,20 @@ export interface FertilizerDosage {
   phaseId: number;
   phaseName: string;
   nutrientContribution: any;
+  // Enhanced context fields
+  cropName: string;
+  cropProductionName: string;
+  phaseStartDate: Date | null;
+  phaseEndDate: Date | null;
+  phaseWeekRange: string;
+  recommendationType: 'apply' | 'buy' | 'stock-check' | 'formulation';
+  recommendationText: string;
+  stockStatus: 'critical' | 'low' | 'ok' | 'unknown';
+  currentStock: number | null;
+  minimumStock: number | null;
+  stockUnit: string;
+  relatedRecipeName: string;
+  fertilizerDescription: string;
 }
 
 export interface CropProductionLocation {
@@ -155,6 +169,8 @@ export class DashboardComponent implements OnInit {
   availableFertilizers: any[] = [];
   availableCatalogs: any[] = [];
   cropPhaseRequirements: any[] = [];
+  cropPhases: any[] = [];
+  nutrientRecipes: any[] = [];
 
   // Selected filters
   selectedCropProductionId: number | null = null;
@@ -1039,6 +1055,10 @@ export class DashboardComponent implements OnInit {
         this.availableFertilizers = fertilizers.map((f: any) => ({
           id: f.id,
           name: f.name,
+          description: f.description || '',
+          brand: f.brand || '',
+          type: f.type || '',
+          applicationMethod: f.applicationMethod || '',
           N: f.nitrogenPercentage || 0,
           P2O5: f.phosphorusPercentage || 0,
           K2O: f.potassiumPercentage || 0,
@@ -1046,10 +1066,18 @@ export class DashboardComponent implements OnInit {
           MgO: f.magnesiumPercentage || 0,
           S: f.sulfurPercentage || 0,
           solubility: f.solubility || 1000,
-          cost: f.pricePerUnit || 1.0
+          cost: f.pricePerUnit || 1.0,
+          currentStock: f.currentStock ?? null,
+          minimumStock: f.minimumStock ?? null,
+          stockUnit: f.stockUnit || 'kg'
         }));
 
-        // 
+        // Recalculate dosages now that fertilizers are loaded
+        if (this.cropPhaseRequirements.length > 0) {
+          this.calculateFertilizerDosages();
+        }
+
+        //
       },
       error: (error) => {
         console.error('Error loading fertilizers:', error);
@@ -1059,27 +1087,51 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * Load crop phase requirements for fertilizer calculations
+   * Load crop phase requirements and crop phases for fertilizer calculations
    */
   private loadCropPhaseRequirements(): void {
-    this.apiService.get<any>('/CropPhaseSolutionRequirement').subscribe({
-      next: (response) => {
-        //
-
-        // Handle different response structures
-        if (Array.isArray(response)) {
-          this.cropPhaseRequirements = response;
-        } else if (response && Array.isArray(response.cropPhaseRequirements)) {
-          this.cropPhaseRequirements = response.cropPhaseRequirements;
+    forkJoin({
+      requirements: this.apiService.get<any>('/CropPhaseSolutionRequirement').pipe(catchError(() => of([]))),
+      cropPhases: this.apiService.get<any>('/CropPhase').pipe(catchError(() => of([])))
+    }).subscribe({
+      next: ({ requirements, cropPhases }) => {
+        // Extract requirements
+        if (Array.isArray(requirements)) {
+          this.cropPhaseRequirements = requirements;
+        } else if (requirements && Array.isArray(requirements.cropPhaseRequirements)) {
+          this.cropPhaseRequirements = requirements.cropPhaseRequirements;
         } else {
           this.cropPhaseRequirements = [];
         }
 
-        //
+        // Extract crop phases
+        if (Array.isArray(cropPhases)) {
+          this.cropPhases = cropPhases;
+        } else if (cropPhases?.result?.cropPhases) {
+          this.cropPhases = cropPhases.result.cropPhases;
+        } else if (cropPhases?.cropPhases) {
+          this.cropPhases = cropPhases.cropPhases;
+        } else {
+          this.cropPhases = [];
+        }
+
+        // Load saved nutrient recipes from localStorage
+        try {
+          const stored = localStorage.getItem('nutrient_recipes');
+          this.nutrientRecipes = stored ? JSON.parse(stored) : [];
+        } catch {
+          this.nutrientRecipes = [];
+        }
+
+        // Recalculate now that all reference data is loaded
+        if (this.availableFertilizers.length > 0) {
+          this.calculateFertilizerDosages();
+        }
       },
       error: (error) => {
-        console.error('Error loading crop phase requirements:', error);
+        console.error('Error loading crop phase data:', error);
         this.cropPhaseRequirements = [];
+        this.cropPhases = [];
       }
     });
   }
@@ -1394,61 +1446,80 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
- * Calculate fertilizer dosages based on ET and requirements
- * Fixed to iterate through ALL crop phase requirements
- */
+   * Calculate fertilizer dosages based on ET and crop phase requirements.
+   * Enriches each recommendation with crop name, production name, phase dates,
+   * stock status, and a human-readable recommendation description.
+   */
   private calculateFertilizerDosages(): void {
     if (this.availableFertilizers.length === 0 || this.cropPhaseRequirements.length === 0) {
       console.warn('Cannot calculate fertilizer dosages - missing data');
       return;
     }
 
-    
-    
-
-    // Get latest ET value (non-zero)
-    const latestET = this.climateKPIs.length > 0
-      ? this.climateKPIs.slice().reverse().find(kpi => kpi.cropET > 0)?.cropET || 0
-      : 0;
-
-    
-
-    // Reset fertilizer dosages array
+    // Reset
     this.fertilizerDosages = [];
 
-    // Get average water volume for cost calculations
+    // Lookup maps for enrichment
+    const crops: any[] = this.rawData.crops?.crops || [];
+    const cropProductions: any[] = this.rawData.cropProductions?.cropProductions || [];
+    const now = new Date();
+    const twoWeeksFromNow = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+    // Average water volume for cost calculation
     const avgWaterVolume = this.irrigationMetrics.length > 0
       ? this.irrigationMetrics.reduce((sum, m) => sum + m.totalVolume, 0) / this.irrigationMetrics.length
       : 10000;
 
-    // ITERATE THROUGH ALL CROP PHASE REQUIREMENTS
     for (const requirement of this.cropPhaseRequirements) {
-      
+      // --- Enrich with crop phase context ---
+      const cropPhase = this.cropPhases.find(
+        (cp: any) => cp.id === requirement.cropPhaseId || cp.cropPhaseId === requirement.cropPhaseId
+      ) || null;
 
-      // Calculate requirements in ppm
-      const requirements = {
-        nitrogen: (requirement.nO3 || 0) + (requirement.nH4 || 0),
-        phosphorus: requirement.h2PO4 || 0,
-        potassium: requirement.k || 0,
-        calcium: requirement.ca || 0,
-        magnesium: requirement.mg || 0,
-        sulfur: requirement.sO4 || 0
-      };
+      const cropId = cropPhase?.cropId ?? requirement.cropId ?? null;
+      const crop = cropId ? crops.find((c: any) => c.id === cropId) : null;
 
-      // Track remaining nutrients for this phase
-      let remainingN = requirements.nitrogen;
-      let remainingP = requirements.phosphorus;
-      let remainingK = requirements.potassium;
+      // Find most relevant crop production (match by cropId)
+      const cropProduction = cropId
+        ? cropProductions.find((cp: any) => cp.cropId === cropId && (cp.isActive || cp.active)) ||
+          cropProductions.find((cp: any) => cp.cropId === cropId)
+        : null;
 
-      // Calculate dosages for this phase requirement
+      // Phase name: prefer solution requirement name, then crop phase name
+      const phaseName = requirement.name || requirement.cropPhaseName || cropPhase?.name || `Fase ${requirement.id}`;
+
+      // Phase dates from actual CropPhase (startDate/endDate) or week-based fallback
+      let phaseStartDate: Date | null = cropPhase?.startDate ? new Date(cropPhase.startDate) : null;
+      let phaseEndDate: Date | null = cropPhase?.endDate ? new Date(cropPhase.endDate) : null;
+
+      // Build week-range label
+      let phaseWeekRange = '';
+      if (cropPhase?.startingWeek || cropPhase?.endingWeek) {
+        phaseWeekRange = cropPhase.startingWeek && cropPhase.endingWeek
+          ? `Semanas ${cropPhase.startingWeek}–${cropPhase.endingWeek}`
+          : cropPhase.startingWeek
+            ? `Desde semana ${cropPhase.startingWeek}`
+            : `Hasta semana ${cropPhase.endingWeek}`;
+      }
+
+      // Check for saved nutrient recipe matching this phase/crop
+      const relatedRecipe = this.nutrientRecipes.find(
+        (r: any) => r.cropPhaseId === requirement.cropPhaseId || r.cropId === cropId
+      );
+
+      // Nutrient requirements in ppm
+      const reqN = (requirement.nO3 || 0) + (requirement.nH4 || 0);
+      const reqP = requirement.h2PO4 || 0;
+      const reqK = requirement.k || 0;
+
+      let remainingN = reqN;
+      let remainingP = reqP;
+      let remainingK = reqK;
+
       for (const fert of this.availableFertilizers) {
-        
-        
         if (remainingN <= 0 && remainingK <= 0 && remainingP <= 0) break;
 
         let dosageNeeded = 0;
-
-        // Calculate dosage based on nutrient with highest deficit
         if (remainingN > 0 && fert.N > 0) {
           dosageNeeded = Math.max(dosageNeeded, (remainingN / 1000) / (fert.N / 100));
         }
@@ -1459,49 +1530,120 @@ export class DashboardComponent implements OnInit {
           dosageNeeded = Math.max(dosageNeeded, (remainingP / 1000) / (fert.P2O5 * 0.44 / 100));
         }
 
-        
-        // Only add if dosage is valid and within solubility limits
-        if (dosageNeeded > 0) { // TODO check this condition  && dosageNeeded <= fert.solubility
-          // Subtract nutrients provided by this fertilizer
-          remainingN -= (dosageNeeded * (fert.N / 100) * 1000);
-          remainingK -= (dosageNeeded * (fert.K2O / 100) * 0.83 * 1000);
-          remainingP -= (dosageNeeded * (fert.P2O5 / 100) * 0.44 * 1000);
+        if (dosageNeeded > 0) {
+          remainingN -= dosageNeeded * (fert.N / 100) * 1000;
+          remainingK -= dosageNeeded * (fert.K2O / 100) * 0.83 * 1000;
+          remainingP -= dosageNeeded * (fert.P2O5 / 100) * 0.44 * 1000;
 
-          // Check if this fertilizer/phase combination already exists
+          // --- Stock status ---
+          let stockStatus: 'critical' | 'low' | 'ok' | 'unknown' = 'unknown';
+          if (fert.currentStock !== null && fert.minimumStock !== null) {
+            if (fert.currentStock < fert.minimumStock * 0.5) {
+              stockStatus = 'critical';
+            } else if (fert.currentStock <= fert.minimumStock) {
+              stockStatus = 'low';
+            } else {
+              stockStatus = 'ok';
+            }
+          }
+
+          // --- Recommendation type & text ---
+          const cropLabel = crop?.name ? `cultivo "${crop.name}"` : 'cultivo';
+          const prodLabel = cropProduction?.name || cropProduction?.code
+            ? `producción "${cropProduction.name || cropProduction.code}"`
+            : '';
+          const phaseLabel = `fase "${phaseName}"`;
+          const stockLabel = fert.currentStock !== null
+            ? `${fert.currentStock} ${fert.stockUnit} disponibles`
+            : 'stock desconocido';
+          const minLabel = fert.minimumStock !== null
+            ? `mínimo requerido: ${fert.minimumStock} ${fert.stockUnit}`
+            : '';
+
+          let recommendationType: 'apply' | 'buy' | 'stock-check' | 'formulation';
+          let recommendationText: string;
+
+          if (stockStatus === 'critical') {
+            recommendationType = 'buy';
+            recommendationText =
+              `URGENTE — Comprar ${fert.name}: el inventario es crítico (${stockLabel}; ${minLabel}). ` +
+              `Se necesita para la ${phaseLabel} del ${cropLabel}` +
+              (phaseStartDate ? ` que inicia el ${phaseStartDate.toLocaleDateString('es-CR')}` : '') + '.';
+          } else if (stockStatus === 'low') {
+            recommendationType = 'buy';
+            recommendationText =
+              `Stock bajo: adquirir más ${fert.name} (${stockLabel}; ${minLabel}). ` +
+              `Requerido para la ${phaseLabel} del ${cropLabel}` +
+              (phaseWeekRange ? ` (${phaseWeekRange})` : '') + '.';
+          } else if (relatedRecipe) {
+            recommendationType = 'formulation';
+            recommendationText =
+              `Aplicar ${fert.name} según receta guardada "${relatedRecipe.name || relatedRecipe.recipeName}" ` +
+              `en el ${cropLabel}${prodLabel ? ', ' + prodLabel : ''}, ${phaseLabel}` +
+              (phaseWeekRange ? ` (${phaseWeekRange})` : '') +
+              `. Dosis calculada: ${dosageNeeded.toFixed(3)} g/L.`;
+          } else if (
+            phaseStartDate &&
+            phaseStartDate > now &&
+            phaseStartDate <= twoWeeksFromNow
+          ) {
+            recommendationType = 'stock-check';
+            recommendationText =
+              `Verificar inventario de ${fert.name}: la ${phaseLabel} del ${cropLabel} ` +
+              `inicia el ${phaseStartDate.toLocaleDateString('es-CR')}. ` +
+              `Asegúrese de contar con la dosis recomendada (${dosageNeeded.toFixed(3)} g/L) durante esta fase.`;
+          } else {
+            recommendationType = 'apply';
+            recommendationText =
+              `Aplicar ${fert.name} al ${cropLabel}` +
+              (prodLabel ? ` (${prodLabel})` : '') +
+              ` durante la ${phaseLabel}` +
+              (phaseWeekRange ? ` (${phaseWeekRange})` : '') +
+              `. Dosis recomendada: ${dosageNeeded.toFixed(3)} g/L por riego.`;
+          }
+
+          // --- Merge or add entry ---
           const existingIndex = this.fertilizerDosages.findIndex(
             d => d.fertilizer === fert.name && d.phaseId === requirement.id
           );
 
           if (existingIndex >= 0) {
-            // Update existing dosage
             this.fertilizerDosages[existingIndex].dosageGramsPerLiter += dosageNeeded;
             this.fertilizerDosages[existingIndex].cost += dosageNeeded * fert.cost / 1000 * avgWaterVolume;
           } else {
-            // Add new dosage entry with phase information
             this.fertilizerDosages.push({
               fertilizer: fert.name,
+              fertilizerDescription: fert.description || '',
               dosageGramsPerLiter: dosageNeeded,
               cost: dosageNeeded * fert.cost / 1000 * avgWaterVolume,
               phaseId: requirement.id,
-              phaseName: requirement.cropPhaseName || `Fase ${requirement.id}`,
-              // Add nutrient contribution details
+              phaseName,
               nutrientContribution: {
                 N: dosageNeeded * (fert.N / 100) * 1000,
                 P: dosageNeeded * (fert.P2O5 / 100) * 0.44 * 1000,
                 K: dosageNeeded * (fert.K2O / 100) * 0.83 * 1000
-              }
+              },
+              // Enriched context
+              cropName: crop?.name || '',
+              cropProductionName: cropProduction?.name || cropProduction?.code || '',
+              phaseStartDate,
+              phaseEndDate,
+              phaseWeekRange,
+              recommendationType,
+              recommendationText,
+              stockStatus,
+              currentStock: fert.currentStock,
+              minimumStock: fert.minimumStock,
+              stockUnit: fert.stockUnit || 'kg',
+              relatedRecipeName: relatedRecipe?.name || relatedRecipe?.recipeName || ''
             });
           }
         }
       }
     }
 
-    
-
-    // Update dashboard stats with total cost
-    this.stats.fertilizerCost = this.fertilizerDosages.reduce(
-      (sum, f) => sum + f.cost, 0
-    );
+    // Update dashboard stats total cost
+    this.stats.fertilizerCost = this.fertilizerDosages.reduce((sum, f) => sum + f.cost, 0);
   }
 
   // ============================================================================

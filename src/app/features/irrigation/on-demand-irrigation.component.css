@@ -2141,3 +2141,574 @@ textarea.form-control {
   color: #0f172a;
   text-align: right;
 }
+
+/* ============================================================================
+   ON-DEMAND IRRIGATION — FRUTIGER AERO OVERRIDES
+   ============================================================================ */
+
+.on-demand-irrigation-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0) 32%),
+    radial-gradient(circle at top right, rgba(120, 206, 255, 0.22) 0%, rgba(120, 206, 255, 0) 28%),
+    linear-gradient(160deg, #a8d8f0 0%, #c5e8fb 25%, #daf1fd 55%, #eef8fe 80%, #f5fcff 100%);
+}
+
+.on-demand-irrigation-page .container-fluid {
+  max-width: none;
+  width: 100%;
+}
+
+.on-demand-irrigation-container {
+  padding: 0;
+  background: transparent;
+  min-height: auto;
+}
+
+.aero-header {
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.85) 0%,
+    rgba(220,240,255,0.82) 50%,
+    rgba(180,220,255,0.65) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.9);
+  border-radius: 18px;
+  box-shadow:
+    0 10px 32px rgba(60,140,220,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    inset 0 -1px 0 rgba(100,170,240,0.2);
+  padding: 1rem 1.4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.aero-header::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 52%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0));
+  pointer-events: none;
+}
+
+.aero-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.aero-icon-orb {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #6cd3fa 0%, #2baef0 50%, #0a7ed4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.5rem;
+  box-shadow:
+    0 6px 18px rgba(33,150,243,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.6),
+    inset 0 -1px 0 rgba(0,60,140,0.28);
+  position: relative;
+}
+
+.aero-icon-orb::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  right: 7px;
+  height: 40%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0));
+}
+
+.aero-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #1a3a5c;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.aero-subtitle {
+  font-size: 0.86rem;
+  color: #4a7a9b;
+  font-weight: 500;
+}
+
+.aero-btn-back,
+.on-demand-irrigation-page .btn,
+.on-demand-irrigation-page .btn-duration,
+.on-demand-irrigation-page .btn-icon {
+  border-radius: 18px;
+  border: 1px solid rgba(90,160,230,0.4);
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.92) 0%,
+    rgba(210,233,255,0.82) 45%,
+    rgba(170,215,255,0.68) 55%,
+    rgba(140,195,245,0.62) 100%);
+  color: #1a5fa0;
+  box-shadow:
+    0 4px 12px rgba(60,130,220,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.88),
+    inset 0 -1px 0 rgba(80,150,220,0.16);
+}
+
+.aero-btn-back {
+  padding: 0.55rem 1.15rem;
+  font-weight: 600;
+}
+
+.aero-btn-back:hover,
+.on-demand-irrigation-page .btn:hover:not(:disabled),
+.on-demand-irrigation-page .btn-duration:hover:not(:disabled),
+.on-demand-irrigation-page .btn-icon:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.96) 0%,
+    rgba(190,225,255,0.88) 45%,
+    rgba(150,205,255,0.76) 55%,
+    rgba(110,185,250,0.72) 100%);
+  color: #0f518d;
+}
+
+.on-demand-irrigation-page .btn-primary,
+.on-demand-irrigation-page .btn-duration,
+.on-demand-irrigation-page .btn-toggle.active {
+  background: linear-gradient(180deg, #7ec8f7 0%, #3ea8f0 45%, #1a88e0 55%, #0d72c8 100%);
+  border-color: rgba(10,90,180,0.4);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,50,120,0.35);
+}
+
+.on-demand-irrigation-page .btn-primary:hover:not(:disabled),
+.on-demand-irrigation-page .btn-duration:hover:not(:disabled),
+.on-demand-irrigation-page .btn-toggle.active:hover:not(:disabled) {
+  background: linear-gradient(180deg, #92d8fb 0%, #57b8f4 45%, #2494ea 55%, #0f79d1 100%);
+  color: #fff;
+}
+
+.on-demand-irrigation-page .btn-secondary {
+  color: #295f8e;
+}
+
+.on-demand-irrigation-page .btn:disabled,
+.on-demand-irrigation-page .btn-duration:disabled,
+.on-demand-irrigation-page .btn-icon:disabled,
+.aero-btn-back:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.aero-main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.aero-glass-panel,
+.alerts-container .alert,
+.loading-container,
+.analysis-dashboard,
+.recommendation-error-panel,
+.auto-mode-status,
+.no-recommendation,
+.execution-form-modal,
+.details-modal,
+.history-card,
+.quick-action-card,
+.empty-state {
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.94) 0%,
+    rgba(225,242,255,0.9) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.94);
+  box-shadow:
+    0 10px 30px rgba(60,140,220,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.92),
+    inset 0 -1px 0 rgba(100,170,240,0.18);
+}
+
+.loading-container {
+  border-radius: 24px;
+  color: #3d6e97;
+}
+
+.alerts-container {
+  margin-bottom: 1.2rem;
+}
+
+.alerts-container .alert {
+  border-radius: 18px;
+  padding: 1rem 1.2rem;
+}
+
+.alerts-container .alert-success {
+  color: #0f6b73;
+  background: linear-gradient(180deg, rgba(237,255,251,0.92), rgba(192,247,233,0.85));
+}
+
+.alerts-container .alert-danger {
+  color: #8a3150;
+  background: linear-gradient(180deg, rgba(255,245,248,0.94), rgba(255,214,225,0.86));
+}
+
+.statistics-row {
+  gap: 1.25rem;
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 1.4rem 1.3rem;
+  align-items: center;
+}
+
+.stat-card::before,
+.auto-mode-section::before,
+.analysis-dashboard::before,
+.execution-form-modal::before,
+.details-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 42%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0));
+  pointer-events: none;
+}
+
+.stat-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.7),
+    0 8px 18px rgba(60,140,220,0.14);
+}
+
+.stat-content h3,
+.on-demand-irrigation-page .section-title,
+.on-demand-irrigation-page .analysis-section-title,
+.on-demand-irrigation-page .detail-section h3,
+.on-demand-irrigation-page .modal-header h2 {
+  color: #1a3a5c;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.72);
+}
+
+.stat-content p,
+.subtitle,
+.history-item .label,
+.detail-item label,
+.meta-item,
+.sensor-card-sub,
+.calc-formula,
+.on-demand-irrigation-page .section-title i,
+.on-demand-irrigation-page .analysis-section-title i {
+  color: #365d7d;
+}
+
+.auto-mode-section {
+  position: relative;
+  border-radius: 26px;
+  padding: 1.6rem;
+  border: 1px solid rgba(255,255,255,0.88);
+}
+
+.auto-mode-header {
+  gap: 1.25rem;
+}
+
+.auto-mode-title h2,
+.dashboard-title-row h3,
+.fd-text h3,
+.rule-name,
+.history-title h4,
+.plan-header h3 {
+  color: #1a3a5c;
+}
+
+.auto-mode-title p,
+.fd-text p,
+.rule-reason-text,
+.history-item .value,
+.detail-item span,
+.no-recommendation p,
+.empty-state p,
+.empty-state small {
+  color: #284a66;
+}
+
+.crop-selector label,
+.form-group label {
+  color: #2d5f86;
+}
+
+.on-demand-irrigation-page .form-control,
+.on-demand-irrigation-page textarea.form-control,
+.on-demand-irrigation-page select.form-control {
+  border-radius: 16px;
+  border: 1px solid rgba(125,180,225,0.44);
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(225,242,255,0.78));
+  color: #1f4769;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.92),
+    0 2px 8px rgba(120,180,230,0.08);
+}
+
+.on-demand-irrigation-page .form-control:focus {
+  border-color: rgba(59,152,232,0.75);
+  box-shadow:
+    0 0 0 4px rgba(85,177,247,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.96);
+}
+
+.valve-info-panel,
+.auto-mode-status,
+.recommendation-error-panel,
+.missing-data-warnings,
+.final-decision-card,
+.calc-row,
+.rule-row,
+.sensor-card {
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.78);
+  box-shadow:
+    0 8px 20px rgba(60,140,220,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.88);
+}
+
+.valve-info-panel,
+.auto-mode-status,
+.recommendation-error-panel,
+.missing-data-warnings,
+.calc-row,
+.rule-row,
+.sensor-card,
+.final-decision-card,
+.no-recommendation {
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(221,239,252,0.86));
+}
+
+.valve-info-item i,
+.status-item i,
+.analysis-section-title i,
+.dashboard-title-icon,
+.fd-icon i,
+.history-item i,
+.meta-item i,
+.error-panel-header i,
+.missing-data-header i {
+  color: #2c9be8;
+}
+
+.on-demand-irrigation-page .valve-info-item,
+.on-demand-irrigation-page .status-item {
+  color: #1d3f59;
+}
+
+.on-demand-irrigation-page .valve-info-label,
+.on-demand-irrigation-page .status-item strong {
+  color: #16354c;
+  font-weight: 700;
+}
+
+.on-demand-irrigation-page .valve-info-value,
+.on-demand-irrigation-page .status-item span {
+  color: #254a66;
+}
+
+.analysis-dashboard {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.analysis-dashboard.analysis-critical {
+  border-top-color: #f16b8f;
+}
+
+.analysis-dashboard.analysis-high {
+  border-top-color: #f3b84c;
+}
+
+.analysis-dashboard.analysis-medium {
+  border-top-color: #4eb4f3;
+}
+
+.analysis-dashboard.analysis-low {
+  border-top-color: #57c5b8;
+}
+
+.analysis-dashboard.analysis-critical .dashboard-header {
+  background: linear-gradient(135deg, rgba(255,234,240,0.94) 0%, rgba(255,210,224,0.88) 100%);
+}
+
+.analysis-dashboard.analysis-high .dashboard-header {
+  background: linear-gradient(135deg, rgba(255,248,220,0.95) 0%, rgba(255,232,174,0.9) 100%);
+}
+
+.analysis-dashboard.analysis-medium .dashboard-header {
+  background: linear-gradient(135deg, rgba(235,248,255,0.96) 0%, rgba(193,231,255,0.9) 100%);
+}
+
+.analysis-dashboard.analysis-low .dashboard-header {
+  background: linear-gradient(135deg, rgba(234,255,250,0.95) 0%, rgba(196,244,233,0.9) 100%);
+}
+
+.urgency-badge,
+.rule-tag,
+.history-badge,
+.badge,
+.auto-execution-notice {
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.72);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
+}
+
+.sensor-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(232,245,255,0.9));
+}
+
+.sensor-card-value,
+.fd-metric-value,
+.calc-result,
+.time-separator {
+  color: #1f5b86;
+}
+
+.sensor-mini-bar {
+  background: rgba(152, 206, 245, 0.26);
+  border-radius: 999px;
+}
+
+.sensor-mini-fill {
+  background: linear-gradient(90deg, #67d0ff 0%, #2896eb 100%);
+  border-radius: 999px;
+}
+
+.rule-row,
+.calc-row,
+.final-decision-card,
+.history-card,
+.quick-action-card,
+.detail-section,
+.notes-content,
+.error-content,
+.empty-state {
+  border-color: rgba(146, 199, 238, 0.34);
+}
+
+.final-decision-card.irrigate {
+  background: linear-gradient(180deg, rgba(236,255,252,0.92), rgba(193,244,233,0.84));
+}
+
+.fd-divider {
+  background: linear-gradient(180deg, rgba(124,183,228,0), rgba(124,183,228,0.6), rgba(124,183,228,0));
+}
+
+.auto-execution-notice {
+  background: linear-gradient(180deg, rgba(255,250,214,0.96), rgba(255,230,161,0.9));
+  color: #7a5a15;
+}
+
+.execution-form-overlay,
+.details-overlay {
+  background: rgba(114, 164, 209, 0.26);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.aero-modal-shell {
+  position: relative;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.92);
+  overflow: hidden;
+}
+
+.on-demand-irrigation-page .modal-header,
+.on-demand-irrigation-page .modal-body,
+.on-demand-irrigation-page .modal-footer,
+.detail-section,
+.notes-content {
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(230,244,255,0.88));
+}
+
+.on-demand-irrigation-page .modal-header,
+.on-demand-irrigation-page .modal-footer,
+.history-header,
+.history-meta,
+.detail-section h3 {
+  border-color: rgba(140, 197, 236, 0.4);
+}
+
+.notes-content,
+.error-content {
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(226,242,255,0.9));
+}
+
+.error-content {
+  color: #944465;
+  background: linear-gradient(180deg, rgba(255,244,247,0.92), rgba(255,220,229,0.84));
+}
+
+.on-demand-irrigation-page .modal-body,
+.on-demand-irrigation-page .details-body,
+.detail-section,
+.on-demand-irrigation-page .detail-item span,
+.on-demand-irrigation-page .history-item .value,
+.on-demand-irrigation-page .rule-reason-text,
+.on-demand-irrigation-page .sensor-card-label {
+  color: #1d3f59;
+}
+
+.on-demand-irrigation-page .sensor-card-sub,
+.on-demand-irrigation-page .calc-formula,
+.on-demand-irrigation-page .meta-item,
+.on-demand-irrigation-page .detail-item label {
+  color: #466983;
+}
+
+.no-recommendation,
+.empty-state {
+  border-radius: 22px;
+}
+
+.no-recommendation i,
+.empty-state i {
+  color: #37a8ee;
+}
+
+@media (max-width: 768px) {
+  .aero-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .aero-btn-back {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .on-demand-irrigation-container {
+    padding: 0;
+  }
+
+  .auto-mode-section,
+  .stat-card,
+  .analysis-dashboard,
+  .execution-form-modal,
+  .details-modal {
+    border-radius: 20px;
+  }
+}

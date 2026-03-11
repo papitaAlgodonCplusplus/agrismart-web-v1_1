@@ -5,7 +5,7 @@
       <h2><i class="bi bi-box-seam-fill"></i> Gestión de Contenedores</h2>
       <p class="text-muted">Administre los contenedores y tipos del sistema</p>
     </div>
-    <button class="btn btn-primary" (click)="activeTab === 'containers' ? createNew() : createNewType()">
+    <button class=" btn aero-btn aero-btn-primary " (click)="activeTab === 'containers' ? createNew() : createNewType()">
       <i class="bi bi-plus-circle"></i> {{ activeTab === 'containers' ? 'Nuevo Contenedor' : 'Nuevo Tipo' }}
     </button>
   </div>
@@ -38,7 +38,7 @@
     <div class="filters-section">
       <div class="search-box">
         <i class="bi bi-search"></i>
-        <input type="text" class="form-control" placeholder="Buscar por nombre o ID..." [(ngModel)]="searchTerm" />
+        <input type="text" class="form-control aero-input" placeholder="Buscar por nombre o ID..." [(ngModel)]="searchTerm" />
         <button *ngIf="searchTerm" class="btn-clear" (click)="clearSearch()"><i class="bi bi-x"></i></button>
       </div>
       <div class="filter-actions">
@@ -87,7 +87,7 @@
             </td>
             <td class="text-center">
               <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-primary" (click)="view(c)" title="Ver detalles"><i class="bi bi-eye"></i></button>
+                <button class=" btn aero-btn aero-btn-outline-primary " (click)="view(c)" title="Ver detalles"><i class="bi bi-eye"></i></button>
                 <button class="btn btn-outline-warning" (click)="edit(c)" title="Editar"><i class="bi bi-pencil"></i></button>
                 <button class="btn btn-outline-danger" (click)="delete(c)" title="Eliminar"><i class="bi bi-trash"></i></button>
               </div>
@@ -167,8 +167,8 @@
 <!-- ══════════ Container Create/Edit Modal ══════════ -->
 <div class="modal" [class.show]="showCreateModal || showEditModal" *ngIf="showCreateModal || showEditModal">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
+    <div class="modal-content aero-card aero-glass-card">
+      <div class=" modal-header aero-modal-header-primary ">
         <h5 class="modal-title">
           <i class="bi bi-box-seam-fill"></i>
           {{ showCreateModal ? 'Nuevo Contenedor' : 'Editar Contenedor' }}
@@ -183,7 +183,7 @@
           <div class="row g-3">
             <div class="col-md-8">
               <label class="form-label">Catálogo <span class="text-danger">*</span></label>
-              <select class="form-select" formControlName="catalogId"
+              <select class="form-select aero-input" formControlName="catalogId"
                 [class.is-invalid]="containerForm.get('catalogId')?.invalid && containerForm.get('catalogId')?.touched">
                 <option [value]="null">Seleccione un catálogo</option>
                 <option *ngFor="let cat of catalogs" [value]="cat.id">{{ cat.name }}</option>
@@ -192,7 +192,7 @@
             </div>
             <div class="col-md-4">
               <label class="form-label">Tipo de Contenedor <span class="text-danger">*</span></label>
-              <select class="form-select" formControlName="containerTypeId"
+              <select class="form-select aero-input" formControlName="containerTypeId"
                 [class.is-invalid]="containerForm.get('containerTypeId')?.invalid && containerForm.get('containerTypeId')?.touched">
                 <option [value]="null">Seleccione un tipo</option>
                 <option *ngFor="let type of containerTypes" [value]="type.id">{{ type.name }}</option>
@@ -201,35 +201,35 @@
             </div>
             <div class="col-12">
               <label class="form-label">Nombre <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" formControlName="name" placeholder="Ej: Maceta 18L Redonda"
+              <input type="text" class="form-control aero-input" formControlName="name" placeholder="Ej: Maceta 18L Redonda"
                 [class.is-invalid]="containerForm.get('name')?.invalid && containerForm.get('name')?.touched" />
               <div class="invalid-feedback">El nombre debe tener al menos 2 caracteres</div>
             </div>
             <div class="col-12"><hr class="my-1"><small class="text-muted fw-semibold">Dimensiones (cm)</small></div>
             <div class="col-md-4">
               <label class="form-label">Alto <span class="text-danger">*</span></label>
-              <input type="number" class="form-control" formControlName="height" min="0" step="0.1" placeholder="cm"
+              <input type="number" class="form-control aero-input" formControlName="height" min="0" step="0.1" placeholder="cm"
                 [class.is-invalid]="containerForm.get('height')?.invalid && containerForm.get('height')?.touched" />
             </div>
             <div class="col-md-4">
               <label class="form-label">Ancho <span class="text-danger">*</span></label>
-              <input type="number" class="form-control" formControlName="width" min="0" step="0.1" placeholder="cm"
+              <input type="number" class="form-control aero-input" formControlName="width" min="0" step="0.1" placeholder="cm"
                 [class.is-invalid]="containerForm.get('width')?.invalid && containerForm.get('width')?.touched" />
             </div>
             <div class="col-md-4">
               <label class="form-label">Largo <span class="text-danger">*</span></label>
-              <input type="number" class="form-control" formControlName="length" min="0" step="0.1" placeholder="cm"
+              <input type="number" class="form-control aero-input" formControlName="length" min="0" step="0.1" placeholder="cm"
                 [class.is-invalid]="containerForm.get('length')?.invalid && containerForm.get('length')?.touched" />
             </div>
             <div class="col-12"><hr class="my-1"><small class="text-muted fw-semibold">Diámetros (cm)</small></div>
             <div class="col-md-6">
               <label class="form-label">Diámetro Inferior <span class="text-danger">*</span></label>
-              <input type="number" class="form-control" formControlName="lowerDiameter" min="0" step="0.1" placeholder="cm"
+              <input type="number" class="form-control aero-input" formControlName="lowerDiameter" min="0" step="0.1" placeholder="cm"
                 [class.is-invalid]="containerForm.get('lowerDiameter')?.invalid && containerForm.get('lowerDiameter')?.touched" />
             </div>
             <div class="col-md-6">
               <label class="form-label">Diámetro Superior <span class="text-danger">*</span></label>
-              <input type="number" class="form-control" formControlName="upperDiameter" min="0" step="0.1" placeholder="cm"
+              <input type="number" class="form-control aero-input" formControlName="upperDiameter" min="0" step="0.1" placeholder="cm"
                 [class.is-invalid]="containerForm.get('upperDiameter')?.invalid && containerForm.get('upperDiameter')?.touched" />
             </div>
             <div class="col-12" *ngIf="showEditModal">
@@ -243,8 +243,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">Cancelar</button>
-          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting || containerForm.invalid">
+          <button type="button" class=" btn aero-btn aero-btn-secondary " (click)="closeModal()" [disabled]="isSubmitting">Cancelar</button>
+          <button type="submit" class=" btn aero-btn aero-btn-primary " [disabled]="isSubmitting || containerForm.invalid">
             <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
             <i *ngIf="!isSubmitting" class="bi bi-save me-2"></i>
             {{ isSubmitting ? 'Guardando...' : 'Guardar' }}
@@ -258,8 +258,8 @@
 <!-- ══════════ Container View Modal ══════════ -->
 <div class="modal" [class.show]="showViewModal" *ngIf="showViewModal && selectedContainer">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
+    <div class="modal-content aero-card aero-glass-card">
+      <div class=" modal-header aero-modal-header-primary ">
         <h5 class="modal-title"><i class="bi bi-info-circle-fill"></i> Detalles del Contenedor</h5>
         <button type="button" class="btn-close" (click)="closeModal()"></button>
       </div>
@@ -288,8 +288,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
-        <button type="button" class="btn btn-warning" (click)="edit(selectedContainer!); showViewModal = false;">
+        <button type="button" class=" btn aero-btn aero-btn-secondary " (click)="closeModal()">Cerrar</button>
+        <button type="button" class=" btn aero-btn aero-btn-warning " (click)="edit(selectedContainer!); showViewModal = false;">
           <i class="bi bi-pencil"></i> Editar
         </button>
       </div>
@@ -300,8 +300,8 @@
 <!-- ══════════ ContainerType Create/Edit Modal ══════════ -->
 <div class="modal" [class.show]="showCreateTypeModal || showEditTypeModal" *ngIf="showCreateTypeModal || showEditTypeModal">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
+    <div class="modal-content aero-card aero-glass-card">
+      <div class=" modal-header aero-modal-header-primary ">
         <h5 class="modal-title">
           <i class="bi bi-collection-fill"></i>
           {{ showCreateTypeModal ? 'Nuevo Tipo de Contenedor' : 'Editar Tipo de Contenedor' }}
@@ -316,13 +316,13 @@
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label">Nombre <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" formControlName="name" placeholder="Ej: Hidro Bucket"
+              <input type="text" class="form-control aero-input" formControlName="name" placeholder="Ej: Hidro Bucket"
                 [class.is-invalid]="containerTypeForm.get('name')?.invalid && containerTypeForm.get('name')?.touched" />
               <div class="invalid-feedback">El nombre debe tener al menos 2 caracteres</div>
             </div>
             <div class="col-12">
               <label class="form-label">Fórmula de Volumen <span class="text-danger">*</span></label>
-              <select class="form-select" formControlName="formulaType"
+              <select class="form-select aero-input" formControlName="formulaType"
                 [class.is-invalid]="containerTypeForm.get('formulaType')?.invalid && containerTypeForm.get('formulaType')?.touched">
                 <option [value]="null">Seleccione una fórmula</option>
                 <option *ngFor="let f of formulaTypes" [value]="f.value">{{ f.label }}</option>
@@ -346,8 +346,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeTypeModal()" [disabled]="isSubmittingType">Cancelar</button>
-          <button type="submit" class="btn btn-primary" [disabled]="isSubmittingType || containerTypeForm.invalid">
+          <button type="button" class=" btn aero-btn aero-btn-secondary " (click)="closeTypeModal()" [disabled]="isSubmittingType">Cancelar</button>
+          <button type="submit" class=" btn aero-btn aero-btn-primary " [disabled]="isSubmittingType || containerTypeForm.invalid">
             <span *ngIf="isSubmittingType" class="spinner-border spinner-border-sm me-2"></span>
             <i *ngIf="!isSubmittingType" class="bi bi-save me-2"></i>
             {{ isSubmittingType ? 'Guardando...' : 'Guardar' }}

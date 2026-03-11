@@ -12,8 +12,8 @@ import {
   SplitStrategyComparison,
   CalendarEvent
 } from '../../models/split-application.models';
-import { ApiService } from '../../../../core/services/api.service';
 import { CropService } from '../../../crops/services/crop.service';
+import { CropPhaseService } from '../../../../features/crop-phases/services/crop-phase.service';
 
 @Component({
   selector: 'app-split-application-calculator',
@@ -53,8 +53,8 @@ export class SplitApplicationCalculatorComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private splitService: SplitApplicationService,
-    private apiService: ApiService,
-    private cropService: CropService
+    private cropService: CropService,
+    private cropPhaseService: CropPhaseService
   ) { }
 
   ngOnInit(): void {
@@ -72,20 +72,15 @@ export class SplitApplicationCalculatorComponent implements OnInit, OnDestroy {
 
     forkJoin({
       crops: this.cropService.getAll().pipe(catchError(() => of([]))),
-      cropPhases: this.apiService.get<any>('/CropPhase').pipe(catchError(() => of([]))),
-      requirements: this.apiService.get<any>('/CropPhaseSolutionRequirement').pipe(catchError(() => of([])))
+      cropPhases: this.cropPhaseService.getAll().pipe(catchError(() => of([]))),
+      requirements: this.cropService.getAllCropPhaseSolutionRequirements().pipe(catchError(() => of([])))
     }).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
           this.crops = Array.isArray(data.crops) ? data.crops : [];
           this.cropPhases = Array.isArray(data.cropPhases) ? data.cropPhases : [];
 
-          // Extract crop phase requirements from response
-          if (data.requirements?.cropPhaseRequirements) {
-            this.cropPhaseSolutionRequirements = data.requirements.cropPhaseRequirements;
-          } else if (Array.isArray(data.requirements)) {
-            this.cropPhaseSolutionRequirements = data.requirements;
-          }
+          this.cropPhaseSolutionRequirements = Array.isArray(data.requirements) ? data.requirements : [];
 
           console.log(`Loaded ${this.crops.length} crops, ${this.cropPhases.length} phases, ${this.cropPhaseSolutionRequirements.length} requirements`);
 

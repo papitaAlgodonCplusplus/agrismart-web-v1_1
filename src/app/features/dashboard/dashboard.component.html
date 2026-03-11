@@ -1,731 +1,635 @@
 <!-- src/app/features/dashboard/dashboard.component.html -->
-<div class="dashboard">
-  <!-- Header Section -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="welcome-card">
-        <h1 class="display-6 mb-2">Dashboard - AgriSmart</h1>
-        <p class="lead text-muted mb-0">
-          Bienvenido, <strong>{{ 'Usuario' }}</strong>
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Statistics Cards with Animations -->
-  <div class="row mb-4" *ngIf="stats && !isLoading">
-    <!-- Farms Card -->
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="stats-card card-success">
-        <div class="card-body">
-          <div class="row align-items-center">
-            <div class="col-8">
-              <h6 class="card-category text-uppercase text-muted mb-0">Fincas</h6>
-              <h2 class="card-title mb-0 counter">{{ stats.totalFarms }}</h2>
-            </div>
-            <div class="col-4 text-end">
-              <div class="icon-shape bg-gradient-success text-white rounded-circle">
-                <i class="bi bi-geo-alt fs-4"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Crops Card -->
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="stats-card card-warning">
-        <div class="card-body">
-          <div class="row align-items-center">
-            <div class="col-8">
-              <h6 class="card-category text-uppercase text-muted mb-0">Cultivos</h6>
-              <h2 class="card-title mb-0 counter">{{ stats.totalCrops }}</h2>
-            </div>
-            <div class="col-4 text-end">
-              <div class="icon-shape bg-gradient-warning text-white rounded-circle">
-                <i class="bi bi-flower1 fs-4"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Devices Card -->
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="stats-card card-info">
-        <div class="card-body">
-          <div class="row align-items-center">
-            <div class="col-8">
-              <h6 class="card-category text-uppercase text-muted mb-0">Dispositivos</h6>
-              <h2 class="card-title mb-0 counter">{{ stats.totalDevices }}</h2>
-            </div>
-            <div class="col-4 text-end">
-              <div class="icon-shape bg-gradient-info text-white rounded-circle">
-                <i class="bi bi-cpu fs-4"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Flow Events Card -->
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="stats-card card-primary">
-        <div class="card-body">
-          <div class="row align-items-center">
-            <div class="col-8">
-              <h6 class="card-category text-uppercase text-muted mb-0">Eventos Detectados</h6>
-              <h2 class="card-title mb-0 counter">{{ getTotalEventsDetected() }}</h2>
-            </div>
-            <div class="col-4 text-end">
-              <div class="icon-shape bg-gradient-primary text-white rounded-circle">
-                <i class="bi bi-droplet-fill fs-4"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Charts and Activities Section -->
-  <div class="row mb-4" *ngIf="!isLoading">
-    <!-- Quick Actions -->
-    <div class="col-lg-8 mb-4">
-      <div class="card action-card">
-        <div class="card-header bg-white border-0">
-          <h5 class="mb-0">
-            <i class="bi bi-lightning me-2 text-warning"></i>
-            Acciones Rápidas
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <!-- Management Section -->
-            <div class="col-12 mb-3">
-              <h6 class="text-muted text-uppercase small">Gestión Principal</h6>
-            </div>
-
-            <!-- Farms Management -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToFarms()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-geo-alt-fill text-success"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Fincas</h6>
-                  <p class="quick-action-description">Gestionar fincas y propiedades</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Crops Management -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToCrops()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-flower1 text-warning"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Catálogo de Cultivos</h6>
-                  <p class="quick-action-description">Gestionar tipos de cultivos</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Devices Management -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToDevices()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-cpu text-info"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Dispositivos</h6>
-                  <p class="quick-action-description">Gestionar dispositivos IoT</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-
-
-            <!-- Fertilizer Management -->
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="quick-action-card" (click)="navigateToFertilizers()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-bag text-success"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Fertilizantes</h6>
-                  <p class="quick-action-description">Gestionar catálogo de fertilizantes</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Crop Production Specs -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToCropProductionSpecs()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-rulers text-info"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Especificaciones</h6>
-                  <p class="quick-action-description">Configurar espaciamiento y contenedores</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Containers -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToContainers()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-box-seam-fill text-secondary"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Contenedores</h6>
-                  <p class="quick-action-description">Gestionar tipos de contenedores</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Growing Medium -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToCropMedium()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-layers-fill text-success"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Medios de Cultivo</h6>
-                  <p class="quick-action-description">Gestionar sustratos y medios</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Crop Production Section -->
-            <div class="col-12 mb-3 mt-3">
-              <h6 class="text-muted text-uppercase small">Producción de Cultivos</h6>
-            </div>
-
-            <!-- Crop Phases -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToCropPhases()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-diagram-3 text-success"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Fases de Cultivo</h6>
-                  <p class="quick-action-description">Definir etapas de crecimiento</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Phase Requirements -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToPhaseRequirements()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-list-check text-warning"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Requerimientos por Fase</h6>
-                  <p class="quick-action-description">Configurar necesidades por etapa</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Crop Production Management -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToCropProduction()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-egg text-primary"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Producciones</h6>
-                  <p class="quick-action-description">Gestionar producciones activas</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Production Units -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToProductionUnits()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-grid-3x3-gap text-info"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Unidades de Producción</h6>
-                  <p class="quick-action-description">Gestionar áreas productivas</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Technical Tools Section -->
-            <div class="col-12 mb-3 mt-3">
-              <h6 class="text-muted text-uppercase small">Herramientas Técnicas</h6>
-            </div>
-
-            <!-- Nutrient Solution Formulation -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToNutrientFormulation()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-search-heart text-primary"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Formulación Nutritiva</h6>
-                  <p class="quick-action-description">Crear recetas de soluciones nutritivas</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Water Analysis -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToWaterAnalysis()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-water text-info"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Análisis de Agua</h6>
-                  <p class="quick-action-description">Gestionar fuentes de agua y química</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Soil Analysis -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToSoilAnalysis()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-layers text-brown"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Análisis de Suelo</h6>
-                  <p class="quick-action-description">Gestionar análisis de suelo y textura</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Irrigation Engineering Design -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToIrrigationDesignRequirements()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-wrench-adjustable-circle text-info"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Diseño de Riego</h6>
-                  <p class="quick-action-description">Calcular requerimientos de diseño</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Droppers Management -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToDroppers()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-droplet-fill text-primary"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Goteros</h6>
-                  <p class="quick-action-description">Gestionar catálogo de goteros</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- On Demand Irrigation Requirements -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToIrrigationRequirements()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-droplet text-danger"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Riego Bajo Demanda</h6>
-                  <p class="quick-action-description">Calcular necesidades hídricas</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Analytics Section -->
-            <div class="col-12 mb-3 mt-3">
-              <h6 class="text-muted text-uppercase small">Análisis y Reportes</h6>
-            </div>
-
-            <!-- Shiny Dashboard -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToShinyDashboard()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-speedometer2 text-secondary"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">Dashboard Avanzado</h6>
-                  <p class="quick-action-description">Visualizaciones interactivas</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Process KPIs -->
-            <div class="col-md-3 col-6 mb-3">
-              <div class="quick-action-card" (click)="navigateToProcessKPIs()">
-                <div class="quick-action-icon">
-                  <i class="bi bi-bar-chart-line text-primary"></i>
-                </div>
-                <div class="quick-action-content">
-                  <h6 class="quick-action-title">KPIs de Procesos</h6>
-                  <p class="quick-action-description">Monitorear indicadores clave</p>
-                </div>
-                <div class="quick-action-arrow">
-                  <i class="bi bi-arrow-right"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="col-lg-4 mb-4">
-      <div class="card">
-        <div class="card-header bg-white border-0">
-          <h5 class="mb-0">
-            <i class="bi bi-clock me-2 text-info"></i>
-            Actividad Reciente
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="timeline">
-            <div class="timeline-item" *ngFor="let activity of recentActivities; trackBy: trackByIndex">
-              <div class="timeline-marker {{ getActivityTypeClass(activity.type) }} text-white">
-                <i class="{{ activity.icon }}"></i>
-              </div>
-              <div class="timeline-content">
-                <div class="timeline-title fw-semibold">{{ activity.message }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Loading State with Skeletons -->
-  <div class="row" *ngIf="isLoading">
-    <div class="col-12">
-      <div class="d-flex justify-content-center align-items-center py-5">
-        <div class="loading-animation">
-          <div class="spinner-grow text-primary me-3" role="status">
-            <span class="visually-hidden">Cargando...</span>
+<div class="page-wrapper dashboard">
+  <div class="dashboard-aurora"></div>
+  <div class="container-fluid dashboard-shell mx-auto p-3">
+    <!-- Aero Header -->
+    <div class="aero-header dashboard-hero mb-4">
+      <div class="hero-glow hero-glow-left"></div>
+      <div class="hero-glow hero-glow-right"></div>
+      <div class="aero-header-content dashboard-hero-content">
+        <div class="d-flex align-items-center gap-3 hero-main-copy">
+          <div class="aero-icon-orb dashboard-orb">
+            <i class="bi bi-speedometer"></i>
           </div>
           <div>
-            <h5>Cargando estadísticas...</h5>
-            <p class="text-muted mb-0">Obteniendo datos del sistema AgriSmart</p>
+            <div class="hero-kicker">Centro de Operaciones Inteligente</div>
+            <h2 class="aero-title mb-0">Dashboard AgriSmart</h2>
+            <p class="aero-subtitle mb-0">Bienvenido, <strong>{{ 'Usuario' }}</strong>. Operaciones, monitoreo y decisiones en una sola vista.</p>
+          </div>
+        </div>
+        <div class="dashboard-hero-side" *ngIf="isLoading">
+          <div class="hero-chip chip-sky hero-chip-loading">Actualizando sistema...</div>
+        </div>
+      </div>
+      <div class="hero-ribbon-row" *ngIf="!isLoading">
+        <div class="hero-ribbon">
+          <i class="bi bi-broadcast"></i>
+          Vista principal de producción, clima, riego y recomendaciones.
+        </div>
+        <div class="hero-ribbon secondary-ribbon">
+          <i class="bi bi-stars"></i>
+          Panel dinámico con accesos rápidos y métricas en tiempo real.
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Error State with Action -->
-  <div class="row" *ngIf="errorMessage">
-    <div class="col-12">
-      <div class="alert alert-danger border-0 shadow-sm" role="alert">
-        <div class="d-flex align-items-center">
-          <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
-          <div class="flex-grow-1">
-            <h6 class="alert-heading mb-1">Error en la carga de datos</h6>
-            <p class="mb-2">{{ errorMessage }}</p>
-            <button class="btn btn-danger btn-sm" (click)="refreshStats()">
-              <i class="bi bi-arrow-clockwise me-1"></i>
-              Intentar nuevamente
-            </button>
+    <div class="row mb-4 dashboard-stats-row" *ngIf="stats && !isLoading">
+    <div class="row mb-4" *ngIf="stats && !isLoading">
+      <!-- Farms Card -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="aero-card aero-glass-card stats-card card-success">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-8">
+                <h6 class="card-category text-uppercase text-muted mb-0">Fincas</h6>
+                <h2 class="card-title mb-0 counter">{{ stats.totalFarms }}</h2>
+              </div>
+              <div class="col-4 text-end">
+                <div class="icon-shape bg-gradient-success text-white rounded-circle">
+                  <i class="bi bi-geo-alt fs-4"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Crops Card -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="aero-card aero-glass-card stats-card card-warning">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-8">
+                <h6 class="card-category text-uppercase text-muted mb-0">Cultivos</h6>
+                <h2 class="card-title mb-0 counter">{{ stats.totalCrops }}</h2>
+              </div>
+              <div class="col-4 text-end">
+                <div class="icon-shape bg-gradient-warning text-white rounded-circle">
+                  <i class="bi bi-flower1 fs-4"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Devices Card -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="aero-card aero-glass-card stats-card card-info">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-8">
+                <h6 class="card-category text-uppercase text-muted mb-0">Dispositivos</h6>
+                <h2 class="card-title mb-0 counter">{{ stats.totalDevices }}</h2>
+              </div>
+              <div class="col-4 text-end">
+                <div class="icon-shape bg-gradient-info text-white rounded-circle">
+                  <i class="bi bi-cpu fs-4"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flow Events Card -->
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="aero-card aero-glass-card stats-card card-primary">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-8">
+                <h6 class="card-category text-uppercase text-muted mb-0">Eventos Detectados</h6>
+                <h2 class="card-title mb-0 counter">{{ getTotalEventsDetected() }}</h2>
+              </div>
+              <div class="col-4 text-end">
+                <div class="icon-shape bg-gradient-primary text-white rounded-circle">
+                  <i class="bi bi-droplet-fill fs-4"></i>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Replace the Climate KPIs Summary section (around line 170) -->
-  <div class="pagination-actions">
-    <button class="btn btn-outline-success me-2" (click)="resetPagination()"
-      [disabled]="isLoadingMore || currentPage === 1">
-      <i class="bi bi-arrow-clockwise me-1"></i>
-      Recargar
-    </button>
-    <button class="btn btn-success" (click)="loadMoreDeviceDataBulk()" [disabled]="isLoadingMore || !hasMoreData">
-      <span *ngIf="!isLoadingMore">
-        <i class="bi bi-arrow-down-circle me-1"></i>
-        Cargar Más Datos (+6 horas)
-      </span>
-      <span *ngIf="isLoadingMore">
-        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-        Cargando...
-      </span>
-    </button>
-    <button class="btn btn-success" style="margin-left: 1vw;" (click)="loadMoreDeviceDataBulk24()" [disabled]="isLoadingMore || !hasMoreData">
-      <span *ngIf="!isLoadingMore">
-        <i class="bi bi-arrow-down-circle me-1"></i>
-        Cargar Más Datos (+24 horas)
-      </span>
-      <span *ngIf="isLoadingMore">
-        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-        Cargando...
-      </span>
-    </button>
-  </div>
-  <br />
-
-  <!-- Climate KPIs Section with Collapse/Expand -->
-  <div class="row mt-4" *ngIf="aggregateClimateKPIs">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-primary text-white">
-          <div class="d-flex justify-content-between align-items-center">
+    <!-- Charts and Activities Section -->
+    <div class="row mb-4" *ngIf="!isLoading">
+      <!-- Quick Actions -->
+      <div class="col-lg-8 mb-4">
+        <div class="aero-card aero-glass-card action-card dashboard-action-hub">
+          <div class="aero-card-header bg-white border-0">
             <h5 class="mb-0">
-              <i class="bi bi-cloud-sun"></i> KPIs Climáticos
+              <i class="bi bi-lightning me-2 text-warning"></i>
+              Acciones Rápidas
             </h5>
-            <button class="btn btn-sm btn-light" (click)="toggleClimateKPIs()">
-              <i class="bi" [class.bi-chevron-down]="isClimateKPIsCollapsed" [class.bi-chevron-up]="!isClimateKPIsCollapsed"></i>
-              {{ isClimateKPIsCollapsed ? 'Expandir' : 'Contraer' }}
-            </button>
+          </div>
+          <div class="card-body action-hub-body">
+            <div class="row">
+              <!-- Management Section -->
+              <div class="col-12 mb-3">
+                <h6 class="text-muted text-uppercase small dashboard-section-label">Gestión Principal</h6>
+              </div>
+
+              <!-- Farms Management -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToFarms()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-geo-alt-fill text-success"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Fincas</h6>
+                    <p class="quick-action-description">Gestionar fincas y propiedades</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Crops Management -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToCrops()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-flower1 text-warning"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Catálogo de Cultivos</h6>
+                    <p class="quick-action-description">Gestionar tipos de cultivos</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Devices Management -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToDevices()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-cpu text-info"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Dispositivos</h6>
+                    <p class="quick-action-description">Gestionar dispositivos IoT</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+
+
+              <!-- Fertilizer Management -->
+              <div class="col-xl-3 col-md-6 mb-4">
+                <div class="quick-action-card" (click)="navigateToFertilizers()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-bag text-success"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Fertilizantes</h6>
+                    <p class="quick-action-description">Gestionar catálogo de fertilizantes</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Crop Production Specs -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToCropProductionSpecs()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-rulers text-info"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Especificaciones</h6>
+                    <p class="quick-action-description">Configurar espaciamiento y contenedores</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Containers -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToContainers()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-box-seam-fill text-secondary"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Contenedores</h6>
+                    <p class="quick-action-description">Gestionar tipos de contenedores</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Growing Medium -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToCropMedium()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-layers-fill text-success"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Medios de Cultivo</h6>
+                    <p class="quick-action-description">Gestionar sustratos y medios</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Crop Production Section -->
+              <div class="col-12 mb-3 mt-3">
+                <h6 class="text-muted text-uppercase small dashboard-section-label">Producción de Cultivos</h6>
+              </div>
+
+              <!-- Crop Phases -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToCropPhases()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-diagram-3 text-success"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Fases de Cultivo</h6>
+                    <p class="quick-action-description">Definir etapas de crecimiento</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Phase Requirements -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToPhaseRequirements()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-list-check text-warning"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Requerimientos por Fase</h6>
+                    <p class="quick-action-description">Configurar necesidades por etapa</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Crop Production Management -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToCropProduction()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-egg text-primary"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Producciones</h6>
+                    <p class="quick-action-description">Gestionar producciones activas</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Production Units -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToProductionUnits()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-grid-3x3-gap text-info"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Unidades de Producción</h6>
+                    <p class="quick-action-description">Gestionar áreas productivas</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Technical Tools Section -->
+              <div class="col-12 mb-3 mt-3">
+                <h6 class="text-muted text-uppercase small dashboard-section-label">Herramientas Técnicas</h6>
+              </div>
+
+              <!-- Nutrient Solution Formulation -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToNutrientFormulation()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-search-heart text-primary"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Formulación Nutritiva</h6>
+                    <p class="quick-action-description">Crear recetas de soluciones nutritivas</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Water Analysis -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToWaterAnalysis()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-water text-info"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Análisis de Agua</h6>
+                    <p class="quick-action-description">Gestionar fuentes de agua y química</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Soil Analysis -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToSoilAnalysis()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-layers text-brown"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Análisis de Suelo</h6>
+                    <p class="quick-action-description">Gestionar análisis de suelo y textura</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Irrigation Engineering Design -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToIrrigationDesignRequirements()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-wrench-adjustable-circle text-info"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Diseño de Riego</h6>
+                    <p class="quick-action-description">Calcular requerimientos de diseño</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Droppers Management -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToDroppers()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-droplet-fill text-primary"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Goteros</h6>
+                    <p class="quick-action-description">Gestionar catálogo de goteros</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- On Demand Irrigation Requirements -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToIrrigationRequirements()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-droplet text-danger"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Riego Bajo Demanda</h6>
+                    <p class="quick-action-description">Calcular necesidades hídricas</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Analytics Section -->
+              <div class="col-12 mb-3 mt-3">
+                <h6 class="text-muted text-uppercase small dashboard-section-label">Análisis y Reportes</h6>
+              </div>
+
+              <!-- Shiny Dashboard -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToShinyDashboard()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-speedometer2 text-secondary"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">Dashboard Avanzado</h6>
+                    <p class="quick-action-description">Visualizaciones interactivas</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Process KPIs -->
+              <div class="col-md-3 col-6 mb-3">
+                <div class="quick-action-card" (click)="navigateToProcessKPIs()">
+                  <div class="quick-action-icon">
+                    <i class="bi bi-bar-chart-line text-primary"></i>
+                  </div>
+                  <div class="quick-action-content">
+                    <h6 class="quick-action-title">KPIs de Procesos</h6>
+                    <p class="quick-action-description">Monitorear indicadores clave</p>
+                  </div>
+                  <div class="quick-action-arrow">
+                    <i class="bi bi-arrow-right"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="card-body" *ngIf="!isClimateKPIsCollapsed">
-          <!-- Summary Stats -->
-          <div class="row mb-3">
-            <div class="col-md-3">
-              <div class="stat-box">
-                <i class="bi bi-thermometer-half text-danger"></i>
-                <h6>Temperatura Promedio</h6>
-                <h3>{{ aggregateClimateKPIs.tempAvg | number:'1.1-1' }}°C</h3>
-                <small class="text-muted">
-                  Min: {{ aggregateClimateKPIs.tempMin | number:'1.1-1' }}°C |
-                  Max: {{ aggregateClimateKPIs.tempMax | number:'1.1-1' }}°C
-                </small>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-box">
-                <i class="bi bi-wind text-info"></i>
-                <h6>Velocidad del Viento</h6>
-                <h3>{{ aggregateClimateKPIs.windSpeedAvg | number:'1.1-1' }} m/s</h3>
-                <small class="text-muted">Promedio del período</small>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-box">
-                <i class="bi bi-brightness-high text-warning"></i>
-                <h6>Radiación Solar</h6>
-                <h3>{{ aggregateClimateKPIs.solarRadiationAvg | number:'1.0-0' }} W/m²</h3>
-                <small class="text-muted">PAR promedio</small>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-box bg-primary text-white">
-                <i class="bi bi-droplet"></i>
-                <h6>Evapotranspiración</h6>
-                <h3>{{ aggregateClimateKPIs.cropETAvg | number:'1.2-2' }} mm/día</h3>
-                <small>Min: {{ aggregateClimateKPIs.cropETMin | number:'1.2-2' }} | Max: {{ aggregateClimateKPIs.cropETMax |
-                  number:'1.2-2' }}</small>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="col-lg-4 mb-4">
+        <div class="aero-card aero-glass-card activity-card">
+          <div class="aero-card-header bg-white border-0">
+            <h5 class="mb-0">
+              <i class="bi bi-clock me-2 text-info"></i>
+              Actividad Reciente
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="timeline">
+              <div class="timeline-item type-{{ activity.type }}" *ngFor="let activity of recentActivities; trackBy: trackByIndex">
+                <div class="timeline-marker {{ getActivityTypeClass(activity.type) }} text-white">
+                  <i class="{{ activity.icon }}"></i>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-title fw-semibold">{{ activity.message }}</div>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
 
-          <!-- ET Trend Table -->
-          <div class="table-responsive">
-            <table class="table table-sm table-hover">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Temp (°C)</th>
-                  <th>Viento (m/s)</th>
-                  <th>Radiación (W/m²)</th>
-                  <th>ET Referencia</th>
-                  <th>ET Cultivo</th>
-                  <th>Déficit Vapor</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let kpi of getClimateKPIsPaginated()">
-                  <td>{{ kpi.date | date:'short' }}</td>
-                  <td>{{ kpi.tempAvg | number:'1.1-1' }}</td>
-                  <td>{{ kpi.windSpeed | number:'1.1-1' }}</td>
-                  <td>{{ kpi.solarRadiation | number:'1.0-0' }}</td>
-                  <td>{{ kpi.referenceET | number:'1.2-2' }} mm/día</td>
-                  <td><strong>{{ kpi.cropET | number:'1.2-2' }} mm/día</strong></td>
-                  <td>{{ kpi.vaporPressureDeficit | number:'1.2-2' }} kPa</td>
-                </tr>
-              </tbody>
-            </table>
+    <!-- Loading State with Skeletons -->
+    <div class="row" *ngIf="isLoading">
+      <div class="col-12">
+        <div class="d-flex justify-content-center align-items-center py-5">
+          <div class="loading-animation dashboard-loading-panel">
+            <div class="spinner-grow text-primary me-3" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <div>
+              <h5>Cargando estadísticas...</h5>
+              <p class="text-muted mb-0">Obteniendo datos del sistema AgriSmart</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-            <!-- Pagination controls -->
-            <div class="table-pagination">
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                  <label class="text-muted mb-0" style="font-size:0.8rem;white-space:nowrap;">Filas por página:</label>
-                  <select class="form-select form-select-sm" style="width:auto;"
-                    [value]="climateKPIsPageSize"
-                    (change)="changeClimateKPIsPageSize(+$any($event.target).value)">
-                    <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
-                  </select>
-                  <small class="text-muted" style="white-space:nowrap;">
-                    Mostrando {{ (climateKPIsPage - 1) * climateKPIsPageSize + 1 }} -
-                    {{ (climateKPIsPage * climateKPIsPageSize) < climateKPIs.length ? (climateKPIsPage * climateKPIsPageSize) :
-                      climateKPIs.length }} de {{ climateKPIs.length }} registros
+    <!-- Error State with Action -->
+    <div class="row" *ngIf="errorMessage">
+      <div class="col-12">
+        <div class="alert aero-card aero-glass-card alert-danger border-0 shadow-sm" role="alert">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
+            <div class="flex-grow-1">
+              <h6 class="alert-heading mb-1">Error en la carga de datos</h6>
+              <p class="mb-2">{{ errorMessage }}</p>
+              <button class="btn aero-btn aero-btn-danger btn-sm" (click)="refreshStats()">
+                <i class="bi bi-arrow-clockwise me-1"></i>
+                Intentar nuevamente
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Replace the Climate KPIs Summary section (around line 170) -->
+    <div class="pagination-actions">
+      <button class="btn aero-btn aero-btn-outline-success me-2" (click)="resetPagination()"
+        [disabled]="isLoadingMore || currentPage === 1">
+        <i class="bi bi-arrow-clockwise me-1"></i>
+        Recargar
+      </button>
+      <button class="btn aero-btn aero-btn-success" (click)="loadMoreDeviceDataBulk()"
+        [disabled]="isLoadingMore || !hasMoreData">
+        <span *ngIf="!isLoadingMore">
+          <i class="bi bi-arrow-down-circle me-1"></i>
+          Cargar Más Datos (+6 horas)
+        </span>
+        <span *ngIf="isLoadingMore">
+          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+          Cargando...
+        </span>
+      </button>
+      <button class="btn aero-btn aero-btn-success" style="margin-left: 1vw;" (click)="loadMoreDeviceDataBulk24()"
+        [disabled]="isLoadingMore || !hasMoreData">
+        <span *ngIf="!isLoadingMore">
+          <i class="bi bi-arrow-down-circle me-1"></i>
+          Cargar Más Datos (+24 horas)
+        </span>
+        <span *ngIf="isLoadingMore">
+          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+          Cargando...
+        </span>
+      </button>
+    </div>
+    <br />
+
+    <!-- Climate KPIs Section with Collapse/Expand -->
+    <div class="row mt-4" *ngIf="aggregateClimateKPIs">
+      <div class="col-12">
+        <div class="aero-card aero-glass-card">
+          <div class="aero-card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">
+                <i class="bi bi-cloud-sun"></i> KPIs Climáticos
+              </h5>
+              <button class="btn aero-btn aero-btn-sm btn-light" (click)="toggleClimateKPIs()">
+                <i class="bi" [class.bi-chevron-down]="isClimateKPIsCollapsed"
+                  [class.bi-chevron-up]="!isClimateKPIsCollapsed"></i>
+                {{ isClimateKPIsCollapsed ? 'Expandir' : 'Contraer' }}
+              </button>
+            </div>
+          </div>
+          <div class="card-body" *ngIf="!isClimateKPIsCollapsed">
+            <!-- Summary Stats -->
+            <div class="row mb-3">
+              <div class="col-md-3">
+                <div class="stat-box">
+                  <i class="bi bi-thermometer-half text-danger"></i>
+                  <h6>Temperatura Promedio</h6>
+                  <h3>{{ aggregateClimateKPIs.tempAvg | number:'1.1-1' }}°C</h3>
+                  <small class="text-muted">
+                    Min: {{ aggregateClimateKPIs.tempMin | number:'1.1-1' }}°C |
+                    Max: {{ aggregateClimateKPIs.tempMax | number:'1.1-1' }}°C
                   </small>
                 </div>
-                <nav aria-label="Paginación de tabla">
-                  <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item" [class.disabled]="climateKPIsPage === 1">
-                      <button class="page-link" (click)="goToClimateKPIsPage(1)" [disabled]="climateKPIsPage === 1">
-                        <i class="bi bi-chevron-bar-left"></i>
-                      </button>
-                    </li>
-                    <li class="page-item" [class.disabled]="climateKPIsPage === 1">
-                      <button class="page-link" (click)="goToClimateKPIsPage(climateKPIsPage - 1)"
-                        [disabled]="climateKPIsPage === 1">
-                        <i class="bi bi-chevron-left"></i>
-                      </button>
-                    </li>
-                    <li class="page-item" *ngFor="let page of getPageNumbers(climateKPIsPage, getClimateKPIsTotalPages())"
-                      [class.active]="page === climateKPIsPage" [class.disabled]="page === '...'">
-                      <button class="page-link" *ngIf="page !== '...'" (click)="goToClimateKPIsPage(page)">
-                        {{ page }}
-                      </button>
-                      <span class="page-link" *ngIf="page === '...'">...</span>
-                    </li>
-                    <li class="page-item" [class.disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
-                      <button class="page-link" (click)="goToClimateKPIsPage(climateKPIsPage + 1)"
-                        [disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
-                        <i class="bi bi-chevron-right"></i>
-                      </button>
-                    </li>
-                    <li class="page-item" [class.disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
-                      <button class="page-link" (click)="goToClimateKPIsPage(getClimateKPIsTotalPages())"
-                        [disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
-                        <i class="bi bi-chevron-bar-right"></i>
-                      </button>
-                    </li>
-                  </ul>
-                </nav>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-box">
+                  <i class="bi bi-wind text-info"></i>
+                  <h6>Velocidad del Viento</h6>
+                  <h3>{{ aggregateClimateKPIs.windSpeedAvg | number:'1.1-1' }} m/s</h3>
+                  <small class="text-muted">Promedio del período</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-box">
+                  <i class="bi bi-brightness-high text-warning"></i>
+                  <h6>Radiación Solar</h6>
+                  <h3>{{ aggregateClimateKPIs.solarRadiationAvg | number:'1.0-0' }} W/m²</h3>
+                  <small class="text-muted">PAR promedio</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-box bg-primary text-white">
+                  <i class="bi bi-droplet"></i>
+                  <h6>Evapotranspiración</h6>
+                  <h3>{{ aggregateClimateKPIs.cropETAvg | number:'1.2-2' }} mm/día</h3>
+                  <small>Min: {{ aggregateClimateKPIs.cropETMin | number:'1.2-2' }} | Max: {{
+                    aggregateClimateKPIs.cropETMax |
+                    number:'1.2-2' }}</small>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-
-  <!-- Flow Events Detection Section -->
-  <div class="row mt-4" *ngIf="flowEvents.length > 0">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-primary text-white">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-              <i class="bi bi-activity"></i> Eventos de Flujo Detectados
-            </h5>
-            <span class="badge bg-light text-primary">{{ getTotalEventsDetected() }} eventos</span>
-          </div>
-        </div>
-        <div class="card-body">
-          <!-- Group events by device -->
-          <div *ngFor="let deviceEntry of getEventsByDevice() | keyvalue" class="mb-4">
-            <h6 class="text-primary border-bottom pb-2">
-              <i class="bi bi-router"></i> Dispositivo: {{ deviceEntry.key }}
-              <span class="badge bg-primary ms-2">{{ deviceEntry.value.length }} eventos</span>
-            </h6>
-
-            <div class="table-responsive">
-              <table class="table table-sm table-hover">
+            <!-- ET Trend Table -->
+            <div class="aero-table-container table-responsive">
+              <table class="table aero-table table-sm table-hover">
                 <thead>
                   <tr>
-                    <th>Sensor</th>
-                    <th>Fecha/Hora</th>
-                    <th>Payload Anterior</th>
-                    <th>Payload Actual</th>
-                    <th>Cambio</th>
-                    <th>Volumen de Agua</th>
-                    <th>Tiempo Transcurrido</th>
+                    <th>Fecha</th>
+                    <th>Temp (°C)</th>
+                    <th>Viento (m/s)</th>
+                    <th>Radiación (W/m²)</th>
+                    <th>ET Referencia</th>
+                    <th>ET Cultivo</th>
+                    <th>Déficit Vapor</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let event of getFlowEventsPaginatedForDevice(deviceEntry.value)">
-                    <td>
-                      <span class="badge"
-                            [class.bg-info]="event.sensorType === 'Water_flow_value'"
-                            [class.bg-success]="event.sensorType === 'Total_pulse'">
-                        {{ event.sensorType }}
-                      </span>
-                    </td>
-                    <td>{{ event.changeDetectedAt | date:'short' }}</td>
-                    <td>{{ event.previousPayload | number:'1.2-2' }}</td>
-                    <td>{{ event.currentPayload | number:'1.2-2' }}</td>
-                    <td>
-                      <span class="badge"
-                            [class.bg-success]="event.currentPayload > event.previousPayload"
-                            [class.bg-danger]="event.currentPayload < event.previousPayload">
-                        {{ (event.currentPayload - event.previousPayload) | number:'1.2-2' }}
-                      </span>
-                    </td>
-                    <td>
-                      <strong *ngIf="event.sensorType === 'Water_flow_value'">
-                        {{ (event.currentPayload - event.previousPayload) | number:'1.2-2' }} L
-                      </strong>
-                      <span *ngIf="event.sensorType !== 'Water_flow_value'" class="text-muted">N/A</span>
-                    </td>
-                    <td>{{ formatTimeDifference(event.timeDifference) }}</td>
+                  <tr *ngFor="let kpi of getClimateKPIsPaginated()">
+                    <td>{{ kpi.date | date:'short' }}</td>
+                    <td>{{ kpi.tempAvg | number:'1.1-1' }}</td>
+                    <td>{{ kpi.windSpeed | number:'1.1-1' }}</td>
+                    <td>{{ kpi.solarRadiation | number:'1.0-0' }}</td>
+                    <td>{{ kpi.referenceET | number:'1.2-2' }} mm/día</td>
+                    <td><strong>{{ kpi.cropET | number:'1.2-2' }} mm/día</strong></td>
+                    <td>{{ kpi.vaporPressureDeficit | number:'1.2-2' }} kPa</td>
                   </tr>
                 </tbody>
               </table>
@@ -734,50 +638,47 @@
               <div class="table-pagination">
                 <div class="d-flex justify-content-between align-items-center">
                   <div class="d-flex align-items-center gap-2">
-                    <label class="text-muted mb-0" style="font-size:0.8rem;white-space:nowrap;">Filas por página:</label>
-                    <select class="form-select form-select-sm" style="width:auto;"
-                      [value]="flowEventsPageSize"
-                      (change)="changeFlowEventsPageSize(+$any($event.target).value)">
+                    <label class="text-muted mb-0" style="font-size:0.8rem;white-space:nowrap;">Filas por
+                      página:</label>
+                    <select class="form-select aero-select form-select-sm" style="width:auto;"
+                      [value]="climateKPIsPageSize" (change)="changeClimateKPIsPageSize(+$any($event.target).value)">
                       <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
                     </select>
                     <small class="text-muted" style="white-space:nowrap;">
-                      Mostrando {{ (flowEventsPage - 1) * flowEventsPageSize + 1 }} -
-                      {{ ((flowEventsPage * flowEventsPageSize) < deviceEntry.value.length) ?
-                        (flowEventsPage * flowEventsPageSize) : deviceEntry.value.length }} de {{
-                        deviceEntry.value.length }} registros
-                    </small>
+                      Mostrando {{ (climateKPIsPage - 1) * climateKPIsPageSize + 1 }} -
+                      {{ (climateKPIsPage * climateKPIsPageSize) < climateKPIs.length ? (climateKPIsPage *
+                        climateKPIsPageSize) : climateKPIs.length }} de {{ climateKPIs.length }} registros </small>
                   </div>
                   <nav aria-label="Paginación de tabla">
                     <ul class="pagination pagination-sm mb-0">
-                      <li class="page-item" [class.disabled]="flowEventsPage === 1">
-                        <button class="page-link" (click)="goToFlowEventsPage(1)"
-                          [disabled]="flowEventsPage === 1">
+                      <li class="page-item" [class.disabled]="climateKPIsPage === 1">
+                        <button class="page-link" (click)="goToClimateKPIsPage(1)" [disabled]="climateKPIsPage === 1">
                           <i class="bi bi-chevron-bar-left"></i>
                         </button>
                       </li>
-                      <li class="page-item" [class.disabled]="flowEventsPage === 1">
-                        <button class="page-link" (click)="goToFlowEventsPage(flowEventsPage - 1)"
-                          [disabled]="flowEventsPage === 1">
+                      <li class="page-item" [class.disabled]="climateKPIsPage === 1">
+                        <button class="page-link" (click)="goToClimateKPIsPage(climateKPIsPage - 1)"
+                          [disabled]="climateKPIsPage === 1">
                           <i class="bi bi-chevron-left"></i>
                         </button>
                       </li>
                       <li class="page-item"
-                        *ngFor="let page of getPageNumbers(flowEventsPage, getFlowEventsTotalPagesForDevice(deviceEntry.value))"
-                        [class.active]="page === flowEventsPage" [class.disabled]="page === '...'">
-                        <button class="page-link" *ngIf="page !== '...'" (click)="goToFlowEventsPage(page)">
+                        *ngFor="let page of getPageNumbers(climateKPIsPage, getClimateKPIsTotalPages())"
+                        [class.active]="page === climateKPIsPage" [class.disabled]="page === '...'">
+                        <button class="page-link" *ngIf="page !== '...'" (click)="goToClimateKPIsPage(page)">
                           {{ page }}
                         </button>
                         <span class="page-link" *ngIf="page === '...'">...</span>
                       </li>
-                      <li class="page-item" [class.disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
-                        <button class="page-link" (click)="goToFlowEventsPage(flowEventsPage + 1)"
-                          [disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
+                      <li class="page-item" [class.disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
+                        <button class="page-link" (click)="goToClimateKPIsPage(climateKPIsPage + 1)"
+                          [disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
                           <i class="bi bi-chevron-right"></i>
                         </button>
                       </li>
-                      <li class="page-item" [class.disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
-                        <button class="page-link" (click)="goToFlowEventsPage(getFlowEventsTotalPagesForDevice(deviceEntry.value))"
-                          [disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
+                      <li class="page-item" [class.disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
+                        <button class="page-link" (click)="goToClimateKPIsPage(getClimateKPIsTotalPages())"
+                          [disabled]="climateKPIsPage === getClimateKPIsTotalPages()">
                           <i class="bi bi-chevron-bar-right"></i>
                         </button>
                       </li>
@@ -787,414 +688,683 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
 
-          <div class="alert alert-info mt-3" *ngIf="getTotalEventsDetected() === 0">
-            <i class="bi bi-info-circle"></i>
-            <strong>Sin eventos detectados.</strong> No se detectaron cambios en los sensores Water_flow_value o Total_pulse en el período seleccionado.
+
+    <!-- Flow Events Detection Section -->
+    <div class="row mt-4" *ngIf="flowEvents.length > 0">
+      <div class="col-12">
+        <div class="aero-card aero-glass-card">
+          <div class="aero-card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">
+                <i class="bi bi-activity"></i> Eventos de Flujo Detectados
+              </h5>
+              <span class="badge aero-badge aero-badge-light text-primary">{{ getTotalEventsDetected() }} eventos</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- Group events by device -->
+            <div *ngFor="let deviceEntry of getEventsByDevice() | keyvalue" class="mb-4">
+              <h6 class="text-primary border-bottom pb-2">
+                <i class="bi bi-router"></i> Dispositivo: {{ deviceEntry.key }}
+                <span class="badge aero-badge aero-badge-primary ms-2">{{ deviceEntry.value.length }} eventos</span>
+              </h6>
+
+              <div class="aero-table-container table-responsive">
+                <table class="table aero-table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>Sensor</th>
+                      <th>Fecha/Hora</th>
+                      <th>Payload Anterior</th>
+                      <th>Payload Actual</th>
+                      <th>Cambio</th>
+                      <th>Volumen de Agua</th>
+                      <th>Tiempo Transcurrido</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let event of getFlowEventsPaginatedForDevice(deviceEntry.value)">
+                      <td>
+                        <span class="badge" [class.bg-info]="event.sensorType === 'Water_flow_value'"
+                          [class.bg-success]="event.sensorType === 'Total_pulse'">
+                          {{ event.sensorType }}
+                        </span>
+                      </td>
+                      <td>{{ event.changeDetectedAt | date:'short' }}</td>
+                      <td>{{ event.previousPayload | number:'1.2-2' }}</td>
+                      <td>{{ event.currentPayload | number:'1.2-2' }}</td>
+                      <td>
+                        <span class="badge" [class.bg-success]="event.currentPayload > event.previousPayload"
+                          [class.bg-danger]="event.currentPayload < event.previousPayload">
+                          {{ (event.currentPayload - event.previousPayload) | number:'1.2-2' }}
+                        </span>
+                      </td>
+                      <td>
+                        <strong *ngIf="event.sensorType === 'Water_flow_value'">
+                          {{ (event.currentPayload - event.previousPayload) | number:'1.2-2' }} L
+                        </strong>
+                        <span *ngIf="event.sensorType !== 'Water_flow_value'" class="text-muted">N/A</span>
+                      </td>
+                      <td>{{ formatTimeDifference(event.timeDifference) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <!-- Pagination controls -->
+                <div class="table-pagination">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                      <label class="text-muted mb-0" style="font-size:0.8rem;white-space:nowrap;">Filas por
+                        página:</label>
+                      <select class="form-select aero-select form-select-sm" style="width:auto;"
+                        [value]="flowEventsPageSize" (change)="changeFlowEventsPageSize(+$any($event.target).value)">
+                        <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+                      </select>
+                      <small class="text-muted" style="white-space:nowrap;">
+                        Mostrando {{ (flowEventsPage - 1) * flowEventsPageSize + 1 }} -
+                        {{ ((flowEventsPage * flowEventsPageSize) < deviceEntry.value.length) ? (flowEventsPage *
+                          flowEventsPageSize) : deviceEntry.value.length }} de {{ deviceEntry.value.length }} registros
+                          </small>
+                    </div>
+                    <nav aria-label="Paginación de tabla">
+                      <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" [class.disabled]="flowEventsPage === 1">
+                          <button class="page-link" (click)="goToFlowEventsPage(1)" [disabled]="flowEventsPage === 1">
+                            <i class="bi bi-chevron-bar-left"></i>
+                          </button>
+                        </li>
+                        <li class="page-item" [class.disabled]="flowEventsPage === 1">
+                          <button class="page-link" (click)="goToFlowEventsPage(flowEventsPage - 1)"
+                            [disabled]="flowEventsPage === 1">
+                            <i class="bi bi-chevron-left"></i>
+                          </button>
+                        </li>
+                        <li class="page-item"
+                          *ngFor="let page of getPageNumbers(flowEventsPage, getFlowEventsTotalPagesForDevice(deviceEntry.value))"
+                          [class.active]="page === flowEventsPage" [class.disabled]="page === '...'">
+                          <button class="page-link" *ngIf="page !== '...'" (click)="goToFlowEventsPage(page)">
+                            {{ page }}
+                          </button>
+                          <span class="page-link" *ngIf="page === '...'">...</span>
+                        </li>
+                        <li class="page-item"
+                          [class.disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
+                          <button class="page-link" (click)="goToFlowEventsPage(flowEventsPage + 1)"
+                            [disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
+                            <i class="bi bi-chevron-right"></i>
+                          </button>
+                        </li>
+                        <li class="page-item"
+                          [class.disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
+                          <button class="page-link"
+                            (click)="goToFlowEventsPage(getFlowEventsTotalPagesForDevice(deviceEntry.value))"
+                            [disabled]="flowEventsPage === getFlowEventsTotalPagesForDevice(deviceEntry.value)">
+                            <i class="bi bi-chevron-bar-right"></i>
+                          </button>
+                        </li>
+                      </ul>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="alert aero-card aero-glass-card alert-info mt-3" *ngIf="getTotalEventsDetected() === 0">
+              <i class="bi bi-info-circle"></i>
+              <strong>Sin eventos detectados.</strong> No se detectaron cambios en los sensores Water_flow_value o
+              Total_pulse en el período seleccionado.
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Irrigation Metrics Section -->
-  <div class="row mt-4" *ngIf="irrigationMetrics.length > 0">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-info text-white">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-              <i class="bi bi-water"></i> Métricas de Riego
-            </h5>
-            <button class="btn btn-sm btn-light" (click)="toggleIrrigationMetrics()">
-              <i class="bi" [class.bi-chevron-down]="isIrrigationMetricsCollapsed" [class.bi-chevron-up]="!isIrrigationMetricsCollapsed"></i>
-              {{ isIrrigationMetricsCollapsed ? 'Expandir' : 'Contraer' }}
-            </button>
-          </div>
-        </div>
-        <div class="card-body" *ngIf="!isIrrigationMetricsCollapsed">
-          <!-- Irrigation Summary -->
-          <div class="row mb-3">
-            <div class="col-md-3">
-              <div class="stat-box">
-                <i class="bi bi-droplet-fill text-primary"></i>
-                <h6>Agua Total Aplicada</h6>
-                <h3>{{ stats.totalWaterUsed | number:'1.0-0' }} L</h3>
-                <small class="text-muted">Últimos eventos</small>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-box">
-                <i class="bi bi-moisture text-info"></i>
-                <h6>Drenaje Promedio</h6>
-                <h3>{{ stats.avgDrainPercentage | number:'1.1-1' }}%</h3>
-                <small class="text-muted">
-                  <span
-                    [class]="stats.avgDrainPercentage > 30 ? 'text-danger' : stats.avgDrainPercentage < 15 ? 'text-warning' : 'text-success'">
-                    {{ stats.avgDrainPercentage > 30 ? 'Alto' : stats.avgDrainPercentage < 15 ? 'Bajo' : 'Óptimo' }}
-                      </span>
-                </small>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-box">
-                <i class="bi bi-speedometer2 text-success"></i>
-                <h6>Eficiencia de Agua</h6>
-                <h3>{{ stats.waterEfficiency | number:'1.1-1' }}%</h3>
-                <small class="text-muted">Agua absorbida</small>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="stat-box">
-                <i class="bi bi-calendar-event text-secondary"></i>
-                <h6>Eventos de Riego</h6>
-                <h3>{{ getTotalEventsDetected() }}</h3>
-                <small class="text-muted">Detectados</small>
-              </div>
+    <!-- Irrigation Metrics Section -->
+    <div class="row mt-4" *ngIf="irrigationMetrics.length > 0">
+      <div class="col-12">
+        <div class="aero-card aero-glass-card">
+          <div class="aero-card-header bg-info text-white">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">
+                <i class="bi bi-water"></i> Métricas de Riego
+              </h5>
+              <button class="btn aero-btn aero-btn-sm btn-light" (click)="toggleIrrigationMetrics()">
+                <i class="bi" [class.bi-chevron-down]="isIrrigationMetricsCollapsed"
+                  [class.bi-chevron-up]="!isIrrigationMetricsCollapsed"></i>
+                {{ isIrrigationMetricsCollapsed ? 'Expandir' : 'Contraer' }}
+              </button>
             </div>
           </div>
-
-
-          <!-- Replace the Irrigation Events Table section (around line 370) -->
-          <div class="table-responsive">
-            <table class="table table-sm table-hover">
-              <thead>
-                <tr>
-                  <th>Fecha/Hora</th>
-                  <th>Intervalo (hr)</th>
-                  <th>Duración (min)</th>
-                  <th>Vol. por m²</th>
-                  <th>Vol. por Planta</th>
-                  <th>Volumen Total</th>
-                  <th>Drenaje %</th>
-                  <th>Caudal (L/h)</th>
-                  <th>Precipitación</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngIf="irrigationMetrics.length === 0">
-                  <td colspan="9" class="text-center text-muted py-4">
-                    <i class="bi bi-droplet-slash" style="font-size: 2rem;"></i>
-                    <p class="mt-2 mb-0">No se detectaron eventos de riego con flujo real</p>
-                    <small>El sensor de flujo muestra que no ha circulado agua en el período seleccionado</small>
-                  </td>
-                </tr>
-                <tr *ngFor="let metric of getIrrigationMetricsPaginated()">
-                  <td>{{ metric.date | date:'short' }}</td>
-                  <td>{{ metric.intervalHours | number:'1.1-1' }}</td>
-                  <td>{{ metric.lengthMinutes | number:'1.0-0' }}</td>
-                  <td>{{ metric.volumePerM2 | number:'1.2-2' }} L/m²</td>
-                  <td>{{ metric.volumePerPlant | number:'1.2-2' }} L</td>
-                  <td><strong>{{ metric.totalVolume | number:'1.0-0' }} L</strong></td>
-                  <td>
+          <div class="card-body" *ngIf="!isIrrigationMetricsCollapsed">
+            <!-- Irrigation Summary -->
+            <div class="row mb-3">
+              <div class="col-md-3">
+                <div class="stat-box">
+                  <i class="bi bi-droplet-fill text-primary"></i>
+                  <h6>Agua Total Aplicada</h6>
+                  <h3>{{ stats.totalWaterUsed | number:'1.0-0' }} L</h3>
+                  <small class="text-muted">Últimos eventos</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-box">
+                  <i class="bi bi-moisture text-info"></i>
+                  <h6>Drenaje Promedio</h6>
+                  <h3>{{ stats.avgDrainPercentage | number:'1.1-1' }}%</h3>
+                  <small class="text-muted">
                     <span
-                      [class]="metric.drainPercentage > 30 ? 'badge bg-danger' : metric.drainPercentage < 15 ? 'badge bg-warning' : 'badge bg-success'">
-                      {{ metric.drainPercentage | number:'1.1-1' }}%
-                    </span>
-                  </td>
-                  <td>{{ metric.flowRate | number:'1.0-0' }} L/h</td>
-                  <td>{{ metric.precipitationRate | number:'1.2-2' }} L/m²/h</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <!-- Add pagination controls -->
-            <div class="table-pagination">
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                  <label class="text-muted mb-0" style="font-size:0.8rem;white-space:nowrap;">Filas por página:</label>
-                  <select class="form-select form-select-sm" style="width:auto;"
-                    [value]="irrigationMetricsPageSize"
-                    (change)="changeIrrigationMetricsPageSize(+$any($event.target).value)">
-                    <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
-                  </select>
-                  <small class="text-muted" style="white-space:nowrap;">
-                    Mostrando {{ (irrigationMetricsPage - 1) * irrigationMetricsPageSize + 1 }} -
-                    {{ ((irrigationMetricsPage * irrigationMetricsPageSize) < irrigationMetrics.length) ?
-                      (irrigationMetricsPage * irrigationMetricsPageSize) : irrigationMetrics.length }} de {{
-                      irrigationMetrics.length }} registros
+                      [class]="stats.avgDrainPercentage > 30 ? 'text-danger' : stats.avgDrainPercentage < 15 ? 'text-warning' : 'text-success'">
+                      {{ stats.avgDrainPercentage > 30 ? 'Alto' : stats.avgDrainPercentage < 15 ? 'Bajo' : 'Óptimo' }}
+                        </span>
                   </small>
                 </div>
-                <nav aria-label="Paginación de tabla">
-                  <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item" [class.disabled]="irrigationMetricsPage === 1">
-                      <button class="page-link" (click)="goToIrrigationMetricsPage(1)"
-                        [disabled]="irrigationMetricsPage === 1">
-                        <i class="bi bi-chevron-bar-left"></i>
-                      </button>
-                    </li>
-                    <li class="page-item" [class.disabled]="irrigationMetricsPage === 1">
-                      <button class="page-link" (click)="goToIrrigationMetricsPage(irrigationMetricsPage - 1)"
-                        [disabled]="irrigationMetricsPage === 1">
-                        <i class="bi bi-chevron-left"></i>
-                      </button>
-                    </li>
-                    <li class="page-item"
-                      *ngFor="let page of getPageNumbers(irrigationMetricsPage, getIrrigationMetricsTotalPages())"
-                      [class.active]="page === irrigationMetricsPage" [class.disabled]="page === '...'">
-                      <button class="page-link" *ngIf="page !== '...'" (click)="goToIrrigationMetricsPage(page)">
-                        {{ page }}
-                      </button>
-                      <span class="page-link" *ngIf="page === '...'">...</span>
-                    </li>
-                    <li class="page-item" [class.disabled]="irrigationMetricsPage === getIrrigationMetricsTotalPages()">
-                      <button class="page-link" (click)="goToIrrigationMetricsPage(irrigationMetricsPage + 1)"
-                        [disabled]="irrigationMetricsPage === getIrrigationMetricsTotalPages()">
-                        <i class="bi bi-chevron-right"></i>
-                      </button>
-                    </li>
-                    <li class="page-item" [class.disabled]="irrigationMetricsPage === getIrrigationMetricsTotalPages()">
-                      <button class="page-link" (click)="goToIrrigationMetricsPage(getIrrigationMetricsTotalPages())"
-                        [disabled]="irrigationMetricsPage === getIrrigationMetricsTotalPages()">
-                        <i class="bi bi-chevron-bar-right"></i>
-                      </button>
-                    </li>
-                  </ul>
-                </nav>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-box">
+                  <i class="bi bi-speedometer2 text-success"></i>
+                  <h6>Eficiencia de Agua</h6>
+                  <h3>{{ stats.waterEfficiency | number:'1.1-1' }}%</h3>
+                  <small class="text-muted">Agua absorbida</small>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-box">
+                  <i class="bi bi-calendar-event text-secondary"></i>
+                  <h6>Eventos de Riego</h6>
+                  <h3>{{ getTotalEventsDetected() }}</h3>
+                  <small class="text-muted">Detectados</small>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="mt-2" *ngIf="isLoadingMore">
-            <div class="progress" style="height: 3px;">
-              <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar"
-                style="width: 100%"></div>
+
+            <!-- Replace the Irrigation Events Table section (around line 370) -->
+            <div class="aero-table-container table-responsive">
+              <table class="table aero-table table-sm table-hover">
+                <thead>
+                  <tr>
+                    <th>Fecha/Hora</th>
+                    <th>Intervalo (hr)</th>
+                    <th>Duración (min)</th>
+                    <th>Vol. por m²</th>
+                    <th>Vol. por Planta</th>
+                    <th>Volumen Total</th>
+                    <th>Drenaje %</th>
+                    <th>Caudal (L/h)</th>
+                    <th>Precipitación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngIf="irrigationMetrics.length === 0">
+                    <td colspan="9" class="text-center text-muted py-4">
+                      <i class="bi bi-droplet-slash" style="font-size: 2rem;"></i>
+                      <p class="mt-2 mb-0">No se detectaron eventos de riego con flujo real</p>
+                      <small>El sensor de flujo muestra que no ha circulado agua en el período seleccionado</small>
+                    </td>
+                  </tr>
+                  <tr *ngFor="let metric of getIrrigationMetricsPaginated()">
+                    <td>{{ metric.date | date:'short' }}</td>
+                    <td>{{ metric.intervalHours | number:'1.1-1' }}</td>
+                    <td>{{ metric.lengthMinutes | number:'1.0-0' }}</td>
+                    <td>{{ metric.volumePerM2 | number:'1.2-2' }} L/m²</td>
+                    <td>{{ metric.volumePerPlant | number:'1.2-2' }} L</td>
+                    <td><strong>{{ metric.totalVolume | number:'1.0-0' }} L</strong></td>
+                    <td>
+                      <span
+                        [class]="metric.drainPercentage > 30 ? 'badge bg-danger' : metric.drainPercentage < 15 ? 'badge bg-warning' : 'badge bg-success'">
+                        {{ metric.drainPercentage | number:'1.1-1' }}%
+                      </span>
+                    </td>
+                    <td>{{ metric.flowRate | number:'1.0-0' }} L/h</td>
+                    <td>{{ metric.precipitationRate | number:'1.2-2' }} L/m²/h</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Add pagination controls -->
+              <div class="table-pagination">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    <label class="text-muted mb-0" style="font-size:0.8rem;white-space:nowrap;">Filas por
+                      página:</label>
+                    <select class="form-select aero-select form-select-sm" style="width:auto;"
+                      [value]="irrigationMetricsPageSize"
+                      (change)="changeIrrigationMetricsPageSize(+$any($event.target).value)">
+                      <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+                    </select>
+                    <small class="text-muted" style="white-space:nowrap;">
+                      Mostrando {{ (irrigationMetricsPage - 1) * irrigationMetricsPageSize + 1 }} -
+                      {{ ((irrigationMetricsPage * irrigationMetricsPageSize) < irrigationMetrics.length) ?
+                        (irrigationMetricsPage * irrigationMetricsPageSize) : irrigationMetrics.length }} de {{
+                        irrigationMetrics.length }} registros </small>
+                  </div>
+                  <nav aria-label="Paginación de tabla">
+                    <ul class="pagination pagination-sm mb-0">
+                      <li class="page-item" [class.disabled]="irrigationMetricsPage === 1">
+                        <button class="page-link" (click)="goToIrrigationMetricsPage(1)"
+                          [disabled]="irrigationMetricsPage === 1">
+                          <i class="bi bi-chevron-bar-left"></i>
+                        </button>
+                      </li>
+                      <li class="page-item" [class.disabled]="irrigationMetricsPage === 1">
+                        <button class="page-link" (click)="goToIrrigationMetricsPage(irrigationMetricsPage - 1)"
+                          [disabled]="irrigationMetricsPage === 1">
+                          <i class="bi bi-chevron-left"></i>
+                        </button>
+                      </li>
+                      <li class="page-item"
+                        *ngFor="let page of getPageNumbers(irrigationMetricsPage, getIrrigationMetricsTotalPages())"
+                        [class.active]="page === irrigationMetricsPage" [class.disabled]="page === '...'">
+                        <button class="page-link" *ngIf="page !== '...'" (click)="goToIrrigationMetricsPage(page)">
+                          {{ page }}
+                        </button>
+                        <span class="page-link" *ngIf="page === '...'">...</span>
+                      </li>
+                      <li class="page-item"
+                        [class.disabled]="irrigationMetricsPage === getIrrigationMetricsTotalPages()">
+                        <button class="page-link" (click)="goToIrrigationMetricsPage(irrigationMetricsPage + 1)"
+                          [disabled]="irrigationMetricsPage === getIrrigationMetricsTotalPages()">
+                          <i class="bi bi-chevron-right"></i>
+                        </button>
+                      </li>
+                      <li class="page-item"
+                        [class.disabled]="irrigationMetricsPage === getIrrigationMetricsTotalPages()">
+                        <button class="page-link" (click)="goToIrrigationMetricsPage(getIrrigationMetricsTotalPages())"
+                          [disabled]="irrigationMetricsPage === getIrrigationMetricsTotalPages()">
+                          <i class="bi bi-chevron-bar-right"></i>
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="alert alert-info mt-2 mb-0" *ngIf="!hasMoreData && !isLoadingMore">
-            <i class="bi bi-check-circle me-2"></i>
-            <strong>Todos los datos cargados.</strong> No hay más registros disponibles.
+            <div class="mt-2" *ngIf="isLoadingMore">
+              <div class="progress" style="height: 3px;">
+                <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar"
+                  style="width: 100%"></div>
+              </div>
+            </div>
+
+            <div class="alert aero-card aero-glass-card alert-info mt-2 mb-0" *ngIf="!hasMoreData && !isLoadingMore">
+              <i class="bi bi-check-circle me-2"></i>
+              <strong>Todos los datos cargados.</strong> No hay más registros disponibles.
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Fertilizer Recommendations Section -->
-  <div class="row mt-4" *ngIf="fertilizerDosages.length > 0">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-success text-white">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-              <i class="bi bi-trophy"></i> Recomendaciones de Fertilización
+    <!-- Fertilizer Recommendations Section -->
+    <div class="row mt-4" *ngIf="fertilizerDosages.length > 0">
+      <div class="col-12">
+        <div class="aero-card aero-glass-card">
+          <div class="aero-card-header bg-success text-white">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">
+                <i class="bi bi-trophy"></i> Recomendaciones de Fertilización
+              </h5>
+              <button class="btn aero-btn aero-btn-sm btn-light" (click)="toggleFertilizerDosages()">
+                <i class="bi" [class.bi-chevron-down]="isFertilizerDosagesCollapsed"
+                  [class.bi-chevron-up]="!isFertilizerDosagesCollapsed"></i>
+                {{ isFertilizerDosagesCollapsed ? 'Expandir' : 'Contraer' }}
+              </button>
+            </div>
+          </div>
+          <div class="card-body" *ngIf="!isFertilizerDosagesCollapsed">
+            <!-- Fertilizer Summary -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <div class="stat-box">
+                  <i class="bi bi-cash-coin text-success"></i>
+                  <h6>Costo Total Fertilizantes</h6>
+                  <h3>₡{{ stats.fertilizerCost | number:'1.2-2' }}</h3>
+                  <small class="text-muted">Por aplicación</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="stat-box">
+                  <i class="bi bi-beaker text-primary"></i>
+                  <h6>Fertilizantes Activos</h6>
+                  <h3>{{ fertilizerDosages.length }}</h3>
+                  <small class="text-muted">Recomendados</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="stat-box">
+                  <i class="bi bi-graph-up text-info"></i>
+                  <h6>Eficiencia Nutricional</h6>
+                  <h3>{{ stats.waterEfficiency | number:'1.0-0' }}%</h3>
+                  <small class="text-muted">Basado en drenaje</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fertilizer Dosage Table -->
+            <div class="aero-table-container table-responsive">
+              <table class="table aero-table table-sm table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Fertilizante</th>
+                    <th>Fase del Cultivo</th>
+                    <th>Cultivo</th>
+                    <th>Período</th>
+                    <th>Dosis (g/L)</th>
+                    <th>Costo / Aplicación</th>
+                    <th>Tipo</th>
+                    <th>Recomendación</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let dosage of fertilizerDosages" [class.table-danger]="dosage.stockStatus === 'critical'"
+                    [class.table-warning]="dosage.stockStatus === 'low'">
+                    <td>
+                      <strong>{{ dosage.fertilizer }}</strong>
+                      <div class="text-muted small" *ngIf="dosage.fertilizerDescription">{{ dosage.fertilizerDescription
+                        }}</div>
+                    </td>
+                    <td>{{ dosage.phaseName }}</td>
+                    <td>
+                      <span *ngIf="dosage.cropName">{{ dosage.cropName }}</span>
+                      <span class="text-muted small d-block" *ngIf="dosage.cropProductionName">{{
+                        dosage.cropProductionName }}</span>
+                    </td>
+                    <td class="text-nowrap">
+                      <span *ngIf="dosage.phaseStartDate || dosage.phaseEndDate">
+                        <span *ngIf="dosage.phaseStartDate">{{ dosage.phaseStartDate | date:'dd/MM/yy' }}</span>
+                        <span *ngIf="dosage.phaseEndDate"> – {{ dosage.phaseEndDate | date:'dd/MM/yy' }}</span>
+                      </span>
+                      <span class="text-muted small d-block" *ngIf="dosage.phaseWeekRange">{{ dosage.phaseWeekRange
+                        }}</span>
+                      <span class="text-muted"
+                        *ngIf="!dosage.phaseStartDate && !dosage.phaseEndDate && !dosage.phaseWeekRange">—</span>
+                    </td>
+                    <td>{{ dosage.dosageGramsPerLiter | number:'1.3-3' }} g/L</td>
+                    <td>₡{{ dosage.cost | number:'1.2-2' }}</td>
+                    <td>
+                      <span class="badge"
+                        [class.bg-danger]="dosage.recommendationType === 'buy' && dosage.stockStatus === 'critical'"
+                        [class.bg-warning]="dosage.recommendationType === 'buy' && dosage.stockStatus !== 'critical'"
+                        [class.bg-info]="dosage.recommendationType === 'stock-check'"
+                        [class.bg-primary]="dosage.recommendationType === 'formulation'"
+                        [class.bg-success]="dosage.recommendationType === 'apply'">
+                        <i class="bi me-1" [class.bi-cart-x]="dosage.recommendationType === 'buy'"
+                          [class.bi-exclamation-triangle]="dosage.recommendationType === 'stock-check'"
+                          [class.bi-journal-check]="dosage.recommendationType === 'formulation'"
+                          [class.bi-droplet-half]="dosage.recommendationType === 'apply'"></i>
+                        <span *ngIf="dosage.recommendationType === 'buy'">Comprar</span>
+                        <span *ngIf="dosage.recommendationType === 'stock-check'">Verificar Stock</span>
+                        <span *ngIf="dosage.recommendationType === 'formulation'">Receta</span>
+                        <span *ngIf="dosage.recommendationType === 'apply'">Aplicar</span>
+                      </span>
+                    </td>
+                    <td style="max-width:260px;">
+                      <small>{{ dosage.recommendationText }}</small>
+                    </td>
+                    <td>
+                      <button class="btn aero-btn aero-btn-sm btn-outline-primary" title="Ver detalles"
+                        (click)="openFertilizerDetailsModal(dosage)">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr class="table-active">
+                    <td colspan="5"><strong>TOTAL</strong></td>
+                    <td><strong>₡{{ stats.fertilizerCost | number:'1.2-2' }}</strong></td>
+                    <td colspan="3"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <!-- Nutrient Balance Info -->
+            <div class="alert aero-card aero-glass-card alert-info mt-3" *ngIf="cropPhaseRequirements.length > 0">
+              <i class="bi bi-info-circle"></i>
+              <strong>Información:</strong> Los cálculos se basan en los requerimientos nutricionales de la fase de
+              cultivo actual y la evapotranspiración calculada. Las dosis se ajustan automáticamente según las
+              condiciones climáticas.
+              Las filas en <span class="text-danger fw-bold">rojo</span> indican stock crítico; en
+              <span class="text-warning fw-bold">amarillo</span>, stock bajo.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fertilizer Details Modal -->
+    <div class="modal fade" [class.show]="showFertilizerDetailsModal"
+      [style.display]="showFertilizerDetailsModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header aero-modal-header-success text-white">
+            <h5 class="modal-title">
+              <i class="bi bi-eye me-2"></i>
+              Detalles de Fertilizante
             </h5>
-            <button class="btn btn-sm btn-light" (click)="toggleFertilizerDosages()">
-              <i class="bi" [class.bi-chevron-down]="isFertilizerDosagesCollapsed" [class.bi-chevron-up]="!isFertilizerDosagesCollapsed"></i>
-              {{ isFertilizerDosagesCollapsed ? 'Expandir' : 'Contraer' }}
+            <button type="button" class="btn-close btn-close-white" (click)="closeFertilizerDetailsModal()"></button>
+          </div>
+
+          <div class="modal-body" *ngIf="selectedFertilizerDosage">
+            <div class="fertilizer-details">
+
+              <!-- Header: fertilizer name + type badge -->
+              <div class="detail-header mb-3">
+                <div class="row align-items-center">
+                  <div class="col-md-8">
+                    <h4 class="fertilizer-name mb-1">{{ selectedFertilizerDosage.fertilizer }}</h4>
+                    <p class="text-muted mb-0" *ngIf="selectedFertilizerDosage.fertilizerDescription">
+                      {{ selectedFertilizerDosage.fertilizerDescription }}
+                    </p>
+                  </div>
+                  <div class="col-md-4 text-end">
+                    <span class="badge fs-6"
+                      [class.bg-danger]="selectedFertilizerDosage.recommendationType === 'buy' && selectedFertilizerDosage.stockStatus === 'critical'"
+                      [class.bg-warning]="selectedFertilizerDosage.recommendationType === 'buy' && selectedFertilizerDosage.stockStatus !== 'critical'"
+                      [class.bg-info]="selectedFertilizerDosage.recommendationType === 'stock-check'"
+                      [class.bg-primary]="selectedFertilizerDosage.recommendationType === 'formulation'"
+                      [class.bg-success]="selectedFertilizerDosage.recommendationType === 'apply'">
+                      <i class="bi me-1" [class.bi-cart-x]="selectedFertilizerDosage.recommendationType === 'buy'"
+                        [class.bi-exclamation-triangle]="selectedFertilizerDosage.recommendationType === 'stock-check'"
+                        [class.bi-journal-check]="selectedFertilizerDosage.recommendationType === 'formulation'"
+                        [class.bi-droplet-half]="selectedFertilizerDosage.recommendationType === 'apply'"></i>
+                      <span *ngIf="selectedFertilizerDosage.recommendationType === 'buy'">Comprar</span>
+                      <span *ngIf="selectedFertilizerDosage.recommendationType === 'stock-check'">Verificar Stock</span>
+                      <span *ngIf="selectedFertilizerDosage.recommendationType === 'formulation'">Basado en
+                        Receta</span>
+                      <span *ngIf="selectedFertilizerDosage.recommendationType === 'apply'">Aplicar</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recommendation message -->
+              <div class="alert mb-3" [class.alert-danger]="selectedFertilizerDosage.stockStatus === 'critical'"
+                [class.alert-warning]="selectedFertilizerDosage.stockStatus === 'low'"
+                [class.alert-primary]="selectedFertilizerDosage.recommendationType === 'formulation'"
+                [class.alert-info]="selectedFertilizerDosage.recommendationType === 'stock-check'"
+                [class.alert-success]="selectedFertilizerDosage.recommendationType === 'apply' && selectedFertilizerDosage.stockStatus !== 'low' && selectedFertilizerDosage.stockStatus !== 'critical'">
+                <i class="bi bi-lightbulb me-2"></i>
+                {{ selectedFertilizerDosage.recommendationText }}
+              </div>
+
+              <!-- Crop & Phase context -->
+              <div class="detail-section aero-card aero-glass-card mb-3 p-3">
+                <h6 class="section-title">
+                  <i class="bi bi-tree text-success"></i>
+                  Contexto del Cultivo y Fase
+                </h6>
+                <div class="row g-2">
+                  <div class="col-md-6" *ngIf="selectedFertilizerDosage.cropName">
+                    <div class="detail-item">
+                      <label>Cultivo:</label>
+                      <span class="fw-bold">{{ selectedFertilizerDosage.cropName }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6" *ngIf="selectedFertilizerDosage.cropProductionName">
+                    <div class="detail-item">
+                      <label>Producción:</label>
+                      <span class="fw-bold">{{ selectedFertilizerDosage.cropProductionName }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="detail-item">
+                      <label>Fase:</label>
+                      <span class="fw-bold">{{ selectedFertilizerDosage.phaseName }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6" *ngIf="selectedFertilizerDosage.phaseWeekRange">
+                    <div class="detail-item">
+                      <label>Semanas de la Fase:</label>
+                      <span>{{ selectedFertilizerDosage.phaseWeekRange }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6" *ngIf="selectedFertilizerDosage.phaseStartDate">
+                    <div class="detail-item">
+                      <label>Inicio de Fase:</label>
+                      <span>{{ selectedFertilizerDosage.phaseStartDate | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6" *ngIf="selectedFertilizerDosage.phaseEndDate">
+                    <div class="detail-item">
+                      <label>Fin de Fase:</label>
+                      <span>{{ selectedFertilizerDosage.phaseEndDate | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6" *ngIf="selectedFertilizerDosage.relatedRecipeName">
+                    <div class="detail-item">
+                      <label>Receta de Nutrición:</label>
+                      <span class="text-primary fw-bold">{{ selectedFertilizerDosage.relatedRecipeName }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dosage Information -->
+              <div class="detail-section aero-card aero-glass-card mb-3 p-3">
+                <h6 class="section-title">
+                  <i class="bi bi-droplet text-primary"></i>
+                  Información de Dosificación
+                </h6>
+                <div class="row g-2">
+                  <div class="col-md-4">
+                    <div class="detail-item">
+                      <label>Dosis (g/L):</label>
+                      <span class="fw-bold">{{ selectedFertilizerDosage.dosageGramsPerLiter | number:'1.3-3' }}
+                        g/L</span>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="detail-item">
+                      <label>Dosis (ml/L):</label>
+                      <span class="fw-bold">{{ selectedFertilizerDosage.dosageGramsPerLiter | number:'1.3-3' }}
+                        ml/L</span>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="detail-item">
+                      <label>Costo por Aplicación:</label>
+                      <span class="fw-bold text-success">₡{{ selectedFertilizerDosage.cost | number:'1.2-2' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Stock Information -->
+              <div class="detail-section"
+                *ngIf="selectedFertilizerDosage.currentStock !== null || selectedFertilizerDosage.minimumStock !== null">
+                <h6 class="section-title">
+                  <i class="bi bi-boxes text-warning"></i>
+                  Estado de Inventario
+                </h6>
+                <div class="row g-2">
+                  <div class="col-md-4">
+                    <div class="detail-item">
+                      <label>Stock Actual:</label>
+                      <span class="fw-bold" [class.text-danger]="selectedFertilizerDosage.stockStatus === 'critical'"
+                        [class.text-warning]="selectedFertilizerDosage.stockStatus === 'low'"
+                        [class.text-success]="selectedFertilizerDosage.stockStatus === 'ok'">
+                        {{ selectedFertilizerDosage.currentStock }} {{ selectedFertilizerDosage.stockUnit }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="detail-item">
+                      <label>Stock Mínimo:</label>
+                      <span>{{ selectedFertilizerDosage.minimumStock }} {{ selectedFertilizerDosage.stockUnit }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="detail-item">
+                      <label>Estado:</label>
+                      <span class="badge" [class.bg-danger]="selectedFertilizerDosage.stockStatus === 'critical'"
+                        [class.bg-warning]="selectedFertilizerDosage.stockStatus === 'low'"
+                        [class.bg-success]="selectedFertilizerDosage.stockStatus === 'ok'"
+                        [class.bg-secondary]="selectedFertilizerDosage.stockStatus === 'unknown'">
+                        <span *ngIf="selectedFertilizerDosage.stockStatus === 'critical'">Crítico</span>
+                        <span *ngIf="selectedFertilizerDosage.stockStatus === 'low'">Bajo</span>
+                        <span *ngIf="selectedFertilizerDosage.stockStatus === 'ok'">OK</span>
+                        <span *ngIf="selectedFertilizerDosage.stockStatus === 'unknown'">Desconocido</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nutrient Contribution -->
+              <div class="detail-section aero-card aero-glass-card mb-3 p-3" *ngIf="selectedFertilizerDosage.nutrientContribution">
+                <h6 class="section-title">
+                  <i class="bi bi-graph-up text-success"></i>
+                  Contribución de Nutrientes
+                </h6>
+                <div class="row g-2">
+                  <div class="col-md-4">
+                    <div class="nutrient-item nitrogen">
+                      <div class="nutrient-label">Nitrógeno (N)</div>
+                      <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.N | number:'1.2-2' }}
+                        ppm</div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="nutrient-item phosphorus">
+                      <div class="nutrient-label">Fósforo (P)</div>
+                      <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.P | number:'1.2-2' }}
+                        ppm</div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="nutrient-item potassium">
+                      <div class="nutrient-label">Potasio (K)</div>
+                      <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.K | number:'1.2-2' }}
+                        ppm</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn aero-btn aero-btn-secondary" (click)="closeFertilizerDetailsModal()">
+              <i class="bi bi-x-circle me-1"></i>
+              Cerrar
             </button>
           </div>
         </div>
-        <div class="card-body" *ngIf="!isFertilizerDosagesCollapsed">
-          <!-- Fertilizer Summary -->
-          <div class="row mb-3">
-            <div class="col-md-4">
-              <div class="stat-box">
-                <i class="bi bi-cash-coin text-success"></i>
-                <h6>Costo Total Fertilizantes</h6>
-                <h3>${{ stats.fertilizerCost | number:'1.2-2' }}</h3>
-                <small class="text-muted">Por aplicación</small>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="stat-box">
-                <i class="bi bi-beaker text-primary"></i>
-                <h6>Fertilizantes Activos</h6>
-                <h3>{{ fertilizerDosages.length }}</h3>
-                <small class="text-muted">Recomendados</small>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="stat-box">
-                <i class="bi bi-graph-up text-info"></i>
-                <h6>Eficiencia Nutricional</h6>
-                <h3>{{ stats.waterEfficiency | number:'1.0-0' }}%</h3>
-                <small class="text-muted">Basado en drenaje</small>
-              </div>
-            </div>
-          </div>
-
-          <!-- Fertilizer Dosage Table -->
-          <div class="table-responsive">
-            <table class="table table-sm table-hover">
-              <thead>
-                <tr>
-                  <th>Fertilizante</th>
-                  <th>Dosis (g/L)</th>
-                  <th>Dosis (ml/L)</th>
-                  <th>Costo por Aplicación</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let dosage of fertilizerDosages">
-                  <td><strong>{{ dosage.fertilizer }}</strong></td>
-                  <td>{{ dosage.dosageGramsPerLiter | number:'1.3-3' }} g/L</td>
-                  <td>{{ dosage.dosageGramsPerLiter | number:'1.3-3' }} ml/L</td>
-                  <td>${{ dosage.cost | number:'1.2-2' }}</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary" title="Ver detalles"
-                      (click)="openFertilizerDetailsModal(dosage)">
-                      <i class="bi bi-eye"></i>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr class="table-active">
-                  <td colspan="3"><strong>TOTAL</strong></td>
-                  <td><strong>${{ stats.fertilizerCost | number:'1.2-2' }}</strong></td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <!-- Nutrient Balance Info -->
-          <div class="alert alert-info mt-3" *ngIf="cropPhaseRequirements.length > 0">
-            <i class="bi bi-info-circle"></i>
-            <strong>Información:</strong> Los cálculos se basan en los requerimientos nutricionales de la fase de
-            cultivo actual
-            y la evapotranspiración calculada. Las dosis se ajustan automáticamente según las condiciones climáticas.
-          </div>
-        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Fertilizer Details Modal -->
-  <div class="modal fade" [class.show]="showFertilizerDetailsModal"
-    [style.display]="showFertilizerDetailsModal ? 'block' : 'none'" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header bg-success text-white">
-          <h5 class="modal-title">
-            <i class="bi bi-eye me-2"></i>
-            Detalles de Fertilizante
-          </h5>
-          <button type="button" class="btn-close btn-close-white" (click)="closeFertilizerDetailsModal()"></button>
-        </div>
-
-        <div class="modal-body" *ngIf="selectedFertilizerDosage">
-          <div class="fertilizer-details">
-            <!-- Header Info -->
-            <div class="detail-header">
-              <div class="row">
-                <div class="col-md-8">
-                  <h4 class="fertilizer-name">{{ selectedFertilizerDosage.fertilizer }}</h4>
-                  <p class="fertilizer-id text-muted">Fase: {{ selectedFertilizerDosage.phaseName }}</p>
-                </div>
-                <div class="col-md-4 text-end">
-                  <span class="badge bg-success fs-6">
-                    Recomendado
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Dosage Information -->
-            <div class="detail-section">
-              <h6 class="section-title">
-                <i class="bi bi-droplet text-primary"></i>
-                Información de Dosificación
-              </h6>
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="detail-item">
-                    <label>Dosis (g/L):</label>
-                    <span class="fw-bold">{{ selectedFertilizerDosage.dosageGramsPerLiter | number:'1.3-3' }} g/L</span>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="detail-item">
-                    <label>Dosis (ml/L):</label>
-                    <span class="fw-bold">{{ selectedFertilizerDosage.dosageGramsPerLiter | number:'1.3-3' }}
-                      ml/L</span>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="detail-item">
-                    <label>Costo por Aplicación:</label>
-                    <span class="fw-bold text-success">${{ selectedFertilizerDosage.cost | number:'1.2-2' }}</span>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="detail-item">
-                    <label>ID de Fase:</label>
-                    <span>{{ selectedFertilizerDosage.phaseId }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Nutrient Contribution -->
-            <div class="detail-section" *ngIf="selectedFertilizerDosage.nutrientContribution">
-              <h6 class="section-title">
-                <i class="bi bi-graph-up text-success"></i>
-                Contribución de Nutrientes
-              </h6>
-              <div class="row">
-                <div class="col-md-4">
-                  <div class="nutrient-item nitrogen">
-                    <div class="nutrient-label">Nitrógeno (N)</div>
-                    <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.N | number:'1.2-2' }}
-                      ppm</div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="nutrient-item phosphorus">
-                    <div class="nutrient-label">Fósforo (P)</div>
-                    <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.P | number:'1.2-2' }}
-                      ppm</div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="nutrient-item potassium">
-                    <div class="nutrient-label">Potasio (K)</div>
-                    <div class="nutrient-value">{{ selectedFertilizerDosage.nutrientContribution.K | number:'1.2-2' }}
-                      ppm</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Phase Information -->
-            <div class="detail-section">
-              <h6 class="section-title">
-                <i class="bi bi-info-circle text-info"></i>
-                Información de la Fase
-              </h6>
-              <div class="row">
-                <div class="col-12">
-                  <div class="alert alert-info">
-                    <i class="bi bi-lightbulb me-2"></i>
-                    <strong>Fase del Cultivo:</strong> {{ selectedFertilizerDosage.phaseName }}
-                  </div>
-                  <p class="text-muted">
-                    Esta dosificación ha sido calculada específicamente para la fase
-                    <strong>{{ selectedFertilizerDosage.phaseName }}</strong>
-                    del cultivo, considerando los requerimientos nutricionales óptimos y las condiciones climáticas
-                    actuales.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeFertilizerDetailsModal()">
-            <i class="bi bi-x-circle me-1"></i>
-            Cerrar
-          </button>
-        </div>
-      </div>
+    <!-- Modal Backdrop -->
+    <div class="modal-backdrop fade" [class.show]="showFertilizerDetailsModal" *ngIf="showFertilizerDetailsModal"
+      (click)="closeFertilizerDetailsModal()">
     </div>
-  </div>
-
-  <!-- Modal Backdrop -->
-  <div class="modal-backdrop fade" [class.show]="showFertilizerDetailsModal" *ngIf="showFertilizerDetailsModal"
-    (click)="closeFertilizerDetailsModal()">
   </div>
 </div>

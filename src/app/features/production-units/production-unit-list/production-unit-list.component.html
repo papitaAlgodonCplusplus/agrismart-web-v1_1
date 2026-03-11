@@ -1,29 +1,36 @@
 <!-- Production Unit List Component -->
-<div class="container-fluid py-4">
+<div class="page-wrapper production-unit-page">
+  <div class="container-fluid py-3">
+    <div class="production-unit-container">
   <!-- Header -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <h2 class="mb-1">
-            <i class="bi bi-grid-3x3-gap me-2 text-primary"></i>
-            Unidades de Producción
-          </h2>
-          <p class="text-muted mb-0">Gestión de espacios de cultivo y producción</p>
+      <div class="aero-header">
+        <div class="aero-header-content">
+          <div class="d-flex align-items-center gap-3">
+            <div class="aero-icon-orb">
+              <i class="bi bi-grid-3x3-gap"></i>
+            </div>
+            <div>
+              <h2 class="aero-title mb-0">Unidades de Producción</h2>
+              <p class="aero-subtitle mb-0">Gestión de espacios de cultivo, capacidad y configuración operativa</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-primary" (click)="openCreateModal()">
+              <i class="bi bi-plus-circle me-2"></i>
+              Nueva Unidad
+            </button>
+          </div>
         </div>
-        <button class="btn btn-primary btn-lg" (click)="openCreateModal()">
-          <i class="bi bi-plus-circle me-2"></i>
-          Nueva Unidad
-        </button>
       </div>
-      <hr class="mt-3">
     </div>
   </div>
 
   <!-- Filters Section -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="card shadow-sm">
+      <div class="card aero-glass-panel filters-card">
         <div class="card-body">
           <div class="row align-items-end g-3">
             <!-- Search -->
@@ -34,7 +41,7 @@
               </label>
               <input
                 type="text"
-                class="form-control"
+                class="form-control aero-input"
                 placeholder="Nombre, descripción, ubicación..."
                 [(ngModel)]="searchTerm"
                 (keyup.enter)="loadProductionUnits()">
@@ -47,7 +54,7 @@
                 Finca
               </label>
               <select
-                class="form-select"
+                class="form-select aero-input"
                 [(ngModel)]="selectedFarmId"
                 (change)="loadProductionUnits()">
                 <option value="">Todas las fincas</option>
@@ -64,7 +71,7 @@
                 Tipo
               </label>
               <select
-                class="form-select"
+                class="form-select aero-input"
                 [(ngModel)]="selectedTypeId"
                 (change)="loadProductionUnits()">
                 <option value="">Todos los tipos</option>
@@ -80,7 +87,7 @@
                 <i class="bi bi-filter me-1"></i>
                 Estado
               </label>
-              <div class="form-check form-switch">
+              <div class="form-check form-switch status-toggle">
                 <input
                   type="checkbox"
                   id="onlyActiveSwitch"
@@ -122,7 +129,7 @@
   <!-- Loading State -->
   <div class="row" *ngIf="isLoading">
     <div class="col-12">
-      <div class="card shadow-sm">
+      <div class="card aero-glass-panel loading-panel">
         <div class="card-body text-center py-5">
           <div class="spinner-border text-primary mb-3" role="status">
             <span class="visually-hidden">Cargando...</span>
@@ -136,8 +143,8 @@
   <!-- Production Units Table -->
   <div class="row" *ngIf="!isLoading && (productionUnits$ | async) as productionUnits">
     <div class="col-12">
-      <div class="card shadow-sm">
-        <div class="card-header bg-white border-bottom">
+      <div class="card aero-glass-panel units-table-card">
+        <div class="card-header table-card-header">
           <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
               <i class="bi bi-list-ul me-2 text-primary"></i>
@@ -244,7 +251,7 @@
             </table>
 
             <!-- Empty State -->
-            <div class="text-center py-5" *ngIf="productionUnits.length === 0">
+            <div class="text-center py-5 empty-state" *ngIf="productionUnits.length === 0">
               <i class="bi bi-grid-3x3-gap display-1 text-muted opacity-50"></i>
               <h5 class="mt-3 mb-2">No se encontraron unidades de producción</h5>
               <p class="text-muted mb-4">
@@ -266,7 +273,7 @@
   <!-- Statistics Cards -->
   <div class="row mt-4" *ngIf="(productionUnits$ | async) as productionUnits">
     <div class="col-md-3 mb-3">
-      <div class="card shadow-sm border-0 bg-primary bg-gradient text-white h-100">
+      <div class="card aero-glass-panel stats-card total-card h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -280,7 +287,7 @@
     </div>
 
     <div class="col-md-3 mb-3">
-      <div class="card shadow-sm border-0 bg-success bg-gradient text-white h-100">
+      <div class="card aero-glass-panel stats-card active-card h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -294,7 +301,7 @@
     </div>
 
     <div class="col-md-3 mb-3">
-      <div class="card shadow-sm border-0 bg-info bg-gradient text-white h-100">
+      <div class="card aero-glass-panel stats-card area-card h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -309,7 +316,7 @@
     </div>
 
     <div class="col-md-3 mb-3">
-      <div class="card shadow-sm border-0 bg-warning bg-gradient text-white h-100">
+      <div class="card aero-glass-panel stats-card capacity-card h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -322,13 +329,15 @@
       </div>
     </div>
   </div>
+    </div>
+  </div>
 </div>
 
 <!-- Create/Edit Modal -->
 <div class="modal fade" id="productionUnitModal" tabindex="-1" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
+    <div class="modal-content aero-modal-shell">
+      <div class="modal-header aero-modal-header primary-modal-header">
         <h5 class="modal-title">
           <i class="bi" [ngClass]="isEditMode ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
           {{ isEditMode ? 'Editar' : 'Nueva' }} Unidad de Producción
@@ -352,7 +361,7 @@
               <input
                 type="text"
                 id="name"
-                class="form-control"
+                class="form-control aero-input"
                 formControlName="name"
                 placeholder="Ej: Invernadero A1"
                 [class.is-invalid]="productionUnitForm.get('name')?.invalid && productionUnitForm.get('name')?.touched">
@@ -367,7 +376,7 @@
               </label>
               <select
                 id="farmId"
-                class="form-select"
+                class="form-select aero-input"
                 formControlName="farmId"
                 [class.is-invalid]="productionUnitForm.get('farmId')?.invalid && productionUnitForm.get('farmId')?.touched">
                 <option [ngValue]="null">Seleccione una finca</option>
@@ -386,7 +395,7 @@
               </label>
               <select
                 id="productionUnitTypeId"
-                class="form-select"
+                class="form-select aero-input"
                 formControlName="productionUnitTypeId"
                 [class.is-invalid]="productionUnitForm.get('productionUnitTypeId')?.invalid && productionUnitForm.get('productionUnitTypeId')?.touched">
                 <option [ngValue]="null">Seleccione un tipo</option>
@@ -406,7 +415,7 @@
               <input
                 type="text"
                 id="location"
-                class="form-control"
+                class="form-control aero-input"
                 formControlName="location"
                 placeholder="Ej: Sector Norte, Lote 3">
             </div>
@@ -417,7 +426,7 @@
               </label>
               <textarea
                 id="description"
-                class="form-control"
+                class="form-control aero-input"
                 formControlName="description"
                 rows="3"
                 placeholder="Descripción detallada de la unidad de producción"></textarea>
@@ -440,7 +449,7 @@
                 <input
                   type="number"
                   id="area"
-                  class="form-control"
+                  class="form-control aero-input"
                   formControlName="area"
                   placeholder="0.00"
                   step="0.01"
@@ -457,7 +466,7 @@
                 <input
                   type="number"
                   id="capacity"
-                  class="form-control"
+                  class="form-control aero-input"
                   formControlName="capacity"
                   placeholder="0"
                   step="1"
@@ -482,7 +491,7 @@
               <input
                 type="text"
                 id="soilType"
-                class="form-control"
+                class="form-control aero-input"
                 formControlName="soilType"
                 placeholder="Ej: Franco arcilloso">
             </div>
@@ -491,7 +500,7 @@
               <label for="drainage" class="form-label fw-semibold">
                 Drenaje
               </label>
-              <select id="drainage" class="form-select" formControlName="drainage">
+              <select id="drainage" class="form-select aero-input" formControlName="drainage">
                 <option value="">Seleccione</option>
                 <option value="Excelente">Excelente</option>
                 <option value="Bueno">Bueno</option>
@@ -507,7 +516,7 @@
               <input
                 type="text"
                 id="greenhouseType"
-                class="form-control"
+                class="form-control aero-input"
                 formControlName="greenhouseType"
                 placeholder="Ej: Túnel alto">
             </div>
@@ -519,7 +528,7 @@
               <input
                 type="text"
                 id="ventilation"
-                class="form-control"
+                class="form-control aero-input"
                 formControlName="ventilation"
                 placeholder="Ej: Natural, Forzada">
             </div>
@@ -531,7 +540,7 @@
               <input
                 type="text"
                 id="lightingSystem"
-                class="form-control"
+                class="form-control aero-input"
                 formControlName="lightingSystem"
                 placeholder="Ej: LED, Natural">
             </div>
@@ -607,8 +616,8 @@
 <!-- View Details Modal -->
 <div class="modal fade" id="viewModal" tabindex="-1" [class.show]="showViewModal" [style.display]="showViewModal ? 'block' : 'none'">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header bg-info text-white">
+    <div class="modal-content aero-modal-shell">
+      <div class="modal-header aero-modal-header info-modal-header">
         <h5 class="modal-title">
           <i class="bi bi-eye-fill me-2"></i>
           Detalles de Unidad de Producción
@@ -619,7 +628,7 @@
         <div class="row">
           <!-- Header Info -->
           <div class="col-12 mb-4">
-            <div class="d-flex justify-content-between align-items-start">
+            <div class="d-flex justify-content-between align-items-start details-hero">
               <div>
                 <h4 class="mb-1">{{ selectedUnit.name }}</h4>
                 <p class="text-muted mb-2" *ngIf="selectedUnit.description">
@@ -635,7 +644,7 @@
 
           <!-- Basic Information -->
           <div class="col-md-6 mb-3">
-            <div class="card bg-light">
+            <div class="card detail-card bg-light">
               <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-muted">
                   <i class="bi bi-tag me-1"></i>Tipo
@@ -650,7 +659,7 @@
           </div>
 
           <div class="col-md-6 mb-3">
-            <div class="card bg-light">
+            <div class="card detail-card bg-light">
               <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-muted">
                   <i class="bi bi-building me-1"></i>Finca
@@ -661,7 +670,7 @@
           </div>
 
           <div class="col-md-6 mb-3">
-            <div class="card bg-light">
+            <div class="card detail-card bg-light">
               <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-muted">
                   <i class="bi bi-geo-alt me-1"></i>Ubicación
@@ -672,7 +681,7 @@
           </div>
 
           <div class="col-md-6 mb-3">
-            <div class="card bg-light">
+            <div class="card detail-card bg-light">
               <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-muted">
                   <i class="bi bi-hash me-1"></i>ID
@@ -690,7 +699,7 @@
           </div>
 
           <div class="col-md-6 mb-3">
-            <div class="card bg-info bg-opacity-10 border-info">
+            <div class="card detail-card metric-card area-metric bg-info bg-opacity-10 border-info">
               <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-info">
                   <i class="bi bi-arrows-fullscreen me-1"></i>Área
@@ -701,7 +710,7 @@
           </div>
 
           <div class="col-md-6 mb-3">
-            <div class="card bg-warning bg-opacity-10 border-warning">
+            <div class="card detail-card metric-card capacity-metric bg-warning bg-opacity-10 border-warning">
               <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-warning">
                   <i class="bi bi-stack me-1"></i>Capacidad
@@ -717,7 +726,7 @@
           </div>
 
           <div class="col-md-4 mb-3" *ngIf="selectedUnit.soilType">
-            <div class="card bg-light">
+            <div class="card detail-card bg-light">
               <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-muted small">Tipo de Suelo</h6>
                 <p class="card-text mb-0">{{ selectedUnit.soilType }}</p>
@@ -726,7 +735,7 @@
           </div>
 
           <div class="col-md-4 mb-3" *ngIf="selectedUnit.drainage">
-            <div class="card bg-light">
+            <div class="card detail-card bg-light">
               <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-muted small">Drenaje</h6>
                 <p class="card-text mb-0">{{ selectedUnit.drainage }}</p>
@@ -735,7 +744,7 @@
           </div>
 
           <div class="col-md-4 mb-3" *ngIf="selectedUnit.greenhouseType">
-            <div class="card bg-light">
+            <div class="card detail-card bg-light">
               <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-muted small">Tipo Invernadero</h6>
                 <p class="card-text mb-0">{{ selectedUnit.greenhouseType }}</p>
@@ -744,7 +753,7 @@
           </div>
 
           <div class="col-md-4 mb-3" *ngIf="selectedUnit.ventilation">
-            <div class="card bg-light">
+            <div class="card detail-card bg-light">
               <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-muted small">Ventilación</h6>
                 <p class="card-text mb-0">{{ selectedUnit.ventilation }}</p>

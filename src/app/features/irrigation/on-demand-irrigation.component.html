@@ -1,23 +1,27 @@
 <!-- src/app/features/irrigation/on-demand-irrigation.component.html -->
-<div class="on-demand-irrigation-container">
-  <!-- Header Section -->
-  <div class="page-header">
-    <div class="header-content">
-      <h1>
-        <i class="bi bi-droplet-fill"></i>
-        Riego OnDemand
-      </h1>
-      <p class="subtitle">Gestión y monitoreo de riego a demanda</p>
-    </div>
-    <div>
-      <button
-        class="btn btn-secondary me-2"
-        (click)="goToDashboard()">
-        <i class="bi bi-arrow-left"></i>
-        Regresar al Dashboard
-      </button>
-    </div>
-  </div>
+<div class="page-wrapper on-demand-irrigation-page">
+  <div class="container-fluid py-3">
+    <div class="on-demand-irrigation-container">
+      <!-- Header Section -->
+      <div class="aero-header mb-3">
+        <div class="aero-header-content">
+          <div class="d-flex align-items-center gap-3">
+            <div class="aero-icon-orb">
+              <i class="bi bi-droplet-fill"></i>
+            </div>
+            <div>
+              <h1 class="aero-title mb-0">Riego OnDemand</h1>
+              <p class="aero-subtitle mb-0">Gestión y monitoreo inteligente de riego a demanda</p>
+            </div>
+          </div>
+          <button
+            class="aero-btn-back"
+            (click)="goToDashboard()">
+            <i class="bi bi-arrow-left me-1"></i>
+            Regresar al Dashboard
+          </button>
+        </div>
+      </div>
 
   <!-- Loading Spinner -->
   <div *ngIf="isLoading" class="loading-container">
@@ -42,11 +46,11 @@
   </div>
 
   <!-- Main Content -->
-  <div *ngIf="!isLoading" class="main-content">
+  <div *ngIf="!isLoading" class="main-content aero-main-content">
     
     <!-- Statistics Dashboard -->
     <div class="statistics-row">
-      <div class="stat-card stat-today">
+      <div class="stat-card aero-glass-panel stat-today">
         <div class="stat-icon">
           <i class="bi bi-calendar-day"></i>
         </div>
@@ -56,7 +60,7 @@
         </div>
       </div>
 
-      <div class="stat-card stat-duration">
+      <div class="stat-card aero-glass-panel stat-duration">
         <div class="stat-icon">
           <i class="bi bi-clock-fill"></i>
         </div>
@@ -66,7 +70,7 @@
         </div>
       </div>
 
-      <div class="stat-card stat-active">
+      <div class="stat-card aero-glass-panel stat-active">
         <div class="stat-icon">
           <i class="bi bi-play-fill"></i>
         </div>
@@ -76,7 +80,7 @@
         </div>
       </div>
 
-      <div class="stat-card stat-plans">
+      <div class="stat-card aero-glass-panel stat-plans">
         <div class="stat-icon">
           <i class="bi bi-diagram-3-fill"></i>
         </div>
@@ -88,7 +92,7 @@
     </div>
 
     <!-- Auto Mode Section -->
-    <div class="auto-mode-section">
+    <div class="auto-mode-section aero-glass-panel">
       <div class="auto-mode-header">
         <div class="auto-mode-title">
           <i class="bi bi-robot"></i>
@@ -543,7 +547,7 @@
 
     <!-- Execution Form (Modal Style) -->
     <div *ngIf="showExecutionForm" class="execution-form-overlay">
-      <div class="execution-form-modal">
+      <div class="execution-form-modal aero-modal-shell">
         <div class="modal-header">
           <h2>
             <i class="bi bi-play-circle"></i>
@@ -709,7 +713,7 @@
 
   <!-- History Details Modal -->
   <div *ngIf="selectedHistory" class="details-overlay" (click)="closeHistoryDetails()">
-    <div class="details-modal" (click)="$event.stopPropagation()">
+    <div class="details-modal aero-modal-shell" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>
           <i class="bi bi-info-circle"></i>
@@ -841,6 +845,7 @@
           Cerrar
         </button>
       </div>
+    </div>
     </div>
   </div>
 </div>

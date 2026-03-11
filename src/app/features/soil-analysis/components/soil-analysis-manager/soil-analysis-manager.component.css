@@ -1,384 +1,561 @@
 /* ============================================================================
-   SOIL ANALYSIS MANAGER STYLES
+   SOIL ANALYSIS MANAGER — FRUTIGER AERO THEME
    ============================================================================ */
 
-/* Main Container */
+@keyframes aeroFadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .soil-analysis-manager {
-  padding: 20px;
-  background-color: #f8f9fa;
+  padding: 1.2rem;
+  background: linear-gradient(160deg, #a8d8f0 0%, #c5e8fb 25%, #daf1fd 55%, #eef8fe 80%, #f5fcff 100%);
   min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #1a3a5c;
+  animation: aeroFadeIn 0.5s ease-out;
 }
 
 /* Page Header */
 .page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 30px;
-  border-radius: 10px;
-  margin-bottom: 30px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(220,240,255,0.75) 50%, rgba(168,216,240,0.6) 100%);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.9);
+  border-radius: 18px;
+  padding: 1.3rem 1.6rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 24px rgba(60,140,220,0.12), inset 0 1px 0 rgba(255,255,255,0.95);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 0.75rem;
 }
 
-.header-content {
-  flex: 1;
+.header-content { flex: 1; }
+.page-title { font-size: 1.5rem; font-weight: 700; color: #1a3a5c; margin: 0 0 0.3rem; text-shadow: 0 1px 0 rgba(255,255,255,0.8); display: flex; align-items: center; gap: 0.6rem; }
+.page-title i { color: #2196f3; }
+.page-subtitle { color: #3a6a9c; margin: 0; font-size: 0.88rem; }
+.header-go-back, .header-actions { display: flex; gap: 0.5rem; }
+
+/* Buttons */
+.btn { cursor: pointer; transition: all 0.25s ease; display: inline-flex; align-items: center; gap: 0.4rem; border-radius: 22px; font-weight: 600; padding: 0.55rem 1.1rem; font-size: 0.88rem; }
+.btn-primary { background: linear-gradient(180deg, #5bc4f5 0%, #2196f3 50%, #1565c0 100%); border: 1px solid rgba(33,150,243,0.6); color: white; box-shadow: 0 3px 12px rgba(33,150,243,0.35), inset 0 1px 0 rgba(255,255,255,0.35); }
+.btn-primary:hover { background: linear-gradient(180deg, #80d4ff 0%, #42a5f5 50%, #1976d2 100%); transform: translateY(-1px); color: white; }
+.btn-primary:disabled { opacity: 0.6; transform: none; }
+.btn-secondary { background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(200,225,250,0.75) 100%); border: 1px solid rgba(120,180,240,0.5); color: #1a3a5c; box-shadow: 0 2px 8px rgba(60,140,220,0.1), inset 0 1px 0 rgba(255,255,255,0.8); }
+.btn-secondary:hover { transform: translateY(-1px); color: #1a3a5c; }
+.btn-outline-secondary { border: 1px solid rgba(120,180,240,0.5); background: rgba(255,255,255,0.5); color: #1a3a5c; border-radius: 22px; }
+.btn-outline-secondary:hover { background: rgba(255,255,255,0.8); transform: translateY(-1px); }
+.btn-sm { padding: 0.35rem 0.8rem; font-size: 0.82rem; border-radius: 18px; }
+.btn-danger { background: linear-gradient(180deg, #ff8a80 0%, #f44336 50%, #c62828 100%); border: 1px solid rgba(244,67,54,0.5); color: white; box-shadow: 0 3px 12px rgba(244,67,54,0.3); }
+.btn-danger:hover { transform: translateY(-1px); color: white; }
+.btn-outline-primary { border: 1px solid rgba(33,150,243,0.4); background: rgba(33,150,243,0.06); color: #1565c0; border-radius: 18px; }
+.btn-outline-primary:hover { background: rgba(33,150,243,0.15); }
+.btn-outline-danger { border: 1px solid rgba(244,67,54,0.4); background: rgba(244,67,54,0.06); color: #c62828; border-radius: 18px; }
+.btn-outline-danger:hover { background: rgba(244,67,54,0.15); }
+
+/* Crop Production Selector */
+.crop-production-selector .card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(220,240,255,0.65) 100%);
+  backdrop-filter: blur(12px);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.85);
+  box-shadow: 0 4px 16px rgba(60,140,220,0.1);
+  overflow: hidden;
+}
+.crop-production-selector .card-body { padding: 1.2rem; }
+
+/* Form Controls */
+.form-label { font-weight: 600; color: #1a3a5c; margin-bottom: 0.4rem; font-size: 0.88rem; }
+.form-select, .form-control {
+  border-color: rgba(120,180,240,0.5);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(6px);
+  color: #1a3a5c;
+  transition: all 0.25s ease;
+  font-size: 0.9rem;
+}
+.form-select:focus, .form-control:focus { border-color: rgba(33,150,243,0.6); box-shadow: 0 0 0 3px rgba(33,150,243,0.12); background: rgba(255,255,255,0.85); outline: none; }
+.form-select:disabled, .form-control:disabled { opacity: 0.6; }
+
+/* Summary Stats */
+.summary-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.85rem; margin-bottom: 1.5rem; }
+.stat-card { background: linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(220,240,255,0.65) 100%); backdrop-filter: blur(12px); border-radius: 14px; padding: 1.1rem; box-shadow: 0 4px 16px rgba(60,140,220,0.1), inset 0 1px 0 rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.85); text-align: center; transition: transform 0.2s ease; }
+.stat-card:hover { transform: translateY(-2px); }
+.stat-number { font-size: 1.6rem; font-weight: 700; color: #1a3a5c; }
+.stat-label { font-size: 0.8rem; color: #3a6a9c; font-weight: 500; }
+
+/* Analysis List */
+.analysis-list { background: linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(220,240,255,0.65) 100%); backdrop-filter: blur(12px); border-radius: 14px; border: 1px solid rgba(255,255,255,0.85); box-shadow: 0 4px 16px rgba(60,140,220,0.1); overflow: hidden; }
+.list-header { background: linear-gradient(180deg, rgba(168,216,240,0.5) 0%, rgba(130,190,230,0.4) 100%); padding: 0.85rem 1.2rem; border-bottom: 1px solid rgba(120,180,240,0.3); display: flex; justify-content: space-between; align-items: center; }
+.list-header h5 { margin: 0; font-weight: 700; color: #1a3a5c; font-size: 0.95rem; text-shadow: 0 1px 0 rgba(255,255,255,0.7); display: flex; align-items: center; gap: 0.5rem; }
+
+/* Table */
+.table { margin: 0; border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+.table thead th { background: linear-gradient(180deg, rgba(168,216,240,0.6) 0%, rgba(130,190,230,0.5) 100%); color: #1a3a5c; font-weight: 700; border: none; border-bottom: 1px solid rgba(120,180,240,0.4); padding: 0.85rem 0.9rem; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.4px; text-shadow: 0 1px 0 rgba(255,255,255,0.7); }
+.table tbody tr { border-bottom: 1px solid rgba(168,216,240,0.25); transition: background 0.2s ease; }
+.table tbody tr:hover { background: rgba(168,216,240,0.2); }
+.table td { padding: 0.85rem 0.9rem; vertical-align: middle; border-color: transparent; }
+.table-responsive { max-height: 68vh; overflow-y: auto; }
+.table-responsive::-webkit-scrollbar { width: 4px; }
+.table-responsive::-webkit-scrollbar-track { background: rgba(168,216,240,0.2); }
+.table-responsive::-webkit-scrollbar-thumb { background: rgba(33,150,243,0.35); border-radius: 2px; }
+
+/* Alerts */
+.alert { border-radius: 12px; border: none; padding: 0.85rem 1.2rem; display: flex; align-items: center; gap: 0.6rem; font-weight: 500; backdrop-filter: blur(6px); margin-bottom: 1rem; }
+.alert-success { background: rgba(45,184,106,0.12); color: #166534; border: 1px solid rgba(45,184,106,0.3); border-left: 4px solid #2db86a; }
+.alert-danger { background: rgba(244,67,54,0.1); color: #7f1d1d; border: 1px solid rgba(244,67,54,0.2); border-left: 4px solid #f44336; }
+.alert-warning { background: rgba(255,167,38,0.12); color: #92400e; border: 1px solid rgba(255,167,38,0.3); border-left: 4px solid #ffa726; }
+
+/* Badges */
+.badge { font-size: 0.73rem; padding: 0.3rem 0.65rem; border-radius: 16px; font-weight: 600; }
+.bg-success { background: linear-gradient(135deg, #81e0a0, #2db86a) !important; color: white; }
+.bg-secondary { background: rgba(120,160,200,0.45) !important; color: #1a3a5c; }
+.bg-info { background: linear-gradient(135deg, #80deea, #26c6da) !important; color: white; }
+.bg-warning { background: linear-gradient(135deg, #ffd54f, #ffa726) !important; color: #1a3a5c; }
+.bg-danger { background: linear-gradient(135deg, #ff8a80, #f44336) !important; color: white; }
+.bg-primary { background: linear-gradient(135deg, #5bc4f5, #2196f3) !important; color: white; }
+
+.text-muted { color: #3a6a9c !important; }
+.text-danger { color: #f44336 !important; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 3rem 2rem; color: #3a6a9c; }
+.empty-state i { font-size: 3rem; color: rgba(33,150,243,0.25); margin-bottom: 1rem; display: block; }
+
+/* Pagination */
+.pagination-wrapper { padding: 0.85rem; background: rgba(168,216,240,0.2); border-top: 1px solid rgba(120,180,240,0.25); }
+.pagination { margin: 0; }
+.page-link { border-radius: 8px; margin: 0 2px; border-color: rgba(120,180,240,0.4); color: #1a3a5c; background: rgba(255,255,255,0.6); }
+.page-link:hover { background: rgba(168,216,240,0.5); border-color: rgba(33,150,243,0.5); color: #0d47a1; }
+.page-item.active .page-link { background: linear-gradient(135deg, #5bc4f5, #2196f3); border-color: rgba(33,150,243,0.5); color: white; }
+
+/* Loading */
+.loading-container { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 3rem; color: #3a6a9c; }
+
+/* View toggle */
+.view-toggle { display: flex; gap: 0.5rem; }
+.view-toggle .btn.active { background: linear-gradient(135deg, #5bc4f5, #2196f3); color: white; border-color: rgba(33,150,243,0.5); }
+
+@media (max-width: 768px) {
+  .soil-analysis-manager { padding: 0.75rem; }
+  .page-header { flex-direction: column; align-items: flex-start; }
 }
 
-.page-title {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 600;
+/* --- AERO THEME INJECTIONS --- */
+.page-wrapper {
+    min-height: calc(100vh - 60px);
+    background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 50%, #81d4fa 100%);
+    padding-bottom: 2rem;
+}
+
+.table {
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.7);
+}
+
+.aero-table-header {
+    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6)) !important;
+    color: #1a5fa0 !important;
+}
+
+.aero-badge {
+    background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
+    border: 1px solid rgba(255,255,255,0.6);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    color: #333;
+}
+
+.aero-card {
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15) !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    overflow: hidden !important;
+}
+.aero-glass-card {
+    backdrop-filter: blur(12px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+}
+.aero-card-header {
+    background: linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
+    color: #1a3a5c !important;
+    font-weight: 600 !important;
+}
+.aero-btn {
+    border-radius: 20px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    border: 1px solid rgba(255,255,255,0.6) !important;
+    backdrop-filter: blur(4px) !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+}
+.aero-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15) !important;
+}
+.aero-btn-primary { background: linear-gradient(180deg, #4da6ff 0%, #1a75ff 100%) !important; color: white !important; }
+.aero-btn-success { background: linear-gradient(180deg, #6ae094 0%, #2db86a 100%) !important; color: white !important; }
+.aero-btn-danger  { background: linear-gradient(180deg, #ff7a7a 0%, #e60000 100%) !important; color: white !important; }
+.aero-btn-warning { background: linear-gradient(180deg, #ffcc66 0%, #ff9900 100%) !important; color: #333 !important; }
+.aero-btn-secondary{background: linear-gradient(180deg, #f0f0f0 0%, #d9d9d9 100%) !important; color: #333 !important; }
+.aero-input {
+    background: rgba(255,255,255,0.8) !important;
+    border: 1px solid rgba(255,255,255,0.6) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(4px) !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05) !important;
+}
+.aero-modal-header-primary {
+    background: linear-gradient(180deg, #4da6ff 0%, #1a75ff 100%) !important;
+    color: white !important;
+    border-radius: 16px 16px 0 0 !important;
+}
+
+/* ============================================================================
+   SOIL ANALYSIS MANAGER — AERO SHELL OVERRIDES
+   ============================================================================ */
+
+.soil-analysis-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0) 32%),
+    radial-gradient(circle at top right, rgba(120,206,255,0.2) 0%, rgba(120,206,255,0) 28%),
+    linear-gradient(160deg, #a8d8f0 0%, #c5e8fb 25%, #daf1fd 55%, #eef8fe 80%, #f5fcff 100%);
+}
+
+.soil-analysis-page .container-fluid {
+  max-width: none;
+  width: 100%;
+}
+
+.soil-analysis-manager {
+  padding: 0;
+  background: transparent;
+  min-height: auto;
+}
+
+.aero-header {
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.88) 0%,
+    rgba(220,240,255,0.82) 50%,
+    rgba(180,220,255,0.68) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.92);
+  border-radius: 18px;
+  box-shadow:
+    0 10px 32px rgba(60,140,220,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    inset 0 -1px 0 rgba(100,170,240,0.2);
+  padding: 1rem 1.4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.aero-header::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 52%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.58), rgba(255,255,255,0));
+  pointer-events: none;
+}
+
+.aero-header-content {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
-.page-subtitle {
-  margin: 10px 0 0 0;
-  opacity: 0.9;
-  font-size: 1rem;
-}
-
-.header-go-back {
-  margin-right: auto;
-}
-
-.header-go-back .btn {
-  font-weight: 600;
-  padding: 10px 20px;
-  border-radius: 8px;
-  background: #d1d1d1;
-}
-
-.header-actions .btn {
-  font-weight: 600;
-  padding: 12px 24px;
-  border-radius: 8px;
-}
-
-/* View Tabs */
-.view-tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 30px;
-  background: white;
-  padding: 10px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 12px 24px;
-  background: transparent;
-  border: 2px solid transparent;
-  border-radius: 8px;
-  font-weight: 600;
-  color: #6c757d;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.aero-icon-orb {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #6cd3fa 0%, #2baef0 50%, #0a7ed4 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  color: #fff;
+  font-size: 1.45rem;
+  box-shadow:
+    0 6px 18px rgba(33,150,243,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.6),
+    inset 0 -1px 0 rgba(0,60,140,0.28);
+  position: relative;
 }
 
-.tab-btn:hover {
-  background: #f8f9fa;
-  color: #007bff;
+.aero-icon-orb::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  right: 7px;
+  height: 40%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0));
 }
 
-.tab-btn.active {
-  background: #007bff;
-  color: white;
-  border-color: #007bff;
+.aero-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a3a5c;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+  letter-spacing: -0.02em;
 }
 
-/* Loading Container */
+.aero-subtitle {
+  font-size: 0.84rem;
+  color: #416e95;
+  font-weight: 500;
+}
+
+.header-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.aero-btn-back,
+.soil-analysis-manager .btn,
+.soil-analysis-manager .tab-btn {
+  border-radius: 18px;
+  border: 1px solid rgba(90,160,230,0.4);
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.92) 0%,
+    rgba(210,233,255,0.82) 45%,
+    rgba(170,215,255,0.68) 55%,
+    rgba(140,195,245,0.62) 100%);
+  color: #1a5fa0;
+  box-shadow:
+    0 4px 12px rgba(60,130,220,0.16),
+    inset 0 1px 0 rgba(255,255,255,0.88),
+    inset 0 -1px 0 rgba(80,150,220,0.16);
+}
+
+.aero-btn-back {
+  padding: 0.55rem 1.15rem;
+  font-weight: 600;
+}
+
+.aero-btn-back:hover,
+.soil-analysis-manager .btn:hover:not(:disabled),
+.soil-analysis-manager .tab-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.96) 0%,
+    rgba(190,225,255,0.88) 45%,
+    rgba(150,205,255,0.76) 55%,
+    rgba(110,185,250,0.72) 100%);
+  color: #0f518d;
+}
+
+.soil-analysis-manager .aero-btn-primary,
+.soil-analysis-manager .tab-btn.active,
+.soil-analysis-manager .btn-primary {
+  background: linear-gradient(180deg, #7ec8f7 0%, #3ea8f0 45%, #1a88e0 55%, #0d72c8 100%) !important;
+  border-color: rgba(10,90,180,0.42) !important;
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0,50,120,0.35);
+}
+
+.soil-analysis-manager .btn-outline-secondary,
+.soil-analysis-manager .btn-outline-primary,
+.soil-analysis-manager .btn-outline-danger {
+  background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(221,238,251,0.86));
+}
+
+.soil-analysis-manager .btn-outline-primary {
+  color: #0d5ea8;
+}
+
+.soil-analysis-manager .btn-outline-danger {
+  color: #b6425b;
+}
+
+.aero-glass-panel,
+.selector-card,
+.empty-state,
+.form-view,
+.analysis-card,
+.alert,
 .loading-container {
-  text-align: center;
-  padding: 60px 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.94) 0%,
+    rgba(225,242,255,0.9) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.92);
+  box-shadow:
+    0 10px 30px rgba(60,140,220,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.92),
+    inset 0 -1px 0 rgba(100,170,240,0.18);
 }
 
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 80px 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.selector-card,
+.empty-state,
+.form-view,
+.analysis-card,
+.loading-container {
+  border-radius: 22px;
 }
 
-.empty-state i {
-  font-size: 4rem;
-  color: #dee2e6;
-  margin-bottom: 20px;
+.selector-card-body,
+.form-view {
+  padding: 1.25rem;
 }
 
-.empty-state h3 {
-  color: #6c757d;
-  margin-bottom: 10px;
+.soil-tab-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1rem;
 }
 
-.empty-state p {
-  color: #adb5bd;
-  margin-bottom: 30px;
+.soil-analysis-manager .tab-btn {
+  padding: 0.6rem 1.25rem;
+  font-weight: 600;
 }
 
-/* Analysis Grid */
 .analysis-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
 }
 
-/* Analysis Card */
 .analysis-card {
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.analysis-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.card-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 15px 20px;
+.analysis-card-header,
+.analysis-card-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
 }
 
-.card-date {
+.analysis-card-header {
+  background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(215,237,253,0.82));
+  border-bottom: 1px solid rgba(140,197,236,0.34);
+}
+
+.analysis-card-date,
+.analysis-card-info,
+.selected-production-info,
+.soil-analysis-manager .text-muted,
+.soil-analysis-manager .page-subtitle,
+.soil-analysis-manager .empty-state p {
+  color: #365d7d !important;
+}
+
+.analysis-card-date,
+.analysis-card-status {
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
-.card-status .badge {
-  font-size: 0.75rem;
-  padding: 4px 8px;
+.analysis-card-body {
+  padding: 1.1rem 1.15rem;
+  color: #1d3f59;
 }
 
-.card-body {
-  padding: 20px;
+.analysis-card-info {
+  margin-bottom: 0.45rem;
 }
 
-.card-info {
-  margin-bottom: 8px;
-  color: #495057;
-  font-size: 0.9rem;
+.analysis-card-info strong,
+.metric-label,
+.page-title,
+.soil-analysis-manager h3,
+.soil-analysis-manager strong,
+.selected-production-info strong {
+  color: #16354c;
 }
 
-.card-info strong {
-  color: #212529;
-}
-
-/* Key Metrics */
 .key-metrics {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
 }
 
 .metric {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.metric-label {
-  font-size: 0.75rem;
-  color: #6c757d;
-  text-transform: uppercase;
-  font-weight: 600;
+  padding: 0.75rem 0.8rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(231,245,255,0.84));
+  border: 1px solid rgba(150,203,239,0.35);
+  text-align: center;
 }
 
 .metric-value {
-  font-size: 1.1rem;
+  display: block;
+  margin-top: 0.15rem;
+  color: #21506f;
   font-weight: 700;
-  color: #007bff;
 }
 
-/* Interpretation Badge */
 .interpretation-badge {
-  margin-top: 15px;
+  margin-top: 1rem;
 }
 
-.interpretation-badge .badge {
-  font-size: 0.85rem;
-  padding: 6px 12px;
+.analysis-card-actions {
+  border-top: 1px solid rgba(140,197,236,0.34);
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(220,240,255,0.8));
 }
 
-/* Card Actions */
-.card-actions {
-  padding: 15px 20px;
-  background: #f8f9fa;
-  border-top: 1px solid #dee2e6;
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
+.soil-analysis-manager .form-label,
+.soil-analysis-manager .form-select,
+.soil-analysis-manager .form-control {
+  color: #1d3f59;
 }
 
-.card-actions .btn {
-  font-size: 0.875rem;
-  padding: 6px 16px;
-  border-radius: 6px;
-  font-weight: 600;
+.soil-analysis-manager .form-select,
+.soil-analysis-manager .form-control {
+  border-radius: 16px;
+  border: 1px solid rgba(125,180,225,0.44);
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(228,244,255,0.86));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.92), 0 2px 8px rgba(120,180,230,0.08);
 }
 
-/* Form View */
-.form-view {
-  max-width: 1200px;
-  margin: 0 auto;
+.soil-analysis-manager .form-select:focus,
+.soil-analysis-manager .form-control:focus {
+  border-color: rgba(59,152,232,0.75);
+  box-shadow: 0 0 0 4px rgba(85,177,247,0.15), inset 0 1px 0 rgba(255,255,255,0.96);
 }
 
-/* Alert */
-.alert {
-  border-radius: 10px;
-  padding: 15px 20px;
-  margin-bottom: 20px;
-}
-
-.alert i {
-  margin-right: 8px;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
-  .soil-analysis-manager {
-    padding: 10px;
-  }
-
-  .page-header {
-    padding: 20px;
+  .aero-header-content {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .page-title {
-    font-size: 1.5rem;
-  }
-
-  .header-actions {
+  .header-actions-group {
     width: 100%;
   }
 
-  .header-actions .btn {
+  .aero-btn-back,
+  .header-actions-group .btn {
     width: 100%;
+    justify-content: center;
   }
 
-  .view-tabs {
-    flex-direction: column;
-  }
-
-  .analysis-grid {
+  .analysis-grid,
+  .key-metrics {
     grid-template-columns: 1fr;
   }
 
-  .key-metrics {
+  .analysis-card-header,
+  .analysis-card-actions {
     flex-direction: column;
-    gap: 10px;
-  }
-
-  .card-actions {
-    flex-direction: column;
-  }
-
-  .card-actions .btn {
-    width: 100%;
-  }
-}
-
-/* ============================================================================
-   CROP PRODUCTION SELECTOR
-   ============================================================================ */
-
-.crop-production-selector {
-  animation: fadeInDown 0.5s ease;
-}
-
-.crop-production-selector .card {
-  border: 2px solid #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.crop-production-selector .card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-color: #667eea;
-}
-
-.crop-production-selector .form-label {
-  color: #495057;
-  font-size: 1rem;
-  margin-bottom: 8px;
-}
-
-.crop-production-selector .form-label i {
-  margin-right: 8px;
-  color: #667eea;
-}
-
-.crop-production-selector .form-select {
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 10px 15px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-}
-
-.crop-production-selector .form-select:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-}
-
-.crop-production-selector .form-select:disabled {
-  background-color: #f8f9fa;
-  cursor: not-allowed;
-}
-
-.selected-production-info {
-  padding: 15px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
-}
-
-.selected-production-info strong {
-  color: #495057;
-  font-size: 1.1rem;
-}
-
-.selected-production-info .badge {
-  font-size: 0.85rem;
-  padding: 6px 12px;
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    align-items: flex-start;
   }
 }
