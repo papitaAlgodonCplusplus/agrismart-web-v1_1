@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subject, forkJoin, of } from 'rxjs';
+import { Subject, forkJoin, of, tap, finalize } from 'rxjs';
 import { takeUntil, catchError, map } from 'rxjs/operators';
 import { SplitApplicationService } from '../../services/split-application.service';
 import {
@@ -58,9 +58,9 @@ export class SplitApplicationCalculatorComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    this.loadDataFromAPI();
     this.initializeForm();
     this.loadStrategyPresets();
-    this.loadDataFromAPI();
     this.setupFormListeners();
   }
 
@@ -71,14 +71,33 @@ export class SplitApplicationCalculatorComponent implements OnInit, OnDestroy {
     this.isLoadingData = true;
 
     forkJoin({
-      crops: this.cropService.getAll().pipe(catchError(() => of([]))),
-      cropPhases: this.apiService.get<any>('/CropPhase').pipe(catchError(() => of([]))),
-      requirements: this.apiService.get<any>('/CropPhaseSolutionRequirement').pipe(catchError(() => of([])))
+      crops: this.cropService.getAll().pipe( tap(response => {
+        console.log('Raw API response:', response);
+      }),
+      catchError(error => {
+        console.warn('Error loading requirements:', error);
+        return of({ cropPhaseRequirements: [] }); // Return expected structure on error
+      })),
+      cropPhases: this.apiService.get<any>('/CropPhase').pipe( tap(response => {
+        console.log('Raw API response:', response);
+      }),
+      catchError(error => {
+        console.warn('Error loading requirements:', error);
+        return of({ cropPhaseRequirements: [] }); // Return expected structure on error
+      })),
+      requirements: this.apiService.get<any>('/CropPhaseSolutionRequirement').pipe( tap(response => {
+        console.log('Raw API response:', response);
+      }),
+      catchError(error => {
+        console.warn('Error loading requirements:', error);
+        return of({ cropPhaseRequirements: [] }); // Return expected structure on error
+      }))
     }).pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
           this.crops = Array.isArray(data.crops) ? data.crops : [];
           this.cropPhases = Array.isArray(data.cropPhases) ? data.cropPhases : [];
+          console.log(`API data loaded: ${this.cropPhases.length} crop phases, ${this.cropPhases}`);
 
           // Extract crop phase requirements from response
           if (data.requirements?.cropPhaseRequirements) {
@@ -215,7 +234,7 @@ export class SplitApplicationCalculatorComponent implements OnInit, OnDestroy {
     }
 
     // Find crop phases for this crop
-    const phases = this.cropPhases.filter(p => p.cropId === crop.id);
+    const phases = this.cropPhases.filter(p => p.cropId.toString() === crop.id.toString());
 
     if (phases.length === 0) {
       console.warn(`No phases found for crop "${cropName}" - no growth stages available`);
