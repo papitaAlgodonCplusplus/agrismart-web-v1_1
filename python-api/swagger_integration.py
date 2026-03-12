@@ -395,19 +395,45 @@ class SwaggerAPIClient:
         print(f"      Purity: {purity}%")
         print(f"      Density: {density}")
 
-        # Get composition from our database using intelligent matching
-        composition_data = self.fertilizer_db.find_fertilizer_composition(name, formula)
+        # Try composition from DB fields first (populated via fertilizer_composition_update.sql).
+        # Fall back to hardcoded dictionary for fertilizers not yet in DB or with all-zero fields.
+        db_ca  = float(swagger_fert.get('ca')  or 0)
+        db_k   = float(swagger_fert.get('k')   or 0)
+        db_mg  = float(swagger_fert.get('mg')  or 0)
+        db_na  = float(swagger_fert.get('na')  or 0)
+        db_nh4 = float(swagger_fert.get('nH4') or 0)
+        db_fe  = float(swagger_fert.get('fe')  or 0)
+        db_mn  = float(swagger_fert.get('mn')  or 0)
+        db_zn  = float(swagger_fert.get('zn')  or 0)
+        db_cu  = float(swagger_fert.get('cu')  or 0)
+        db_n   = float(swagger_fert.get('n')   or 0)
+        db_s   = float(swagger_fert.get('s')   or 0)
+        db_cl  = float(swagger_fert.get('cl')  or 0)
+        db_p   = float(swagger_fert.get('p')   or 0)
+        db_b   = float(swagger_fert.get('b')   or 0)
+        db_mo  = float(swagger_fert.get('mo')  or 0)
 
-        if composition_data:
+        db_total = db_ca + db_k + db_mg + db_na + db_nh4 + db_fe + db_mn + db_zn + db_cu + db_n + db_s + db_cl + db_p + db_b + db_mo
+
+        # Also fetch hardcoded entry for molecular weight (used regardless of source)
+        composition_data = self.fertilizer_db.find_fertilizer_composition(name, formula)
+        molecular_weight = composition_data['mw'] if composition_data else 100.0
+
+        if db_total > 0:
+            cations = {'Ca': db_ca, 'K': db_k, 'Mg': db_mg, 'Na': db_na, 'NH4': db_nh4,
+                       'Fe': db_fe, 'Mn': db_mn, 'Zn': db_zn, 'Cu': db_cu}
+            anions  = {'N': db_n, 'S': db_s, 'Cl': db_cl, 'P': db_p, 'HCO3': 0.0, 'B': db_b, 'Mo': db_mo}
+            print(f"      [SUCCESS] Using DB composition fields (total={db_total:.2f}%)")
+            total_content = db_total
+            print(f"      Total content: {total_content:.1f}%")
+
+        elif composition_data:
             cations = composition_data['cations'].copy()
             anions = composition_data['anions'].copy()
-            molecular_weight = composition_data['mw']
-            print(f"      [SUCCESS] Found in database: {composition_data['formula']}")
-            
-            # Calculate total content for verification
+            print(f"      [FALLBACK] Using hardcoded database: {composition_data['formula']}")
             total_content = sum(cations.values()) + sum(anions.values())
             print(f"      Total content: {total_content:.1f}%")
-            
+
         else:
             # Create default empty composition with all required elements
             cations = {
@@ -419,7 +445,7 @@ class SwaggerAPIClient:
                 'B': 0.0, 'Mo': 0.0
             }
             molecular_weight = 100.0
-            print(f"      [WARNING]  Not found in database, using defaults")
+            print(f"      [WARNING]  Not found in any source, using defaults")
 
         # Validate and clean values
         if molecular_weight <= 0:

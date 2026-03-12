@@ -63,6 +63,7 @@ interface CalculationResponse {
 
 interface CalculationDataUsed {
     api_fertilizers_raw?: any[];
+    fertilizer_database?: any[];
     water_analysis?: WaterAnalysis;
     volume_liters?: number;
     target_concentrations?: any;
@@ -2502,6 +2503,7 @@ export class NutrientFormulationComponent implements OnInit {
         }
 
         const rawFertilizers = this.calculationResults.calculation_data_used.api_fertilizers_raw;
+        const fertilizerDatabase: any[] = this.calculationResults.calculation_data_used.fertilizer_database || [];
         const dosages = this.calculationResults.calculation_results.fertilizer_dosages;
         const costs = this.calculationResults.cost_analysis.fertilizer_costs;
         const costPercentages = this.calculationResults.cost_analysis.cost_percentages;
@@ -2513,9 +2515,33 @@ export class NutrientFormulationComponent implements OnInit {
                 const cost = costs[name] || 0;
                 const costPercentage = costPercentages[name] || 0;
 
+                // Use fertilizer_database composition (used by the optimizer) for accurate nutrient percentages.
+                // api_fertilizers_raw fields contain database values that may not reflect the true chemistry.
+                const dbFert = fertilizerDatabase.find((f: any) => f.name === name);
+                let fertForContribution: any = rawFert || {};
+                if (dbFert?.composition) {
+                    const cations = dbFert.composition.cations || {};
+                    const anions = dbFert.composition.anions || {};
+                    fertForContribution = {
+                        ...fertForContribution,
+                        n: anions.N ?? 0,
+                        p: anions.P ?? 0,
+                        k: cations.K ?? 0,
+                        ca: cations.Ca ?? 0,
+                        mg: cations.Mg ?? 0,
+                        s: anions.S ?? 0,
+                        fe: cations.Fe ?? 0,
+                        mn: cations.Mn ?? 0,
+                        zn: cations.Zn ?? 0,
+                        cu: cations.Cu ?? 0,
+                        b: anions.B ?? 0,
+                        mo: anions.Mo ?? 0,
+                    };
+                }
+
                 // dosage_g_per_L is already per final liter, so the helper returns mg/L directly.
                 const nutrientContribution = this.calculateNutrientContribution(
-                    rawFert,
+                    fertForContribution,
                     dosage.dosage_g_per_L,
                     volumeLiters
                 );

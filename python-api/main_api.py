@@ -942,6 +942,18 @@ async def swagger_integrated_calculation_with_linear_programming(
                 raise HTTPException(
                     status_code=500, detail="No usable fertilizers found from API")
 
+            # Deduplicate fertilizers by name — the API may return the same fertilizer from
+            # multiple catalogs, causing LP variables to be shared and contributions doubled.
+            seen_names: set = set()
+            dedup_fertilizers = []
+            for fert in api_fertilizers:
+                if fert.name not in seen_names:
+                    seen_names.add(fert.name)
+                    dedup_fertilizers.append(fert)
+            if len(dedup_fertilizers) < len(api_fertilizers):
+                print(f"[INFO] Deduplicated fertilizers: {len(api_fertilizers)} → {len(dedup_fertilizers)} (removed {len(api_fertilizers) - len(dedup_fertilizers)} duplicates)")
+            api_fertilizers = dedup_fertilizers
+
             print(
                 f"[CHECK] Successfully processed {len(api_fertilizers)} API fertilizers")
 
