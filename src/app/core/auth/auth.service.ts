@@ -268,7 +268,8 @@ export class AuthService {
   public shouldRedirectToAdmin(): boolean {
     const user = this.currentUserSubject.value;
     console.log('Current user for admin check:', user);
-    return user?.email === 'ebrecha@iapsoft.com' || user?.userName === 'ebrecha@iapsoft.com' || user?.role === 'Admin';
+    return user?.profileId === 1 ||
+           user?.email === 'ebrecha@iapsoft.com' || user?.userName === 'ebrecha@iapsoft.com' || user?.role === 'Admin';
   }
 
   public getCurrentUser(): any {
@@ -280,10 +281,36 @@ export class AuthService {
     return this.currentUserSubject.value['http://schemas.microsoft.com/ws/2008/06/identity/claims/primarysid'];
   }
 
+  public getProfileId(): number {
+    const user = this.currentUserSubject.value;
+    return user?.profileId || 0;
+  }
+
+  // ProfileId = 2 (ClientAdmin) — full dashboard + admin panel
+  public isAdminUser(): boolean {
+    return this.getProfileId() === 2;
+  }
+
+  // ProfileId = 5 — technical/configuration access
+  public isTechnicianUser(): boolean {
+    return this.getProfileId() === 5;
+  }
+
+  // ProfileId = 6 — operative/agronomic day-to-day access
+  public isAgronomistUser(): boolean {
+    return this.getProfileId() === 6;
+  }
+
+  // ProfileId = 7 — combined: full technical + agronomic access
+  public isAgronomistTechnicianUser(): boolean {
+    return this.getProfileId() === 7;
+  }
+
   public isAdmin(): boolean {
     const user = this.currentUserSubject.value;
     console.log("Checking for user: ", user);
-    return user?.role === 'Admin' || user?.roleId === 1; // Assuming roleId 1 is Admin
+    // SuperUser=1 or ClientAdmin=2 (Admin User role)
+    return user?.profileId === 1 || user?.profileId === 2 || user?.role === 'Admin' || user?.roleId === 1;
   }
 
   public logout(): void {

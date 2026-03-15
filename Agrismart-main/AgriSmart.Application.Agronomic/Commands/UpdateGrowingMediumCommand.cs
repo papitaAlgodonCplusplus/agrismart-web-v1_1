@@ -9,6 +9,7 @@ namespace AgriSmart.Application.Agronomic.Commands
         public int Id { get; set; }
         public int CatalogId { get; set; }
         public string? Name { get; set; }
+        public double SaturationPoint { get; set; }
         public double ContainerCapacityPercentage { get; set; }
         public double PermanentWiltingPoint { get; set; }
         public double FiveKpaHumidity { get; set; }

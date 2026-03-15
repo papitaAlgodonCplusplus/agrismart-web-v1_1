@@ -27,7 +27,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Queries
                         return new Response<GetAllSensorsResponse>(new Exception(errors.ToString()));
                 }
 
-                var getResult = await _sensorQueryRepository.GetAllAsync(query.CompanyId, query.DeviceId, query.IncludeInactives);
+                var getResult = await _sensorQueryRepository.GetAllAsync(query.CompanyId, query.DeviceId, query.IncludeInactives, query.SensorType);
 
                 if (getResult != null)
                 {

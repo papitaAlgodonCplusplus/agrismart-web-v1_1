@@ -13,12 +13,18 @@ export interface IrrigationCalculationBreakdown {
   containerVolumeLiters: number | null;    // configured container volume (L)
   tawPercentage: number | null;            // total available water %
   depletionFraction: number | null;        // current depletion as 0-1
-  baseVolumeLiters: number | null;         // TAW * depletion * container volume
+  baseVolumeLiters: number | null;         // result of volume formula before rule multipliers
   volumeMultiplier: number;                // combined rule adjustments (e.g. 1.2)
   dropperFlowRateLH: number | null;        // L/h per dropper
   droppersPerContainer: number | null;     // count
   flowRateLPerMin: number | null;          // (flowRate * droppers) / 60
   totalContainers: number | null;          // area / (rowSpacing * containerSpacing)
+  // C# formula breakdown
+  moistureSetPoint: number | null;         // CC% - TAW% × (depletionThreshold% / 100)
+  waterConsumptionLiters: number | null;   // deficit portion of irrigation volume
+  drainThresholdPct: number | null;        // drain % applied (from cropProduction.drainThreshold)
+  drainVolumeLiters: number | null;        // drain portion of irrigation volume
+  volumeCase: 'A' | 'B' | null;           // A = depletion recalc, B = drain adjustment
 }
 
 export interface IrrigationRecommendation {
@@ -39,9 +45,11 @@ export interface IrrigationRecommendation {
 
 export interface IrrigationDecisionFactors {
   // Soil Moisture Status
-  currentMoisture: number; // % volumetric
-  containerCapacity: number; // % volumetric
-  depletionPercentage: number; // %
+  currentMoisture: number;              // % volumetric — current sensor reading
+  containerCapacity: number;            // % volumetric — CC from growing medium
+  moistureSetPoint: number;             // % — CC% − TAW% × (depletionThreshold% / 100)
+  depletionPercentage: number;          // % — (CC − moisture) / CC × 100, for display & rules
+  availableDepletionFraction: number;   // (CC − moisture) / TAW — used in Case A volume formula
 
   // Climate Conditions
   currentVPD?: number; // kPa

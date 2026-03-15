@@ -169,6 +169,19 @@ interface OptimizationSummary {
     success_rate_percent: number;
 }
 
+interface IonicBalanceDisplay {
+    cation_sum: number;
+    anion_sum: number;
+    difference: number;
+    difference_percentage: number;
+    balance_status: string;
+    balance_color: string;
+    balance_recommendation: string;
+    cation_distribution: { [ion: string]: number };
+    anion_distribution: { [ion: string]: number };
+    final_meq_L: { [ion: string]: number };
+}
+
 interface PerformanceMetrics {
     fertilizers_fetched: number;
     fertilizers_processed: number;
@@ -252,6 +265,8 @@ interface CalculationResults {
     optimization_status: string;
     objective_value: number;
     ionic_balance_error: number;
+    ionic_balance?: any;
+    final_meq_L?: { [ion: string]: number };
     solver_time_seconds: number;
     active_fertilizers: number;
     total_dosage_g_per_L: number;
@@ -547,7 +562,22 @@ export class NutrientFormulationComponent implements OnInit {
     soilAnalysisData: any | null = null;
     performanceMetricsDisplay: any | null = null;
     optimizationSummaryDisplay: any | null = null;
+    ionicBalanceDisplay: IonicBalanceDisplay | null = null;
     nutrientDiagnostics: NutrientDiagnostics = {};
+    sectionExpanded = {
+        dosages: true,
+        verification: true,
+        performance: false,
+        optimization: false,
+        ionicBalance: true,
+        costs: true,
+        water: false,
+        waterDilution: false,
+        soil: false,
+        charts: false,
+        advancedParams: false,
+        fertilizerDb: false
+    };
 
     // Data arrays
     catalogs: Catalog[] = [];
@@ -2488,6 +2518,10 @@ export class NutrientFormulationComponent implements OnInit {
         this.processOptimizationSummary();
         console.log("finished processOptimizationSummary")
 
+        // NEW: Process ionic balance display
+        this.processIonicBalance();
+        console.log("finished processIonicBalance")
+
         this.renderFertilizerCharts();
         console.log("finished renderFertilizerCharts")
     }
@@ -2707,6 +2741,46 @@ export class NutrientFormulationComponent implements OnInit {
             ionic_balance_error: this.roundToDecimals(summary.ionic_balance_error, 2),
             success_rate_percent: this.roundToDecimals(summary.success_rate_percent, 2)
         };
+    }
+
+    private processIonicBalance(): void {
+        const ib = this.calculationResults?.calculation_results?.ionic_balance;
+        if (!ib) {
+            this.ionicBalanceDisplay = null;
+            return;
+        }
+        this.ionicBalanceDisplay = {
+            cation_sum: this.roundToDecimals(ib.cation_sum, 3),
+            anion_sum: this.roundToDecimals(ib.anion_sum, 3),
+            difference: this.roundToDecimals(ib.difference, 3),
+            difference_percentage: this.roundToDecimals(ib.difference_percentage, 2),
+            balance_status: ib.balance_status,
+            balance_color: ib.balance_color,
+            balance_recommendation: ib.balance_recommendation,
+            cation_distribution: ib.cation_distribution || {},
+            anion_distribution: ib.anion_distribution || {},
+            final_meq_L: this.calculationResults?.calculation_results?.final_meq_L || {}
+        };
+    }
+
+    get fertilizerDatabase(): any[] {
+        return this.calculationResults?.calculation_data_used?.fertilizer_database || [];
+    }
+
+    getActiveCations(fert: any): string {
+        const cations = fert?.composition?.cations || {};
+        const active = Object.entries(cations)
+            .filter(([, v]) => (v as number) > 0)
+            .map(([k, v]) => `${k}: ${v}%`);
+        return active.length ? active.join(', ') : '—';
+    }
+
+    getActiveAnions(fert: any): string {
+        const anions = fert?.composition?.anions || {};
+        const active = Object.entries(anions)
+            .filter(([, v]) => (v as number) > 0)
+            .map(([k, v]) => `${k}: ${v}%`);
+        return active.length ? active.join(', ') : '—';
     }
 
     ngAfterViewInit(): void {

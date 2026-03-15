@@ -120,27 +120,59 @@
 .aero-card-header.bg-success { background: linear-gradient(180deg, rgba(132, 230, 169, 0.5) 0%, rgba(76, 175, 80, 0.4) 100%); }
 .aero-card-header.bg-dark { background: linear-gradient(180deg, rgba(162, 185, 210, 0.6) 0%, rgba(96, 125, 139, 0.5) 100%); }
 
-.aero-card-body { padding: 1.2rem; }
+.aero-card-body { padding: 1.4rem; }
 
 /* Grid systems & specific classes inside Shiny dashboard */
-.activity-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-.system-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.activity-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; margin-bottom: 1.75rem; }
+.system-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin-bottom: 1.75rem; }
 .devices-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.85rem; }
 
-.activity-card h3 { font-size: 0.85rem; font-weight: 700; color: #3a6a9c; margin: 0 0 0.5rem 0; text-transform: uppercase; }
+.activity-card,
+.overview-card,
+.chart-card,
+.chart-container,
+.thermostat-gauge,
+.dlig-card,
+.dlip-card {
+  padding: 1.1rem;
+}
+
+.activity-card,
+.overview-card {
+  min-height: 120px;
+}
+
+.activity-card h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #3a6a9c;
+  margin: 0 0 0.65rem 0;
+  text-transform: uppercase;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
 .activity-number { font-size: 2rem; font-weight: 700; color: #1a3a5c; text-shadow: 0 1px 0 rgba(255,255,255,0.8); }
 .activity-percentage { font-size: 0.8rem; color: #3a6a9c; margin-top: 0.25rem; }
 .activity-card.total .activity-number { color: #2196f3; }
 .activity-card.active .activity-number { color: #2db86a; }
 .activity-card.inactive .activity-number { color: #607d8b; }
 
-.overview-card h3 { font-size: 0.88rem; font-weight: 700; color: #1a3a5c; margin: 0 0 0.85rem 0; }
+.overview-card h3 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1a3a5c;
+  margin: 0 0 0.95rem 0;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
 
-.status-summary { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.status-summary { display: flex; flex-wrap: wrap; gap: 0.6rem; }
 .status-item {
   display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.65rem;
   border-radius: 16px; font-size: 0.78rem; font-weight: 600;
   backdrop-filter: blur(4px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .status-item::before { content: '●'; font-size: 0.7rem; }
 .status-item.online { background: rgba(45,184,106,0.15); color: #166534; border: 1px solid rgba(45,184,106,0.25); }
@@ -154,9 +186,24 @@
 
 .device-header { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem; }
 .device-header h3 { margin: 0; font-size: 1rem; font-weight: 700; color: #1a5fa0; }
-.device-content .reading { display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem; border-bottom: 1px dashed rgba(120,180,240,0.3); padding-bottom: 0.2rem; }
+.device-content .reading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.85rem;
+  border-bottom: 1px dashed rgba(120,180,240,0.3);
+  padding-bottom: 0.25rem;
+}
+.device-content .label,
+.device-content .value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .device-content .label { color: #3a6a9b; font-weight: 600; }
-.device-content .value { color: #1a3a5c; font-weight: 700; }
+.device-content .value { color: #1a3a5c; font-weight: 700; text-align: right; }
 
 .device-status-badge span {
   font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 12px; font-weight: 700; color: white;
@@ -176,7 +223,7 @@
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* Charts container classes for overriding component specific styles */
-.charts-section { padding: 1rem; background: rgba(255,255,255,0.3); border-radius: 12px; }
+.charts-section { padding: 1.1rem; background: rgba(188, 206, 223, 0.45); border-radius: 12px; }
 .chart-type-selector { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
 .chart-type-btn {
   background: linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(220,240,255,0.7) 100%);
@@ -184,15 +231,25 @@
   transition: all 0.2s; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 .chart-type-btn.active, .chart-type-btn:hover { background: linear-gradient(180deg, #5bc4f5 0%, #2196f3 100%); color: white; }
-.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
-.chart-container { background: rgba(255,255,255,0.6); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.9); }
-.chart-header h3 { font-size: 0.9rem; margin-bottom: 0.5rem; color: #1a3a5c; }
+.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; }
+.chart-container {
+  background: rgba(174, 192, 208, 0.42);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.9);
+}
+.chart-header h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.7rem;
+  color: #1a3a5c;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
 .mini-chart { width: 100% !important; height: 200px !important; }
 
 /* Keep Wind Rose & Thermostat specific styles, modified slightly for Aero */
-.chart-card { background: rgba(255,255,255,0.5); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); }
+.chart-card { background: rgba(171, 191, 208, 0.40); border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); }
 .thermostats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-.thermostat-gauge { background: rgba(255,255,255,0.6); border-radius: 16px; padding: 1rem; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(60,140,220,0.1); }
+.thermostat-gauge { background: rgba(241,246,251,0.88); border-radius: 16px; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(60,140,220,0.1); }
 .thermostat-svg { width: 100%; height: auto; max-width: 300px; display: block; margin: 0 auto; }
 .thermostat-stats { margin-top: 1rem; font-size: 0.85rem; }
 .stat-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
@@ -210,12 +267,18 @@
 
 /* Keep DLIg/DLIp Specific styles */
 .dlig-summary-cards, .dlip-summary-cards { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-.dlig-card, .dlip-card { flex: 1; min-width: 150px; background: rgba(255,255,255,0.7); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(60,140,220,0.1); text-align: center; }
+.dlig-card, .dlip-card { flex: 1; min-width: 150px; background: rgba(255,255,255,0.7); border-radius: 12px; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(60,140,220,0.1); text-align: center; }
 .dlig-card-header, .dlip-card-header { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem; font-weight: 600; color: #3a6a9b; }
 .dlig-value, .dlip-value { font-size: 1.8rem; font-weight: 700; color: #1a3a5c; }
 .dlig-unit, .dlip-unit { font-size: 0.9rem; color: #3a6a9b; }
 
-.tsr-chart-container, .par-chart-container { margin: 1rem 0; overflow-x: auto; background: rgba(0,0,0,0.05); border-radius: 12px; padding: 1rem; }
+.tsr-chart-container, .par-chart-container {
+  margin: 1rem 0;
+  overflow-x: auto;
+  background: rgba(83, 102, 121, 0.30);
+  border-radius: 12px;
+  padding: 1rem;
+}
 .tsr-chart-svg, .par-chart-svg { min-width: 600px; display: block; margin: 0 auto; }
 .tsr-legend, .par-legend { display: flex; justify-content: center; gap: 1.5rem; margin-top: 1rem; flex-wrap: wrap; }
 .tsr-legend-item, .par-legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #1a3a5c; }
@@ -231,3 +294,33 @@
 /* Wind rose specific */
 .custom-wind-rose-container { display: flex; justify-content: center; align-items: center; padding: 1rem; }
 .wind-rose-svg { max-width: 100%; height: auto; }
+
+@media (max-width: 768px) {
+  .activity-overview,
+  .system-overview,
+  .charts-grid,
+  .thermostats-grid {
+    gap: 0.9rem;
+  }
+
+  .aero-card-body,
+  .activity-card,
+  .overview-card,
+  .chart-container,
+  .chart-card,
+  .thermostat-gauge,
+  .dlig-card,
+  .dlip-card {
+    padding: 0.9rem;
+  }
+
+  .activity-number {
+    font-size: 1.7rem;
+  }
+
+  .chart-header h3,
+  .overview-card h3,
+  .activity-card h3 {
+    font-size: 0.82rem;
+  }
+}

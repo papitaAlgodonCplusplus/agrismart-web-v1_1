@@ -1,4 +1,4 @@
-﻿using AgriSmart.Core.Configuration;
+using AgriSmart.Core.Configuration;
 using AgriSmart.Infrastructure.Data;
 using AgriSmart.Core.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -67,7 +67,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               where
                                   (
                                         (u.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser && u.Id == GetSessionUserId()) ||
-                                        (u.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (u.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                   )
                                   && ((u.ProfileId == profileId) || profileId == 0)
@@ -89,7 +89,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               where
                                   (
                                         (u.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser && u.Id == GetSessionUserId()) ||
-                                        (u.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (u.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                   )
                                   && (u.Id == id)
@@ -109,7 +109,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               where
                                   (
                                         (u.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser && u.Id == GetSessionUserId()) ||
-                                        (u.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (u.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                   )
                                   && (u.Id == GetSessionUserId())

@@ -14,6 +14,7 @@ import { CropProductionService } from '../../services/crop-production.service';
 import { GrowingMediumService, GrowingMedium } from '../../growing-medium/services/growing-medium.service';
 import { FarmService } from '../../farms/services/farm.service';
 import { Farm } from '../../../core/models/models';
+import { SensorConfigService, SENSOR_TYPES } from '../../sensors/services/sensor-config.service';
 
 // ============================================================================
 // INTERFACES
@@ -66,7 +67,8 @@ export class KPIOrchestatorService {
     private cropProductionSpecsService: CropProductionSpecsService,
     private cropService: CropService,
     private growingMediumService: GrowingMediumService,
-    private farmService: FarmService
+    private farmService: FarmService,
+    private sensorConfig: SensorConfigService
   ) { }
 
   // ============================================================================
@@ -99,15 +101,16 @@ export class KPIOrchestatorService {
       console.log('Fetched crop data:', crop);
 
       console.log('Distinct sensors in raw data:', Array.from(new Set(rawData.map(d => d.sensor))));
-      console.log('First and last date where Water_flow_value sensor is present in raw data:');
-      const flowData = rawData.filter(d => d.sensor === 'Water_flow_value');
+      const waterFlowLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.WATER_FLOW);
+      console.log('First and last date where water flow sensors are present in raw data:', waterFlowLabels);
+      const flowData = rawData.filter((d: any) => waterFlowLabels.includes(d.sensor));
       if (flowData.length > 0) {
         const sortedFlowData = flowData.sort((a, b) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime());
         console.log(`  First: ${sortedFlowData[0].recordDate}, Last: ${sortedFlowData[sortedFlowData.length - 1].recordDate}`);
         // payloads
         console.log(`  First payload: ${sortedFlowData[0].payload}, Last payload: ${sortedFlowData[sortedFlowData.length - 1].payload}`);
       } else {
-        console.log('  No Water_flow_value sensor data found in raw data');
+        console.log('  No water flow sensor data found in raw data');
       }
       // 2. Transform raw data into structured format (includes temperature capping)
       const deviceId = input.deviceIds && input.deviceIds.length > 0 ? input.deviceIds[0] : undefined;
@@ -340,9 +343,10 @@ export class KPIOrchestatorService {
     console.log('Sample raw data records (last 5):', Array.from(dataByDate.entries()).slice(-5));
 
     // Collect ALL raw temperature values across all days for capping logic
+    const soilTempLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.SOIL_TEMPERATURE);
     const allRawTemps: number[] = [];
-    rawData.forEach(item => {
-      if (['TEMP_SOIL', 'TempC_DS18B20', 'temp_SOIL'].includes(item.sensor)) {
+    rawData.forEach((item: any) => {
+      if (soilTempLabels.includes(item.sensor)) {
         const temp = parseFloat(item.payload);
         if (!isNaN(temp)) {
           allRawTemps.push(temp);
@@ -379,8 +383,8 @@ export class KPIOrchestatorService {
 
       // Extract temperature data
       const temps = dayData
-        .filter(d => ['TEMP_SOIL', 'TempC_DS18B20', 'temp_SOIL'].includes(d.sensor))
-        .map(d => parseFloat(d.payload));
+        .filter((d: any) => soilTempLabels.includes(d.sensor))
+        .map((d: any) => parseFloat(d.payload));
 
       // Extract humidity data with validation
       const humidities = dayData
@@ -462,7 +466,8 @@ export class KPIOrchestatorService {
 
       // Extract irrigation data (flow meters)
       // CRITICAL: Filter by deviceId to avoid mixing data from multiple sensors
-      let flowData = dayData.filter(d => d.sensor === 'Water_flow_value');
+      const flowLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.WATER_FLOW);
+      let flowData = dayData.filter((d: any) => flowLabels.includes(d.sensor));
  
 
       // If deviceId is specified, filter to only that device
@@ -475,7 +480,7 @@ export class KPIOrchestatorService {
         // If no deviceId specified, check if we have multiple devices (data corruption risk)
         const uniqueDevices = new Set(flowData.map(d => d.deviceId));
         if (uniqueDevices.size > 1) {
-          console.error(`⚠️ WARNING: Multiple devices (${uniqueDevices.size}) found for Water_flow_value sensor on ${dateStr}. This will cause incorrect volume calculations! Devices: ${Array.from(uniqueDevices).join(', ')}`);
+          console.error(`⚠️ WARNING: Multiple devices (${uniqueDevices.size}) found for water flow sensor on ${dateStr}. This will cause incorrect volume calculations! Devices: ${Array.from(uniqueDevices).join(', ')}`);
         }
       }
 
@@ -727,6 +732,53 @@ export class KPIOrchestatorService {
         console.log(`\n🚿 No irrigation data for date: ${climateData.date.toISOString().split('T')[0]}`);
       }
 
+      // -----------------------------------------------------------------------
+      // CropET (TODO 4.2)
+      // Formula: CropET = irrigVol − drainVol − (containerMediumVol × ΔWC% / 100)
+      // -----------------------------------------------------------------------
+      const dateStr = climateData.date.toISOString().split('T')[0];
+
+      // Total drain volume for the day (from rain/drain gauge sensors)
+      const rainGaugeLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.RAIN_GAUGE);
+      const dayDrainReadings = [...transformedData.rawData]
+        .filter((r: any) => {
+          const d = new Date(r.recordDate).toISOString().split('T')[0];
+          return d === dateStr && rainGaugeLabels.includes(r.sensor);
+        })
+        .sort((a: any, b: any) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime());
+
+      let totalDrainVolume = 0;
+      if (dayDrainReadings.length >= 2) {
+        const first = parseFloat(dayDrainReadings[0].payload);
+        const last = parseFloat(dayDrainReadings[dayDrainReadings.length - 1].payload);
+        totalDrainVolume = Math.max(0, last - first);
+      }
+
+      // Soil moisture delta for the day (start of day → end of day)
+      const dayMoistureEntry = transformedData.soilMoisture.find(
+        (s: any) => s.date.toISOString().split('T')[0] === dateStr
+      );
+      let deltaVolumetricWC = 0;
+      if (dayMoistureEntry && dayMoistureEntry.moistureData.length >= 2) {
+        const sorted = [...dayMoistureEntry.moistureData].sort(
+          (a: any, b: any) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime()
+        );
+        const wcStart = parseFloat(sorted[0].payload);
+        const wcEnd = parseFloat(sorted[sorted.length - 1].payload);
+        deltaVolumetricWC = wcStart - wcEnd; // positive = soil dried = water transpired to atmosphere
+      }
+
+      // Compute CropET when spacing / container volume are available
+      let cropET: number | undefined;
+      const containerVol: number | undefined = cropProduction.containerVolume;
+      if (cropProductionSpecs && containerVol) {
+        const rowDist = cropProductionSpecs.betweenRowDistance / 100;        // cm → m
+        const containerDist = cropProductionSpecs.betweenContainerDistance / 100; // cm → m
+        const containerDensity = 1 / (rowDist * containerDist);
+        const containerMediumVol = containerVol * containerDensity;
+        cropET = totalVolume - totalDrainVolume - (containerMediumVol * (deltaVolumetricWC / 100));
+      }
+
       dailyKPIs.push({
         date: climateData.date,
         cropProductionId: input.cropProductionId,
@@ -738,7 +790,8 @@ export class KPIOrchestatorService {
           averageDrainPercentage: averageDrainPercentage
         },
         crop: cropKPIs,
-        growingMedium: growingMediumKPIs
+        growingMedium: growingMediumKPIs,
+        cropEvapoTranspiration: cropET
       });
     });
 

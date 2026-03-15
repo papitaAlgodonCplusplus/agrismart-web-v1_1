@@ -1363,6 +1363,11 @@ async def swagger_integrated_calculation_with_linear_programming(
 
                 calculation_results['nutrient_diagnostics'] = nutrient_diagnostics
 
+                # Add detailed ionic balance to calculation_results
+                ionic_balance = verifier.verify_ionic_balance(final_solution['FINAL_meq_L'])
+                calculation_results['ionic_balance'] = ionic_balance
+                calculation_results['final_meq_L'] = final_solution['FINAL_meq_L']
+
                 # 🆕 NEW: Display cost summary in console
                 print(
                     f"[COST] Total Solution Cost: ₡{cost_analysis['total_cost_concentrated']:.3f}")

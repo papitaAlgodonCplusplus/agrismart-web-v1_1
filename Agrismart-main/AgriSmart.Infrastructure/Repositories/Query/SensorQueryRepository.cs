@@ -1,4 +1,4 @@
-﻿using AgriSmart.Core.Configuration;
+using AgriSmart.Core.Configuration;
 using AgriSmart.Infrastructure.Data;
 using AgriSmart.Core.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -19,28 +19,30 @@ namespace AgriSmart.Infrastructure.Repositories.Query
             _context = context;
         }
 
-        public async Task<IReadOnlyList<Sensor>> GetAllAsync(int companyId, int deviceId, bool includeInactives = false)
+        public async Task<IReadOnlyList<Sensor>> GetAllAsync(int companyId, int deviceId, bool includeInactives = false, string? sensorType = null)
         {
             try
             {
                 return await (from s in _context.Sensor
                               join d in _context.Device on s.DeviceId equals d.Id
-                              join c in _context.Company on d.CompanyId equals c.Id                              
+                              join c in _context.Company on d.CompanyId equals c.Id
                               where
                                   (
                                         (c.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (c.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
-                                        (GetSessionProfileId() == (int)Profiles.SuperUser)                                    
+                                        (c.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
+                                        (GetSessionProfileId() == (int)Profiles.SuperUser)
                                   )
                                   && ((d.CompanyId == companyId) || companyId == 0)
                                   && ((s.DeviceId == deviceId) || deviceId == 0)
                                   && (((s.Active == true) && !includeInactives) || includeInactives)
+                                  && (sensorType == null || s.SensorType == sensorType)
                               select new Sensor
                               {
                                   Id = s.Id,
                                   DeviceId = s.DeviceId,
                                   SensorLabel = s.SensorLabel,
                                   Description = s.Description,
+                                  SensorType = s.SensorType,
                                   MeasurementVariableId = s.MeasurementVariableId,
                                   NumberOfContainers = s.NumberOfContainers,
                                   Active = (s.Active ?? false),
@@ -79,7 +81,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               where
                                   (
                                         (c.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (c.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (c.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                   )
                                   && (s.Id == id)
@@ -89,6 +91,9 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                   DeviceId = s.DeviceId,
                                   SensorLabel = s.SensorLabel,
                                   Description = s.Description,
+                                  SensorType = s.SensorType,
+                                  MeasurementVariableId = s.MeasurementVariableId,
+                                  NumberOfContainers = s.NumberOfContainers,
                                   Active = (s.Active ?? false),
                                   DateCreated = s.DateCreated,
                                   DateUpdated = s.DateUpdated,

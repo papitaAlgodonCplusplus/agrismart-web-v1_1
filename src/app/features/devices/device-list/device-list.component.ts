@@ -11,6 +11,8 @@ import { DeviceService, DeviceFilters, DeviceCreateRequest, DeviceUpdateRequest,
 import { IrrigationSectorService } from '../../services/irrigation-sector.service';
 import { Device } from '../../../core/models/models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { SensorService, Sensor } from '../../sensors/services/sensor.service';
+import { SensorConfigService } from '../../sensors/services/sensor-config.service';
 
 // Interfaces for enhanced device data
 interface DeviceReading {
@@ -97,6 +99,11 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   // Statistics
   statistics: DeviceStatistics | null = null;
 
+  // Sensor type management
+  registeredSensors: Sensor[] = [];
+  sensorTypeSaving: { [key: string]: boolean } = {};  // key: "deviceId|sensorLabel"
+  expandedSensorDeviceId: number | null = null;
+
   // Pagination
   currentPage = 1;
   itemsPerPage = 10;
@@ -135,7 +142,9 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private router: Router,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private sensorService: SensorService,
+    private sensorConfig: SensorConfigService
   ) {
     this.initializeForm();
   }
@@ -192,6 +201,12 @@ export class DeviceListComponent implements OnInit, OnDestroy {
           return of([]);
         })
       ),
+      registeredSensors: this.sensorService.getAll().pipe(
+        catchError(error => {
+          console.error('Error loading sensors:', error);
+          return of([]);
+        })
+      ),
       iotDevices: this.irrigationService.getIoTDevices().pipe(
         catchError(error => {
           console.error('Error loading IoT devices:', error);
@@ -209,12 +224,6 @@ export class DeviceListComponent implements OnInit, OnDestroy {
           console.error('Error loading crop production devices:', error);
           return of([]);
         })
-      ),
-      statistics: this.deviceService.getStatistics().pipe(
-        catchError(error => {
-          console.error('Error loading statistics:', error);
-          return of(null);
-        })
       )
     }).pipe(
       finalize(() => {
@@ -222,21 +231,17 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       })
     ).subscribe({
-      next: ({ registeredDevices, iotDevices, rawData, cropProductionDevices, statistics }) => {
-        console.log('Data loaded successfully: ', {
-          registeredDevices: registeredDevices?.length || 0,
-          iotDevices: iotDevices?.length || 0,
-          rawData: rawData?.length || 0,
-          cropProductionDevices: cropProductionDevices?.length || 0
-        });
-
+      next: ({ registeredDevices, registeredSensors, iotDevices, rawData, cropProductionDevices }) => {
         this.registeredDevices = registeredDevices || [];
+        this.registeredSensors = registeredSensors || [];
         this.iotDevices = iotDevices || [];
         this.rawData = rawData || [];
         this.cropProductionDevices = cropProductionDevices || [];
-        this.statistics = statistics;
+
+        console.log('Loaded registered sensors:', this.registeredSensors);
 
         this.combineDeviceData();
+        this.computeStatistics();
         this.applyFilters();
       },
       error: (error) => {
@@ -247,18 +252,12 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   }
 
   private loadRealTimeData(): Observable<any> {
-    return forkJoin({
-      rawData: this.irrigationService.getDeviceRawData().pipe(
-        catchError(() => of([]))
-      ),
-      statistics: this.deviceService.getStatistics().pipe(
-        catchError(() => of(null))
-      )
-    }).pipe(
-      tap(({ rawData, statistics }) => {
+    return this.irrigationService.getDeviceRawData().pipe(
+      catchError(() => of([])),
+      tap((rawData) => {
         this.rawData = rawData || [];
-        this.statistics = statistics;
         this.updateDeviceReadings();
+        this.computeStatistics();
         this.applyFilters();
       })
     );
@@ -272,12 +271,12 @@ export class DeviceListComponent implements OnInit, OnDestroy {
       // Find matching raw data - the registered device deviceId is contained in the raw data deviceId
       // e.g., registered: 'flujo-02' matches raw: 'flujo-02-c7'
       const deviceRawData = this.rawData.filter(rd =>
-        rd.deviceId.includes(registeredDevice.deviceId || '')
+        rd.deviceId.toString().includes(registeredDevice.deviceId.toString() || '')
       );
 
       // Find linked crop productions
       const linkedToCropProductions = this.cropProductionDevices.filter(cpd =>
-        cpd.deviceId === registeredDevice.id && cpd.active
+        cpd.deviceId.toString() === registeredDevice.id.toString() && cpd.active
       );
 
       const sensorReadings = this.processDeviceReadings(deviceRawData);
@@ -287,7 +286,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
 
       const enhancedDevice: EnhancedDevice = {
         ...registeredDevice,
-        name: registeredDevice.name || registeredDevice.deviceId || `Device ${registeredDevice.id}`,
+        name: registeredDevice.name || registeredDevice.deviceId.toString() || `Device ${registeredDevice.id.toString()}`,
         isActive: registeredDevice.active || false,
         lastSeen: registeredDevice.dateUpdated ? new Date(registeredDevice.dateUpdated) : undefined,
         lastReading,
@@ -305,11 +304,11 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     if (this.iotDevices && Array.isArray(this.iotDevices)) {
       this.iotDevices.forEach(iotDevice => {
         const existsInRegistered = this.registeredDevices.some(rd =>
-          iotDevice.deviceId.includes(rd.deviceId || '')
+          iotDevice.deviceId.toString().includes(rd.deviceId.toString() || '')
         );
 
         if (!existsInRegistered) {
-          const deviceRawData = this.rawData.filter(rd => rd.deviceId === iotDevice.deviceId);
+          const deviceRawData = this.rawData.filter(rd => rd.deviceId.toString() === iotDevice.deviceId.toString());
           const sensorReadings = this.processDeviceReadings(deviceRawData);
           const lastReading = this.getLastReadingDate(deviceRawData);
           const hasRealTimeData = deviceRawData.length > 0;
@@ -317,9 +316,9 @@ export class DeviceListComponent implements OnInit, OnDestroy {
 
           const enhancedDevice: EnhancedDevice = {
             id: iotDevice.id,
-            name: iotDevice.deviceId,
+            name: iotDevice.deviceId.toString(),
             description: 'Dispositivo IoT no registrado',
-            deviceType: this.extractDeviceTypeFromId(iotDevice.deviceId),
+            deviceType: this.extractDeviceTypeFromId(iotDevice.deviceId.toString()),
             serialNumber: '',
             model: '',
             manufacturer: '',
@@ -348,7 +347,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     }
 
     this.devices = enhancedDevices;
-    console.log('Enhanced devices created:', this.devices);
+    // console.log.*
   }
 
   private processDeviceReadings(rawData: DeviceRawDataItem[]): { [sensor: string]: DeviceReading } {
@@ -399,7 +398,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
 
   private extractDeviceType(device: Device): string {
     // Use the actual deviceId from the registered device to determine type
-    const deviceId = device.deviceId || device.name || '';
+    const deviceId = device.deviceId.toString() || device.name || '';
     if (deviceId.includes('flujo')) return 'flujo';
     if (deviceId.includes('ph-suelo')) return 'ph-suelo';
     if (deviceId.includes('estacion-metereologica')) return 'estacion-metereologica';
@@ -441,8 +440,8 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     this.devices.forEach(device => {
       // Match using the registered device ID contained in raw data deviceId
       const deviceRawData = this.rawData.filter(rd =>
-        rd.deviceId.includes(device.deviceId || '') ||
-        rd.deviceId.includes(device.name || '')
+        rd.deviceId.toString().includes(device.deviceId.toString() || '') ||
+        rd.deviceId.toString().includes(device.name || '')
       );
       device.sensorReadings = this.processDeviceReadings(deviceRawData);
       device.lastReading = this.getLastReadingDate(deviceRawData);
@@ -462,7 +461,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
         device.description?.toLowerCase().includes(term) ||
         device.deviceType?.toLowerCase().includes(term) ||
         device.serialNumber?.toLowerCase().includes(term) ||
-        device.deviceId?.toLowerCase().includes(term)
+        device.deviceId.toString()?.toLowerCase().includes(term)
       );
     }
 
@@ -552,7 +551,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   private createDevice(data: DeviceCreateRequest): void {
     this.deviceService.create(data).subscribe({
       next: (device) => {
-        console.log('Device created:', device);
+        // console.log.*
         this.hideForm();
         this.loadAllDeviceData();
       },
@@ -566,10 +565,10 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   private updateDevice(data: DeviceUpdateRequest): void {
     if (!this.selectedDevice) return;
 
-    const updateData = { ...data, id: this.selectedDevice.id };
+    const updateData = { ...data, id: this.selectedDevice.id.toString() };
     this.deviceService.update(updateData).subscribe({
       next: (device) => {
-        console.log('Device updated:', device);
+        // console.log.*
         this.hideForm();
         this.loadAllDeviceData();
       },
@@ -584,7 +583,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
     if (confirm(`¿Está seguro de que desea eliminar el dispositivo "${device.name}"?`)) {
       this.deviceService.delete(device.id).subscribe({
         next: () => {
-          console.log('Device deleted:', device.id);
+          // console.log.*
           this.loadAllDeviceData();
         },
         error: (error) => {
@@ -598,7 +597,7 @@ export class DeviceListComponent implements OnInit, OnDestroy {
   toggleDeviceStatus(device: EnhancedDevice): void {
     this.deviceService.toggleStatus(device.id, !device.isActive).subscribe({
       next: (updatedDevice) => {
-        console.log('Device status toggled:', updatedDevice);
+        // console.log.*
         this.loadAllDeviceData();
       },
       error: (error) => {
@@ -798,5 +797,124 @@ export class DeviceListComponent implements OnInit, OnDestroy {
 
   goToDashboard(): void {
     this.router.navigate(['/dashboard']);
+  }
+
+  private computeStatistics(): void {
+    const total = this.devices.length;
+    const online = this.devices.filter(d => d.connectionStatus === 'online').length;
+    const offline = this.devices.filter(d => d.connectionStatus === 'offline').length;
+    const lowBattery = this.devices.filter(d => (d.batteryLevel ?? 100) < 20).length;
+    const oneHourAgo = new Date(Date.now() - 3600000);
+    const recentlySeen = this.devices.filter(d => d.lastReading && d.lastReading > oneHourAgo).length;
+    const withLastSeen = this.devices.filter(d => d.lastReading);
+    const oldest = withLastSeen.sort((a, b) =>
+      (a.lastReading!.getTime()) - (b.lastReading!.getTime())
+    )[0];
+
+    this.statistics = {
+      totalDevices: total,
+      activeDevices: this.devices.filter(d => d.isActive).length,
+      onlineDevices: online,
+      offlineDevices: offline,
+      maintenanceDevices: 0,
+      errorDevices: 0,
+      byType: {},
+      byStatus: { online, offline },
+      averageBatteryLevel: total > 0
+        ? this.devices.reduce((sum, d) => sum + (d.batteryLevel ?? 0), 0) / total
+        : 0,
+      lowBatteryDevices: lowBattery,
+      averageSignalStrength: 0,
+      poorSignalDevices: 0,
+      recentlySeenDevices: recentlySeen,
+      oldestDevice: oldest
+        ? { name: oldest.name || oldest.deviceId.toString() || 'Unknown', lastSeen: oldest.lastReading! }
+        : { name: 'N/A', lastSeen: new Date() }
+    };
+  }
+
+  // ============ Sensor Type Management ============
+
+  /** Toggle expanded sensor configuration panel for a device. */
+  toggleSensorConfig(device: EnhancedDevice): void {
+    if (this.expandedSensorDeviceId?.toString() === device.id.toString()) {
+      this.expandedSensorDeviceId = null;
+    } else {
+      this.expandedSensorDeviceId= device.id;
+      this.loadSensorsForDevice(device);
+    }
+  }
+
+  isSensorConfigExpanded(device: EnhancedDevice): boolean {
+    return this.expandedSensorDeviceId?.toString() === device.id.toString();
+  }
+
+  private loadSensorsForDevice(device: EnhancedDevice): void {
+    this.sensorService.getAll({ deviceId: device.id }).subscribe({
+      next: (sensors) => {
+        this.registeredSensors = [
+          ...this.registeredSensors.filter(s => s.deviceId?.toString() !== device.id.toString()),
+          ...sensors
+        ];
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error loading sensors for device:', err)
+    });
+  }
+
+  getSensorTypeOptions(): { value: string; label: string }[] {
+    return this.sensorConfig.getSensorTypeOptions();
+  }
+
+  /** Get the currently configured SensorType for a sensor label on a device. */
+  getConfiguredSensorType(device: EnhancedDevice, sensorLabel: string): string {
+    const sensor = this.registeredSensors.find(
+      s => s.deviceId?.toString() === device.id.toString() && s.sensorLabel === sensorLabel
+    );
+
+    //console.log(`Getting sensor type for device ${device.name} (${device.id}), sensor "${sensorLabel}":`, sensor);
+    
+    return sensor?.sensorType || '';
+  }
+
+  /** Save or update the SensorType for a sensor label on a device. */
+  saveSensorType(device: EnhancedDevice, sensorLabel: string, sensorType: string): void {
+    const key = `${device.id.toString()}|${sensorLabel}`;
+    this.sensorTypeSaving[key] = true;
+
+    const existing = this.registeredSensors.find(
+      s => s.deviceId?.toString() === device.id.toString() && s.sensorLabel === sensorLabel
+    );
+
+    // Validators require a non-empty Description; use sensorLabel as the description
+    const description = existing?.description || sensorLabel;
+
+    const save$ = existing?.id?.toString()
+      ? this.sensorService.update({ id: existing.id, deviceId: device.id, sensorLabel, description, sensorType, active: true, measurementVariableId: existing.measurementVariableId ?? 0 })
+      : this.sensorService.create({ deviceId: device.id, sensorLabel, description: sensorLabel, sensorType, active: true, measurementVariableId: 0, numberOfContainers: 1 });
+
+    save$.subscribe({
+      next: (saved) => {
+        // console.log.*
+        this.sensorTypeSaving[key] = false;
+        // Refresh the in-memory sensor list
+        this.registeredSensors = [
+          ...this.registeredSensors.filter(s => !(s.deviceId?.toString() === device.id.toString() && s.sensorLabel === sensorLabel)),
+          { ...saved, deviceId: device.id, sensorLabel, sensorType }
+        ];
+        // Reload global sensor config so all components pick up the new type
+        this.sensorConfig.load();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error saving sensor type:', err);
+        this.sensorTypeSaving[key] = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  isSensorTypeSaving(device: EnhancedDevice, sensorLabel: string): boolean {
+    return !!this.sensorTypeSaving[`${device.id.toString()}|${sensorLabel}`];
   }
 }

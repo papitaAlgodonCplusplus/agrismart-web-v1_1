@@ -488,6 +488,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -513,6 +514,7 @@
     transform: translateY(50px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -854,7 +856,7 @@
   .table tbody td {
     padding: 0.75rem 0.5rem;
   }
-  
+
   .table thead.table-header th.sortable {
     padding-right: 1.5rem;
   }
@@ -928,11 +930,11 @@
   .table tbody td {
     padding: 0.625rem 0.375rem;
   }
-  
+
   .table thead.table-header th.sortable {
     padding-right: 1.25rem;
   }
-  
+
   .table thead.table-header th.sortable i {
     right: 0.25rem;
     font-size: 0.875rem;
@@ -981,6 +983,9 @@
     width: 100%;
   }
 
+}
+
+/* end @media (max-width: 768px) */
 
 /* ============================================================================
    IRRIGATION ENGINEERING DESIGN — FRUTIGER AERO OVERRIDES
@@ -989,9 +994,11 @@
 .irrigation-engineering-page {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0) 32%),
-    radial-gradient(circle at top right, rgba(120,206,255,0.22) 0%, rgba(120,206,255,0) 28%),
-    linear-gradient(160deg, #a8d8f0 0%, #c5e8fb 25%, #daf1fd 55%, #eef8fe 80%, #f5fcff 100%);
+    radial-gradient(ellipse at 15% 8%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0) 36%),
+    radial-gradient(ellipse at 88% 6%, rgba(90, 190, 255, 0.40) 0%, rgba(90, 190, 255, 0) 30%),
+    radial-gradient(ellipse at 50% 88%, rgba(130, 205, 255, 0.22) 0%, rgba(130, 205, 255, 0) 46%),
+    radial-gradient(ellipse at 5% 60%, rgba(160, 220, 255, 0.18) 0%, rgba(160, 220, 255, 0) 34%),
+    linear-gradient(155deg, #82c8f0 0%, #aaddf9 18%, #c8eefe 42%, #dff6ff 68%, #f0fbff 100%);
 }
 
 .irrigation-engineering-page .container-fluid {
@@ -1007,18 +1014,21 @@
 
 .aero-header {
   background: linear-gradient(180deg,
-    rgba(255,255,255,0.88) 0%,
-    rgba(220,240,255,0.82) 50%,
-    rgba(180,220,255,0.68) 100%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.92);
-  border-radius: 18px;
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(228, 245, 255, 0.90) 40%,
+      rgba(190, 228, 252, 0.80) 75%,
+      rgba(165, 215, 250, 0.70) 100%);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid rgba(140, 195, 240, 0.45);
+  border-radius: 20px;
   box-shadow:
-    0 10px 32px rgba(60,140,220,0.14),
-    inset 0 1px 0 rgba(255,255,255,0.95),
-    inset 0 -1px 0 rgba(100,170,240,0.2);
-  padding: 1rem 1.4rem;
+    0 12px 40px rgba(45, 120, 200, 0.18),
+    0 2px 8px rgba(60, 140, 220, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(100, 170, 240, 0.28);
+  padding: 1.1rem 1.5rem;
   position: relative;
   overflow: hidden;
 }
@@ -1027,9 +1037,10 @@
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
-  height: 52%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.58), rgba(255,255,255,0));
+  height: 55%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0));
   pointer-events: none;
+  border-radius: 20px 20px 0 0;
 }
 
 .aero-header-content {
@@ -1042,20 +1053,27 @@
 }
 
 .aero-icon-orb {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #6cd3fa 0%, #2baef0 50%, #0a7ed4 100%);
+  background: linear-gradient(145deg,
+      #82dcfc 0%,
+      #3bbcf5 35%,
+      #1498e8 65%,
+      #0874cc 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 1.45rem;
+  font-size: 1.5rem;
+  text-shadow: 0 1px 3px rgba(0, 50, 120, 0.4);
   box-shadow:
-    0 6px 18px rgba(33,150,243,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.6),
-    inset 0 -1px 0 rgba(0,60,140,0.28);
+    0 8px 24px rgba(20, 130, 230, 0.50),
+    0 2px 8px rgba(20, 100, 200, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -2px 0 rgba(0, 55, 140, 0.32);
   position: relative;
+  flex-shrink: 0;
 }
 
 .aero-icon-orb::before {
@@ -1066,14 +1084,14 @@
   right: 7px;
   height: 40%;
   border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0));
 }
 
 .aero-title {
   font-size: 1.4rem;
   font-weight: 700;
   color: #1a3a5c;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
   letter-spacing: -0.02em;
 }
 
@@ -1089,38 +1107,93 @@
   flex-wrap: wrap;
 }
 
-.aero-btn-back,
 .irrigation-engineering-page .btn,
 .irrigation-engineering-page .nav-tabs .nav-link {
   border-radius: 18px;
-  border: 1px solid rgba(90,160,230,0.4);
+  border: 1px solid rgba(90, 160, 230, 0.4);
   background: linear-gradient(180deg,
-    rgba(255,255,255,0.92) 0%,
-    rgba(210,233,255,0.82) 45%,
-    rgba(170,215,255,0.68) 55%,
-    rgba(140,195,245,0.62) 100%);
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(210, 233, 255, 0.82) 45%,
+      rgba(170, 215, 255, 0.68) 55%,
+      rgba(140, 195, 245, 0.62) 100%);
   color: #1a5fa0;
   box-shadow:
-    0 4px 12px rgba(60,130,220,0.16),
-    inset 0 1px 0 rgba(255,255,255,0.88),
-    inset 0 -1px 0 rgba(80,150,220,0.16);
+    0 4px 12px rgba(60, 130, 220, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 -1px 0 rgba(80, 150, 220, 0.16);
 }
 
 .aero-btn-back {
-  padding: 0.55rem 1.15rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(18, 80, 145, 0.60);
+  background: linear-gradient(180deg,
+      #72c6f5 0%,
+      #3aaae8 30%,
+      #1d86d4 55%,
+      #1062b8 100%);
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 3px rgba(0, 40, 90, 0.45);
+  box-shadow:
+    0 6px 20px rgba(25, 95, 165, 0.38),
+    0 2px 6px rgba(25, 95, 165, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(0, 50, 120, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, background 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.aero-btn-back:hover,
+.aero-btn-back::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0));
+  border-radius: 999px 999px 0 0;
+  pointer-events: none;
+}
+
 .irrigation-engineering-page .btn:hover:not(:disabled),
 .irrigation-engineering-page .nav-tabs .nav-link:hover {
   transform: translateY(-1px);
   background: linear-gradient(180deg,
-    rgba(255,255,255,0.96) 0%,
-    rgba(190,225,255,0.88) 45%,
-    rgba(150,205,255,0.76) 55%,
-    rgba(110,185,250,0.72) 100%);
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(190, 225, 255, 0.88) 45%,
+      rgba(150, 205, 255, 0.76) 55%,
+      rgba(110, 185, 250, 0.72) 100%);
   color: #0f518d;
+}
+
+.aero-btn-back:hover {
+  color: #ffffff;
+  transform: translateY(-2px);
+  filter: saturate(1.1) brightness(1.05);
+  background: linear-gradient(180deg,
+      #8bd3f8 0%,
+      #4cb8f0 30%,
+      #2494e0 55%,
+      #1470c8 100%);
+  box-shadow:
+    0 12px 28px rgba(20, 90, 160, 0.42),
+    0 4px 10px rgba(20, 90, 160, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.50),
+    inset 0 -1px 0 rgba(0, 55, 120, 0.32);
+}
+
+.aero-btn-back:focus-visible {
+  outline: 2px solid rgba(34, 141, 215, 0.45);
+  outline-offset: 2px;
 }
 
 .irrigation-engineering-page .aero-btn-primary,
@@ -1129,9 +1202,9 @@
 .irrigation-engineering-page .aero-btn-success,
 .irrigation-engineering-page .btn-success {
   background: linear-gradient(180deg, #7ec8f7 0%, #3ea8f0 45%, #1a88e0 55%, #0d72c8 100%) !important;
-  border-color: rgba(10,90,180,0.42) !important;
+  border-color: rgba(10, 90, 180, 0.42) !important;
   color: #fff !important;
-  text-shadow: 0 1px 2px rgba(0,50,120,0.35);
+  text-shadow: 0 1px 2px rgba(0, 50, 120, 0.35);
 }
 
 .irrigation-engineering-page .aero-btn-secondary,
@@ -1139,7 +1212,7 @@
 .irrigation-engineering-page .btn-outline-primary,
 .irrigation-engineering-page .btn-outline-danger,
 .irrigation-engineering-page .btn-outline-secondary {
-  background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(221,238,251,0.86));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(221, 238, 251, 0.86));
 }
 
 .irrigation-engineering-page .btn-outline-primary {
@@ -1176,15 +1249,19 @@
 .irrigation-engineering-page .form-panel,
 .irrigation-engineering-page .modal-content {
   background: linear-gradient(180deg,
-    rgba(255,255,255,0.94) 0%,
-    rgba(225,242,255,0.9) 100%);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255,255,255,0.92);
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(238, 250, 255, 0.94) 35%,
+      rgba(218, 242, 255, 0.90) 70%,
+      rgba(200, 234, 252, 0.86) 100%);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(180, 215, 240, 0.55);
+  border-top-color: rgba(255, 255, 255, 0.95);
   box-shadow:
-    0 10px 30px rgba(60,140,220,0.12),
-    inset 0 1px 0 rgba(255,255,255,0.92),
-    inset 0 -1px 0 rgba(100,170,240,0.18);
+    0 16px 44px rgba(35, 100, 165, 0.16),
+    0 4px 12px rgba(55, 120, 185, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.90),
+    inset 0 -1px 0 rgba(90, 155, 210, 0.22);
 }
 
 .aero-loading-panel,
@@ -1203,10 +1280,25 @@
 .irrigation-engineering-page .card-header,
 .irrigation-engineering-page .form-header,
 .irrigation-engineering-page .modal-header {
-  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(216,238,254,0.84));
-  color: #16354c;
-  border-bottom: 1px solid rgba(140,197,236,0.36);
-  box-shadow: none;
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(234, 247, 255, 0.94) 40%,
+      rgba(205, 233, 252, 0.88) 100%);
+  color: #14304c;
+  border-bottom: 1px solid rgba(148, 192, 225, 0.50);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.90);
+  padding: 1.35rem 1.5rem;
+  min-height: 88px;
+  align-items: center;
+}
+
+.irrigation-engineering-page .aero-card.aero-glass-card.-header h5,
+.irrigation-engineering-page .card-header h5 {
+  margin: 0;
+  line-height: 1.35;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .irrigation-engineering-page .aero-card.aero-glass-card.-body,
@@ -1220,40 +1312,69 @@
 
 .irrigation-engineering-page .form-footer,
 .irrigation-engineering-page .modal-footer {
-  border-top: 1px solid rgba(140,197,236,0.36);
+  border-top: 1px solid rgba(126, 176, 212, 0.4);
 }
 
 .irrigation-engineering-page .form-overlay,
 .irrigation-engineering-page .modal-backdrop {
-  background: rgba(114,164,209,0.26);
+  background: rgba(114, 164, 209, 0.26);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
 .irrigation-engineering-page .table-responsive {
   border-radius: 18px;
-  box-shadow: none;
-  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(231,245,255,0.84));
-  border: 1px solid rgba(150,203,239,0.35);
+  box-shadow:
+    0 10px 28px rgba(45, 108, 165, 0.15),
+    0 2px 8px rgba(55, 118, 172, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  background: linear-gradient(180deg,
+      rgba(252, 254, 255, 0.98) 0%,
+      rgba(232, 246, 255, 0.94) 50%,
+      rgba(218, 240, 254, 0.90) 100%);
+  border: 1px solid rgba(155, 198, 228, 0.50);
+  border-top-color: rgba(255, 255, 255, 0.92);
+  margin-top: 0.25rem;
+  overflow: hidden;
 }
 
 .irrigation-engineering-page .table thead.table-header,
 .irrigation-engineering-page .table thead.table-light {
-  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(216,238,254,0.86));
+  background: linear-gradient(180deg,
+      rgba(250, 253, 255, 0.99) 0%,
+      rgba(225, 242, 255, 0.96) 45%,
+      rgba(200, 230, 250, 0.92) 100%);
+  border-bottom: 1px solid rgba(150, 195, 230, 0.50);
 }
 
 .irrigation-engineering-page .table thead.table-header th,
 .irrigation-engineering-page .table thead.table-light th {
-  color: #16354c;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.74);
-  border-bottom: 1px solid rgba(140,197,236,0.36);
+  color: #14304c;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid rgba(120, 169, 205, 0.5);
   background: transparent;
+  font-size: 0.79rem;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  padding: 1.3rem 1.1rem;
+  min-height: 60px;
+  line-height: 1.45;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+.irrigation-engineering-page .table tbody tr {
+  border-bottom: 1px solid rgba(131, 176, 209, 0.24);
 }
 
 .irrigation-engineering-page .table tbody tr:hover {
-  background: rgba(126,200,247,0.12);
+  background: rgba(142, 196, 236, 0.2);
   transform: none;
   box-shadow: none;
+}
+
+.irrigation-engineering-page .table tbody tr:nth-child(even) {
+  background: rgba(243, 250, 255, 0.64);
 }
 
 .irrigation-engineering-page .table tbody td,
@@ -1270,6 +1391,42 @@
   color: #1d3f59;
 }
 
+.irrigation-engineering-page .table tbody td {
+  padding: 0.9rem 0.95rem;
+  line-height: 1.4;
+  font-size: 0.92rem;
+  border-top: none;
+}
+
+.irrigation-engineering-page .table tbody td strong {
+  font-weight: 700;
+}
+
+.irrigation-engineering-page .table .badge {
+  border: 1px solid rgba(74, 130, 177, 0.35);
+  box-shadow: none;
+}
+
+.irrigation-engineering-page .table .btn-group {
+  gap: 0.35rem;
+}
+
+.irrigation-engineering-page .table .btn-group .btn {
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.38rem 0.52rem;
+  border-radius: 10px;
+}
+
+.irrigation-engineering-page .table .sortable {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.irrigation-engineering-page .table .sortable:hover {
+  background: rgba(123, 183, 226, 0.28);
+  color: #0f3856;
+}
+
 .irrigation-engineering-page .text-muted,
 .irrigation-engineering-page .lead,
 .irrigation-engineering-page .metric-label,
@@ -1278,26 +1435,63 @@
   color: #365d7d !important;
 }
 
+@media (max-width: 992px) {
+
+  .irrigation-engineering-page .table thead.table-header th,
+  .irrigation-engineering-page .table thead.table-light th,
+  .irrigation-engineering-page .table tbody td {
+    padding: 0.72rem 0.65rem;
+  }
+
+  .irrigation-engineering-page .aero-card.aero-glass-card.-header,
+  .irrigation-engineering-page .card-header {
+    min-height: 70px;
+    padding: 1rem 1.1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .irrigation-engineering-page .table-responsive {
+    border-radius: 12px;
+  }
+
+  .irrigation-engineering-page .table thead.table-header th,
+  .irrigation-engineering-page .table thead.table-light th {
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+    padding: 0.82rem 0.6rem;
+  }
+
+  .irrigation-engineering-page .table tbody td {
+    font-size: 0.84rem;
+    line-height: 1.35;
+  }
+
+  .aero-btn-back {
+    width: 100%;
+  }
+}
+
 .irrigation-engineering-page .form-control,
 .irrigation-engineering-page .form-select,
 .irrigation-engineering-page .aero-input {
   border-radius: 16px !important;
-  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(230,244,255,0.88)) !important;
-  border: 1px solid rgba(125,180,225,0.44) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.92), 0 2px 8px rgba(120,180,230,0.08) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(230, 244, 255, 0.88)) !important;
+  border: 1px solid rgba(125, 180, 225, 0.44) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 2px 8px rgba(120, 180, 230, 0.08) !important;
 }
 
 .irrigation-engineering-page .form-control:focus,
 .irrigation-engineering-page .form-select:focus,
 .irrigation-engineering-page .aero-input:focus {
-  border-color: rgba(59,152,232,0.75) !important;
-  box-shadow: 0 0 0 4px rgba(85,177,247,0.15), inset 0 1px 0 rgba(255,255,255,0.96) !important;
+  border-color: rgba(59, 152, 232, 0.75) !important;
+  box-shadow: 0 0 0 4px rgba(85, 177, 247, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
 }
 
 .irrigation-engineering-page .badge {
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.72);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 
 .irrigation-engineering-page .metric-.aero-card.aero-glass-card {
@@ -1314,16 +1508,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(213,236,253,0.82));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(213, 236, 253, 0.82));
   color: #2694e2;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.92), 0 8px 18px rgba(60,140,220,0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 8px 18px rgba(60, 140, 220, 0.1);
 }
 
 .irrigation-engineering-page .days-selector .form-check {
   padding: 0.55rem 0.8rem;
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(231,245,255,0.84));
-  border: 1px solid rgba(150,203,239,0.35);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(231, 245, 255, 0.84));
+  border: 1px solid rgba(150, 203, 239, 0.35);
 }
 
 @media (max-width: 768px) {
@@ -1351,46 +1545,46 @@
     width: 100%;
   }
 }
-  /* Legacy Modal Responsive */
-  .modal-dialog {
-    margin: 0.5rem;
-    max-width: calc(100% - 1rem);
-  }
 
-  .modal-dialog.modal-lg {
-    max-width: calc(100% - 1rem);
-  }
+/* Legacy Modal Responsive */
+.modal-dialog {
+  margin: 0.5rem;
+  max-width: calc(100% - 1rem);
+}
 
-  .modal-body {
-    padding: 1.5rem;
-  }
+.modal-dialog.modal-lg {
+  max-width: calc(100% - 1rem);
+}
 
-  .modal-footer {
-    flex-direction: column;
-    padding: 1rem;
-  }
+.modal-body {
+  padding: 1.5rem;
+}
 
-  .modal-footer .btn {
-    width: 100%;
-  }
+.modal-footer {
+  flex-direction: column;
+  padding: 1rem;
+}
 
-  .row.g-3 {
-    row-gap: 1rem !important;
-  }
+.modal-footer .btn {
+  width: 100%;
+}
 
-  .col-md-2,
-  .col-md-3,
-  .col-md-4,
-  .col-md-6,
-  .col-md-12 {
-    width: 100%;
-    max-width: 100%;
-  }
+.row.g-3 {
+  row-gap: 1rem !important;
+}
 
-  .badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-  }
+.col-md-2,
+.col-md-3,
+.col-md-4,
+.col-md-6,
+.col-md-12 {
+  width: 100%;
+  max-width: 100%;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
 }
 
 @media (max-width: 576px) {
@@ -1521,6 +1715,7 @@
    PRINT STYLES
    ============================================================================ */
 @media print {
+
   .page-header button,
   .card-header button,
   .btn-group,
@@ -1545,7 +1740,7 @@
   .table {
     font-size: 10pt;
   }
-  
+
   .table thead.table-header th.sortable i {
     display: none;
   }
@@ -1647,67 +1842,151 @@
   .metrics-summary .metric-card {
     padding: 1rem;
   }
-  
+
   .metric-icon {
     width: 50px;
     height: 50px;
     font-size: 1.25rem;
   }
-  
+
   .metric-value {
     font-size: 1.5rem;
   }
 }
+
 /* --- AERO THEME INJECTIONS --- */
 .page-wrapper {
-    min-height: calc(100vh - 60px);
-    background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 50%, #81d4fa 100%);
-    padding-bottom: 2rem;
+  min-height: calc(100vh - 60px);
+  background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 50%, #81d4fa 100%);
+  padding-bottom: 2rem;
 }
 
 .aero-card {
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15) !important;
-    border-radius: 16px !important;
-    background: rgba(255, 255, 255, 0.5) !important;
-    overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15) !important;
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  overflow: hidden !important;
 }
+
 .aero-glass-card {
-    backdrop-filter: blur(12px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
 }
+
 .aero-card-header {
-    background: linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 100%) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
-    color: #1a3a5c !important;
-    font-weight: 600 !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
+  color: #1a3a5c !important;
+  font-weight: 600 !important;
 }
+
 .aero-btn {
-    border-radius: 20px !important;
-    font-weight: 500 !important;
-    transition: all 0.3s ease !important;
-    border: 1px solid rgba(255,255,255,0.6) !important;
-    backdrop-filter: blur(4px) !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+  border-radius: 20px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(4px) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
 }
+
 .aero-btn:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.15) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15) !important;
 }
-.aero-btn-primary { background: linear-gradient(180deg, #4da6ff 0%, #1a75ff 100%) !important; color: white !important; }
-.aero-btn-success { background: linear-gradient(180deg, #6ae094 0%, #2db86a 100%) !important; color: white !important; }
-.aero-btn-danger  { background: linear-gradient(180deg, #ff7a7a 0%, #e60000 100%) !important; color: white !important; }
-.aero-btn-warning { background: linear-gradient(180deg, #ffcc66 0%, #ff9900 100%) !important; color: #333 !important; }
-.aero-btn-secondary{background: linear-gradient(180deg, #f0f0f0 0%, #d9d9d9 100%) !important; color: #333 !important; }
+
+.aero-btn-primary {
+  background: linear-gradient(180deg, #4da6ff 0%, #1a75ff 100%) !important;
+  color: white !important;
+}
+
+.aero-btn-success {
+  background: linear-gradient(180deg, #6ae094 0%, #2db86a 100%) !important;
+  color: white !important;
+}
+
+.aero-btn-danger {
+  background: linear-gradient(180deg, #ff7a7a 0%, #e60000 100%) !important;
+  color: white !important;
+}
+
+.aero-btn-warning {
+  background: linear-gradient(180deg, #ffcc66 0%, #ff9900 100%) !important;
+  color: #333 !important;
+}
+
+.aero-btn-secondary {
+  background: linear-gradient(180deg, #f0f0f0 0%, #d9d9d9 100%) !important;
+  color: #333 !important;
+}
+
 .aero-input {
-    background: rgba(255,255,255,0.8) !important;
-    border: 1px solid rgba(255,255,255,0.6) !important;
-    border-radius: 12px !important;
-    backdrop-filter: blur(4px) !important;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05) !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(4px) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05) !important;
 }
+
 .aero-modal-header-primary {
-    background: linear-gradient(180deg, #4da6ff 0%, #1a75ff 100%) !important;
-    color: white !important;
-    border-radius: 16px 16px 0 0 !important;
+  background: linear-gradient(180deg, #4da6ff 0%, #1a75ff 100%) !important;
+  color: white !important;
+  border-radius: 16px 16px 0 0 !important;
+}
+/* ============================================================
+   METRICS SUMMARY — TOTAL CARD ACCENT
+   ============================================================ */
+.metric-card--total {
+  border-left: 3px solid rgba(13, 202, 240, 0.6);
+}
+
+.metric-card--total .metric-icon {
+  color: #0dcaf0;
+}
+
+/* ============================================================
+   DRAIN % MINI BAR IN TABLE
+   ============================================================ */
+.drain-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 90px;
+}
+
+.drain-mini-bar {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  overflow: visible;
+  min-width: 48px;
+}
+
+.drain-mini-fill {
+  height: 100%;
+  border-radius: 3px;
+  max-width: 100%;
+  transition: width 0.3s ease;
+}
+
+.drain-mini-fill.drain-ok {
+  background: linear-gradient(90deg, #198754, #28a745);
+}
+
+.drain-mini-fill.drain-warn {
+  background: linear-gradient(90deg, #ffc107, #fd7e14);
+}
+
+/* Target range marker at 10% and 30% positions */
+.drain-target-line {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 10%;
+  width: 20%;
+  border-left: 1px dashed rgba(255,255,255,0.3);
+  border-right: 1px dashed rgba(255,255,255,0.3);
+  pointer-events: none;
 }

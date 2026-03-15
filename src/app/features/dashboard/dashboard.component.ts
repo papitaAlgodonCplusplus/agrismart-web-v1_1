@@ -13,6 +13,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { IrrigationSectorService } from '../services/irrigation-sector.service';
 import { CropProductionSpecsService, CropProductionSpecs } from '../crop-production-specs/services/crop-production-specs.service';
+import { SensorConfigService, SENSOR_TYPES } from '../sensors/services/sensor-config.service';
 
 
 export interface ClimateKPIs {
@@ -111,7 +112,7 @@ interface RecentActivity {
 
 interface FlowEvent {
   deviceId: string;
-  sensorType: 'Water_flow_value' | 'Total_pulse';
+  sensorType: string; // Dynamically resolved via SensorConfigService
   changeDetectedAt: Date;
   previousPayload: number;
   currentPayload: number;
@@ -229,7 +230,8 @@ export class DashboardComponent implements OnInit {
     private catalogServiceInjected: CatalogService,
     private irrigationCalcServiceInjected: IrrigationCalculationsService,
     private cropProductionSpecsService: CropProductionSpecsService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private sensorConfig: SensorConfigService
   ) {
     // Assign injected services
     this.farmService = farmServiceInjected;
@@ -258,6 +260,8 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Ensure dashboard uses the latest DB-configured sensor type mappings.
+    this.sensorConfig.load();
     void this.initializeDashboard();
   }
 
@@ -390,31 +394,22 @@ export class DashboardComponent implements OnInit {
       const latestData = dataPoints[dataPoints.length - 1];
 
       // Battery alerts (low battery)
-      const batteryKeys = ['Bat', 'BAT', 'Bat_V', 'BatV'];
-      for (const key of batteryKeys) {
-        if (latestData.sensor === key && latestData !== null) {
-          const batValue = parseFloat(latestData.payload);
-          if (batValue < 3.5) alerts++; // Low battery threshold
-        }
+      if (latestData !== null && this.isSensorOfType(latestData.sensor, SENSOR_TYPES.BATTERY)) {
+        const batValue = parseFloat(latestData.payload);
+        if (batValue < 3.5) alerts++; // Low battery threshold
       }
 
       // Temperature alerts (anomalous readings)
-      const tempKeys = ['TEMP_SOIL', 'temp_SOIL', 'temp_DS18B20', 'TempC_DS18B20'];
-      for (const key of tempKeys) {
-        if (latestData.sensor === key && latestData !== null) {
-          const tempValue = parseFloat(latestData.payload);
-          if (tempValue > 100 || tempValue < 0) alerts++; // Anomalous temperature
-        }
+      if (latestData !== null && this.isSensorOfType(latestData.sensor, SENSOR_TYPES.SOIL_TEMPERATURE)) {
+        const tempValue = parseFloat(latestData.payload);
+        if (tempValue > 100 || tempValue < 0) alerts++; // Anomalous temperature
       }
 
       // pH alerts (out of optimal range)
-      const phKeys = ['PH1_SOIL', 'PH_SOIL'];
-      for (const key of phKeys) {
-        if (latestData.sensor === key && latestData !== null) {
-          const phValue = parseFloat(latestData.payload);
-          if (phValue < 1 || phValue > 14) alerts++; // Invalid pH
-          else if (phValue < 5.5 || phValue > 7.5) alerts++; // Out of optimal range
-        }
+      if (latestData !== null && this.isSensorOfType(latestData.sensor, SENSOR_TYPES.SOIL_PH)) {
+        const phValue = parseFloat(latestData.payload);
+        if (phValue < 1 || phValue > 14) alerts++; // Invalid pH
+        else if (phValue < 5.5 || phValue > 7.5) alerts++; // Out of optimal range
       }
 
       // Alarm alerts
@@ -423,8 +418,8 @@ export class DashboardComponent implements OnInit {
       }
 
       // Pressure alerts
-      if (latestData['Water_pressure_MPa'] !== undefined) {
-        const pressure = parseFloat(latestData['Water_pressure_MPa'].payload);
+      if (latestData !== null && this.isSensorOfType(latestData.sensor, SENSOR_TYPES.WATER_PRESSURE)) {
+        const pressure = parseFloat(latestData.payload);
         if (pressure > 1.0) alerts++; // High pressure
       }
 
@@ -438,83 +433,71 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * Detect flow events based on payload changes in Water_flow_value and Total_pulse sensors
+   * Detect flow events based on payload changes in configured water flow and pulse counter sensors.
    */
   private detectFlowEvents(): void {
     this.flowEvents = [];
     const rawDeviceData = this.rawData.deviceRawData || [];
+    const waterFlowLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.WATER_FLOW);
+    const pulseLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.PULSE_COUNTER);
+    const allFlowLabels = new Set([...waterFlowLabels, ...pulseLabels]);
 
     // Group data by deviceId and sensor
     const deviceSensorMap = new Map<string, Map<string, any[]>>();
 
     rawDeviceData.forEach((data: any) => {
       const sensor = data.sensor;
-
-      // Only process Water_flow_value and Total_pulse sensors
-      if (sensor !== 'Water_flow_value' && sensor !== 'Total_pulse') {
-        return;
-      }
+      if (!allFlowLabels.has(sensor)) return;
 
       const deviceId = data.deviceId;
-
-      if (!deviceSensorMap.has(deviceId)) {
-        deviceSensorMap.set(deviceId, new Map());
-      }
+      if (!deviceSensorMap.has(deviceId)) deviceSensorMap.set(deviceId, new Map());
 
       const sensorMap = deviceSensorMap.get(deviceId)!;
-      if (!sensorMap.has(sensor)) {
-        sensorMap.set(sensor, []);
-      }
-
+      if (!sensorMap.has(sensor)) sensorMap.set(sensor, []);
       sensorMap.get(sensor)!.push(data);
     });
 
-    // Process each device separately
     deviceSensorMap.forEach((sensorMap, deviceId) => {
-      // Sort readings by time for each sensor
-      sensorMap.forEach((readings, sensorType) => {
-        readings.sort((a, b) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime());
+      sensorMap.forEach(readings => {
+        readings.sort((a: any, b: any) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime());
       });
 
-      // Track which timestamps already have events to avoid duplicates
       const eventTimestamps = new Set<string>();
 
-      // Detect changes in Water_flow_value
-      if (sensorMap.has('Water_flow_value')) {
-        const waterFlowReadings = sensorMap.get('Water_flow_value')!;
+      // Detect changes in water flow sensors
+      waterFlowLabels.forEach(label => {
+        if (!sensorMap.has(label)) return;
+        const waterFlowReadings = sensorMap.get(label)!;
 
         for (let i = 1; i < waterFlowReadings.length; i++) {
           const current = waterFlowReadings[i];
           const previous = waterFlowReadings[i - 1];
-
           const currentPayload = parseFloat(current.payload);
           const previousPayload = parseFloat(previous.payload);
           const currentTime = new Date(current.recordDate);
           const previousTime = new Date(previous.recordDate);
 
-          // Check if there was a change in payload
           if (currentPayload !== previousPayload) {
             const timeDiff = currentTime.getTime() - previousTime.getTime();
             const timeKey = currentTime.toISOString();
 
-            // Check if Total_pulse also changed at the same time (within 5 seconds)
+            // Check if any pulse counter also changed at the same time (within 5 seconds)
             let isCombinedEvent = false;
-            if (sensorMap.has('Total_pulse')) {
-              const totalPulseReadings = sensorMap.get('Total_pulse')!;
-              isCombinedEvent = totalPulseReadings.some(tpReading => {
-                const tpTime = new Date(tpReading.recordDate);
-                return Math.abs(tpTime.getTime() - currentTime.getTime()) <= 5000; // 5 second window
-              });
-            }
+            pulseLabels.forEach(pulseLabel => {
+              if (sensorMap.has(pulseLabel)) {
+                isCombinedEvent = isCombinedEvent || sensorMap.get(pulseLabel)!.some((tpReading: any) => {
+                  return Math.abs(new Date(tpReading.recordDate).getTime() - currentTime.getTime()) <= 5000;
+                });
+              }
+            });
 
-            // Only add if not already recorded at this timestamp
             if (!eventTimestamps.has(timeKey)) {
               this.flowEvents.push({
-                deviceId: deviceId,
-                sensorType: 'Water_flow_value',
+                deviceId,
+                sensorType: label,
                 changeDetectedAt: currentTime,
-                previousPayload: previousPayload,
-                currentPayload: currentPayload,
+                previousPayload,
+                currentPayload,
                 volumeOfWater: currentPayload,
                 timeDifference: timeDiff
               });
@@ -522,38 +505,35 @@ export class DashboardComponent implements OnInit {
             }
           }
         }
-      }
+      });
 
-      // Detect changes in Total_pulse (only if not already counted)
-      if (sensorMap.has('Total_pulse')) {
-        const totalPulseReadings = sensorMap.get('Total_pulse')!;
+      // Detect changes in pulse counter sensors (only if not already counted)
+      pulseLabels.forEach(label => {
+        if (!sensorMap.has(label)) return;
+        const totalPulseReadings = sensorMap.get(label)!;
 
         for (let i = 1; i < totalPulseReadings.length; i++) {
           const current = totalPulseReadings[i];
           const previous = totalPulseReadings[i - 1];
-
           const currentPayload = parseFloat(current.payload);
           const previousPayload = parseFloat(previous.payload);
           const currentTime = new Date(current.recordDate);
           const previousTime = new Date(previous.recordDate);
           const timeKey = currentTime.toISOString();
 
-          // Only add if there was a change AND it's not already recorded
           if (currentPayload !== previousPayload && !eventTimestamps.has(timeKey)) {
-            const timeDiff = currentTime.getTime() - previousTime.getTime();
-
             this.flowEvents.push({
-              deviceId: deviceId,
-              sensorType: 'Total_pulse',
+              deviceId,
+              sensorType: label,
               changeDetectedAt: currentTime,
-              previousPayload: previousPayload,
-              currentPayload: currentPayload,
-              timeDifference: timeDiff
+              previousPayload,
+              currentPayload,
+              timeDifference: currentTime.getTime() - previousTime.getTime()
             });
             eventTimestamps.add(timeKey);
           }
         }
-      }
+      });
     });
 
     // Sort events by time (most recent first)
@@ -599,153 +579,137 @@ export class DashboardComponent implements OnInit {
       }
 
       // Battery alerts
-      const batteryKeys = ['Bat', 'BAT', 'Bat_V', 'BatV'];
-      for (const key of batteryKeys) {
-        if (latestData.sensor === key && latestData !== null) {
-          // 
-          const batValue = parseFloat(latestData.payload);
-          const timestamp = new Date(latestData.recordDate);
-          if (batValue < 3.5) {
-            this.recentActivities.push({
-              icon: 'bi-battery',
-              id: activityId++,
-              type: 'danger',
-              message: `${deviceName}: Batería crítica (${batValue.toFixed(2)}V)`,
-              timestamp,
-              deviceId: deviceName
-            });
-          } else if (batValue < 3.3) {
-            this.recentActivities.push({
-              icon: 'bi-battery-half',
-              id: activityId++,
-              type: 'warning',
-              message: `${deviceName}: Batería baja (${batValue.toFixed(2)}V)`,
-              timestamp,
-              deviceId: deviceName
-            });
-          }
+      if (latestData !== null && this.isSensorOfType(latestData.sensor, SENSOR_TYPES.BATTERY)) {
+        const batValue = parseFloat(latestData.payload);
+        const timestamp = new Date(latestData.recordDate);
+        if (batValue < 3.5) {
+          this.recentActivities.push({
+            icon: 'bi-battery',
+            id: activityId++,
+            type: 'danger',
+            message: `${deviceName}: Batería crítica (${batValue.toFixed(2)}V)`,
+            timestamp,
+            deviceId: deviceName
+          });
+        } else if (batValue < 3.3) {
+          this.recentActivities.push({
+            icon: 'bi-battery-half',
+            id: activityId++,
+            type: 'warning',
+            message: `${deviceName}: Batería baja (${batValue.toFixed(2)}V)`,
+            timestamp,
+            deviceId: deviceName
+          });
         }
       }
 
       // Temperature alerts
-      const tempKeys = ['TEMP_SOIL', 'temp_SOIL', 'temp_DS18B20', 'TempC_DS18B20'];
-      for (const key of tempKeys) {
-        if (latestData.sensor === key && latestData !== null) {
-          const tempValue = parseFloat(latestData.payload);
-          const timestamp = new Date(latestData.recordDate);
-          if (tempValue > 100) {
-            this.recentActivities.push({
-              icon: 'bi-thermometer-high',
-              id: activityId++,
-              type: 'warning',
-              message: `${deviceName}: Temperatura anómala (${tempValue.toFixed(1)}°C)`,
-              timestamp,
-              deviceId: deviceName
-            });
-          } else if (tempValue > 50) {
-            this.recentActivities.push({
-              icon: 'bi-thermometer-sun',
-              id: activityId++,
-              type: 'warning',
-              message: `${deviceName}: Temperatura alta (${tempValue.toFixed(1)}°C)`,
-              timestamp,
-              deviceId: deviceName
-            });
-          }
+      if (latestData !== null && this.isSensorOfType(latestData.sensor, SENSOR_TYPES.SOIL_TEMPERATURE)) {
+        const tempValue = parseFloat(latestData.payload);
+        const timestamp = new Date(latestData.recordDate);
+        if (tempValue > 100) {
+          this.recentActivities.push({
+            icon: 'bi-thermometer-high',
+            id: activityId++,
+            type: 'warning',
+            message: `${deviceName}: Temperatura anómala (${tempValue.toFixed(1)}°C)`,
+            timestamp,
+            deviceId: deviceName
+          });
+        } else if (tempValue > 50) {
+          this.recentActivities.push({
+            icon: 'bi-thermometer-sun',
+            id: activityId++,
+            type: 'warning',
+            message: `${deviceName}: Temperatura alta (${tempValue.toFixed(1)}°C)`,
+            timestamp,
+            deviceId: deviceName
+          });
         }
       }
 
       // PAR / Solar Radiation alerts
-      const parKeys = ['TSR', 'Solar_Radiation', 'illumination'];
-      for (const key of parKeys) {
-        if (latestData.sensor === key && latestData !== null) {
-          const parValue = parseFloat(latestData.payload);
-          const timestamp = new Date(latestData.recordDate);
-          if (parValue > 1000) {
-            this.recentActivities.push({
-              icon: 'bi-sun',
-              id: activityId++,
-              type: 'warning',
-              message: `${deviceName}: Radiación solar alta (${parValue.toFixed(1)} W/m²)`,
-              timestamp,
-              deviceId: deviceName
-            });
-          } else if (parValue == 0) {
-            this.recentActivities.push({
-              icon: 'bi-sun',
-              id: activityId++,
-              type: 'info',
-              message: `${deviceName}: Radiación solar no detectada`,
-              timestamp,
-              deviceId: deviceName
-            });
-          }
+      if (latestData !== null && this.isSensorOfType(latestData.sensor, SENSOR_TYPES.SOLAR_RADIATION)) {
+        const parValue = parseFloat(latestData.payload);
+        const timestamp = new Date(latestData.recordDate);
+        if (parValue > 1000) {
+          this.recentActivities.push({
+            icon: 'bi-sun',
+            id: activityId++,
+            type: 'warning',
+            message: `${deviceName}: Radiación solar alta (${parValue.toFixed(1)} W/m²)`,
+            timestamp,
+            deviceId: deviceName
+          });
+        } else if (parValue == 0) {
+          this.recentActivities.push({
+            icon: 'bi-sun',
+            id: activityId++,
+            type: 'info',
+            message: `${deviceName}: Radiación solar no detectada`,
+            timestamp,
+            deviceId: deviceName
+          });
         }
       }
 
 
       // wind alerts
-      const windKeys = ['wind_speed_level', 'wind_speed', 'wind_direction'];
-      for (const key of windKeys) {
-        if (latestData.sensor === key && latestData !== null) {
-          const windValue = parseFloat(latestData.payload);
-          const timestamp = new Date(latestData.recordDate);
-          if (windValue > 80) {
-            this.recentActivities.push({
-              icon: 'bi-wind',
-              id: activityId++,
-              type: 'danger',
-              message: `${deviceName}: Velocidad de viento peligrosa (${windValue.toFixed(1)} km/h)`,
-              timestamp,
-              deviceId: deviceName
-            });
-          } else if (windValue > 50) {
-            this.recentActivities.push({
-              icon: 'bi-wind',
-              id: activityId++,
-              type: 'warning',
-              message: `${deviceName}: Velocidad de viento alta (${windValue.toFixed(1)} km/h)`,
-              timestamp,
-              deviceId: deviceName
-            });
-          } else if (windValue == 0) {
-            this.recentActivities.push({
-              icon: 'bi-wind',
-              id: activityId++,
-              type: 'info',
-              message: `${deviceName}: Sin viento detectado`,
-              timestamp,
-              deviceId: deviceName
-            });
-          }
+      if (latestData !== null && this.isSensorOfType(latestData.sensor, SENSOR_TYPES.WIND_SPEED)) {
+        const windValue = parseFloat(latestData.payload);
+        const timestamp = new Date(latestData.recordDate);
+        if (windValue > 80) {
+          this.recentActivities.push({
+            icon: 'bi-wind',
+            id: activityId++,
+            type: 'danger',
+            message: `${deviceName}: Velocidad de viento peligrosa (${windValue.toFixed(1)} km/h)`,
+            timestamp,
+            deviceId: deviceName
+          });
+        } else if (windValue > 50) {
+          this.recentActivities.push({
+            icon: 'bi-wind',
+            id: activityId++,
+            type: 'warning',
+            message: `${deviceName}: Velocidad de viento alta (${windValue.toFixed(1)} km/h)`,
+            timestamp,
+            deviceId: deviceName
+          });
+        } else if (windValue == 0) {
+          this.recentActivities.push({
+            icon: 'bi-wind',
+            id: activityId++,
+            type: 'info',
+            message: `${deviceName}: Sin viento detectado`,
+            timestamp,
+            deviceId: deviceName
+          });
         }
       }
 
       // pH alerts
-      const phKeys = ['PH1_SOIL', 'PH_SOIL'];
-      for (const key of phKeys) {
-        if (latestData.sensor === key && latestData !== null) {
-          const phValue = parseFloat(latestData.payload);
-          const timestamp = new Date(latestData.recordDate);
-          if (phValue < 1 || phValue > 14) {
-            this.recentActivities.push({
-              icon: 'bi-droplet',
-              id: activityId++,
-              type: 'warning',
-              message: `${deviceName}: pH fuera de rango (${phValue.toFixed(2)})`,
-              timestamp,
-              deviceId: deviceName
-            });
-          } else if (phValue < 5.5 || phValue > 7.5) {
-            this.recentActivities.push({
-              icon: 'bi-droplet-half',
-              id: activityId++,
-              type: 'info',
-              message: `${deviceName}: pH no óptimo (${phValue.toFixed(2)})`,
-              timestamp,
-              deviceId: deviceName
-            });
-          }
+      if (latestData !== null && this.isSensorOfType(latestData.sensor, SENSOR_TYPES.SOIL_PH)) {
+        const phValue = parseFloat(latestData.payload);
+        const timestamp = new Date(latestData.recordDate);
+        if (phValue < 1 || phValue > 14) {
+          this.recentActivities.push({
+            icon: 'bi-droplet',
+            id: activityId++,
+            type: 'warning',
+            message: `${deviceName}: pH fuera de rango (${phValue.toFixed(2)})`,
+            timestamp,
+            deviceId: deviceName
+          });
+        } else if (phValue < 5.5 || phValue > 7.5) {
+          this.recentActivities.push({
+            icon: 'bi-droplet-half',
+            id: activityId++,
+            type: 'info',
+            message: `${deviceName}: pH no óptimo (${phValue.toFixed(2)})`,
+            timestamp,
+            deviceId: deviceName
+          });
         }
       }
 
@@ -762,15 +726,15 @@ export class DashboardComponent implements OnInit {
       }
 
       // Pressure alerts
-      if (latestData['Water_pressure_MPa'] !== undefined) {
-        const pressure = parseFloat(latestData['Water_pressure_MPa'].payload);
+      if (latestData !== null && this.isSensorOfType(latestData.sensor, SENSOR_TYPES.WATER_PRESSURE)) {
+        const pressure = parseFloat(latestData.payload);
         if (pressure > 1.0) {
           this.recentActivities.push({
             icon: 'bi-arrows-angle-expand',
             id: activityId++,
             type: 'warning',
             message: `${deviceName}: Presión alta (${pressure.toFixed(3)} MPa)`,
-            timestamp: new Date(latestData['Water_pressure_MPa'].recordDate),
+            timestamp: new Date(latestData.recordDate),
             deviceId: deviceName
           });
         }
@@ -1050,6 +1014,21 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/process-kpis']);
   }
 
+  // ── Role helpers ─────────────────────────────────────────────────────────────
+  get isAdminUser(): boolean               { return this.authService.isAdminUser(); }
+  get isTechnicianUser(): boolean          { return this.authService.isTechnicianUser(); }
+  get isAgronomistUser(): boolean          { return this.authService.isAgronomistUser(); }
+  get isAgronomistTechnicianUser(): boolean { return this.authService.isAgronomistTechnicianUser(); }
+
+  /** Admin/combined sees everything; Technician sees hardware/config; Agronomist sees production/operative */
+  canSee(feature: 'tech' | 'agro' | 'both'): boolean {
+    if (this.isAdminUser || this.isAgronomistTechnicianUser) return true;
+    if (feature === 'tech')  return this.isTechnicianUser;
+    if (feature === 'agro')  return this.isAgronomistUser;
+    if (feature === 'both')  return this.isTechnicianUser || this.isAgronomistUser;
+    return false;
+  }
+
   /**
    * Load available fertilizers from catalog
    */
@@ -1194,21 +1173,18 @@ export class DashboardComponent implements OnInit {
     this.climateKPIs = Array.from(hourlyData.entries()).map(([hour, sensors]) => {
       // 
 
-      // Extract temperature from DS18B20 sensor
-      const temps = this.extractSensorValues(sensors, 'temp')
+      // Extract temperature from configured soil temperature sensors
+      const temps = this.extractSensorValuesByType(sensors, SENSOR_TYPES.SOIL_TEMPERATURE)
         .map(v => v / 10); // Convert from sensor reading
 
-      // Extract humidity from HUM sensors
-      const humidities = [
-        ...this.extractSensorValues(sensors, 'HUM'),
-        ...this.extractSensorValues(sensors, 'Hum_SHT2x')
-      ];
+      // Extract humidity from configured air humidity sensors
+      const humidities = this.extractSensorValuesByType(sensors, SENSOR_TYPES.AIR_HUMIDITY);
 
       // Extract wind speed
-      const windSpeeds = this.extractSensorValues(sensors, 'wind_speed_level');
+      const windSpeeds = this.extractSensorValuesByType(sensors, SENSOR_TYPES.WIND_SPEED);
 
       // Extract PAR (solar radiation)
-      const solarRadiation = this.extractSensorValues(sensors, 'TSR');
+      const solarRadiation = this.extractSensorValuesByType(sensors, SENSOR_TYPES.SOLAR_RADIATION);
 
       ////
 
@@ -1314,9 +1290,10 @@ export class DashboardComponent implements OnInit {
       d.sensor === 'IDC_intput_mA'
     );
 
-    // Get all flow data (Water_flow_value sensor)
+    // Get all flow data (configured water flow sensors)
+    const waterFlowLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.WATER_FLOW);
     const allFlowData = this.rawData.deviceRawData.filter((d: any) =>
-      d.sensor === 'Water_flow_value'
+      waterFlowLabels.includes(d.sensor)
     );
 
     // Group flow data by device ID
@@ -1687,6 +1664,33 @@ export class DashboardComponent implements OnInit {
       .filter(s => s.sensor.includes(sensorName))
       .map(s => typeof s.payload === 'number' ? s.payload : parseFloat(s.payload))
       .filter(v => !isNaN(v));
+  }
+
+  private extractSensorValuesByType(sensors: any[], sensorType: string): number[] {
+    const sensorLabels = this.sensorConfig.getSensorLabelsByType(sensorType);
+    if (!sensorLabels.length) {
+      return [];
+    }
+
+    const normalizedLabels = new Set(sensorLabels.map(label => this.normalizeSensorLabel(label)));
+    return sensors
+      .filter(s => normalizedLabels.has(this.normalizeSensorLabel(s?.sensor)))
+      .map(s => typeof s.payload === 'number' ? s.payload : parseFloat(s.payload))
+      .filter(v => !isNaN(v));
+  }
+
+  private isSensorOfType(sensorLabel: string | undefined, sensorType: string): boolean {
+    if (!sensorLabel) {
+      return false;
+    }
+
+    const configuredLabels = this.sensorConfig.getSensorLabelsByType(sensorType);
+    const normalized = this.normalizeSensorLabel(sensorLabel);
+    return configuredLabels.some(label => this.normalizeSensorLabel(label) === normalized);
+  }
+
+  private normalizeSensorLabel(label: string | undefined): string {
+    return (label || '').trim().toLowerCase();
   }
 
   private calculateStatsValues(values: number[]): { min: number; max: number; avg: number } {
@@ -2255,6 +2259,14 @@ export class DashboardComponent implements OnInit {
    */
   getTotalEventsDetected(): number {
     return this.flowEvents.length;
+  }
+
+  isWaterFlowSensor(sensorLabel: string): boolean {
+    return this.sensorConfig.isSensorOfType(sensorLabel, SENSOR_TYPES.WATER_FLOW);
+  }
+
+  isPulseCounterSensor(sensorLabel: string): boolean {
+    return this.sensorConfig.isSensorOfType(sensorLabel, SENSOR_TYPES.PULSE_COUNTER);
   }
 
   /**

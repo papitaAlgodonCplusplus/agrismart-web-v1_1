@@ -416,10 +416,12 @@
       </div>
       <app-irrigation-volume-calculator
         [substrateCurve]="currentCurve"
-        [numberOfContainers]="1000"
-        [containersPerPlant]="1"
-        [totalArea]="1000"
-        [plantDensity]="2.5"
+        [numberOfContainers]="derivedNumberOfContainers"
+        [containersPerPlant]="derivedPlantsPerContainer"
+        [totalArea]="derivedTotalArea"
+        [plantDensity]="derivedPlantDensity"
+        [initialDrainPercentage]="derivedDrainPercentage"
+        [initialDepletionPercentage]="derivedDepletionPercentage"
         (volumeCalculated)="onVolumeCalculated($event)"
         (applyIrrigation)="onApplyIrrigation($event)">
       </app-irrigation-volume-calculator>

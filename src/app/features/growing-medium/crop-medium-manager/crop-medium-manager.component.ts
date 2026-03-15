@@ -60,6 +60,7 @@ export class CropMediumManagerComponent implements OnInit, OnDestroy {
     this.mediumForm = this.fb.group({
       catalogId:                    [null, Validators.required],
       name:                         ['',   [Validators.required, Validators.minLength(2)]],
+      saturationPoint:              [95.8, [Validators.required, Validators.min(0), Validators.max(100)]],
       containerCapacityPercentage:  [null, [Validators.required, Validators.min(0), Validators.max(100)]],
       permanentWiltingPoint:        [null, [Validators.required, Validators.min(0), Validators.max(100)]],
       fiveKpaHumidity:              [null, [Validators.required, Validators.min(0), Validators.max(100)]],
@@ -103,6 +104,7 @@ export class CropMediumManagerComponent implements OnInit, OnDestroy {
     this.mediumService.getAll(this.includeInactives).pipe(
       map((res: any) => {
         this.media = res.growingMediums || res || [];
+        console.log('Loaded growing mediums:', this.media);
         return this.media;
       }),
       catchError(() => {
@@ -143,6 +145,7 @@ export class CropMediumManagerComponent implements OnInit, OnDestroy {
     this.mediumForm.patchValue({
       catalogId:                    medium.catalogId,
       name:                         medium.name,
+      saturationPoint:              medium.saturationPoint ?? 95.8,
       containerCapacityPercentage:  medium.containerCapacityPercentage,
       permanentWiltingPoint:        medium.permanentWiltingPoint,
       fiveKpaHumidity:              medium.fiveKpaHumidity,
@@ -179,6 +182,7 @@ export class CropMediumManagerComponent implements OnInit, OnDestroy {
         id:                           this.selectedMedium.id,
         catalogId:                    v.catalogId,
         name:                         v.name,
+        saturationPoint:              v.saturationPoint,
         containerCapacityPercentage:  v.containerCapacityPercentage,
         permanentWiltingPoint:        v.permanentWiltingPoint,
         fiveKpaHumidity:              v.fiveKpaHumidity,
@@ -196,6 +200,7 @@ export class CropMediumManagerComponent implements OnInit, OnDestroy {
       const cmd: CreateGrowingMediumCommand = {
         catalogId:                    v.catalogId,
         name:                         v.name,
+        saturationPoint:              v.saturationPoint,
         containerCapacityPercentage:  v.containerCapacityPercentage,
         permanentWiltingPoint:        v.permanentWiltingPoint,
         fiveKpaHumidity:              v.fiveKpaHumidity,

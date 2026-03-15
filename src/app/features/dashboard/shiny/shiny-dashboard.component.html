@@ -918,17 +918,17 @@
               <p><small>ID de Registro: {{ device.registeredDevice?.id }}</small></p>
             </div>
             <div *ngIf="device.isActive">
-              <div class="reading" *ngIf="hasNumericReading(device, 'Water_flow_value')">
+              <div class="reading" *ngIf="hasReadingByType(device, SENSOR_TYPES.WATER_FLOW, 'Water_flow_value')">
                 <span class="label">Valor de Flujo:</span>
-                <span class="value">{{ getReadingValue(device, 'Water_flow_value') }}</span>
+                <span class="value">{{ getReadingValueByType(device, SENSOR_TYPES.WATER_FLOW, 'Water_flow_value') }}</span>
               </div>
               <div class="reading" *ngIf="hasNumericReading(device, 'MOD')">
                 <span class="label">Tasa de Flujo:</span>
                 <span class="value">{{ getReadingValue(device, 'MOD') }}</span>
               </div>
-              <div class="reading" *ngIf="hasNumericReading(device, 'Total_pulse')">
+              <div class="reading" *ngIf="hasReadingByType(device, SENSOR_TYPES.PULSE_COUNTER, 'Total_pulse')">
                 <span class="label">Pulsos Totales:</span>
-                <span class="value">{{ getReadingValue(device, 'Total_pulse') }}</span>
+                <span class="value">{{ getReadingValueByType(device, SENSOR_TYPES.PULSE_COUNTER, 'Total_pulse') }}</span>
               </div>
               <div class="reading">
                 <span class="label">Alarma:</span>
@@ -997,13 +997,9 @@
                 <span class="label">Conductividad:</span>
                 <span class="value">{{ getReadingValue(device, 'conduct_SOIL') }}</span>
               </div>
-              <div class="reading" *ngIf="hasNumericReading(device, 'temp_DS18B20')">
-                <span class="label">Temperatura:</span>
-                <span class="value">{{ getReadingValue(device, 'temp_DS18B20') }}</span>
-              </div>
-              <div class="reading" *ngIf="hasNumericReading(device, 'TEMP_SOIL')">
+              <div class="reading" *ngIf="hasReadingByType(device, SENSOR_TYPES.SOIL_TEMPERATURE, 'TEMP_SOIL')">
                 <span class="label">Temperatura del Suelo:</span>
-                <span class="value">{{ getReadingValue(device, 'TEMP_SOIL') }}</span>
+                <span class="value">{{ getReadingValueByType(device, SENSOR_TYPES.SOIL_TEMPERATURE, 'TEMP_SOIL') }}</span>
               </div>
               <div class="reading">
                 <span class="label">Última Actualización:</span>
@@ -1067,9 +1063,9 @@
                   {{ getReadingValue(device, 'PH_SOIL') }}
                 </span>
               </div>
-              <div class="reading" *ngIf="hasNumericReading(device, 'TEMP_SOIL')">
+              <div class="reading" *ngIf="hasReadingByType(device, SENSOR_TYPES.SOIL_TEMPERATURE, 'TEMP_SOIL')">
                 <span class="label">Temperatura del Suelo:</span>
-                <span class="value">{{ getReadingValue(device, 'TEMP_SOIL') }}</span>
+                <span class="value">{{ getReadingValueByType(device, SENSOR_TYPES.SOIL_TEMPERATURE, 'TEMP_SOIL') }}</span>
               </div>
               <div class="reading" *ngIf="hasNumericReading(device, 'Bat')">
                 <span class="label">Batería:</span>

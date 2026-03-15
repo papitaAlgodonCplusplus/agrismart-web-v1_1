@@ -1,4 +1,4 @@
-﻿using AgriSmart.Core.Configuration;
+using AgriSmart.Core.Configuration;
 using AgriSmart.Infrastructure.Data;
 using AgriSmart.Core.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +28,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                 return await (from l in _context.License
                               where (
                                         (l.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (l.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (l.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((l.ClientId == clientId) || clientId == 0)
@@ -48,7 +48,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                 return await (from l in _context.License
                               where (
                                         (l.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (l.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (l.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                      && (l.Id == id)

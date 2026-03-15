@@ -13,6 +13,7 @@ import { IrrigationCalculationsService, IrrigationMetric } from './irrigation-ca
 import { GrowingMediumService, GrowingMedium as GrowingMediumEntity } from '../growing-medium/services/growing-medium.service';
 import { ContainerService } from './container.service';
 import { CropPhaseService, CropPhase } from '../crop-phases/services/crop-phase.service';
+import { SensorConfigService, SENSOR_TYPES } from '../sensors/services/sensor-config.service';
 
 // Models
 import {
@@ -55,6 +56,10 @@ const AVOID_IRRIGATION_HOURS = { start: 11, end: 14 }; // midday
 })
 export class IrrigationDecisionEngineService {
 
+  // Tracks the depletionPercentage threshold used at the last irrigation call per cropProductionId.
+  // Used to decide between Case A (full recalculation) and Case B (drain-adjustment).
+  private _lastDepletionMap = new Map<number, number>();
+
   constructor(
     private irrigationService: IrrigationSectorService,
     private cropProductionService: CropProductionService,
@@ -62,7 +67,8 @@ export class IrrigationDecisionEngineService {
     private irrigationCalc: IrrigationCalculationsService,
     private growingMediumService: GrowingMediumService,
     private containerService: ContainerService,
-    private cropPhaseService: CropPhaseService
+    private cropPhaseService: CropPhaseService,
+    private sensorConfig: SensorConfigService
   ) { }
 
   // ============================================================================
@@ -112,7 +118,7 @@ export class IrrigationDecisionEngineService {
           : of(null);
         return forkJoin({
           soilMoisture: this.getSoilMoisture(cropProductionId),
-          substrate: this.getSubstrateProperties(cropProductionId),
+          substrate: this.getSubstrateProperties(cropProduction),
           climate: this.getCurrentClimate(cropProductionId),
           history: this.getRecentIrrigationHistory(cropProductionId),
           container: container$,
@@ -128,7 +134,8 @@ export class IrrigationDecisionEngineService {
               cropProduction,
               data.substrate,
               data.container,
-              data.dropper
+              data.dropper,
+              data.history
             );
           })
         );
@@ -151,39 +158,47 @@ export class IrrigationDecisionEngineService {
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
+    const soilMoistureLabels = new Set(
+      this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.SOIL_HUMIDITY)
+    );
+
     return this.irrigationService.getDeviceRawData(
       undefined,
       yesterday.toISOString(),
       now.toISOString()
     ).pipe(
       map(rawData => {
-        const moistureReadings = rawData.filter((d: any) =>
-          ['water_SOIL'].includes(d.sensor)
-        );
+
+        const moistureReadings = rawData
+          .filter((d: any) => d?.sensor && soilMoistureLabels.has(d.sensor));
 
         if (moistureReadings.length === 0) {
-          console.error('Sin datos de sensor de humedad de suelo (water_SOIL, water_SOIL_original, conduct_SOIL)');
-          throw new Error('Sin datos de sensor de humedad de suelo');
-        } else {
-          console.log('Últimos datos de humedad de suelo:', moistureReadings.slice(5));
+          console.error('No soil moisture sensor data found');
+          throw new Error('No soil moisture sensor data');
         }
 
-        const sorted = moistureReadings.sort((a: any, b: any) =>
-          new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
-        );
-        const moisture = typeof sorted[0].payload === 'number'
-          ? sorted[0].payload
-          : parseFloat(sorted[0].payload);
+        // sort newest first
+        const latest = moistureReadings.sort(
+          (a: any, b: any) =>
+            new Date(b.recordDate).getTime() - new Date(a.recordDate).getTime()
+        )[0];
 
-        if (isNaN(moisture)) {
-          console.error('Valor de humedad de suelo inválido:', sorted[0].payload);
-          throw new Error('Valor de humedad de suelo inválido');
+        console.log('Latest soil moisture readings:', moistureReadings.slice(0, 5));
+
+        const moisture =
+          typeof latest.payload === 'number'
+            ? latest.payload
+            : parseFloat(latest.payload);
+
+        if (Number.isNaN(moisture)) {
+          console.error('Invalid soil moisture value:', latest.payload);
+          throw new Error('Invalid soil moisture value');
         }
 
         return moisture;
       }),
       catchError(error => {
-        console.error('Error al obtener humedad de suelo:', error);
+        console.error('Error retrieving soil moisture:', error);
         throw error;
       })
     );
@@ -192,17 +207,48 @@ export class IrrigationDecisionEngineService {
   /**
    * Get substrate properties (container capacity, wilting point, etc.)
    */
-  private getSubstrateProperties(cropProductionId: number): Observable<GrowingMedium> {
-    return this.growingMediumService.getAll(false).pipe(
+  private getSubstrateProperties(cropProduction: any): Observable<GrowingMedium> {
+    const growingMediumId: number | undefined = cropProduction?.growingMediumId;
+
+    if (!growingMediumId) {
+      return this.growingMediumService.getAll(false).pipe(
+        map(response => {
+          const growingMedia = response.growingMediums ?? [];
+
+          if (growingMedia.length === 0) {
+            console.error('No se encontró ningún medio de cultivo activo');
+            throw new Error('No se encontró ningún medio de cultivo activo');
+          }
+
+          const growingMedium = growingMedia[0];
+
+          if (!growingMedium.containerCapacityPercentage) {
+            console.error('Medio de cultivo sin containerCapacityPercentage');
+            throw new Error('Medio de cultivo sin containerCapacityPercentage');
+          }
+
+          if (!growingMedium.permanentWiltingPoint) {
+            console.error('Medio de cultivo sin permanentWiltingPoint');
+            throw new Error('Medio de cultivo sin permanentWiltingPoint');
+          }
+
+          return growingMedium as GrowingMedium;
+        }),
+        catchError(error => {
+          console.error('Error al obtener propiedades del sustrato:', error);
+          throw error;
+        })
+      );
+    }
+
+    return this.growingMediumService.getById(growingMediumId).pipe(
       map(response => {
-        const growingMedia = response.growingMediums ?? [];
+        const growingMedium = response?.result?.growingMedium ?? response?.growingMedium ?? response;
 
-        if (growingMedia.length === 0) {
-          console.error('No se encontró ningún medio de cultivo activo');
-          throw new Error('No se encontró ningún medio de cultivo activo');
+        if (!growingMedium) {
+          console.error(`No se encontró el medio de cultivo con ID ${growingMediumId}`);
+          throw new Error('No se encontró el medio de cultivo para esta producción');
         }
-
-        const growingMedium = growingMedia[0];
 
         if (!growingMedium.containerCapacityPercentage) {
           console.error('Medio de cultivo sin containerCapacityPercentage');
@@ -243,20 +289,24 @@ export class IrrigationDecisionEngineService {
         const sensorTypes = [...new Set(rawData.map((d: any) => d.sensor))];
         console.log('Unique sensor types:', sensorTypes);
 
+        const soilTempLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.SOIL_TEMPERATURE);
+        const airHumidityLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.AIR_HUMIDITY);
         const tempReadings = rawData.filter((d: any) =>
-          ['temp_SOIL', 'temp_DS18B20', 'TEMP_SOIL', 'TempC_DS18B20'].includes(d.sensor)
+          soilTempLabels.includes(d.sensor)
         );
         const humidityReadings = rawData.filter((d: any) =>
-          ['HUM', 'Hum_SHT2x'].includes(d.sensor)
+          airHumidityLabels.includes(d.sensor)
         );
 
         if (tempReadings.length === 0) {
-          console.error('Sin datos de sensor de temperatura (temp_SOIL, temp_DS18B20)');
+          console.error('Sin datos de sensores configurados para temperatura');
           throw new Error('Sin datos de sensor de temperatura');
+        } else {
+          console.log('Últimos datos de temperatura:', tempReadings.slice(5));
         }
 
         if (humidityReadings.length === 0) {
-          console.warn('Sin datos de sensor de humedad relativa (HUM, Hum_SHT2x) — VPD no disponible');
+          console.warn('Sin datos de sensores configurados para humedad relativa — VPD no disponible');
         } else {
           console.log('Últimos datos de humedad relativa:', humidityReadings.slice(5));
         }
@@ -273,7 +323,7 @@ export class IrrigationDecisionEngineService {
           : null;
 
         if (currentHumidity === null) {
-          console.warn('Sin sensor de humedad relativa (HUM, Hum_SHT2x) — VPD no disponible');
+          console.warn('Sin sensor configurado de humedad relativa — VPD no disponible');
         }
 
         return { temperature: currentTemp, humidity: currentHumidity, vpd, timestamp: new Date() };
@@ -295,7 +345,7 @@ export class IrrigationDecisionEngineService {
   }
 
   /**
-   * Get recent irrigation history from Water_flow_value and Total_pulse sensors
+   * Get recent irrigation history from configured water-flow and pulse-counter sensors.
    */
   private getRecentIrrigationHistory(cropProductionId: number): Observable<any> {
     const now = new Date();
@@ -311,7 +361,7 @@ export class IrrigationDecisionEngineService {
         const flowEvents = this.detectFlowEvents(rawData);
 
         if (flowEvents.length === 0) {
-          console.error('Sin eventos de flujo de riego en los últimos 10 días (Water_flow_value, Total_pulse)');
+          console.error('Sin eventos de flujo de riego en los últimos 10 días (tipos flujo/contador de pulsos)');
           throw new Error('Sin historial de eventos de riego');
         }
 
@@ -320,6 +370,12 @@ export class IrrigationDecisionEngineService {
           b.changeDetectedAt.getTime() - a.changeDetectedAt.getTime()
         );
         const lastEvent = sortedEvents[0];
+
+        // Volume of the last single irrigation event (payload delta, ml → L)
+        const lastEventVolumeLiters = Math.max(
+          0,
+          ((lastEvent.currentPayload ?? 0) - (lastEvent.previousPayload ?? 0)) / 1000
+        );
 
         // Calculate average daily volume (total volume / days)
         var totalVolume = flowEvents.reduce((sum, event) =>
@@ -331,9 +387,12 @@ export class IrrigationDecisionEngineService {
         const daysCovered = (now.getTime() - tenDaysAgo.getTime()) / (1000 * 60 * 60 * 24);
         const averageDailyVolume = totalVolume / daysCovered;
 
-        // Calculate drainage percentage from drain sensors
+        // Calculate drainage percentage from configured rain-gauge sensors
+        const rainGaugeLabels = new Set(
+          this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.RAIN_GAUGE)
+        );
         const drainReadings = rawData.filter((d: any) =>
-          d.sensor && typeof d.sensor === 'string' && d.sensor.toLowerCase().includes('gauge')
+          d?.sensor && typeof d.sensor === 'string' && rainGaugeLabels.has(d.sensor)
         ); // 11218691
 
         let recentDrainagePercentage = 0;
@@ -365,7 +424,8 @@ export class IrrigationDecisionEngineService {
         return {
           lastIrrigationTime: lastEvent.changeDetectedAt,
           recentDrainagePercentage,
-          averageDailyVolume
+          averageDailyVolume,
+          lastEventVolumeLiters
         };
       }),
       catchError(error => {
@@ -376,112 +436,87 @@ export class IrrigationDecisionEngineService {
   }
 
   /**
-   * Detect flow events based on payload changes in Water_flow_value and Total_pulse sensors
+   * Detect flow events based on payload changes in configured water flow and pulse counter sensors.
    * (Same logic as dashboard component)
    */
   private detectFlowEvents(rawDeviceData: any[]): any[] {
     const flowEvents: any[] = [];
+    const waterFlowLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.WATER_FLOW);
+    const pulseLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.PULSE_COUNTER);
+    const allFlowLabels = new Set([...waterFlowLabels, ...pulseLabels]);
 
     // Group data by deviceId and sensor
     const deviceSensorMap = new Map<string, Map<string, any[]>>();
 
     rawDeviceData.forEach((data: any) => {
       const sensor = data.sensor;
-
-      // Only process Water_flow_value and Total_pulse sensors
-      if (sensor !== 'Water_flow_value' && sensor !== 'Total_pulse') {
-        return;
-      }
+      if (!allFlowLabels.has(sensor)) return;
 
       const deviceId = data.deviceId;
-
-      if (!deviceSensorMap.has(deviceId)) {
-        deviceSensorMap.set(deviceId, new Map());
-      }
+      if (!deviceSensorMap.has(deviceId)) deviceSensorMap.set(deviceId, new Map());
 
       const sensorMap = deviceSensorMap.get(deviceId)!;
-      if (!sensorMap.has(sensor)) {
-        sensorMap.set(sensor, []);
-      }
-
+      if (!sensorMap.has(sensor)) sensorMap.set(sensor, []);
       sensorMap.get(sensor)!.push(data);
     });
 
-    // Process each device separately
     deviceSensorMap.forEach((sensorMap, deviceId) => {
-      // Sort readings by time for each sensor
-      sensorMap.forEach((readings, sensorType) => {
-        readings.sort((a, b) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime());
+      sensorMap.forEach(readings => {
+        readings.sort((a: any, b: any) => new Date(a.recordDate).getTime() - new Date(b.recordDate).getTime());
       });
 
-      // Track which timestamps already have events to avoid duplicates
       const eventTimestamps = new Set<string>();
 
-      // Detect changes in Water_flow_value
-      if (sensorMap.has('Water_flow_value')) {
-        const waterFlowReadings = sensorMap.get('Water_flow_value')!;
-
-        for (let i = 1; i < waterFlowReadings.length; i++) {
-          const current = waterFlowReadings[i];
-          const previous = waterFlowReadings[i - 1];
-
+      // Detect changes in water flow sensors
+      waterFlowLabels.forEach(label => {
+        if (!sensorMap.has(label)) return;
+        const readings = sensorMap.get(label)!;
+        for (let i = 1; i < readings.length; i++) {
+          const current = readings[i];
+          const previous = readings[i - 1];
           const currentPayload = parseFloat(current.payload);
           const previousPayload = parseFloat(previous.payload);
           const currentTime = new Date(current.recordDate);
-          const previousTime = new Date(previous.recordDate);
-
-          // Check if there was a change in payload
-          if (currentPayload !== previousPayload) {
-            const timeDiff = currentTime.getTime() - previousTime.getTime();
-            const timeKey = currentTime.toISOString();
-
-            // Only add if not already recorded at this timestamp
-            if (!eventTimestamps.has(timeKey)) {
-              flowEvents.push({
-                deviceId: deviceId,
-                sensorType: 'Water_flow_value',
-                changeDetectedAt: currentTime,
-                previousPayload: previousPayload,
-                currentPayload: currentPayload,
-                volumeOfWater: currentPayload,
-                timeDifference: timeDiff
-              });
-              eventTimestamps.add(timeKey);
-            }
-          }
-        }
-      }
-
-      // Detect changes in Total_pulse (only if not already counted)
-      if (sensorMap.has('Total_pulse')) {
-        const totalPulseReadings = sensorMap.get('Total_pulse')!;
-
-        for (let i = 1; i < totalPulseReadings.length; i++) {
-          const current = totalPulseReadings[i];
-          const previous = totalPulseReadings[i - 1];
-
-          const currentPayload = parseFloat(current.payload);
-          const previousPayload = parseFloat(previous.payload);
-          const currentTime = new Date(current.recordDate);
-          const previousTime = new Date(previous.recordDate);
           const timeKey = currentTime.toISOString();
-
-          // Only add if there was a change AND it's not already recorded
           if (currentPayload !== previousPayload && !eventTimestamps.has(timeKey)) {
-            const timeDiff = currentTime.getTime() - previousTime.getTime();
-
             flowEvents.push({
-              deviceId: deviceId,
-              sensorType: 'Total_pulse',
+              deviceId,
+              sensorType: label,
               changeDetectedAt: currentTime,
-              previousPayload: previousPayload,
-              currentPayload: currentPayload,
-              timeDifference: timeDiff
+              previousPayload,
+              currentPayload,
+              volumeOfWater: currentPayload,
+              timeDifference: currentTime.getTime() - new Date(previous.recordDate).getTime()
             });
             eventTimestamps.add(timeKey);
           }
         }
-      }
+      });
+
+      // Detect changes in pulse counter sensors (only if not already counted)
+      pulseLabels.forEach(label => {
+        if (!sensorMap.has(label)) return;
+        const readings = sensorMap.get(label)!;
+        for (let i = 1; i < readings.length; i++) {
+          const current = readings[i];
+          const previous = readings[i - 1];
+          const currentPayload = parseFloat(current.payload);
+          const previousPayload = parseFloat(previous.payload);
+          const currentTime = new Date(current.recordDate);
+          const timeKey = currentTime.toISOString();
+          if (currentPayload !== previousPayload && !eventTimestamps.has(timeKey)) {
+            flowEvents.push({
+              deviceId,
+              sensorType: label,
+              changeDetectedAt: currentTime,
+              previousPayload,
+              currentPayload,
+              timeDifference: currentTime.getTime() - new Date(previous.recordDate).getTime()
+            });
+            eventTimestamps.add(timeKey);
+          }
+        }
+      });
     });
 
     return flowEvents;
@@ -499,6 +534,7 @@ export class IrrigationDecisionEngineService {
     console.log('Building decision factors with data:', data);
     const containerCapacity = data.substrate.containerCapacityPercentage;
     const currentMoisture = data.soilMoisture as number;
+    const moistureSetPoint = this.calculateHumiditySetPoint(data.substrate, data.cropProduction);
     console.log(`Current soil moisture: ${currentMoisture}, Container capacity: ${containerCapacity}`);
 
     const depletionPercentage = Math.max(0, ((containerCapacity - currentMoisture) / containerCapacity) * 100);
@@ -510,9 +546,15 @@ export class IrrigationDecisionEngineService {
 
     const currentHour = now.getHours();
 
+    const taw = data.substrate.totalAvailableWaterPercentage ?? 0;
+    // (CC - moisture) / TAW — fraction of TAW depleted, used in Case A volume formula
+    const availableDepletionFraction = taw > 0 ? Math.max(0, containerCapacity - currentMoisture) / taw : 0;
+
     return {
       currentMoisture,
       containerCapacity,
+      moistureSetPoint,
+      availableDepletionFraction,
       depletionPercentage,
       hasSoilMoistureData: true,
       currentVPD: data.climate.vpd,
@@ -558,11 +600,30 @@ export class IrrigationDecisionEngineService {
     cropProduction: any,
     substrate: GrowingMedium,
     container: Container,
-    dropper: any | null = null
+    dropper: any | null = null,
+    history: any = null
   ): IrrigationRecommendation {
+    const monitorEvaluation = this.irrigationCalc.toIrrigate(
+      {
+        id: cropProduction?.id ?? 0,
+        betweenRowDistance: cropProduction?.betweenRowDistance ?? 1,
+        betweenContainerDistance: cropProduction?.betweenContainerDistance ?? 1,
+        betweenPlantDistance: cropProduction?.betweenPlantDistance ?? 1,
+        area: cropProduction?.area ?? 1,
+        containerVolume: container?.volume,
+        availableWaterPercentage: substrate?.totalAvailableWaterPercentage,
+        numberOfDroppersPerContainer: cropProduction?.numberOfDroppersPerContainer,
+        dropper: dropper ? { flowRate: dropper.flowRate } : undefined
+      },
+      factors.currentMoisture,
+      factors.moistureSetPoint,
+      DEFAULT_DEPLETION_THRESHOLD,
+      cropProduction?.drainThreshold ?? 20
+    );
+
     // Determine if we should irrigate
     const triggeringRules = ruleResults.filter(r => r.shouldTrigger);
-    const shouldIrrigate = triggeringRules.length > 0;
+    const shouldIrrigate = monitorEvaluation.irrigate && triggeringRules.length > 0;
     // dropper
     console.log('Dropper data:', dropper);
     console.log("container:", container);
@@ -579,7 +640,11 @@ export class IrrigationDecisionEngineService {
         recommendedDuration: null,
         totalVolume: null,
         confidence: 85,
-        reasoning: ['Los niveles de humedad del suelo son adecuados', 'No se detectaron condiciones urgentes'],
+        reasoning: [
+          'Los niveles de humedad del suelo son adecuados',
+          'No se detectaron condiciones urgentes',
+          monitorEvaluation.reason ?? 'El setpoint agronómico no requiere riego'
+        ],
         urgency: 'low',
         nextRecommendedCheck: new Date(Date.now() + 2 * 60 * 60 * 1000),
         decisionFactors: factors,
@@ -619,11 +684,48 @@ export class IrrigationDecisionEngineService {
     let volumeMultiplier = 1.0;
     let flowRateLPerMin: number | null = null;
     let totalContainersCalc: number | null = null;
+    let waterConsumption: number | null = null;
+    let drainVolume: number | null = null;
+    let drainThresholdPct: number = cropProduction?.drainThreshold ?? 20;
+    let volumeCase: 'A' | 'B' | null = null;
 
     if (canCalculateVolume) {
-      baseVolume = this.calculateIrrigationVolume(factors, substrate, container);
+      const currentDepletionPct: number = cropProduction?.depletionPercentage ?? DEFAULT_DEPLETION_THRESHOLD;
+      const lastDepletionPct = this._lastDepletionMap.get(cropProduction?.id);
+      const depletionUnchanged = lastDepletionPct !== undefined && lastDepletionPct === currentDepletionPct;
+      const lastEventVol: number = history?.lastEventVolumeLiters ?? 0;
 
-      // Apply volume adjustments only from triggered rules
+      if (depletionUnchanged && lastEventVol > 0 && factors.recentDrainagePercentage != null) {
+        // Case B — drain-adjustment (depletion threshold unchanged, fine-tune from last event)
+        // Source: IrrigationMonitor.cs SetCropProductionsToIrrigateOnDemand (else branch)
+        //   drainDiff%         = drainThreshold% − previousDrain%
+        //   irrigationAdjust   = prevIrrigationVol × (drainDiff% / 100)
+        //   totalIrrigationVol = prevIrrigationVol + irrigationAdjust
+        const drainDiff = drainThresholdPct - factors.recentDrainagePercentage;
+        const irrigationAdjustment = lastEventVol * (drainDiff / 100);
+        baseVolume = lastEventVol + irrigationAdjustment;
+        waterConsumption = lastEventVol;
+        drainVolume = lastEventVol * (drainThresholdPct / 100);
+        volumeCase = 'B';
+        console.log(`Volume Case B: prevVol=${lastEventVol.toFixed(2)}L drainDiff=${drainDiff.toFixed(1)}% adjustment=${irrigationAdjustment.toFixed(2)}L total=${baseVolume.toFixed(2)}L`);
+      } else {
+        // Case A — full recalculation (depletion threshold changed or no prior event)
+        // Source: IrrigationMonitor.cs SetCropProductionsToIrrigateOnDemand (if branch)
+        const baseVolumeResult = this.calculateIrrigationVolume(factors, substrate, container, cropProduction);
+        baseVolume = baseVolumeResult.volume;
+        waterConsumption = baseVolumeResult.waterConsumption;
+        drainVolume = baseVolumeResult.drainVolume;
+        drainThresholdPct = baseVolumeResult.drainThresholdPct;
+        volumeCase = 'A';
+        console.log(`Volume Case A: waterConsumption=${waterConsumption.toFixed(2)}L drain=${drainVolume.toFixed(2)}L total=${baseVolume.toFixed(2)}L`);
+      }
+
+      // Persist current depletion threshold for next call comparison
+      if (cropProduction?.id != null) {
+        this._lastDepletionMap.set(cropProduction.id, currentDepletionPct);
+      }
+
+      // Apply volume adjustments from triggered rules (VPD, drain feedback, etc.)
       ruleResults.forEach(result => {
         if (result.shouldTrigger && result.volumeAdjustment) {
           volumeMultiplier *= result.volumeAdjustment;
@@ -636,6 +738,8 @@ export class IrrigationDecisionEngineService {
         // flowRate (L/h per dropper) × count / 60 = L/min for the container
         flowRateLPerMin = (dropper!.flowRate * cropProduction.numberOfDroppersPerContainer) / 60;
         recommendedDuration = Math.ceil(recommendedVolume / flowRateLPerMin);
+      } else if (monitorEvaluation.irrigationTime > 0) {
+        recommendedDuration = monitorEvaluation.irrigationTime;
       }
 
       if (canCalculateTotal) {
@@ -648,13 +752,18 @@ export class IrrigationDecisionEngineService {
     const calculationBreakdown: IrrigationCalculationBreakdown = {
       containerVolumeLiters: container.volume ?? null,
       tawPercentage: substrate.totalAvailableWaterPercentage ?? null,
-      depletionFraction: factors.depletionPercentage != null ? factors.depletionPercentage / 100 : null,
+      depletionFraction: factors.availableDepletionFraction ?? null,
       baseVolumeLiters: baseVolume,
       volumeMultiplier,
       dropperFlowRateLH: dropper?.flowRate ?? null,
       droppersPerContainer: cropProduction.numberOfDroppersPerContainer ?? null,
       flowRateLPerMin,
       totalContainers: totalContainersCalc,
+      moistureSetPoint: factors.moistureSetPoint ?? null,
+      waterConsumptionLiters: waterConsumption,
+      drainThresholdPct,
+      drainVolumeLiters: drainVolume,
+      volumeCase,
     };
 
     // Determine urgency
@@ -664,6 +773,9 @@ export class IrrigationDecisionEngineService {
     const reasoning = ruleResults
       .filter(r => r.shouldTrigger)
       .map(r => r.reason);
+    if (monitorEvaluation.reason) {
+      reasoning.push(monitorEvaluation.reason);
+    }
 
     // Calculate confidence
     const confidence = this.calculateConfidence(factors, ruleResults);
@@ -712,23 +824,27 @@ export class IrrigationDecisionEngineService {
           };
         }
 
-        const depletionThreshold = factors.phaseDepletionThreshold ?? DEFAULT_DEPLETION_THRESHOLD;
+        const moistureDeficit = factors.moistureSetPoint - factors.currentMoisture;
+        const isBelowSetPoint = moistureDeficit > 0;
+        const deficitPercentage = factors.moistureSetPoint > 0
+          ? (moistureDeficit / factors.moistureSetPoint) * 100
+          : 0;
 
-        if (factors.depletionPercentage >= CRITICAL_DEPLETION_THRESHOLD) {
+        if (isBelowSetPoint && deficitPercentage >= CRITICAL_DEPLETION_THRESHOLD) {
           return {
             shouldTrigger: true,
             confidence: 95,
-            reason: `CRÍTICO: Depleción de humedad al ${factors.depletionPercentage.toFixed(1)}% (umbral crítico: ${CRITICAL_DEPLETION_THRESHOLD}%)`,
+            reason: `CRÍTICO: Humedad actual ${factors.currentMoisture.toFixed(1)}% por debajo del setpoint ${factors.moistureSetPoint.toFixed(1)}%`,
             urgency: 'critical',
             volumeAdjustment: 1.1
           };
         }
 
-        if (factors.depletionPercentage >= depletionThreshold) {
+        if (isBelowSetPoint) {
           return {
             shouldTrigger: true,
             confidence: 85,
-            reason: `Depleción de humedad al ${factors.depletionPercentage.toFixed(1)}% supera el umbral (${depletionThreshold}%)`,
+            reason: `Humedad actual ${factors.currentMoisture.toFixed(1)}% por debajo del setpoint ${factors.moistureSetPoint.toFixed(1)}%`,
             urgency: 'high'
           };
         }
@@ -736,7 +852,7 @@ export class IrrigationDecisionEngineService {
         return {
           shouldTrigger: false,
           confidence: 90,
-          reason: `Humedad del suelo adecuada (depleción: ${factors.depletionPercentage.toFixed(1)}%)`
+          reason: `Humedad del suelo adecuada (${factors.currentMoisture.toFixed(1)}% >= setpoint ${factors.moistureSetPoint.toFixed(1)}%)`
         };
       }
     };
@@ -1117,25 +1233,39 @@ export class IrrigationDecisionEngineService {
   }
 
   /**
-   * Calculate irrigation volume based on depletion and substrate properties
+   * Calculate irrigation volume — C# Case A (depletion recalculation).
+   * Source: IrrigationMonitor.cs SetCropProductionsToIrrigateOnDemand
+   *
+   *   totalAvailableWaterVol = containerVol × (TAW% / 100)
+   *   waterConsumption       = totalAvailableWaterVol × availableDepletionFraction
+   *                            where availableDepletionFraction = (CC% − moisture%) / TAW%
+   *   drainVolume            = waterConsumption × (drainThreshold% / 100)
+   *   total                  = waterConsumption + drainVolume
    */
   private calculateIrrigationVolume(
     factors: IrrigationDecisionFactors,
     substrate: GrowingMedium,
-    container: Container
-  ): number {
+    container: Container,
+    cropProduction: any
+  ): { volume: number; waterConsumption: number; drainVolume: number; drainThresholdPct: number } {
     const containerVolume = container.volume!;
-    const availableWater = substrate.totalAvailableWaterPercentage! / 100;
-    const depletionFraction = factors.depletionPercentage / 100;
+    const taw = substrate.totalAvailableWaterPercentage!;
+    const drainThresholdPct: number = cropProduction?.drainThreshold ?? 20;
 
-    // Volume needed to restore to optimal moisture
-    const baseVolume = containerVolume * availableWater * depletionFraction;
+    const totalAvailableWaterVol = containerVolume * (taw / 100);
+    const waterConsumption = totalAvailableWaterVol * (factors.availableDepletionFraction ?? 0);
+    const drainVolume = waterConsumption * (drainThresholdPct / 100);
 
-    // Add 20% for target drainage
-    const targetDrain = 0.20;
-    const totalVolume = baseVolume * (1 + targetDrain);
+    return { volume: waterConsumption + drainVolume, waterConsumption, drainVolume, drainThresholdPct };
+  }
 
-    return totalVolume;
+  private calculateHumiditySetPoint(substrate: GrowingMedium, cropProduction: any): number {
+    const containerCapacity = substrate.containerCapacityPercentage ?? 0;
+    const totalAvailableWater = substrate.totalAvailableWaterPercentage ?? 0;
+    const depletion = cropProduction?.depletionPercentage ?? DEFAULT_DEPLETION_THRESHOLD;
+    const depletionRatio = depletion / 100;
+
+    return containerCapacity - (totalAvailableWater * depletionRatio);
   }
 
   /**

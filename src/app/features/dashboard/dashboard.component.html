@@ -143,13 +143,13 @@
           </div>
           <div class="card-body action-hub-body">
             <div class="row">
-              <!-- Management Section -->
+              <!-- ── Gestión Principal ─────────────────────────────────────────── -->
               <div class="col-12 mb-3">
                 <h6 class="text-muted text-uppercase small dashboard-section-label">Gestión Principal</h6>
               </div>
 
-              <!-- Farms Management -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- Farms Management — admin + tech + agro -->
+              <div class="col-md-3 col-6 mb-3" *ngIf="canSee('both')">
                 <div class="quick-action-card" (click)="navigateToFarms()">
                   <div class="quick-action-icon">
                     <i class="bi bi-geo-alt-fill text-success"></i>
@@ -164,8 +164,8 @@
                 </div>
               </div>
 
-              <!-- Crops Management -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- Crops Management — admin + tech + agro -->
+              <div class="col-md-3 col-6 mb-3" *ngIf="canSee('both')">
                 <div class="quick-action-card" (click)="navigateToCrops()">
                   <div class="quick-action-icon">
                     <i class="bi bi-flower1 text-warning"></i>
@@ -180,8 +180,8 @@
                 </div>
               </div>
 
-              <!-- Devices Management -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- Devices Management — admin + tech only -->
+              <div class="col-md-3 col-6 mb-3" *ngIf="canSee('tech')">
                 <div class="quick-action-card" (click)="navigateToDevices()">
                   <div class="quick-action-icon">
                     <i class="bi bi-cpu text-info"></i>
@@ -196,10 +196,8 @@
                 </div>
               </div>
 
-
-
-              <!-- Fertilizer Management -->
-              <div class="col-xl-3 col-md-6 mb-4">
+              <!-- Fertilizer Management — admin + tech + agro -->
+              <div class="col-xl-3 col-md-6 mb-4" *ngIf="canSee('both')">
                 <div class="quick-action-card" (click)="navigateToFertilizers()">
                   <div class="quick-action-icon">
                     <i class="bi bi-bag text-success"></i>
@@ -214,8 +212,8 @@
                 </div>
               </div>
 
-              <!-- Crop Production Specs -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- Crop Production Specs — admin + tech + agro -->
+              <!-- <div class="col-md-3 col-6 mb-3" *ngIf="canSee('both')">
                 <div class="quick-action-card" (click)="navigateToCropProductionSpecs()">
                   <div class="quick-action-icon">
                     <i class="bi bi-rulers text-info"></i>
@@ -228,10 +226,10 @@
                     <i class="bi bi-arrow-right"></i>
                   </div>
                 </div>
-              </div>
+              </div> -->
 
-              <!-- Containers -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- Containers — admin + tech only -->
+              <div class="col-md-3 col-6 mb-3" *ngIf="canSee('tech')">
                 <div class="quick-action-card" (click)="navigateToContainers()">
                   <div class="quick-action-icon">
                     <i class="bi bi-box-seam-fill text-secondary"></i>
@@ -246,8 +244,8 @@
                 </div>
               </div>
 
-              <!-- Growing Medium -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- Growing Medium — admin + tech only -->
+              <div class="col-md-3 col-6 mb-3" *ngIf="canSee('tech')">
                 <div class="quick-action-card" (click)="navigateToCropMedium()">
                   <div class="quick-action-icon">
                     <i class="bi bi-layers-fill text-success"></i>
@@ -262,82 +260,84 @@
                 </div>
               </div>
 
-              <!-- Crop Production Section -->
-              <div class="col-12 mb-3 mt-3">
-                <h6 class="text-muted text-uppercase small dashboard-section-label">Producción de Cultivos</h6>
-              </div>
+              <!-- ── Producción de Cultivos — admin + agro only ─────────────────── -->
+              <ng-container *ngIf="canSee('agro')">
+                <div class="col-12 mb-3 mt-3">
+                  <h6 class="text-muted text-uppercase small dashboard-section-label">Producción de Cultivos</h6>
+                </div>
 
-              <!-- Crop Phases -->
-              <div class="col-md-3 col-6 mb-3">
-                <div class="quick-action-card" (click)="navigateToCropPhases()">
-                  <div class="quick-action-icon">
-                    <i class="bi bi-diagram-3 text-success"></i>
-                  </div>
-                  <div class="quick-action-content">
-                    <h6 class="quick-action-title">Fases de Cultivo</h6>
-                    <p class="quick-action-description">Definir etapas de crecimiento</p>
-                  </div>
-                  <div class="quick-action-arrow">
-                    <i class="bi bi-arrow-right"></i>
+                <!-- Crop Phases -->
+                <div class="col-md-3 col-6 mb-3">
+                  <div class="quick-action-card" (click)="navigateToCropPhases()">
+                    <div class="quick-action-icon">
+                      <i class="bi bi-diagram-3 text-success"></i>
+                    </div>
+                    <div class="quick-action-content">
+                      <h6 class="quick-action-title">Fases de Cultivo</h6>
+                      <p class="quick-action-description">Definir etapas de crecimiento</p>
+                    </div>
+                    <div class="quick-action-arrow">
+                      <i class="bi bi-arrow-right"></i>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Phase Requirements -->
-              <div class="col-md-3 col-6 mb-3">
-                <div class="quick-action-card" (click)="navigateToPhaseRequirements()">
-                  <div class="quick-action-icon">
-                    <i class="bi bi-list-check text-warning"></i>
-                  </div>
-                  <div class="quick-action-content">
-                    <h6 class="quick-action-title">Requerimientos por Fase</h6>
-                    <p class="quick-action-description">Configurar necesidades por etapa</p>
-                  </div>
-                  <div class="quick-action-arrow">
-                    <i class="bi bi-arrow-right"></i>
+                <!-- Phase Requirements -->
+                <div class="col-md-3 col-6 mb-3">
+                  <div class="quick-action-card" (click)="navigateToPhaseRequirements()">
+                    <div class="quick-action-icon">
+                      <i class="bi bi-list-check text-warning"></i>
+                    </div>
+                    <div class="quick-action-content">
+                      <h6 class="quick-action-title">Requerimientos por Fase</h6>
+                      <p class="quick-action-description">Configurar necesidades por etapa</p>
+                    </div>
+                    <div class="quick-action-arrow">
+                      <i class="bi bi-arrow-right"></i>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Crop Production Management -->
-              <div class="col-md-3 col-6 mb-3">
-                <div class="quick-action-card" (click)="navigateToCropProduction()">
-                  <div class="quick-action-icon">
-                    <i class="bi bi-egg text-primary"></i>
-                  </div>
-                  <div class="quick-action-content">
-                    <h6 class="quick-action-title">Producciones</h6>
-                    <p class="quick-action-description">Gestionar producciones activas</p>
-                  </div>
-                  <div class="quick-action-arrow">
-                    <i class="bi bi-arrow-right"></i>
+                <!-- Crop Production Management -->
+                <div class="col-md-3 col-6 mb-3">
+                  <div class="quick-action-card" (click)="navigateToCropProduction()">
+                    <div class="quick-action-icon">
+                      <i class="bi bi-egg text-primary"></i>
+                    </div>
+                    <div class="quick-action-content">
+                      <h6 class="quick-action-title">Producciones</h6>
+                      <p class="quick-action-description">Gestionar producciones activas</p>
+                    </div>
+                    <div class="quick-action-arrow">
+                      <i class="bi bi-arrow-right"></i>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Production Units -->
-              <div class="col-md-3 col-6 mb-3">
-                <div class="quick-action-card" (click)="navigateToProductionUnits()">
-                  <div class="quick-action-icon">
-                    <i class="bi bi-grid-3x3-gap text-info"></i>
-                  </div>
-                  <div class="quick-action-content">
-                    <h6 class="quick-action-title">Unidades de Producción</h6>
-                    <p class="quick-action-description">Gestionar áreas productivas</p>
-                  </div>
-                  <div class="quick-action-arrow">
-                    <i class="bi bi-arrow-right"></i>
+                <!-- Production Units -->
+                <div class="col-md-3 col-6 mb-3">
+                  <div class="quick-action-card" (click)="navigateToProductionUnits()">
+                    <div class="quick-action-icon">
+                      <i class="bi bi-grid-3x3-gap text-info"></i>
+                    </div>
+                    <div class="quick-action-content">
+                      <h6 class="quick-action-title">Unidades de Producción</h6>
+                      <p class="quick-action-description">Gestionar áreas productivas</p>
+                    </div>
+                    <div class="quick-action-arrow">
+                      <i class="bi bi-arrow-right"></i>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ng-container>
 
-              <!-- Technical Tools Section -->
+              <!-- ── Herramientas Técnicas ──────────────────────────────────────── -->
               <div class="col-12 mb-3 mt-3">
                 <h6 class="text-muted text-uppercase small dashboard-section-label">Herramientas Técnicas</h6>
               </div>
 
-              <!-- Nutrient Solution Formulation -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- Nutrient Solution Formulation — admin + tech + agro -->
+              <div class="col-md-3 col-6 mb-3" *ngIf="canSee('both')">
                 <div class="quick-action-card" (click)="navigateToNutrientFormulation()">
                   <div class="quick-action-icon">
                     <i class="bi bi-search-heart text-primary"></i>
@@ -352,8 +352,8 @@
                 </div>
               </div>
 
-              <!-- Water Analysis -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- Water Analysis — admin + tech only -->
+              <div class="col-md-3 col-6 mb-3" *ngIf="canSee('tech')">
                 <div class="quick-action-card" (click)="navigateToWaterAnalysis()">
                   <div class="quick-action-icon">
                     <i class="bi bi-water text-info"></i>
@@ -368,8 +368,8 @@
                 </div>
               </div>
 
-              <!-- Soil Analysis -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- Soil Analysis — admin + tech + agro -->
+              <div class="col-md-3 col-6 mb-3" *ngIf="canSee('both')">
                 <div class="quick-action-card" (click)="navigateToSoilAnalysis()">
                   <div class="quick-action-icon">
                     <i class="bi bi-layers text-brown"></i>
@@ -384,8 +384,8 @@
                 </div>
               </div>
 
-              <!-- Irrigation Engineering Design -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- Irrigation Engineering Design — admin + tech only -->
+              <div class="col-md-3 col-6 mb-3" *ngIf="canSee('tech')">
                 <div class="quick-action-card" (click)="navigateToIrrigationDesignRequirements()">
                   <div class="quick-action-icon">
                     <i class="bi bi-wrench-adjustable-circle text-info"></i>
@@ -400,8 +400,8 @@
                 </div>
               </div>
 
-              <!-- Droppers Management -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- Droppers Management — admin + tech only -->
+              <div class="col-md-3 col-6 mb-3" *ngIf="canSee('tech')">
                 <div class="quick-action-card" (click)="navigateToDroppers()">
                   <div class="quick-action-icon">
                     <i class="bi bi-droplet-fill text-primary"></i>
@@ -416,8 +416,8 @@
                 </div>
               </div>
 
-              <!-- On Demand Irrigation Requirements -->
-              <div class="col-md-3 col-6 mb-3">
+              <!-- On Demand Irrigation — admin + agro only -->
+              <div class="col-md-3 col-6 mb-3" *ngIf="canSee('agro')">
                 <div class="quick-action-card" (click)="navigateToIrrigationRequirements()">
                   <div class="quick-action-icon">
                     <i class="bi bi-droplet text-danger"></i>
@@ -432,42 +432,44 @@
                 </div>
               </div>
 
-              <!-- Analytics Section -->
-              <div class="col-12 mb-3 mt-3">
-                <h6 class="text-muted text-uppercase small dashboard-section-label">Análisis y Reportes</h6>
-              </div>
+              <!-- ── Análisis y Reportes — admin + agro only ───────────────────── -->
+              <ng-container *ngIf="canSee('agro')">
+                <div class="col-12 mb-3 mt-3">
+                  <h6 class="text-muted text-uppercase small dashboard-section-label">Análisis y Reportes</h6>
+                </div>
 
-              <!-- Shiny Dashboard -->
-              <div class="col-md-3 col-6 mb-3">
-                <div class="quick-action-card" (click)="navigateToShinyDashboard()">
-                  <div class="quick-action-icon">
-                    <i class="bi bi-speedometer2 text-secondary"></i>
-                  </div>
-                  <div class="quick-action-content">
-                    <h6 class="quick-action-title">Dashboard Avanzado</h6>
-                    <p class="quick-action-description">Visualizaciones interactivas</p>
-                  </div>
-                  <div class="quick-action-arrow">
-                    <i class="bi bi-arrow-right"></i>
+                <!-- Shiny Dashboard -->
+                <div class="col-md-3 col-6 mb-3">
+                  <div class="quick-action-card" (click)="navigateToShinyDashboard()">
+                    <div class="quick-action-icon">
+                      <i class="bi bi-speedometer2 text-secondary"></i>
+                    </div>
+                    <div class="quick-action-content">
+                      <h6 class="quick-action-title">Dashboard Avanzado</h6>
+                      <p class="quick-action-description">Visualizaciones interactivas</p>
+                    </div>
+                    <div class="quick-action-arrow">
+                      <i class="bi bi-arrow-right"></i>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Process KPIs -->
-              <div class="col-md-3 col-6 mb-3">
-                <div class="quick-action-card" (click)="navigateToProcessKPIs()">
-                  <div class="quick-action-icon">
-                    <i class="bi bi-bar-chart-line text-primary"></i>
-                  </div>
-                  <div class="quick-action-content">
-                    <h6 class="quick-action-title">KPIs de Procesos</h6>
-                    <p class="quick-action-description">Monitorear indicadores clave</p>
-                  </div>
-                  <div class="quick-action-arrow">
-                    <i class="bi bi-arrow-right"></i>
+                <!-- Process KPIs -->
+                <div class="col-md-3 col-6 mb-3">
+                  <div class="quick-action-card" (click)="navigateToProcessKPIs()">
+                    <div class="quick-action-icon">
+                      <i class="bi bi-bar-chart-line text-primary"></i>
+                    </div>
+                    <div class="quick-action-content">
+                      <h6 class="quick-action-title">KPIs de Procesos</h6>
+                      <p class="quick-action-description">Monitorear indicadores clave</p>
+                    </div>
+                    <div class="quick-action-arrow">
+                      <i class="bi bi-arrow-right"></i>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ng-container>
             </div>
           </div>
         </div>
@@ -746,8 +748,8 @@
                   <tbody>
                     <tr *ngFor="let event of getFlowEventsPaginatedForDevice(deviceEntry.value)">
                       <td>
-                        <span class="badge" [class.bg-info]="event.sensorType === 'Water_flow_value'"
-                          [class.bg-success]="event.sensorType === 'Total_pulse'">
+                        <span class="badge" [class.bg-info]="isWaterFlowSensor(event.sensorType)"
+                          [class.bg-success]="isPulseCounterSensor(event.sensorType)">
                           {{ event.sensorType }}
                         </span>
                       </td>
@@ -761,10 +763,10 @@
                         </span>
                       </td>
                       <td>
-                        <strong *ngIf="event.sensorType === 'Water_flow_value'">
+                        <strong *ngIf="isWaterFlowSensor(event.sensorType)">
                           {{ (event.currentPayload - event.previousPayload) | number:'1.2-2' }} L
                         </strong>
-                        <span *ngIf="event.sensorType !== 'Water_flow_value'" class="text-muted">N/A</span>
+                        <span *ngIf="!isWaterFlowSensor(event.sensorType)" class="text-muted">N/A</span>
                       </td>
                       <td>{{ formatTimeDifference(event.timeDifference) }}</td>
                     </tr>
@@ -832,8 +834,7 @@
 
             <div class="alert aero-card aero-glass-card alert-info mt-3" *ngIf="getTotalEventsDetected() === 0">
               <i class="bi bi-info-circle"></i>
-              <strong>Sin eventos detectados.</strong> No se detectaron cambios en los sensores Water_flow_value o
-              Total_pulse en el período seleccionado.
+              <strong>Sin eventos detectados.</strong> No se detectaron cambios en sensores de flujo de agua o contadores de pulso en el período seleccionado. Configure los tipos de sensor en la sección Dispositivos.
             </div>
           </div>
         </div>

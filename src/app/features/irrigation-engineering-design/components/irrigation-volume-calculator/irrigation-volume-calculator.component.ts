@@ -28,6 +28,8 @@ export class IrrigationVolumeCalculatorComponent implements OnInit, OnChanges {
   @Input() containersPerPlant: number = 1;
   @Input() totalArea: number = 1000;      // m²
   @Input() plantDensity: number = 2.5;    // plants/m²
+  @Input() initialDrainPercentage?: number;
+  @Input() initialDepletionPercentage?: number;
   @Input() showStandalone: boolean = true; // If false, hides substrate selector
 
   // ===== OUTPUTS =====
@@ -65,9 +67,32 @@ export class IrrigationVolumeCalculatorComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (!this.calculatorForm) return;
+
+    // Patch form when crop-production-derived inputs change
+    const patch: any = {};
+    if (changes['numberOfContainers'] && !changes['numberOfContainers'].firstChange)
+      patch['numberOfContainers'] = this.numberOfContainers;
+    if (changes['containersPerPlant'] && !changes['containersPerPlant'].firstChange)
+      patch['containersPerPlant'] = this.containersPerPlant;
+    if (changes['totalArea'] && !changes['totalArea'].firstChange)
+      patch['totalArea'] = this.totalArea;
+    if (changes['plantDensity'] && !changes['plantDensity'].firstChange)
+      patch['plantDensity'] = this.plantDensity;
+    if (changes['initialDrainPercentage'] && !changes['initialDrainPercentage'].firstChange)
+      patch['drainPercentage'] = this.initialDrainPercentage;
+    if (changes['initialDepletionPercentage'] && !changes['initialDepletionPercentage'].firstChange) {
+      patch['depletionPercentage'] = this.initialDepletionPercentage;
+      this.currentDepletionValue = this.initialDepletionPercentage!;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      this.calculatorForm.patchValue(patch);
+    }
+
     // Recalculate if substrate curve changes
     if (changes['substrateCurve'] && !changes['substrateCurve'].firstChange) {
-      if (this.calculatorForm && this.substrateCurve) {
+      if (this.substrateCurve) {
         this.calculate();
       }
     }
@@ -78,9 +103,12 @@ export class IrrigationVolumeCalculatorComponent implements OnInit, OnChanges {
   // ==========================================================================
 
   private initializeForm(): void {
+    const depletionDefault = this.initialDepletionPercentage ?? this.config.defaultDepletionPercentage;
+    const drainDefault = this.initialDrainPercentage ?? this.config.defaultDrainPercentage;
+
     this.calculatorForm = this.fb.group({
       depletionPercentage: [
-        this.config.defaultDepletionPercentage,
+        depletionDefault,
         [
           Validators.required,
           Validators.min(this.config.minDepletionPercentage),
@@ -88,7 +116,7 @@ export class IrrigationVolumeCalculatorComponent implements OnInit, OnChanges {
         ]
       ],
       drainPercentage: [
-        this.config.defaultDrainPercentage,
+        drainDefault,
         [Validators.required, Validators.min(0), Validators.max(50)]
       ],
       numberOfContainers: [this.numberOfContainers, [Validators.required, Validators.min(1)]],
@@ -100,7 +128,7 @@ export class IrrigationVolumeCalculatorComponent implements OnInit, OnChanges {
     });
 
     // Initialize slider value
-    this.currentDepletionValue = this.config.defaultDepletionPercentage;
+    this.currentDepletionValue = depletionDefault;
   }
 
   // ==========================================================================

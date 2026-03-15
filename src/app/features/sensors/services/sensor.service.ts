@@ -15,15 +15,13 @@ interface BackendResponse<T> {
 
 export interface Sensor {
   id?: number;
-  name?: string;
+  sensorLabel?: string;    // The IoT raw-data key (e.g. "Water_flow_value")
   description?: string;
-  sensorType?: string;
-  measurementVariable?: string;
-  unit?: string;
-  minValue?: number;
-  maxValue?: number;
-  accuracy?: number;
+  sensorType?: string;     // Semantic category (e.g. "Water Flow Sensor")
+  measurementVariableId?: number;
+  numberOfContainers?: number;
   isActive?: boolean;
+  active?: boolean;
   deviceId?: number;
   createdAt?: Date;
   updatedAt?: Date;
@@ -69,10 +67,10 @@ export class SensorService {
         params = params.set('searchTerm', filters.searchTerm);
       }
       if (filters.sensorType) {
-        params = params.set('sensorType', filters.sensorType);
+        params = params.set('SensorType', filters.sensorType);
       }
       if (filters.deviceId) {
-        params = params.set('deviceId', filters.deviceId.toString());
+        params = params.set('DeviceId', filters.deviceId.toString());
       }
       if (filters.measurementVariable) {
         params = params.set('measurementVariable', filters.measurementVariable);
@@ -82,12 +80,12 @@ export class SensorService {
     const url = this.apiConfig.getAgronomicUrl(this.baseUrl);
     const headers = this.getAuthHeaders();
 
-    return this.http.get<BackendResponse<Sensor[]>>(url, { headers, params })
+    return this.http.get<BackendResponse<{ sensors: Sensor[] }>>(url, { headers, params })
       .pipe(
         map(response => {
           console.log('SensorService.getAll response:', response);
           if (response.success) {
-            return response.result || [];
+            return response.result?.sensors || [];
           }
           throw new Error(`Get sensors failed: ${response.exception}`);
         }),

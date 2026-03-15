@@ -1,4 +1,4 @@
-﻿using AgriSmart.Core.Configuration;
+using AgriSmart.Core.Configuration;
 using AgriSmart.Infrastructure.Data;
 using AgriSmart.Core.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +27,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               join ca in _context.Catalog on cp.CatalogId equals ca.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (ca.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )                                    
                                     && ((cp.CropId == cropId) || cropId == 0)
@@ -63,7 +63,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               join ca in _context.Catalog on cp.CatalogId equals ca.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (ca.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && (cp.Id == id)

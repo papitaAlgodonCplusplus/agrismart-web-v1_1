@@ -9,11 +9,12 @@ import {
 import { DeviceService } from '../../devices/services/device.service';
 import { catchError, map, Observable, of } from 'rxjs';
 import { CropService } from '../../crops/services/crop.service';
+import { SensorConfigService, SENSOR_TYPES } from '../../sensors/services/sensor-config.service';
 
 // ============= INTERFACES =============
 interface ThermostatReading {
   deviceId: string;
-  sensorType: string; // 'TEMP_SOIL', 'temp_DS18B20', 'temp_SOIL', 'TempC_DS18B20'
+  sensorType: string; // Sensor label resolved dynamically via SensorConfigService mappings.
   currentTemp: number;
   max: number;
   min: number;
@@ -222,45 +223,12 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   isPressureDevicesCollapsed = true;
   isClimateDevicesCollapsed = true;
 
-  // Sensor units mapping
+  // Non-typed fallback units for known non-canonical labels.
   private sensorUnits: { [key: string]: string } = {
-    // pH sensors
-    'PH1_SOIL': 'pH',
-    'PH_SOIL': 'pH',
-
-    // Temperature sensors
-    'temp_DS18B20': '°C',
-    'TEMP_SOIL': '°C',
-    'TEM': '°C',
-
-    // Humidity and moisture
-    'HUM': '%',
-    'Hum_SHT2x': '%',
-    'water_SOIL': '%',
-
-    // Pressure sensors
-    'pressure': 'hPa',
-    'Water_pressure_MPa': 'MPa',
     'IDC_intput_mA': 'mA',
     'VDC_intput_V': 'V',
-
-    // Flow sensors
-    'Water_flow_value': 'L',
     'MOD': 'L/min',
-    'Total_pulse': 'pulses',
-
-    // Weather sensors
-    'wind_speed': 'm/s',
-    'wind_direction_angle': '°',
-    'rain_gauge': 'mm',
-    'PAR': 'μmol/m²/s',
-    'illumination': 'lux',
-
-    // Electrical sensors
-    'Bat': 'V',
-
-    // Conductivity
-    'conduct_SOIL': 'mS/cm'
+    'Total_pulse': 'pulses'
   };
 
   // Color palette for charts
@@ -269,15 +237,20 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     '#1abc9c', '#34495e', '#e67e22', '#16a085', '#c0392b'
   ];
 
+  // Expose SENSOR_TYPES to template
+  readonly SENSOR_TYPES = SENSOR_TYPES;
+
   constructor(
     private irrigationService: IrrigationSectorService,
     private deviceService: DeviceService,
     private cdr: ChangeDetectorRef,
-    private cropService: CropService, // ADD THIS
-    private router: Router
+    private cropService: CropService,
+    private router: Router,
+    private sensorConfig: SensorConfigService
   ) { }
 
   ngOnInit(): void {
+    this.sensorConfig.load();
     this.loadDeviceData();
 
   }
@@ -400,15 +373,18 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       // Apply sensor-specific validations and conversions
       if (numericValue !== null) {
         // Temperature sensors: divide by 10
-        if (item.sensor.includes('temp') || item.sensor.includes('TEM')) {
+        if (
+          this.isSensorOfType(item.sensor, SENSOR_TYPES.SOIL_TEMPERATURE) ||
+          this.isSensorOfType(item.sensor, SENSOR_TYPES.AIR_TEMPERATURE)
+        ) {
           numericValue = this.validateTemperature(numericValue, item.sensor, item.payload, item.deviceId);
         }
         // Conductivity sensors: validate and convert units
-        else if (item.sensor.includes('conduct') || item.sensor.includes('EC')) {
+        else if (this.isSensorOfType(item.sensor, SENSOR_TYPES.SOIL_CONDUCTIVITY)) {
           numericValue = this.validateConductivity(numericValue, 'mS/cm', item.payload, item.deviceId);
         }
         // pH sensors: validate range
-        else if (item.sensor.includes('PH') || item.sensor.includes('ph')) {
+        else if (this.isSensorOfType(item.sensor, SENSOR_TYPES.SOIL_PH)) {
           const isValid = this.validateSensorData(numericValue, 'pH', item.payload, item.deviceId);
           if (!isValid) numericValue = null;
         }
@@ -450,7 +426,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       'flow': 'flujo',
       'ph': 'ph-suelo',
       'climate': 'estacion-metereologica',
-      'pressure': 'presion',
+      'hydraulic': 'presion',
       'soil': 'suelo'
     };
 
@@ -634,18 +610,25 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     if (!reading || reading.value === null) return 'N/A';
 
     // Get unit from mapping
-    const unit = this.sensorUnits[sensor] || '';
+    const unit = this.getSensorUnit(sensor);
 
     // Format based on sensor type
     let formattedValue: string;
+    const sensorType = this.getSensorTypeForLabel(sensor);
 
-    if (sensor.includes('temp') || sensor.includes('TEM') || sensor.includes('TEMP')) {
+    if (
+      sensorType === SENSOR_TYPES.SOIL_TEMPERATURE ||
+      sensorType === SENSOR_TYPES.AIR_TEMPERATURE
+    ) {
       formattedValue = reading.value.toFixed(1);
-    } else if (sensor.includes('PH') || sensor.includes('ph')) {
+    } else if (sensorType === SENSOR_TYPES.SOIL_PH) {
       formattedValue = reading.value.toFixed(2);
-    } else if (sensor.includes('mA') || sensor.includes('pressure')) {
+    } else if (
+      sensorType === SENSOR_TYPES.WATER_PRESSURE ||
+      sensorType === SENSOR_TYPES.ATMOSPHERIC_PRESSURE
+    ) {
       formattedValue = reading.value.toFixed(3);
-    } else if (sensor.includes('pulse') || sensor.includes('Total')) {
+    } else if (sensorType === SENSOR_TYPES.PULSE_COUNTER) {
       formattedValue = reading.value.toFixed(0);
     } else {
       formattedValue = reading.value.toFixed(1);
@@ -662,6 +645,30 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   hasNumericReading(device: DeviceData, sensor: string): boolean {
     const reading = device.readings[sensor];
     return reading?.value !== null && reading?.value !== undefined;
+  }
+
+  /**
+   * Returns the first matching reading value for a given sensor type category.
+   * Falls back to the provided fallback sensor label if no type is configured.
+   */
+  getReadingValueByType(device: DeviceData, sensorType: string, fallbackLabel?: string): string {
+    const labels = this.sensorConfig.getSensorLabelsByType(sensorType);
+    for (const label of labels) {
+      if (device.readings[label]?.value !== null && device.readings[label]?.value !== undefined) {
+        return this.getReadingValue(device, label);
+      }
+    }
+    if (fallbackLabel) return this.getReadingValue(device, fallbackLabel);
+    return 'N/A';
+  }
+
+  hasReadingByType(device: DeviceData, sensorType: string, fallbackLabel?: string): boolean {
+    const labels = this.sensorConfig.getSensorLabelsByType(sensorType);
+    for (const label of labels) {
+      if (this.hasNumericReading(device, label)) return true;
+    }
+    if (fallbackLabel) return this.hasNumericReading(device, fallbackLabel);
+    return false;
   }
 
   formatDate(dateString: string): string {
@@ -731,6 +738,29 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   getSensorUnit(sensor: string): string {
+    const sensorType = this.getSensorTypeForLabel(sensor);
+    const sensorTypeUnits: Record<string, string> = {
+      [SENSOR_TYPES.SOIL_PH]: 'pH',
+      [SENSOR_TYPES.SOIL_TEMPERATURE]: '°C',
+      [SENSOR_TYPES.AIR_TEMPERATURE]: '°C',
+      [SENSOR_TYPES.SOIL_HUMIDITY]: '%',
+      [SENSOR_TYPES.AIR_HUMIDITY]: '%',
+      [SENSOR_TYPES.ATMOSPHERIC_PRESSURE]: 'hPa',
+      [SENSOR_TYPES.WATER_PRESSURE]: 'MPa',
+      [SENSOR_TYPES.WATER_FLOW]: 'L',
+      [SENSOR_TYPES.PULSE_COUNTER]: 'pulses',
+      [SENSOR_TYPES.WIND_SPEED]: 'm/s',
+      [SENSOR_TYPES.WIND_DIRECTION]: '°',
+      [SENSOR_TYPES.RAIN_GAUGE]: 'mm',
+      [SENSOR_TYPES.SOLAR_RADIATION]: 'W/m²',
+      [SENSOR_TYPES.BATTERY]: 'V',
+      [SENSOR_TYPES.SOIL_CONDUCTIVITY]: 'mS/cm'
+    };
+
+    if (sensorType && sensorTypeUnits[sensorType]) {
+      return sensorTypeUnits[sensorType];
+    }
+
     return this.sensorUnits[sensor] || '';
   }
 
@@ -819,7 +849,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       'flow': 'Medidores de Flujo',
       'ph': 'Sensores de pH',
       'climate': 'Estación Climática',
-      'pressure': 'Sensores de Presión',
+      'hydraulic': 'Sensores de Presión',
       'soil': 'Sensores de Suelo'
     };
     return labels[type] || type;
@@ -972,13 +1002,12 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   prepareWindRoseData(): void {
     const windData: { direction: number; speed: number }[] = [];
- 
 
     const windRawData = this.rawData.filter(item =>
-      item.sensor === 'wind_speed' ||
-      item.sensor === 'wind_speed_level' ||
-      item.sensor === 'wind_direction_angle'
-    ); 
+      this.isSensorOfType(item.sensor, SENSOR_TYPES.WIND_SPEED) ||
+      this.isSensorOfType(item.sensor, SENSOR_TYPES.WIND_DIRECTION) ||
+      this.normalizeSensorLabel(item.sensor) === 'wind_speed_level'
+    );
 
     const sensorCounts = windRawData.reduce((acc, item) => {
       acc[item.sensor] = (acc[item.sensor] || 0) + 1;
@@ -1004,7 +1033,9 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       let windSpeed = 0;
       let windDirection = 0;
 
-      const speedReading = sensors.get('wind_speed');
+      const speedReading = Array.from(sensors.values()).find(reading =>
+        this.isSensorOfType(reading.sensor, SENSOR_TYPES.WIND_SPEED)
+      );
       const isValidSpeed = speedReading?.payload &&
         speedReading.payload !== 'Nosensor' &&
         speedReading.payload !== 'null' &&
@@ -1024,7 +1055,9 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
         windSpeed = parseFloat(speedReading!.payload);
       }
 
-      const directionReading = sensors.get('wind_direction_angle');
+      const directionReading = Array.from(sensors.values()).find(reading =>
+        this.isSensorOfType(reading.sensor, SENSOR_TYPES.WIND_DIRECTION)
+      );
       const isValidDirection = directionReading?.payload &&
         directionReading.payload !== 'Nosensor' &&
         directionReading.payload !== 'null' &&
@@ -1215,11 +1248,11 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   // ============= TEMPERATURE DATA PREPARATION =============
   prepareThermostatData(): void {
  
-    // Temperature sensor types to track
-    const tempSensors = ['TEMP_SOIL', 'TempC_DS18B20', 'temp_SOIL', 'temp_DS18B20'];
+    // Temperature sensor types to track (dynamically resolved)
+    const tempSensors = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.SOIL_TEMPERATURE);
 
     // Filter temperature data from rawData
-    const tempRawData = this.rawData.filter(item =>
+    const tempRawData = this.rawData.filter((item: any) =>
       tempSensors.includes(item.sensor)
     );
  
@@ -1467,22 +1500,10 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   // 4. ADD METHOD to prepare TSR data (call this in loadDeviceData after prepareThermostatData)
   prepareTSRData(): void {
- 
-    // TSR sensor types to track - based on your system
-    const tsrSensors = [
-      'TSR',
-      'TotalSolarRadiation',
-      'TotalSolarRadiationMin',
-      'TotalSolarRadiationMax',
-      'TotalSolarRadiationAvg',
-      'solar_radiation',
-      'PAR'
-    ];
- 
 
-    // Filter TSR data from rawData - only from climate/meteorological devices
+    // Filter solar radiation data from rawData based on configured sensor types
     const tsrRawData = this.rawData.filter(item =>
-      tsrSensors.some(sensor => item.sensor.includes(sensor) || item.sensor.toLowerCase().includes('radiation'))
+      this.isSensorOfType(item.sensor, SENSOR_TYPES.SOLAR_RADIATION)
     );
  
 
@@ -1723,22 +1744,10 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
 
   // 1.4 ADD PREPARATION METHOD (after prepareTSRData() method, around line 450)
   preparePARData(): void {
- 
-    // IMPORTANT: According to working dashboard, we should use TSR sensors, NOT PAR
-    // PAR sensors may have different units or be incorrect
-    // TSR = Total Solar Radiation in W/m²
-    const parSensors = [
-      'TSR',  // ✅ Use TSR instead of PAR (matches working dashboard)
-      'TotalSolarRadiation',
-      'solar_radiation'
-      // ❌ Removed: 'PAR', 'PhotosyntheticallyActiveRadiation' - wrong sensor type
-    ];
 
-    // Filter TSR data from rawData - from climate/meteorological devices
+    // Use configured solar radiation sensors to derive PAR/DLI metrics.
     const parRawData = this.rawData.filter(item =>
-      parSensors.some(sensor =>
-        item.sensor.includes(sensor)
-      )
+      this.isSensorOfType(item.sensor, SENSOR_TYPES.SOLAR_RADIATION)
     );
  
     if (parRawData.length === 0) {
@@ -2081,6 +2090,56 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       .filter(v => !isNaN(v));
   }
 
+  private extractSensorValuesByType(sensors: any[], sensorType: string, fallbackLabels: string[] = []): number[] {
+    const configuredLabels = this.sensorConfig.getSensorLabelsByType(sensorType);
+    const allLabels = [...configuredLabels, ...fallbackLabels];
+    if (allLabels.length === 0) {
+      return [];
+    }
+
+    const normalizedLabels = new Set(allLabels.map(label => this.normalizeSensorLabel(label)));
+    return sensors
+      .filter(s => normalizedLabels.has(this.normalizeSensorLabel(s?.sensor)))
+      .map(s => typeof s.payload === 'number' ? s.payload : parseFloat(s.payload))
+      .filter(v => !isNaN(v));
+  }
+
+  private getPrimarySensorLabel(sensorType: string, fallbackLabel: string): string {
+    const configuredLabels = this.sensorConfig.getSensorLabelsByType(sensorType);
+    return configuredLabels.length > 0 ? configuredLabels[0] : fallbackLabel;
+  }
+
+  private isSensorOfType(sensorLabel: string | undefined, sensorType: string): boolean {
+    if (!sensorLabel) {
+      return false;
+    }
+
+    const normalized = this.normalizeSensorLabel(sensorLabel);
+    return this.sensorConfig
+      .getSensorLabelsByType(sensorType)
+      .some(label => this.normalizeSensorLabel(label) === normalized);
+  }
+
+  private getSensorTypeForLabel(sensorLabel: string | undefined): string | null {
+    if (!sensorLabel) {
+      return null;
+    }
+
+    const normalized = this.normalizeSensorLabel(sensorLabel);
+    const supportedTypes = Object.values(SENSOR_TYPES);
+    for (const type of supportedTypes) {
+      const labels = this.sensorConfig.getSensorLabelsByType(type);
+      if (labels.some(label => this.normalizeSensorLabel(label) === normalized)) {
+        return type;
+      }
+    }
+    return null;
+  }
+
+  private normalizeSensorLabel(label: string | undefined): string {
+    return (label || '').trim().toLowerCase();
+  }
+
   /**
    * Calculate min/max/avg statistics from array of values
    * Copied from dashboard.component.ts:1521-1531
@@ -2155,10 +2214,10 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
       'humidity': { min: 0, max: 100 },
       'windSpeed': { min: 0, max: 50 },
       'solarRadiation': { min: 0, max: 1200 },  // W/m²
-      'PAR': { min: 0, max: 3000 },  // μmol/m²/s
+      'solarRadiationExtended': { min: 0, max: 3000 },  // μmol/m²/s
       'conductivity': { min: 0, max: 5 },  // mS/cm
       'pH': { min: 3, max: 10 },
-      'pressure': { min: 800, max: 1100 },  // hPa
+      'atmosphericPressure': { min: 800, max: 1100 },  // hPa
       'waterPressure': { min: 0, max: 1.0 }  // MPa
     };
 
@@ -2186,26 +2245,16 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     rawPayload: any,
     deviceId: string
   ): number | null {
-    // CRITICAL: Different sensors have different formats!
-    // DS18B20 sensors: return value × 10 (need /10 conversion)
-    // TEMP_SOIL sensors: return value already in °C (no conversion)
+    // Normalize by observed scale to avoid hardcoded per-label conversions.
+    const temperature = Math.abs(rawValue) > 80 ? rawValue / 10 : rawValue;
 
-    let temperature: number;
-
-    if (sensorType.includes('DS18B20')) {
-      // DS18B20 digital sensors need /10 conversion
-      temperature = rawValue / 10;
-     } else if (sensorType === 'TEMP_SOIL' || sensorType === 'temp_SOIL') {
-      // TEMP_SOIL sensors are already in °C
-      temperature = rawValue;
-     } else {
-      // Other temperature sensors - assume need /10 (default behavior)
-      temperature = rawValue / 10;
-     }
+    const sensorGroup = this.isSensorOfType(sensorType, SENSOR_TYPES.SOIL_TEMPERATURE)
+      ? 'soilTemperature'
+      : 'temperature';
 
     const isValid = this.validateSensorData(
       temperature,
-      sensorType === 'temp_SOIL' || sensorType === 'TEMP_SOIL' ? 'soilTemperature' : 'temperature',
+      sensorGroup,
       rawPayload,
       deviceId
     );
@@ -2259,7 +2308,7 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     rawPayload: any,
     deviceId: string
   ): number | null {
-    const isValid = this.validateSensorData(rawValue, 'PAR', rawPayload, deviceId);
+    const isValid = this.validateSensorData(rawValue, 'solarRadiationExtended', rawPayload, deviceId);
 
     
 
@@ -2298,9 +2347,10 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
     const currentMonth = this.getCurrentMonthName();
     const normalRange = this.normalTemperatureRanges[currentMonth];
     const colors = ['#667eea', '#4facfe'];
+    const primaryTempLabel = this.getPrimarySensorLabel(SENSOR_TYPES.SOIL_TEMPERATURE, 'sensor_soil_temp');
     const sensors = [
-      { deviceId: 'demo-suelo-01', sensorType: 'TEMP_SOIL',     currentTemp: 23.5, max: 27.2, min: 18.4, mean: 22.8 },
-      { deviceId: 'demo-suelo-02', sensorType: 'temp_DS18B20',  currentTemp: 21.0, max: 25.8, min: 17.6, mean: 21.4 },
+      { deviceId: 'demo-suelo-01', sensorType: primaryTempLabel, currentTemp: 23.5, max: 27.2, min: 18.4, mean: 22.8 },
+      { deviceId: 'demo-suelo-02', sensorType: `${primaryTempLabel}_2`, currentTemp: 21.0, max: 25.8, min: 17.6, mean: 21.4 },
     ];
     return sensors.map((s, i) => ({
       ...s,
@@ -2367,26 +2417,35 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   private applyFallbackChartData(): void {
+    const flowLabel = this.getPrimarySensorLabel(SENSOR_TYPES.WATER_FLOW, 'sensor_flow');
+    const phLabel = this.getPrimarySensorLabel(SENSOR_TYPES.SOIL_PH, 'sensor_ph');
+    const airTempLabel = this.getPrimarySensorLabel(SENSOR_TYPES.AIR_TEMPERATURE, 'sensor_air_temp');
+    const airHumidityLabel = this.getPrimarySensorLabel(SENSOR_TYPES.AIR_HUMIDITY, 'sensor_air_humidity');
+    const windLabel = this.getPrimarySensorLabel(SENSOR_TYPES.WIND_SPEED, 'sensor_wind_speed');
+    const waterPressureLabel = this.getPrimarySensorLabel(SENSOR_TYPES.WATER_PRESSURE, 'sensor_water_pressure');
+    const soilHumidityLabel = this.getPrimarySensorLabel(SENSOR_TYPES.SOIL_HUMIDITY, 'sensor_soil_humidity');
+    const soilConductivityLabel = this.getPrimarySensorLabel(SENSOR_TYPES.SOIL_CONDUCTIVITY, 'sensor_soil_conductivity');
+
     const fallbackSensors: Record<string, { sensor: string; baseValue: number; variance: number }[]> = {
       flow: [
-        { sensor: 'Water_flow_value', baseValue: 120, variance: 15 },
+        { sensor: flowLabel, baseValue: 120, variance: 15 },
         { sensor: 'MOD',              baseValue: 8.5, variance: 1.2 }
       ],
       ph: [
-        { sensor: 'PH1_SOIL', baseValue: 6.8, variance: 0.3 }
+        { sensor: phLabel, baseValue: 6.8, variance: 0.3 }
       ],
       climate: [
-        { sensor: 'TEM',        baseValue: 24,  variance: 3   },
-        { sensor: 'HUM',        baseValue: 72,  variance: 8   },
-        { sensor: 'wind_speed', baseValue: 3.5, variance: 1.5 }
+        { sensor: airTempLabel,     baseValue: 24,  variance: 3   },
+        { sensor: airHumidityLabel, baseValue: 72,  variance: 8   },
+        { sensor: windLabel,        baseValue: 3.5, variance: 1.5 }
       ],
       pressure: [
-        { sensor: 'Water_pressure_MPa', baseValue: 0.35, variance: 0.05 },
+        { sensor: waterPressureLabel, baseValue: 0.35, variance: 0.05 },
         { sensor: 'IDC_intput_mA',      baseValue: 12.4, variance: 0.8  }
       ],
       soil: [
-        { sensor: 'water_SOIL',   baseValue: 58,  variance: 6   },
-        { sensor: 'conduct_SOIL', baseValue: 1.2, variance: 0.2 }
+        { sensor: soilHumidityLabel,     baseValue: 58,  variance: 6   },
+        { sensor: soilConductivityLabel, baseValue: 1.2, variance: 0.2 }
       ]
     };
 
@@ -2482,22 +2541,18 @@ export class ShinyDashboardComponent implements OnInit, AfterViewInit, OnDestroy
        return null;
     }
 
-    // Extract temperature using correct sensor names
-    // TEM sensors (air temperature from climate station) typically need /10
-    const temps = this.extractSensorValues(climateSensors, 'TEM')
+    // Extract temperature from configured air temperature sensors.
+    const temps = this.extractSensorValuesByType(climateSensors, SENSOR_TYPES.AIR_TEMPERATURE)
       .map(v => v / 10);  // TEM sensors return value × 10
- 
-    // Extract humidity using correct sensor names (HUM, Hum_SHT2x)
-    const humidities = [
-      ...this.extractSensorValues(climateSensors, 'HUM'),
-      ...this.extractSensorValues(climateSensors, 'Hum_SHT2x')
-    ];
 
-    // Extract wind speed using wind_speed_level (not wind_speed)
-    const windSpeeds = this.extractSensorValues(climateSensors, 'wind_speed_level');
+    // Extract humidity from configured air humidity sensors.
+    const humidities = this.extractSensorValuesByType(climateSensors, SENSOR_TYPES.AIR_HUMIDITY);
 
-    // Extract solar radiation using TSR (not PAR)
-    const solarRadiation = this.extractSensorValues(climateSensors, 'TSR');
+    // Extract wind speed from configured labels with legacy fallback.
+    const windSpeeds = this.extractSensorValuesByType(climateSensors, SENSOR_TYPES.WIND_SPEED, ['wind_speed_level']);
+
+    // Extract solar radiation from configured labels.
+    const solarRadiation = this.extractSensorValuesByType(climateSensors, SENSOR_TYPES.SOLAR_RADIATION);
 
     // Calculate statistics
     const tempStats = this.calculateStatsValues(temps);

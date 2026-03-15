@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -58,7 +58,8 @@ export class SubstrateCurveAnalyzerComponent implements OnInit, AfterViewInit, O
     private substrateService: SubstrateAnalysisService,
     private irrigationService: IrrigationSectorService,
     private alertService: AlertService,
-    private cropProductionService: CropProductionService
+    private cropProductionService: CropProductionService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initializeForms();
     this.chartConfig = this.substrateService.getDefaultChartConfig();
@@ -97,8 +98,11 @@ export class SubstrateCurveAnalyzerComponent implements OnInit, AfterViewInit, O
     this.cropProductionService.getAll({ onlyActive: true })
       .pipe(takeUntil(this.destroy$), finalize(() => this.isLoading = false))
       .subscribe({
-        next: (res: any) => { this.cropProductions = res.cropProductions ?? res ?? []; },
-        error: () => { this.errorMessage = 'Error al cargar las producciones de cultivo'; }
+      next: (res: any) => {
+        this.cropProductions = res.cropProductions ?? res ?? [];
+        console.log('Loaded cropProductions:', this.cropProductions);
+      },
+      error: () => { this.errorMessage = 'Error al cargar las producciones de cultivo'; }
       });
 
     this.irrigationService.getAllGrowingMediums(true)
@@ -129,6 +133,64 @@ export class SubstrateCurveAnalyzerComponent implements OnInit, AfterViewInit, O
   }
 
   // ==========================================================================
+  // COMPUTED INPUTS FOR IRRIGATION VOLUME CALCULATOR
+  // ==========================================================================
+  get derivedTotalArea(): number {
+    const cp = this.selectedCropProduction as any;
+    const area = cp?.area || (cp?.width && cp?.length ? cp.width * cp.length : null);
+    if (!area) {
+      console.warn('derivedTotalArea: No area/width/length found, using fallback 1000');
+      return 1000;
+    }
+    return area;
+  }
+
+  get derivedNumberOfContainers(): number {
+    const cp = this.selectedCropProduction as any;
+    const area = cp?.area || (cp?.width && cp?.length ? cp.width * cp.length : null);
+    if (!area || !cp?.betweenRowDistance || !cp?.betweenPlantDistance) {
+      console.warn('derivedNumberOfContainers: Missing area or distances, using fallback 1000');
+      return 1000;
+    }
+    const totalPlants = area / (cp.betweenRowDistance * cp.betweenPlantDistance);
+    const plantsPerContainer = cp.plantsPerContainer || 1;
+    return Math.max(1, Math.round(totalPlants / plantsPerContainer));
+  }
+
+  get derivedPlantsPerContainer(): number {
+    if (!this.selectedCropProduction?.plantsPerContainer) {
+      console.warn('derivedPlantsPerContainer: plantsPerContainer missing, using fallback 1');
+      return 1;
+    }
+    return this.selectedCropProduction.plantsPerContainer;
+  }
+
+  get derivedPlantDensity(): number {
+    const cp = this.selectedCropProduction;
+    if (!cp?.betweenRowDistance || !cp.betweenPlantDistance) {
+      console.warn('derivedPlantDensity: Missing distances, using fallback 2.5');
+      return 2.5;
+    }
+    return parseFloat((1 / (cp.betweenRowDistance * cp.betweenPlantDistance)).toFixed(2));
+  }
+
+  get derivedDrainPercentage(): number {
+    if ((this.selectedCropProduction as any)?.drainThreshold == null) {
+      console.warn('derivedDrainPercentage: drainThreshold missing, using fallback 20');
+      return 20;
+    }
+    return (this.selectedCropProduction as any).drainThreshold;
+  }
+
+  get derivedDepletionPercentage(): number {
+    if ((this.selectedCropProduction as any)?.depletionPercentage == null) {
+      console.warn('derivedDepletionPercentage: depletionPercentage missing, using fallback 30');
+      return 30;
+    }
+    return (this.selectedCropProduction as any).depletionPercentage;
+  }
+
+  // ==========================================================================
   // CURVE GENERATION
   // ==========================================================================
 
@@ -153,6 +215,7 @@ export class SubstrateCurveAnalyzerComponent implements OnInit, AfterViewInit, O
         next: (curve) => {
           this.currentCurve = curve;
           this.waterVolumes = this.substrateService.calculateWaterVolumes(curve);
+          this.cdr.detectChanges(); // flush *ngIf so canvas appears before renderChart
           this.renderChart(curve);
           this.alertService.showSuccess('Curva generada exitosamente');
         },
@@ -246,7 +309,7 @@ export class SubstrateCurveAnalyzerComponent implements OnInit, AfterViewInit, O
         responsive: true,
         maintainAspectRatio: false,
         interaction: {
-          mode: 'index',
+          mode: 'nearest',
           intersect: false
         },
         plugins: {

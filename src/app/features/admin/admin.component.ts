@@ -333,8 +333,10 @@ export class AdminComponent implements OnInit {
           type: 'select',
           required: true,
           options: [
-            { value: 1, label: 'Admin' },
-            { value: 2, label: 'Client' }
+            { value: 2, label: 'Admin User' },
+            { value: 5, label: 'Technician User' },
+            { value: 6, label: 'Agronomist User' },
+            { value: 7, label: 'Agronomist + Technician' }
           ]
         }
       ]
@@ -2488,8 +2490,13 @@ export class AdminComponent implements OnInit {
    */
   getUserRoleLabel(profileId: number): string {
     const roleMap: { [key: number]: string } = {
-      1: 'Admin',
-      2: 'Client'
+      1: 'Super Admin',
+      2: 'Admin User',
+      3: 'Company User',
+      4: 'Application',
+      5: 'Technician User',
+      6: 'Agronomist User',
+      7: 'Agronomist + Technician'
     };
     return roleMap[profileId] || 'Desconocido';
   }

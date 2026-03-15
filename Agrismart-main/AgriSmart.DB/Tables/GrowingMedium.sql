@@ -3,6 +3,7 @@
 	[Id] INT NOT NULL PRIMARY KEY IDENTITY,
 	[CatalogId] INT NOT NULL,
 	[Name] NVARCHAR(64) NOT NULL,
+	[SaturationPoint] FLOAT NOT NULL DEFAULT 95.8,
 	[ContainerCapacityPercentage] FLOAT NULL,
 	[PermanentWiltingPoint] FLOAT NULL,
 	[Active] BIT NOT NULL DEFAULT 1, 

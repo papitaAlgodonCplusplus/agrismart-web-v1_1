@@ -279,8 +279,8 @@ export class IrrigationAutoMonitorService {
                 title: 'Sensor de temperatura no disponible',
                 details: [
                     'No se encontraron lecturas de temperatura en las últimas 24 horas.',
-                    'Sensores compatibles: temp_SOIL, temp_DS18B20, TEMP_SOIL, TempC_DS18B20.',
-                    'Verifique que alguno de estos sensores esté activo y conectado.'
+                    'Configure un sensor con tipo "Temperatura del Suelo" en la sección Dispositivos.',
+                    'Verifique que el sensor esté activo y conectado.'
                 ]
             },
             {
@@ -288,7 +288,7 @@ export class IrrigationAutoMonitorService {
                 title: 'Sin historial de riego detectado',
                 details: [
                     'No se detectaron eventos de riego en los últimas 10 días.',
-                    'Sensores requeridos: Water_flow_value o Total_pulse.',
+                    'Configure sensores con tipo "Sensor de Flujo de Agua" o "Contador de Pulsos" en la sección Dispositivos.',
                     'Se necesita al menos un evento de flujo reciente para calcular la recomendación.'
                 ]
             },

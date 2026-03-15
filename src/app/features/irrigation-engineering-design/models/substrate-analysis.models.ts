@@ -50,6 +50,7 @@ export interface SubstrateAnalysisInput {
   // From GrowingMedium entity (YOUR EXISTING DATA)
   growingMediumId: number;
   growingMediumName: string;
+  saturationPoint: number;                  // θ at 0 kPa (max water content; solid fraction = 100 - saturationPoint)
   containerCapacityPercentage: number;      // θ at 1 kPa
   permanentWiltingPoint: number;            // θ at ~15 kPa
   easelyAvailableWaterPercentage: number;   // Difference between 1-5 kPa

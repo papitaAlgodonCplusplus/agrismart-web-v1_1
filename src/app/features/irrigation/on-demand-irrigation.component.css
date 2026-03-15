@@ -2712,3 +2712,175 @@ textarea.form-control {
     border-radius: 20px;
   }
 }
+
+/* ============================================================
+   AGRO PARAMS ROW
+   ============================================================ */
+.agro-params-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.agro-params-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+  margin-right: 4px;
+}
+
+.agro-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  white-space: nowrap;
+}
+
+.agro-pill--trigger {
+  background: rgba(255, 193, 7, 0.18);
+  border-color: rgba(255, 193, 7, 0.4);
+  color: #ffc107;
+}
+
+.agro-pill--case {
+  background: rgba(13, 202, 240, 0.15);
+  border-color: rgba(13, 202, 240, 0.35);
+  color: #0dcaf0;
+}
+
+/* ============================================================
+   SOIL MOISTURE SETPOINT MARKER
+   ============================================================ */
+.sensor-mini-bar {
+  position: relative;
+}
+
+.sensor-mini-setpoint {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: #ffc107;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: 0 0 4px rgba(255, 193, 7, 0.6);
+}
+
+.sensor-card-setpoint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #ffc107;
+  margin-top: 3px;
+}
+
+/* ============================================================
+   REASONING SECTION
+   ============================================================ */
+.reasoning-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reasoning-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+  border-left: 3px solid rgba(13, 202, 240, 0.5);
+  line-height: 1.4;
+}
+
+.reasoning-item i {
+  color: #0dcaf0;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ============================================================
+   CALCULATION BREAKDOWN — CASE A/B
+   ============================================================ */
+.calc-case-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.case-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  align-self: flex-start;
+}
+
+.case-badge.case-a {
+  background: rgba(25, 135, 84, 0.2);
+  border: 1px solid rgba(25, 135, 84, 0.5);
+  color: #198754;
+}
+
+.case-badge.case-b {
+  background: rgba(13, 110, 253, 0.2);
+  border: 1px solid rgba(13, 110, 253, 0.5);
+  color: #0d6efd;
+}
+
+.case-description {
+  font-size: 0.76rem;
+  opacity: 0.7;
+  line-height: 1.4;
+}
+
+.calc-row--trigger {
+  background: rgba(255, 193, 7, 0.07);
+  border-left: 3px solid #ffc107 !important;
+}
+
+.calc-result--trigger {
+  color: #198754;
+  font-weight: 700;
+}
+
+.calc-result--up {
+  color: #0d6efd;
+  font-weight: 600;
+}
+
+.calc-result--down {
+  color: #dc3545;
+  font-weight: 600;
+}

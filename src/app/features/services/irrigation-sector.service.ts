@@ -190,6 +190,7 @@ export interface GrowingMedium {
   id: number;
   catalogId: number;
   name: string;
+  saturationPoint?: number;
   containerCapacityPercentage?: number;
   permanentWiltingPoint?: number;
   fiveKpaHumidity?: number;
@@ -526,6 +527,7 @@ export interface GrowingMedium {
   id: number;
   catalogId: number;
   name: string;
+  saturationPoint?: number;
   containerCapacityPercentage?: number;
   permanentWiltingPoint?: number;
   fiveKpaHumidity?: number;

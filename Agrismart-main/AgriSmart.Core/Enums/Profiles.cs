@@ -5,6 +5,9 @@ namespace AgriSmart.Core.Enums
         SuperUser = 1,
         ClientAdmin = 2,
         CompanyUser = 3,
-        Application = 4
+        Application = 4,
+        TechnicianUser = 5,
+        AgronomistUser = 6,
+        AgronomistTechnicianUser = 7
     }
 }

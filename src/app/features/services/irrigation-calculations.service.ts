@@ -2,6 +2,8 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { SensorConfigService, SENSOR_TYPES } from '../sensors/services/sensor-config.service';
+import { CalculationSettingsService } from './calculation-settings.service';
 // models/irrigation-metrics.models.ts
 export interface DeviceRawDataPoint {
   id: number;
@@ -39,6 +41,10 @@ export interface CropProductionEntity {
   area: number;
   containerVolume?: number;
   availableWaterPercentage?: number;
+  numberOfDroppersPerContainer?: number;
+  dropper?: {
+    flowRate?: number;
+  };
 }
 
 export interface MeasurementVariable {
@@ -84,7 +90,10 @@ export interface IrrigationMonitorResponse {
 })
 export class IrrigationCalculationsService {
 
-  constructor() { }
+  constructor(
+    private sensorConfig: SensorConfigService,
+    private calcSettings: CalculationSettingsService
+  ) { }
 
   // ============================================================================
   // 1. CalculateIrrigationCalculationOutput
@@ -124,7 +133,7 @@ export class IrrigationCalculationsService {
     const irrigationVolumeTotal = inputs[0].irrigationVolume || 0;
     const drainVolumeTotal = inputs[0].drainVolume || 0;
 
-    const irrigationVolumeM2 = irrigationVolumeTotal / cropProduction.area;
+    const irrigationVolumeM2 = irrigationVolumeTotal * densityContainer;
     const irrigationVolumePerPlant = irrigationVolumeM2 / densityPlant;
 
     output.irrigationVolumenM2 = new Volume(irrigationVolumeM2, VolumeMeasure.toLitre);
@@ -135,7 +144,7 @@ export class IrrigationCalculationsService {
 
     // Calculate drain volumes
 
-    const drainVolumeM2 = drainVolumeTotal / cropProduction.area;
+    const drainVolumeM2 = drainVolumeTotal * densityContainer;
     const drainVolumePerPlant = drainVolumeM2 / densityPlant;
 
     output.drainVolumenM2 = new Volume(drainVolumeM2, VolumeMeasure.toLitre);
@@ -167,10 +176,11 @@ export class IrrigationCalculationsService {
   getCropProductionIrrigationEvents(
     cropProduction: CropProductionEntity,
     pressureReadings: DeviceRawDataPoint[],
-    pressureDeltaThreshold: number = 0.002, // MPa
+    pressureDeltaThreshold?: number, // MPa — defaults to CalculationSettings 'PressureDeltaThreshold'
     inProgressEvent?: IrrigationEventEntity
   ): IrrigationEventEntity[] {
 
+    const threshold = pressureDeltaThreshold ?? this.calcSettings.getNumber('PressureDeltaThreshold', 0.002);
     const events: IrrigationEventEntity[] = [];
 
     // Sort readings by date
@@ -190,11 +200,11 @@ export class IrrigationCalculationsService {
         const pressureChange = currentPressure - previousPressure;
 
         // Detect pump ON (pressure increase)
-        if (pressureChange >= pressureDeltaThreshold && eventStart === null) {
+        if (pressureChange >= threshold && eventStart === null) {
           eventStart = new Date(reading.recordDate);
         }
         // Detect pump OFF (pressure decrease)
-        else if (pressureChange <= -pressureDeltaThreshold && eventStart !== null) {
+        else if (pressureChange <= -threshold && eventStart !== null) {
           const event: IrrigationEventEntity = {
             recordDateTime: eventStart,
             dateTimeStart: eventStart,
@@ -276,14 +286,15 @@ export class IrrigationCalculationsService {
       event.irrigationVolume = irrigationVolume;
       event.drainVolume = drainVolume;
 
-      // Keep the old format for backward compatibility (with hardcoded IDs)
+      // Populate measurement variable IDs from settings (no longer hardcoded)
+      const varIds = this.calcSettings.getMeasurementVariableIds();
       event.irrigationMeasurements = [
         {
-          measurementVariableId: 1,
+          measurementVariableId: varIds.irrigationVolume,
           recordValue: irrigationVolume
         },
         {
-          measurementVariableId: 2,
+          measurementVariableId: varIds.drainVolume,
           recordValue: drainVolume
         }
       ];
@@ -293,51 +304,20 @@ export class IrrigationCalculationsService {
   }
 
   /**
-   * Calculate volume from flow sensor readings
-   * Handles both instantaneous flow rates and cumulative pulse counts
+   * Calculate volume from WATER_FLOW sensor readings only.
    */
   calculateVolumeFromFlowReadings(flowReadings: DeviceRawDataPoint[]): number {
     if (flowReadings.length === 0) {
-      //console.log.*
       return 0;
     }
 
-    // Check what type of flow sensor data we have
-    const hasTotalPulse = flowReadings.some(r => r.sensor === 'Total_pulse');
-    const hasWaterFlowValue = flowReadings.some(r => r.sensor === 'Water_flow_value');
-
-    // this one is actually a drain sensor, not flow
-    const hasRainFlowValue = flowReadings.some(r => r.sensor.includes('rain'));
-
-    //console.log.*
-
-    if (hasTotalPulse) {
-      // Use cumulative pulse counter (most accurate)
-      const pulseReadings = flowReadings.filter(r => r.sensor === 'Total_pulse');
-      //console.log("Pulse readings for volume calculation:", pulseReadings);
-      if (pulseReadings.length < 2) {
-        //console.log.*
-        return 0;
-      }
-
-      // Get first and last pulse counts
-      const firstPulse = Number(pulseReadings[0].payload);
-      const lastPulse = Number(pulseReadings[pulseReadings.length - 1].payload);
-
-      // Calculate volume from pulse difference
-      // TODO: Get actual pulse-to-volume conversion factor from device configuration
-      const PULSES_PER_LITER = 450; // Example: 450 pulses = 1 liter
-      // console.log("First pulse:", firstPulse, "Last pulse:", lastPulse);
-      const volume = (lastPulse - firstPulse) / PULSES_PER_LITER;
-
-      console.log("Calculated volume from pulses:", volume);
-
-      return Math.max(0, Math.abs(volume));
-    }
+    const waterFlowLabels = this.sensorConfig.getSensorLabelsByType(SENSOR_TYPES.WATER_FLOW);
+    const hasWaterFlowValue = flowReadings.some(r => waterFlowLabels.includes(r.sensor));
+    const hasRainFlowValue  = flowReadings.some(r => r.sensor.includes('rain'));
 
     if (hasWaterFlowValue) {
       // Use instantaneous flow rate values
-      const flowRateReadings = flowReadings.filter(r => r.sensor === 'Water_flow_value');
+      const flowRateReadings = flowReadings.filter(r => waterFlowLabels.includes(r.sensor));
 
       // Sum all flow values (assuming they're already in liters or similar)
       const totalFlow = flowRateReadings.reduce((sum, r) => {
@@ -393,7 +373,7 @@ export class IrrigationCalculationsService {
     cropProduction: CropProductionEntity,
     currentSoilMoisture: number, // Volumetric water content (%)
     targetMoisture: number = 80, // % of container capacity
-    depletionThreshold: number = 50, // % depletion to trigger irrigation
+    depletionThreshold: number = 50, // retained for backward compatibility
     drainTargetPercentage: number = 20 // Target drain %
   ): IrrigationMonitorResponse {
 
@@ -404,10 +384,12 @@ export class IrrigationCalculationsService {
     const setpointHumidity = targetMoisture;
 
     // Calculate depletion percentage
-    const depletionPercentage = ((setpointHumidity - currentSoilMoisture) / setpointHumidity) * 100;
+    const depletionPercentage = setpointHumidity > 0
+      ? ((setpointHumidity - currentSoilMoisture) / setpointHumidity) * 100
+      : 0;
 
-    // Determine if irrigation is needed
-    const shouldIrrigate = depletionPercentage >= depletionThreshold;
+    // Determine if irrigation is needed using absolute moisture vs agronomic setpoint.
+    const shouldIrrigate = currentSoilMoisture < setpointHumidity;
 
     if (!shouldIrrigate) {
       return {
@@ -423,14 +405,18 @@ export class IrrigationCalculationsService {
     // Add drain percentage
     const totalVolume = volumeNeeded * (1 + drainTargetPercentage / 100);
 
-    // Calculate irrigation time (assuming flow rate)
-    const flowRate = 2; // L/min (this should come from system configuration)
-    const irrigationTimeMinutes = totalVolume / flowRate;
+    // Calculate irrigation time from dropper flow when available; fallback keeps legacy behavior.
+    const dropperFlowRate = cropProduction.dropper?.flowRate ?? 0; // L/hour per dropper
+    const droppersPerContainer = cropProduction.numberOfDroppersPerContainer ?? 0;
+    const flowRate = dropperFlowRate > 0 && droppersPerContainer > 0
+      ? (dropperFlowRate * droppersPerContainer) / 60
+      : 2; // L/min fallback
+    const irrigationTimeMinutes = flowRate > 0 ? totalVolume / flowRate : 0;
 
     return {
       irrigate: true,
       irrigationTime: Math.ceil(irrigationTimeMinutes),
-      reason: `Soil moisture low (${currentSoilMoisture.toFixed(1)}%). Depletion: ${depletionPercentage.toFixed(1)}%. Volume needed: ${totalVolume.toFixed(2)}L`
+      reason: `Soil moisture low (${currentSoilMoisture.toFixed(1)}%). Setpoint: ${setpointHumidity.toFixed(1)}%. Depletion: ${depletionPercentage.toFixed(1)}%. Volume needed: ${totalVolume.toFixed(2)}L`
     };
   }
 

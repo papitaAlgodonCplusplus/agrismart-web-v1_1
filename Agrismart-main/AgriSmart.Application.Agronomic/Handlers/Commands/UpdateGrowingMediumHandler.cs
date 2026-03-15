@@ -37,6 +37,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                 {
                     getResult.CatalogId = command.CatalogId;
                     getResult.Name = command.Name;
+                    getResult.SaturationPoint = command.SaturationPoint;
                     getResult.ContainerCapacityPercentage = command.ContainerCapacityPercentage;
                     getResult.PermanentWiltingPoint = command.PermanentWiltingPoint;
                     getResult.FiveKpaHumidity = command.FiveKpaHumidity;
@@ -55,6 +56,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                         Id = updateGrowingMediumResult.Id,
                         CatalogId = updateGrowingMediumResult.CatalogId,
                         Name = updateGrowingMediumResult.Name,
+                        SaturationPoint = updateGrowingMediumResult.SaturationPoint,
                         ContainerCapacityPercentage = updateGrowingMediumResult.ContainerCapacityPercentage,
                         PermanentWiltingPoint = updateGrowingMediumResult.PermanentWiltingPoint,
                         FiveKpaHumidity = updateGrowingMediumResult.FiveKpaHumidity,

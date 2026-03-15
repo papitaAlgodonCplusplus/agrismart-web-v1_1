@@ -15,6 +15,14 @@ const https = require('https');
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 
+const BLYNK = {
+  token:   'jOpGvVwRSfEb-AO4hhF5IDqIIjqJTcSp',
+  baseUrl: 'blynk.cloud',
+};
+
+// sector ID → Blynk virtual pin
+const SECTOR_PIN = { 1: 'V4', 2: 'V5', 3: 'V6' };
+
 const CONFIG = {
   baseUrl:         'https://localhost:7029',
   email:           'csolano@iapcr.com',
@@ -258,6 +266,7 @@ async function processEntry(entry, now) {
   // ── START ────────────────────────────────────────────────────────────────────
   if (status !== 'executing' && status !== 'finished' && now > execDate) {
     const plannedStop = new Date(now.getTime() + entry.duration * 60 * 1000);
+    const sectorPin   = SECTOR_PIN[entry.sectorID];
 
     printCard(
       valveOpen(shortName, formatMs(plannedStop - now)),
@@ -266,6 +275,14 @@ async function processEntry(entry, now) {
       `  Duration: ${entry.duration} min\n` +
       `  Stops at: ${plannedStop.toLocaleString()}`
     );
+
+    log('BLYNK', `Turning ON pump V3 for entry #${entry.id}`);
+    await blynkSet('V3', 1);
+    await sleep(3000);
+    if (sectorPin) {
+      log('BLYNK', `Turning ON sector valve ${sectorPin} (sector ${entry.sectorID}) for entry #${entry.id}`);
+      await blynkSet(sectorPin, 1);
+    }
 
     await updateEntry(entry, {
       status:       'executing',
@@ -277,11 +294,20 @@ async function processEntry(entry, now) {
 
   // ── STOP ─────────────────────────────────────────────────────────────────────
   if (status === 'executing' && stopDate && now > stopDate) {
+    const sectorPin = SECTOR_PIN[entry.sectorID];
+
     printCard(
       valveDone(shortName),
       `  Entry #${entry.id} | Plan: ${entry.irrigationPlanName}\n` +
       `  Finished at: ${now.toLocaleString()}`
     );
+
+    log('BLYNK', `Turning OFF pump V3 for entry #${entry.id}`);
+    await blynkSet('V3', 0);
+    if (sectorPin) {
+      log('BLYNK', `Turning OFF sector valve ${sectorPin} (sector ${entry.sectorID}) for entry #${entry.id}`);
+      await blynkSet(sectorPin, 0);
+    }
 
     await updateEntry(entry, {
       status:   'finished',
@@ -314,6 +340,24 @@ async function processEntry(entry, now) {
   }
 }
 
+// ─── BLYNK HELPER ────────────────────────────────────────────────────────────
+
+function blynkSet(pin, value) {
+  return new Promise((resolve, reject) => {
+    const path = `/external/api/update?token=${BLYNK.token}&${pin}=${value}`;
+    const req = https.request(
+      { hostname: BLYNK.baseUrl, port: 443, path, method: 'GET' },
+      (res) => { res.resume(); res.on('end', resolve); }
+    );
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // ─── UTILITIES ────────────────────────────────────────────────────────────────
 
 function log(tag, msg) {
@@ -323,6 +367,7 @@ function log(tag, msg) {
     POLL:  c(C.cyan,    'POLL '),
     ERROR: c(C.bRed,    'ERROR'),
     INIT:  c(C.bGreen,  'INIT '),
+    BLYNK: c(C.bYellow, 'BLYNK'),
   }[tag] ?? tag.padEnd(5);
   console.log(`${c(C.gray, `[${ts}]`)} [${tagColored}] ${msg}`);
 }

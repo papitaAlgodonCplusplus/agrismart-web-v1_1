@@ -14,13 +14,11 @@ namespace AgriSmart.Application.Agronomic.Validators.Commands
 
         protected override bool AreFiltersValid(CreateSensorCommand command)
         {
-            if (string.IsNullOrEmpty(command.DeviceId.ToString()))
+            if (command.DeviceId <= 0)
                 return false;
-            if (string.IsNullOrEmpty(command.SensorLabel.ToString()))
+            if (string.IsNullOrWhiteSpace(command.SensorLabel))
                 return false;
-            if (string.IsNullOrEmpty(command.Description.ToString()))
-                return false;
-            if (string.IsNullOrEmpty(command.MeasurementVariableId.ToString()))
+            if (string.IsNullOrWhiteSpace(command.Description))
                 return false;
             return true;
         }

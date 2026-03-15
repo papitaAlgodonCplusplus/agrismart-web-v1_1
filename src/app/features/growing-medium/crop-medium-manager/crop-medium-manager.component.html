@@ -153,6 +153,21 @@
 
             <div class="col-md-4">
               <label class="form-label">
+                Punto de Saturación <span class="text-danger">*</span>
+                <i class="bi bi-info-circle text-muted ms-1" title="Humedad volumétrica a 0 kPa (saturación plena). La fracción sólida = 100 − este valor. La curva nunca supera este porcentaje."></i>
+              </label>
+              <div class="input-group">
+                <input type="number" class="form-control aero-input" formControlName="saturationPoint"
+                  min="0" max="100" step="0.1" placeholder="Ej: 95.8"
+                  [class.is-invalid]="mediumForm.get('saturationPoint')?.invalid && mediumForm.get('saturationPoint')?.touched" />
+                <span class="input-group-text">%</span>
+              </div>
+              <small class="form-text text-muted">θ a 0 kPa · Fracción sólida = {{ 100 - (mediumForm.get('saturationPoint')?.value || 0) | number:'1.1-1' }}%</small>
+              <div class="invalid-feedback">Requerido, entre 0 y 100%</div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">
                 Capacidad de Contenedor (CC) <span class="text-danger">*</span>
                 <i class="bi bi-info-circle text-muted ms-1" title="Humedad volumétrica a 1 kPa"></i>
               </label>
@@ -260,6 +275,7 @@
           <div class="detail-row"><span class="detail-label">ID:</span><span class="detail-value">#{{ selectedMedium.id }}</span></div>
           <div class="detail-row"><span class="detail-label">Nombre:</span><span class="detail-value">{{ selectedMedium.name }}</span></div>
           <div class="detail-row"><span class="detail-label">Catálogo:</span><span class="detail-value"><span class="badge bg-info">{{ getCatalogName(selectedMedium.catalogId) }}</span></span></div>
+          <div class="detail-row"><span class="detail-label">Saturación (0 kPa):</span><span class="detail-value fw-bold">{{ selectedMedium.saturationPoint | number:'1.2-2' }}% <small class="text-muted">(sólido: {{ 100 - selectedMedium.saturationPoint | number:'1.2-2' }}%)</small></span></div>
           <div class="detail-row"><span class="detail-label">CC (1 kPa):</span><span class="detail-value fw-bold">{{ selectedMedium.containerCapacityPercentage | number:'1.2-2' }}%</span></div>
           <div class="detail-row"><span class="detail-label">PPM (15 kPa):</span><span class="detail-value fw-bold">{{ selectedMedium.permanentWiltingPoint | number:'1.2-2' }}%</span></div>
           <div class="detail-row"><span class="detail-label">H5kPa:</span><span class="detail-value fw-bold">{{ selectedMedium.fiveKpaHumidity | number:'1.2-2' }}%</span></div>

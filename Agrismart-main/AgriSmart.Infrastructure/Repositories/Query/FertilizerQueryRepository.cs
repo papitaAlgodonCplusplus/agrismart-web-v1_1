@@ -1,4 +1,4 @@
-﻿// AgriSmart.Infrastructure/Repositories/Query/FertilizerQueryRepository.cs
+// AgriSmart.Infrastructure/Repositories/Query/FertilizerQueryRepository.cs
 using AgriSmart.Core.Configuration;
 using AgriSmart.Infrastructure.Data;
 using AgriSmart.Core.Entities;
@@ -27,7 +27,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               join ca in _context.Catalog on f.CatalogId equals ca.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (ca.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
@@ -117,7 +117,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               join ca in _context.Catalog on f.CatalogId equals ca.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (ca.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && (f.Id == id)
@@ -211,7 +211,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               join ca in _context.Catalog on f.CatalogId equals ca.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (ca.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
@@ -276,7 +276,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               join ca in _context.Catalog on f.CatalogId equals ca.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (ca.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
@@ -320,7 +320,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               join ca in _context.Catalog on f.CatalogId equals ca.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (ca.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
@@ -362,7 +362,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               join ca in _context.Catalog on f.CatalogId equals ca.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (ca.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
@@ -406,7 +406,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               join ca in _context.Catalog on f.CatalogId equals ca.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (ca.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)
@@ -453,7 +453,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               join ca in _context.Catalog on f.CatalogId equals ca.Id
                               where (
                                         (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser) ||
-                                        (ca.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (ca.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                     )
                                     && ((ca.Id == catalogId) || catalogId == 0)

@@ -38,6 +38,7 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                     getResult.DeviceId = command.DeviceId;
                     getResult.SensorLabel = command.SensorLabel;
                     getResult.Description = command.Description;
+                    getResult.SensorType = command.SensorType;
                     getResult.MeasurementVariableId =  command.MeasurementVariableId;
                     getResult.NumberOfContainers = command.NumberOfContainers;
                     getResult.Active = command.Active;
@@ -53,7 +54,8 @@ namespace AgriSmart.Application.Agronomic.Handlers.Commands
                         DeviceId = updateSensorResult.DeviceId,
                         SensorLabel = updateSensorResult.SensorLabel,
                         Description = updateSensorResult.Description,
-                        MeasurementVariableId = updateSensorResult.MeasurementVariableId,   
+                        SensorType = updateSensorResult.SensorType,
+                        MeasurementVariableId = updateSensorResult.MeasurementVariableId,
                         NumberOfContainers = updateSensorResult.NumberOfContainers,
                         Active = updateSensorResult.Active
                     };

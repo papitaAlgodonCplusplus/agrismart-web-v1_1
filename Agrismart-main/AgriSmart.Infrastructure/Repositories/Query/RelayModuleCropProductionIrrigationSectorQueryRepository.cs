@@ -1,4 +1,4 @@
-﻿using AgriSmart.Core.Configuration;
+using AgriSmart.Core.Configuration;
 using AgriSmart.Infrastructure.Data;
 using AgriSmart.Core.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +32,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                                 where
     (
           (rm.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser && u.Id == GetSessionUserId()) ||
-          (rm.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+          (rm.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
           (GetSessionProfileId() == (int)Profiles.SuperUser)
     ) && ((uf.UserId == userId) || userId == 0)
                                 select uf).ToListAsync();
@@ -42,7 +42,7 @@ namespace AgriSmart.Infrastructure.Repositories.Query
                               where
                                   (
                                         (u.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.CompanyUser && u.Id == GetSessionUserId()) ||
-                                        (u.ClientId == GetSessionClientId() && GetSessionProfileId() == (int)Profiles.ClientAdmin) ||
+                                        (u.ClientId == GetSessionClientId() && IsClientLevelUser()) ||
                                         (GetSessionProfileId() == (int)Profiles.SuperUser)
                                   )
                                   && ((uf.UserId == userId) || userId == 0)                              

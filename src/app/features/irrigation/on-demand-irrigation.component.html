@@ -235,9 +235,23 @@
               <ng-container *ngIf="currentRecommendation.decisionFactors.hasSoilMoistureData; else noMoisture">
                 <div class="sensor-card-value">{{ currentRecommendation.decisionFactors.currentMoisture.toFixed(1) }}%</div>
                 <div class="sensor-card-label">Humedad Suelo</div>
-                <div class="sensor-card-sub">Depleción: {{ currentRecommendation.decisionFactors.depletionPercentage.toFixed(1) }}%</div>
+                <div class="sensor-card-sub">
+                  CC: {{ currentRecommendation.decisionFactors.containerCapacity.toFixed(1) }}%
+                  · Depleción: {{ currentRecommendation.decisionFactors.depletionPercentage.toFixed(1) }}%
+                </div>
                 <div class="sensor-mini-bar">
-                  <div class="sensor-mini-fill" [style.width.%]="100 - currentRecommendation.decisionFactors.depletionPercentage"></div>
+                  <div class="sensor-mini-fill"
+                       [style.width.%]="(currentRecommendation.decisionFactors.currentMoisture / currentRecommendation.decisionFactors.containerCapacity) * 100">
+                  </div>
+                  <div class="sensor-mini-setpoint"
+                       *ngIf="currentRecommendation.decisionFactors.moistureSetPoint != null && currentRecommendation.decisionFactors.containerCapacity > 0"
+                       [style.left.%]="(currentRecommendation.decisionFactors.moistureSetPoint / currentRecommendation.decisionFactors.containerCapacity) * 100"
+                       [title]="'Punto de riego: ' + currentRecommendation.decisionFactors.moistureSetPoint.toFixed(1) + '%'">
+                  </div>
+                </div>
+                <div class="sensor-card-setpoint" *ngIf="currentRecommendation.decisionFactors.moistureSetPoint != null">
+                  <i class="bi bi-lightning-fill"></i>
+                  Punto de riego: {{ currentRecommendation.decisionFactors.moistureSetPoint.toFixed(1) }}%
                 </div>
               </ng-container>
               <ng-template #noMoisture>
@@ -339,9 +353,42 @@
             </div>
 
           </div>
+
+          <!-- Agronomic Parameters Row -->
+          <div class="agro-params-row" *ngIf="currentRecommendation.decisionFactors && currentRecommendation.calculationBreakdown">
+            <span class="agro-params-label">Parámetros agronómicos:</span>
+            <span class="agro-pill">CC: {{ currentRecommendation.decisionFactors.containerCapacity.toFixed(1) }}%</span>
+            <span class="agro-pill" *ngIf="currentRecommendation.calculationBreakdown.tawPercentage != null">
+              TAW: {{ currentRecommendation.calculationBreakdown.tawPercentage.toFixed(1) }}%
+            </span>
+            <span class="agro-pill agro-pill--trigger" *ngIf="currentRecommendation.decisionFactors.moistureSetPoint != null">
+              <i class="bi bi-lightning-fill"></i>
+              Punto de riego: {{ currentRecommendation.decisionFactors.moistureSetPoint.toFixed(1) }}%
+            </span>
+            <span class="agro-pill" *ngIf="currentRecommendation.calculationBreakdown.drainThresholdPct != null">
+              Drenaje objetivo: {{ currentRecommendation.calculationBreakdown.drainThresholdPct.toFixed(0) }}%
+            </span>
+            <span class="agro-pill agro-pill--case" *ngIf="currentRecommendation.calculationBreakdown.volumeCase">
+              Fórmula: Caso {{ currentRecommendation.calculationBreakdown.volumeCase }}
+            </span>
+          </div>
         </div>
 
-        <!-- SECTION 2: Rule Evaluations -->
+        <!-- SECTION 2: Reasoning -->
+        <div class="analysis-section" *ngIf="currentRecommendation.reasoning?.length">
+          <h4 class="analysis-section-title">
+            <i class="bi bi-lightbulb-fill"></i>
+            Motivos de la decisión
+          </h4>
+          <ul class="reasoning-list">
+            <li *ngFor="let reason of currentRecommendation.reasoning" class="reasoning-item">
+              <i class="bi bi-chevron-right"></i>
+              {{ reason }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- SECTION 3 (was 2): Rule Evaluations -->
         <div class="analysis-section" *ngIf="currentRecommendation.ruleEvaluations?.length">
           <h4 class="analysis-section-title">
             <i class="bi bi-list-check"></i>
@@ -374,7 +421,7 @@
           </div>
         </div>
 
-        <!-- SECTION 3: Final Decision -->
+        <!-- SECTION 4: Final Decision -->
         <div class="analysis-section">
           <h4 class="analysis-section-title">
             <i class="bi bi-check2-square"></i>
@@ -455,25 +502,114 @@
           </div>
         </div>
 
-        <!-- SECTION 4: Calculation Breakdown -->
-        <div class="analysis-section" *ngIf="currentRecommendation.shouldIrrigate && currentRecommendation.calculationBreakdown">
+        <!-- SECTION 5: Calculation Breakdown -->
+        <div class="analysis-section" *ngIf="currentRecommendation.shouldIrrigate && currentRecommendation.calculationBreakdown && currentRecommendation.decisionFactors">
           <h4 class="analysis-section-title">
             <i class="bi bi-calculator"></i>
             Detalle del Cálculo
           </h4>
           <div class="calc-breakdown-grid">
 
-            <!-- Volume per container -->
-            <div class="calc-row" *ngIf="currentRecommendation.calculationBreakdown.baseVolumeLiters !== null">
-              <span class="calc-label">Volumen base por contenedor</span>
-              <span class="calc-formula">
-                TAW ({{ currentRecommendation.calculationBreakdown.tawPercentage?.toFixed(1) }}%)
-                × Depleción ({{ ((currentRecommendation.calculationBreakdown.depletionFraction ?? 0) * 100).toFixed(1) }}%)
-                × Contenedor ({{ currentRecommendation.calculationBreakdown.containerVolumeLiters?.toFixed(1) }} L)
+            <!-- Case Badge -->
+            <div class="calc-case-header" *ngIf="currentRecommendation.calculationBreakdown.volumeCase">
+              <span class="case-badge"
+                    [class.case-a]="currentRecommendation.calculationBreakdown.volumeCase === 'A'"
+                    [class.case-b]="currentRecommendation.calculationBreakdown.volumeCase === 'B'">
+                <i class="bi"
+                   [class.bi-calculator-fill]="currentRecommendation.calculationBreakdown.volumeCase === 'A'"
+                   [class.bi-arrow-left-right]="currentRecommendation.calculationBreakdown.volumeCase === 'B'"></i>
+                {{ currentRecommendation.calculationBreakdown.volumeCase === 'A' ? 'Caso A — Recálculo completo por déficit' : 'Caso B — Ajuste por drenaje previo' }}
               </span>
-              <span class="calc-result">= {{ currentRecommendation.calculationBreakdown.baseVolumeLiters.toFixed(2) }} L</span>
+              <span class="case-description">
+                {{ currentRecommendation.calculationBreakdown.volumeCase === 'A'
+                  ? 'Primera irrigación o cambio en umbral de depleción. Volumen calculado desde el déficit hídrico actual.'
+                  : 'El umbral de depleción no cambió desde la irrigación anterior. Volumen ajustado según drenaje real vs. objetivo.' }}
+              </span>
             </div>
 
+            <!-- Trigger condition -->
+            <div class="calc-row calc-row--trigger"
+                 *ngIf="currentRecommendation.decisionFactors!.moistureSetPoint != null">
+              <span class="calc-label">Condición de riego</span>
+              <span class="calc-formula">
+                Humedad ({{ currentRecommendation.decisionFactors!.currentMoisture.toFixed(1) }}%)
+                &lt; Punto de riego ({{ currentRecommendation.decisionFactors!.moistureSetPoint!.toFixed(1) }}%)
+              </span>
+              <span class="calc-result calc-result--trigger">
+                <i class="bi bi-check-circle-fill"></i> ACTIVA
+              </span>
+            </div>
+
+            <!-- CASE A: Full recalculation rows -->
+            <ng-container *ngIf="currentRecommendation.calculationBreakdown.volumeCase === 'A'">
+
+              <div class="calc-row"
+                   *ngIf="currentRecommendation.calculationBreakdown.tawPercentage != null && currentRecommendation.calculationBreakdown.containerVolumeLiters != null">
+                <span class="calc-label">Agua total disponible (TAW)</span>
+                <span class="calc-formula">
+                  {{ currentRecommendation.calculationBreakdown.containerVolumeLiters.toFixed(1) }} L
+                  × {{ currentRecommendation.calculationBreakdown.tawPercentage.toFixed(1) }}% / 100
+                </span>
+                <span class="calc-result">
+                  = {{ (currentRecommendation.calculationBreakdown.containerVolumeLiters * currentRecommendation.calculationBreakdown.tawPercentage / 100).toFixed(2) }} L
+                </span>
+              </div>
+
+              <div class="calc-row" *ngIf="currentRecommendation.calculationBreakdown.waterConsumptionLiters != null">
+                <span class="calc-label">Consumo de agua (déficit)</span>
+                <span class="calc-formula">
+                  TAW vol × Fracción de depleción ({{ ((currentRecommendation.calculationBreakdown.depletionFraction ?? 0) * 100).toFixed(1) }}%)
+                </span>
+                <span class="calc-result">= {{ currentRecommendation.calculationBreakdown.waterConsumptionLiters.toFixed(2) }} L</span>
+              </div>
+
+              <div class="calc-row" *ngIf="currentRecommendation.calculationBreakdown.drainVolumeLiters != null">
+                <span class="calc-label">Volumen de drenaje</span>
+                <span class="calc-formula">
+                  {{ currentRecommendation.calculationBreakdown.waterConsumptionLiters?.toFixed(2) }} L
+                  × {{ currentRecommendation.calculationBreakdown.drainThresholdPct?.toFixed(0) }}% (objetivo drenaje)
+                </span>
+                <span class="calc-result">= {{ currentRecommendation.calculationBreakdown.drainVolumeLiters.toFixed(2) }} L</span>
+              </div>
+
+              <div class="calc-row calc-row--highlight" *ngIf="currentRecommendation.calculationBreakdown.baseVolumeLiters !== null">
+                <span class="calc-label"><strong>Volumen base por contenedor</strong></span>
+                <span class="calc-formula">Consumo + Drenaje</span>
+                <span class="calc-result"><strong>= {{ currentRecommendation.calculationBreakdown.baseVolumeLiters.toFixed(2) }} L</strong></span>
+              </div>
+
+            </ng-container>
+
+            <!-- CASE B: Drain-adjustment rows -->
+            <ng-container *ngIf="currentRecommendation.calculationBreakdown.volumeCase === 'B'">
+
+              <div class="calc-row" *ngIf="currentRecommendation.decisionFactors!.recentDrainagePercentage != null">
+                <span class="calc-label">Drenaje real vs. objetivo</span>
+                <span class="calc-formula">
+                  Real: {{ currentRecommendation.decisionFactors!.recentDrainagePercentage!.toFixed(1) }}%
+                  — Objetivo: {{ currentRecommendation.calculationBreakdown.drainThresholdPct?.toFixed(0) }}%
+                  → Δ: {{ (currentRecommendation.calculationBreakdown.drainThresholdPct! - currentRecommendation.decisionFactors!.recentDrainagePercentage!).toFixed(1) }}%
+                </span>
+                <span class="calc-result"
+                      [class.calc-result--up]="currentRecommendation.calculationBreakdown.drainThresholdPct! > currentRecommendation.decisionFactors!.recentDrainagePercentage!"
+                      [class.calc-result--down]="currentRecommendation.calculationBreakdown.drainThresholdPct! < currentRecommendation.decisionFactors!.recentDrainagePercentage!">
+                  <i class="bi"
+                     [class.bi-arrow-up]="currentRecommendation.calculationBreakdown.drainThresholdPct! > currentRecommendation.decisionFactors!.recentDrainagePercentage!"
+                     [class.bi-arrow-down]="currentRecommendation.calculationBreakdown.drainThresholdPct! < currentRecommendation.decisionFactors!.recentDrainagePercentage!"
+                     [class.bi-dash]="currentRecommendation.calculationBreakdown.drainThresholdPct! === currentRecommendation.decisionFactors!.recentDrainagePercentage!"></i>
+                  Ajustar volumen
+                </span>
+              </div>
+
+              <div class="calc-row calc-row--highlight" *ngIf="currentRecommendation.calculationBreakdown.baseVolumeLiters !== null">
+                <span class="calc-label"><strong>Volumen ajustado por contenedor</strong></span>
+                <span class="calc-formula">Volumen previo ± ajuste por drenaje</span>
+                <span class="calc-result"><strong>= {{ currentRecommendation.calculationBreakdown.baseVolumeLiters.toFixed(2) }} L</strong></span>
+              </div>
+
+            </ng-container>
+
+            <!-- Rule multiplier (both cases) -->
             <div class="calc-row" *ngIf="currentRecommendation.calculationBreakdown.volumeMultiplier !== 1.0">
               <span class="calc-label">Ajuste por reglas</span>
               <span class="calc-formula">× {{ currentRecommendation.calculationBreakdown.volumeMultiplier.toFixed(2) }}</span>

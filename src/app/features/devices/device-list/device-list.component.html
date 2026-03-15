@@ -187,16 +187,12 @@
               <i class="bi bi-arrow-down-short" *ngIf="sortField === 'lastReading' && sortDirection === 'asc'"></i>
               <i class="bi bi-arrow-up-short" *ngIf="sortField === 'lastReading' && sortDirection === 'desc'"></i>
             </th>
-            <th (click)="sortByField('status')" class="sortable" style="cursor: pointer;">
-              Estado
-              <i class="bi bi-arrow-down-short" *ngIf="sortField === 'status' && sortDirection === 'asc'"></i>
-              <i class="bi bi-arrow-up-short" *ngIf="sortField === 'status' && sortDirection === 'desc'"></i>
-            </th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let device of filteredDevices" [class.table-active]="device === selectedDevice">
+          <ng-container *ngFor="let device of filteredDevices">
+          <tr [class.table-active]="device === selectedDevice">
             <!-- Device Info -->
             <td>
               <div class="device-info">
@@ -239,6 +235,11 @@
               <div class="sensor-readings" *ngIf="device.hasRealTimeData; else noData">
                 <div class="readings-summary">
                   <span class="badge bg-success">{{ getSensorReadingsArray(device).length }} sensores</span>
+                  <button class="btn btn-xs btn-outline-secondary ms-1"
+                    (click)="toggleSensorConfig(device)"
+                    title="Asignar tipo de sensor">
+                    <i class="fas fa-cog"></i> Tipos
+                  </button>
                 </div>
                 <div class="readings-details" *ngFor="let reading of getSensorReadingsArray(device).slice(0, 3)">
                   <small class="text-muted">
@@ -270,24 +271,6 @@
               </ng-template>
             </td>
 
-            <!-- Crop Productions -->
-            <td>
-              <div *ngIf="device.cropProductionIds.length > 0; else noProductions">
-                <span class="badge bg-primary">{{ device.cropProductionIds.length }} producciones</span>
-                <div class="production-list">
-                  <small class="text-muted" *ngFor="let cpId of device.cropProductionIds.slice(0, 2)">
-                    CP-{{ cpId }}
-                  </small>
-                  <small class="text-muted" *ngIf="device.cropProductionIds.length > 2">
-                    +{{ device.cropProductionIds.length - 2 }} más...
-                  </small>
-                </div>
-              </div>
-              <ng-template #noProductions>
-                <span class="text-muted">No asignado</span>
-              </ng-template>
-            </td>
-
             <!-- Actions -->
             <td>
               <div class="action-buttons" style="display: flex !important; gap: 0.25rem; min-width: 120px;">
@@ -301,6 +284,55 @@
               </div>
             </td>
           </tr>
+
+          <!-- Sensor Type Configuration Panel -->
+          <tr *ngIf="isSensorConfigExpanded(device)" class="sensor-config-row">
+
+            <td colspan="10" class="p-0">
+              <div class="sensor-config-panel p-3" style="background: #f0f8ff; border-top: 2px solid #3b82f6;">
+                <h6 class="mb-2">
+                  <i class="fas fa-tags"></i>
+                  Asignar tipos a sensores de <strong>{{ device.name }}</strong>
+                </h6>
+                <p class="text-muted small mb-3">
+                  Seleccione qué tipo representa cada sensor para que el sistema lo utilice dinámicamente.
+                </p>
+                <div class="row g-2">
+                  <div class="col-md-6 col-lg-4"
+                    *ngFor="let reading of getSensorReadingsArray(device)">
+                    <div class="card card-body p-2">
+                      <label class="form-label small fw-bold mb-1">{{ reading.sensor }}</label>
+                      <small class="text-muted d-block mb-1">
+                        Último valor: {{ reading.value !== null ? reading.value : reading.rawValue }}
+                      </small>
+                      <div class="input-group input-group-sm">
+                        <select class="form-select form-select-sm"
+                          (change)="saveSensorType(device, reading.sensor, $any($event.target).value)"
+                          [disabled]="isSensorTypeSaving(device, reading.sensor)">
+                          <option value="">{{getConfiguredSensorType(device, reading.sensor)}}</option>
+                          <option *ngFor="let opt of getSensorTypeOptions()"
+                            [value]="opt.value">
+                            {{ opt.label }}
+                          </option>
+                        </select>
+                        <span class="input-group-text" *ngIf="isSensorTypeSaving(device, reading.sensor)">
+                          <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                        <span class="input-group-text text-success"
+                          *ngIf="!isSensorTypeSaving(device, reading.sensor) && getConfiguredSensorType(device, reading.sensor)">
+                          <i class="fas fa-check"></i>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="getSensorReadingsArray(device).length === 0" class="text-muted small">
+                  No hay datos de sensores recientes para este dispositivo.
+                </div>
+              </div>
+            </td>
+          </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>

@@ -9,5 +9,6 @@ namespace AgriSmart.Application.Agronomic.Queries
         public int CompanyId { get; set; } = 0;
         public int DeviceId { get; set; } = 0;
         public bool IncludeInactives { get; set; }
+        public string? SensorType { get; set; }
     }
 }

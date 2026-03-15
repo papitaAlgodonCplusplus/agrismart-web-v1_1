@@ -437,7 +437,12 @@
                 <!-- Fertilizer Dosages -->
                 <div class="row mb-4">
                   <div class="col-12">
-                    <h6><i class="bi bi-droplet me-2"></i>Dosificación de Fertilizantes</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.dosages = !sectionExpanded.dosages" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-droplet me-2"></i>Dosificación de Fertilizantes</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.dosages" [class.bi-chevron-down]="!sectionExpanded.dosages"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.dosages">
                     <div class="table-responsive">
                       <table class="table table-striped">
                         <thead>
@@ -456,13 +461,19 @@
                         </tbody>
                       </table>
                     </div>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Nutrient Verification Table with Calculated Deviation -->
                 <div class="row mb-4" *ngIf="calculationResults?.calculation_results?.verification_results">
                   <div class="col-12">
-                    <h6><i class="bi bi-check-circle me-2"></i>Verificación de Nutrientes</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.verification = !sectionExpanded.verification" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-check-circle me-2"></i>Verificación de Nutrientes</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.verification" [class.bi-chevron-down]="!sectionExpanded.verification"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.verification">
                     <div class="table-responsive">
                       <table class="table table-hover">
                         <thead>
@@ -513,13 +524,19 @@
                         </tbody>
                       </table>
                     </div>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Performance Metrics -->
                 <div class="row mb-4" *ngIf="performanceMetricsDisplay">
                   <div class="col-12">
-                    <h6><i class="bi bi-speedometer2 me-2"></i>Métricas de Rendimiento</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.performance = !sectionExpanded.performance" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-speedometer2 me-2"></i>Métricas de Rendimiento</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.performance" [class.bi-chevron-down]="!sectionExpanded.performance"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.performance">
                     <div class="row g-3">
                       <div class="col-md-3">
                         <div class="card border-info">
@@ -538,13 +555,19 @@
                         </div>
                       </div>
                     </div>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Optimization Summary -->
                 <div class="row mb-4" *ngIf="optimizationSummaryDisplay">
                   <div class="col-12">
-                    <h6><i class="bi bi-graph-up me-2"></i>Resumen de Optimización</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.optimization = !sectionExpanded.optimization" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>Resumen de Optimización</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.optimization" [class.bi-chevron-down]="!sectionExpanded.optimization"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.optimization">
                     <div class="table-responsive">
                       <table class="table table-sm table-bordered">
                         <tbody>
@@ -575,13 +598,136 @@
                         </tbody>
                       </table>
                     </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Ionic Balance -->
+                <div class="row mb-4" *ngIf="ionicBalanceDisplay">
+                  <div class="col-12">
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.ionicBalance = !sectionExpanded.ionicBalance" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-yin-yang me-2"></i>Balance Iónico Alcanzado</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.ionicBalance" [class.bi-chevron-down]="!sectionExpanded.ionicBalance"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.ionicBalance">
+                    <!-- Summary cards -->
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-3">
+                        <div class="card border-primary">
+                          <div class="card-body text-center">
+                            <h6 class="text-muted small">Suma Cationes</h6>
+                            <h4 class="mb-0 text-primary">{{ ionicBalanceDisplay.cation_sum }} meq/L</h4>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="card border-danger">
+                          <div class="card-body text-center">
+                            <h6 class="text-muted small">Suma Aniones</h6>
+                            <h4 class="mb-0 text-danger">{{ ionicBalanceDisplay.anion_sum }} meq/L</h4>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="card border-warning">
+                          <div class="card-body text-center">
+                            <h6 class="text-muted small">Diferencia</h6>
+                            <h4 class="mb-0 text-warning">{{ ionicBalanceDisplay.difference }} meq/L</h4>
+                            <small class="text-muted">({{ ionicBalanceDisplay.difference_percentage }}%)</small>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="card" [ngClass]="{
+                          'border-success': ionicBalanceDisplay.balance_color === 'green',
+                          'border-warning': ionicBalanceDisplay.balance_color === 'orange',
+                          'border-danger': ionicBalanceDisplay.balance_color === 'red'
+                        }">
+                          <div class="card-body text-center">
+                            <h6 class="text-muted small">Estado</h6>
+                            <h5 class="mb-0" [ngClass]="{
+                              'text-success': ionicBalanceDisplay.balance_color === 'green',
+                              'text-warning': ionicBalanceDisplay.balance_color === 'orange',
+                              'text-danger': ionicBalanceDisplay.balance_color === 'red'
+                            }">{{ ionicBalanceDisplay.balance_status }}</h5>
+                            <small class="text-muted">{{ ionicBalanceDisplay.balance_recommendation }}</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Per-ion tables -->
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <h6 class="text-primary"><i class="bi bi-plus-circle me-1"></i>Cationes (meq/L)</h6>
+                        <div class="table-responsive">
+                          <table class="table table-sm table-bordered">
+                            <thead class="table-primary">
+                              <tr>
+                                <th>Ion</th>
+                                <th class="text-end">meq/L</th>
+                                <th class="text-end">% distribución</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <ng-container *ngFor="let ion of ['Ca','K','Mg','Na','NH4','Fe','Mn','Zn','Cu']">
+                                <tr *ngIf="ionicBalanceDisplay.final_meq_L[ion] || ionicBalanceDisplay.cation_distribution[ion]">
+                                  <td class="fw-bold">{{ ion }}</td>
+                                  <td class="text-end">{{ (ionicBalanceDisplay.final_meq_L[ion] || 0) | number:'1.3-3' }}</td>
+                                  <td class="text-end">{{ (ionicBalanceDisplay.cation_distribution[ion] || 0) | number:'1.1-1' }}%</td>
+                                </tr>
+                              </ng-container>
+                              <tr class="table-primary fw-bold">
+                                <td>Total</td>
+                                <td class="text-end">{{ ionicBalanceDisplay.cation_sum | number:'1.3-3' }}</td>
+                                <td class="text-end">100%</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <h6 class="text-danger"><i class="bi bi-dash-circle me-1"></i>Aniones (meq/L)</h6>
+                        <div class="table-responsive">
+                          <table class="table table-sm table-bordered">
+                            <thead class="table-danger">
+                              <tr>
+                                <th>Ion</th>
+                                <th class="text-end">meq/L</th>
+                                <th class="text-end">% distribución</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <ng-container *ngFor="let ion of ['N','S','Cl','P','HCO3','B','Mo']">
+                                <tr *ngIf="ionicBalanceDisplay.final_meq_L[ion] || ionicBalanceDisplay.anion_distribution[ion]">
+                                  <td class="fw-bold">{{ ion }}</td>
+                                  <td class="text-end">{{ (ionicBalanceDisplay.final_meq_L[ion] || 0) | number:'1.3-3' }}</td>
+                                  <td class="text-end">{{ (ionicBalanceDisplay.anion_distribution[ion] || 0) | number:'1.1-1' }}%</td>
+                                </tr>
+                              </ng-container>
+                              <tr class="table-danger fw-bold">
+                                <td>Total</td>
+                                <td class="text-end">{{ ionicBalanceDisplay.anion_sum | number:'1.3-3' }}</td>
+                                <td class="text-end">100%</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Enhanced Cost Analysis -->
                 <div class="row mb-4" *ngIf="enhancedCostAnalysis">
                   <div class="col-12">
-                    <h6><i class="bi bi-currency-dollar me-2"></i>Análisis de Costos Detallado</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.costs = !sectionExpanded.costs" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-currency-dollar me-2"></i>Análisis de Costos Detallado</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.costs" [class.bi-chevron-down]="!sectionExpanded.costs"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.costs">
                     <div class="row g-3 mb-3">
                       <div class="col-md-3">
                         <div class="card bg-light">
@@ -635,13 +781,58 @@
                         </tbody>
                       </table>
                     </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fertilizer Database -->
+                <div class="row mb-4" *ngIf="fertilizerDatabase.length > 0">
+                  <div class="col-12">
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.fertilizerDb = !sectionExpanded.fertilizerDb" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-database me-2"></i>Fertilizantes en Base de Datos</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.fertilizerDb" [class.bi-chevron-down]="!sectionExpanded.fertilizerDb"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.fertilizerDb">
+                      <div class="table-responsive">
+                        <table class="table table-sm table-hover table-bordered">
+                          <thead class="table-dark">
+                            <tr>
+                              <th>Nombre</th>
+                              <th class="text-end">Pureza (%)</th>
+                              <th class="text-end">P.M.</th>
+                              <th class="text-end">Densidad</th>
+                              <th class="text-end">Solubilidad</th>
+                              <th>Cationes activos</th>
+                              <th>Aniones activos</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr *ngFor="let fert of fertilizerDatabase">
+                              <td class="fw-bold">{{ fert.name }}</td>
+                              <td class="text-end">{{ fert.chemistry?.purity }}</td>
+                              <td class="text-end">{{ fert.molecular_weight | number:'1.2-2' }}</td>
+                              <td class="text-end">{{ fert.density }}</td>
+                              <td class="text-end">{{ fert.chemistry?.solubility }}</td>
+                              <td><small>{{ getActiveCations(fert) }}</small></td>
+                              <td><small>{{ getActiveAnions(fert) }}</small></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Water Analysis -->
                 <div class="row mb-4" *ngIf="waterAnalysisDisplay">
                   <div class="col-12">
-                    <h6><i class="bi bi-droplet me-2"></i>Análisis del Agua de Riego</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.water = !sectionExpanded.water" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-droplet me-2"></i>Análisis del Agua de Riego</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.water" [class.bi-chevron-down]="!sectionExpanded.water"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.water">
                     <div class="row g-2">
                       <div class="col-md-2 col-sm-4" *ngFor="let nutrient of getWaterAnalysisKeys()">
                         <div class="card border">
@@ -652,6 +843,7 @@
                         </div>
                       </div>
                     </div>
+                    </div>
                   </div>
                 </div>
 
@@ -659,7 +851,12 @@
                 <ng-container *ngIf="calculationResults?.water_dilution as wd">
                 <div class="row mb-4">
                   <div class="col-12">
-                    <h6><i class="bi bi-droplet-half me-2"></i>Calidad del Agua de Riego (por Litro)</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.waterDilution = !sectionExpanded.waterDilution" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-droplet-half me-2"></i>Calidad del Agua de Riego (por Litro)</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.waterDilution" [class.bi-chevron-down]="!sectionExpanded.waterDilution"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.waterDilution">
                     <div class="alert mb-2"
                       [class.alert-warning]="wd.dilution_needed"
                       [class.alert-success]="!wd.dilution_needed">
@@ -723,6 +920,7 @@
                         </tbody>
                       </table>
                     </div>
+                    </div>
                   </div>
                 </div>
                 </ng-container>
@@ -730,7 +928,12 @@
                 <!-- Soil Analysis -->
                 <div class="row mb-4" *ngIf="soilAnalysisData && soilAnalysisData.used">
                   <div class="col-12">
-                    <h6><i class="bi bi-globe me-2"></i>Análisis de Suelo Aplicado</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.soil = !sectionExpanded.soil" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-globe me-2"></i>Análisis de Suelo Aplicado</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.soil" [class.bi-chevron-down]="!sectionExpanded.soil"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.soil">
                     <div class="alert alert-info mb-3">
                       <div class="row">
                         <div class="col-md-4">
@@ -775,13 +978,19 @@
                         </tbody>
                       </table>
                     </div>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Fertilizer Usage Graphs -->
                 <div class="row mb-4" *ngIf="fertilizerUsageData.length > 0">
                   <div class="col-12">
-                    <h6><i class="bi bi-bar-chart me-2"></i>Análisis de Uso de Fertilizantes</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.charts = !sectionExpanded.charts" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Análisis de Uso de Fertilizantes</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.charts" [class.bi-chevron-down]="!sectionExpanded.charts"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.charts">
 
                     <!-- Dosage Distribution Chart -->
                     <div class="card mb-3">
@@ -979,13 +1188,19 @@
                     </div>
                     </ng-container>
                     </ng-container>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Enhanced Parameters for Advanced Calculation -->
                 <div class="row mb-4" *ngIf="enhancedFormulationResults && enhancedFormulationResults.length > 0">
                   <div class="col-12">
-                    <h6><i class="bi bi-beaker me-2"></i>Análisis Parámetros Adicionales</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2 section-toggle-header"
+                         (click)="sectionExpanded.advancedParams = !sectionExpanded.advancedParams" style="cursor:pointer;user-select:none">
+                      <h6 class="mb-0"><i class="bi bi-beaker me-2"></i>Análisis Parámetros Adicionales</h6>
+                      <i class="bi" [class.bi-chevron-up]="sectionExpanded.advancedParams" [class.bi-chevron-down]="!sectionExpanded.advancedParams"></i>
+                    </div>
+                    <div *ngIf="sectionExpanded.advancedParams">
                     <div class="table-responsive">
                       <table class="table table-striped">
                         <thead class="table-dark">
@@ -1049,6 +1264,7 @@
                           </tr>
                         </tbody>
                       </table>
+                    </div>
                     </div>
                   </div>
                 </div>

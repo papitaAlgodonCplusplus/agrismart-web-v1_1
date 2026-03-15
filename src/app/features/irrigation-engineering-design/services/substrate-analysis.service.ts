@@ -111,12 +111,14 @@ export class SubstrateAnalysisService {
     permanentWiltingPoint?: SubstrateCurvePoint;
   } {
 
-    // POINT 1: Saturated (0 kPa) - ~93-95% water, minimal air
+    // POINT 1: Saturated (0 kPa) — use the user-defined saturation point.
+    // Solid fraction = 100 - saturationPoint; curve can never exceed saturationPoint.
+    const saturatedWater = input.saturationPoint;
     const saturated: SubstrateCurvePoint = {
       matricPotential: 0,
-      volumetricWaterContent: this.estimateSaturatedWaterContent(input),
-      airContent: this.estimateSaturatedAirContent(input),
-      label: 'Saturado (0 kPa)'
+      volumetricWaterContent: saturatedWater,
+      airContent: 100 - saturatedWater,
+      label: 'Punto de Saturación (0 kPa)'
     };
 
     // POINT 2: Container Capacity (1 kPa) - YOUR DATABASE VALUE
@@ -161,28 +163,6 @@ export class SubstrateAnalysisService {
       tenKpa,
       permanentWiltingPoint
     };
-  }
-
-  /**
-   * Estimate saturated water content
-   * Typical substrates: 85-95% water at saturation
-   * Use porosity if available, otherwise estimate
-   */
-  private estimateSaturatedWaterContent(input: SubstrateAnalysisInput): number {
-    // Typical assumption: saturated content ≈ container capacity + 10-15%
-    // But never exceed 95% (some air always remains)
-    const estimated = Math.min(
-      input.containerCapacityPercentage + 12,
-      95
-    );
-    return estimated;
-  }
-
-  /**
-   * Estimate saturated air content (inverse of water content)
-   */
-  private estimateSaturatedAirContent(input: SubstrateAnalysisInput): number {
-    return 100 - this.estimateSaturatedWaterContent(input);
   }
 
   /**
@@ -277,6 +257,7 @@ export class SubstrateAnalysisService {
     return {
       growingMediumId: growingMedium.id,
       growingMediumName: growingMedium.name,
+      saturationPoint: growingMedium.saturationPoint ?? 95.8,
       containerCapacityPercentage: growingMedium.containerCapacityPercentage || 0,
       permanentWiltingPoint: growingMedium.permanentWiltingPoint || 0,
       easelyAvailableWaterPercentage: growingMedium.easelyAvailableWaterPercentage || 0,

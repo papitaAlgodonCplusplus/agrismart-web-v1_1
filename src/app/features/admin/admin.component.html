@@ -617,12 +617,20 @@
                       <span *ngIf="!item[field.key]" class="text-muted">-</span>
                     </span>
 
-                    <!-- Enhanced Select for User Profile (keep existing) -->
+                    <!-- Enhanced Select for User Profile -->
                     <span *ngIf="field.type === 'select' && field.key === 'profileId'">
-                      <span class="badge" [class.bg-primary]="item[field.key] === 1"
-                        [class.bg-info]="item[field.key] === 2">
-                        <i class="bi" [class.bi-shield-fill]="item[field.key] === 1"
-                          [class.bi-person-fill]="item[field.key] === 2"></i>
+                      <span class="badge"
+                        [class.bg-danger]="item[field.key] === 2"
+                        [class.bg-primary]="item[field.key] === 5"
+                        [class.bg-success]="item[field.key] === 6"
+                        [class.bg-warning]="item[field.key] === 7"
+                        [class.bg-secondary]="![2,5,6,7].includes(item[field.key])">
+                        <i class="bi"
+                          [class.bi-shield-fill]="item[field.key] === 2"
+                          [class.bi-wrench-adjustable]="item[field.key] === 5"
+                          [class.bi-flower1]="item[field.key] === 6"
+                          [class.bi-layers-fill]="item[field.key] === 7"
+                          [class.bi-person-fill]="![2,5,6,7].includes(item[field.key])"></i>
                         {{ getUserRoleLabel(item[field.key]) }}
                       </span>
                     </span>
